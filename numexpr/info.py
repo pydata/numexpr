@@ -50,9 +50,9 @@ The next functions are also supported:
     parts.
 
 
-Copyright 2006,2007 David M. Cooke <cookedm@physics.mcmaster.ca>
-Licenced under a BSD-style license. See LICENSE.txt in the scipy source
-directory.
+Copyright 2006,2007 David M. Cooke <david.m.cooke@gmail.com>
+Licenced under the MIT license. See README.txt included with the
+source.
 """
 
 depends = ['core', 'testing']
