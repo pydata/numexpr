@@ -1,20 +1,27 @@
-from numpy.distutils.misc_util import Configuration
+try:
+    import setuptools
+    have_setuptools = True
+except ImportError:
+    have_setuptools = False
+from numpy.distutils.core import setup, Extension
 
-def configuration(parent_package='', top_path=None):
-    config = Configuration('numexpr', parent_package, top_path)
-    config.add_extension('numexpr.interpreter',
-                         sources = ['numexpr/interpreter.c'],
-                         depends = ['numexpr/interp_body.c',
-                                    'numexpr/complex_functions.inc'],
-                         extra_compile_args=['-O2', '-funroll-all-loops'],
-                         )
-    config.add_data_dir('numexpr/tests')
-    return config
+extra_setup_opts = {}
+if have_setuptools:
+    extra_setup_opts['zip_safe'] = False
+    extra_setup_opts['install_requires'] = ['numpy >= 1.0']
 
-if __name__ == '__main__':
-    from numpy.distutils.core import setup
-    setup(author='David M. Cooke',
-          author_email='david.m.cooke@gmail.com',
-          version='0.8',
-          zip_safe=False,
-          **configuration(top_path='').todict())
+setup(name='numexpr',
+      version='0.8',
+      description='Fast numerical expression evaluator for NumPy',
+      author='David M. Cooke',
+      author_email='david.m.cooke@gmail.com',
+      url='http://code.google.com/p/numexpr/',
+      packages=['numexpr', 'numexpr.tests'],
+      ext_modules=[Extension('numexpr.interpreter',
+                             sources=['numexpr/interpreter.c'],
+                             depends = ['numexpr/interp_body.c',
+                                        'numexpr/complex_functions.inc'],
+                             extra_compile_args=['-O2', '-funroll-all-loops'],
+                            )],
+      **extra_setup_opts
+    )
