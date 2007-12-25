@@ -9,6 +9,7 @@ extra_setup_opts = {}
 if have_setuptools:
     extra_setup_opts['zip_safe'] = False
     extra_setup_opts['install_requires'] = ['numpy >= 1.0']
+    extra_setup_opts['test_suite'] = 'nose.collector'
 
 setup(name='numexpr',
       version='0.8',
