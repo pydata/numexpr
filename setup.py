@@ -25,23 +25,25 @@ class build_ext(old_build_ext):
     def build_extension(self, ext):
         # at this point we know what the C compiler is.
         c = self.compiler
-        old_compile_options = c.compile_options[:]
+        old_compile_options = None
         if ext is interpreter_ext:
             # For MS Visual C, we use /O1 instead of the default /Ox,
             # as /Ox takes a long time (~20 mins) to compile.
             # The speed of the code isn't noticeably different.
             if c.compiler_type == 'msvc':
+                old_compile_options = c.compile_options[:]
                 if '/Ox' in c.compile_options:
                     c.compile_options.remove('/Ox')
                 c.compile_options.append('/O1')
                 ext.extra_compile_args = []
         old_build_ext.build_extension(self, ext)
-        self.compiler.compile_options = old_compile_options
+        if old_compile_options is not None:
+            self.compiler.compile_options = old_compile_options
 
 extra_setup_opts['cmdclass'] = {'build_ext': build_ext}
 
 setup(name='numexpr',
-      version='0.8',
+      version='1.0',
       description='Fast numerical expression evaluator for NumPy',
       author='David M. Cooke',
       author_email='david.m.cooke@gmail.com',

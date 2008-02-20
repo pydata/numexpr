@@ -54,5 +54,3 @@ Copyright 2006,2007 David M. Cooke <david.m.cooke@gmail.com>
 Licenced under the MIT license. See the README file included with the
 source.
 """
-
-depends = ['core', 'testing']
