@@ -4,7 +4,8 @@ and use less memory than doing the same calculation in Python.
 
 Numexpr is written by David Cooke <david.m.cooke@gmail.com> and
 Tim Hochberg <tim.hochberg@ieee.org>. Francesc Altet <faltet@carabos.com>
-contributed support for booleans, and initial support for strided arrays.
+contributed support for booleans and for efficient strided and unaligned array
+operations. Ivan Vilata <ivilata@carabos.com> contributed support for strings.
 It is distributed under the MIT license:
 
 Copyright (c) 2007 David M. Cooke <david.m.cooke@gmail.com>
