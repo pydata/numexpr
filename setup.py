@@ -31,6 +31,8 @@ class build_ext(old_build_ext):
             # as /Ox takes a long time (~20 mins) to compile.
             # The speed of the code isn't noticeably different.
             if c.compiler_type == 'msvc':
+                if not c.initialized:
+                    c.initialize()
                 old_compile_options = c.compile_options[:]
                 if '/Ox' in c.compile_options:
                     c.compile_options.remove('/Ox')
