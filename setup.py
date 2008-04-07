@@ -10,7 +10,6 @@ import numpy
 extra_setup_opts = {}
 if setuptools:
     extra_setup_opts['zip_safe'] = False
-    extra_setup_opts['install_requires'] = ['numpy >= 1.0']
     extra_setup_opts['test_suite'] = 'nose.collector'
 
 interpreter_ext = Extension('numexpr.interpreter',
