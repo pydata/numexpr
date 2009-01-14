@@ -5,12 +5,12 @@ import numpy
 array_size = 1000*1000
 iterations = 10
 
-numpy_ttime = 0
-numpy_sttime = 0
-numpy_nttime = 0
-numexpr_ttime = 0
-numexpr_sttime = 0
-numexpr_nttime = 0
+numpy_ttime = []
+numpy_sttime = []
+numpy_nttime = []
+numexpr_ttime = []
+numexpr_sttime = []
+numexpr_nttime = []
 
 def compare_times(expr, nexpr):
     global numpy_ttime
@@ -28,30 +28,30 @@ def compare_times(expr, nexpr):
 
     numpy_timer = timeit.Timer(expr, setup_contiguous)
     numpy_time = round(numpy_timer.timeit(number=iterations), 4)
-    numpy_ttime += numpy_time
+    numpy_ttime.append(numpy_time)
     print 'numpy:', numpy_time / iterations
 
     numpy_timer = timeit.Timer(expr, setup_strided)
     numpy_stime = round(numpy_timer.timeit(number=iterations), 4)
-    numpy_sttime += numpy_stime
+    numpy_sttime.append(numpy_stime)
     print 'numpy strided:', numpy_stime / iterations
 
     numpy_timer = timeit.Timer(expr, setup_unaligned)
     numpy_ntime = round(numpy_timer.timeit(number=iterations), 4)
-    numpy_nttime += numpy_ntime
+    numpy_nttime.append(numpy_ntime)
     print 'numpy unaligned:', numpy_ntime / iterations
 
     evalexpr = 'evaluate("%s", optimization="aggressive")' % expr
     numexpr_timer = timeit.Timer(evalexpr, setup_contiguous)
     numexpr_time = round(numexpr_timer.timeit(number=iterations), 4)
-    numexpr_ttime += numexpr_time
+    numexpr_ttime.append(numexpr_time)
     print "numexpr:", numexpr_time/iterations,
     print "Speed-up of numexpr over numpy:", round(numpy_time/numexpr_time, 4)
 
     evalexpr = 'evaluate("%s", optimization="aggressive")' % expr
     numexpr_timer = timeit.Timer(evalexpr, setup_strided)
     numexpr_stime = round(numexpr_timer.timeit(number=iterations), 4)
-    numexpr_sttime += numexpr_stime
+    numexpr_sttime.append(numexpr_stime)
     print "numexpr strided:", numexpr_stime/iterations,
     print "Speed-up of numexpr strided over numpy:", \
           round(numpy_stime/numexpr_stime, 4)
@@ -59,7 +59,7 @@ def compare_times(expr, nexpr):
     evalexpr = 'evaluate("%s", optimization="aggressive")' % expr
     numexpr_timer = timeit.Timer(evalexpr, setup_unaligned)
     numexpr_ntime = round(numexpr_timer.timeit(number=iterations), 4)
-    numexpr_nttime += numexpr_ntime
+    numexpr_nttime.append(numexpr_ntime)
     print "numexpr unaligned:", numexpr_ntime/iterations,
     print "Speed-up of numexpr unaligned over numpy:", \
           round(numpy_ntime/numexpr_ntime, 4)
@@ -124,16 +124,27 @@ if __name__ == '__main__':
     else:
         compare()
 
-    print "*************** TOTALS **************************"
-    print "numpy total:", numpy_ttime/iterations
-    print "numpy strided total:", numpy_sttime/iterations
-    print "numpy unaligned total:", numpy_nttime/iterations
-    print "numexpr total:", numexpr_ttime/iterations
-    print "Speed-up of numexpr over numpy:", \
-          round(numpy_ttime/numexpr_ttime, 3)
-    print "numexpr strided total:", numexpr_sttime/iterations
-    print "Speed-up of numexpr strided over numpy:", \
-          round(numpy_sttime/numexpr_sttime, 3)
-    print "numexpr unaligned total:", numexpr_nttime/iterations
-    print "Speed-up of numexpr unaligned over numpy:", \
-          round(numpy_nttime/numexpr_nttime, 3)
+    tratios = numpy.array(numpy_ttime) / numpy.array(numexpr_ttime)
+    stratios = numpy.array(numpy_sttime) / numpy.array(numexpr_sttime)
+    ntratios = numpy.array(numpy_nttime) / numpy.array(numexpr_nttime)
+
+
+    print "*************** Numexpr vs NumPy speed-ups *******************"
+#     print "numpy total:", sum(numpy_ttime)/iterations
+#     print "numpy strided total:", sum(numpy_sttime)/iterations
+#     print "numpy unaligned total:", sum(numpy_nttime)/iterations
+#     print "numexpr total:", sum(numexpr_ttime)/iterations
+    print "Contiguous case:\t %s (mean), %s (min), %s (max)" % \
+          (round(tratios.mean(), 2),
+           round(tratios.min(), 2),
+           round(tratios.max(), 2))
+#    print "numexpr strided total:", sum(numexpr_sttime)/iterations
+    print "Strided case:\t\t %s (mean), %s (min), %s (max)" % \
+          (round(stratios.mean(), 2),
+           round(stratios.min(), 2),
+           round(stratios.max(), 2))
+#    print "numexpr unaligned total:", sum(numexpr_nttime)/iterations
+    print "Unaligned case:\t\t %s (mean), %s (min), %s (max)" % \
+          (round(ntratios.mean(), 2),
+           round(ntratios.min(), 2),
+           round(ntratios.max(), 2))

@@ -20,16 +20,25 @@ class Expression(object):
 
 E = Expression()
 
-try:
-    _context = threading.local()
-except AttributeError:
-    class Context(object):
-        pass
-    _context = Context()
-_context.ctx = {}
+class Context(threading.local):
+    initialized = False
+    def __init__(self, dict_):
+        if self.initialized:
+            raise SystemError('__init__ called too many times')
+        self.initialized = True
+        self.__dict__.update(dict_)
+    def get(self, value, default):
+        return self.__dict__.get(value, default)
+    def get_current_context(self):
+        return self.__dict__
+    def set_new_context(self, dict_):
+        self.__dict__.update(dict_)
+
+# This will be called each time the local object is used in a separate thread
+_context = Context({})
 
 def get_optimization():
-    return _context.ctx.get('optimization', 'none')
+    return _context.get('optimization', 'none')
 
 # helper functions for creating __magic__ methods
 def ophelper(f):
@@ -232,6 +241,7 @@ functions = {
     'copy' : func(numpy.copy),
     'ones_like' : func(numpy.ones_like),
     'sqrt' : func(numpy.sqrt, 'float'),
+
     'sin' : func(numpy.sin, 'float'),
     'cos' : func(numpy.cos, 'float'),
     'tan' : func(numpy.tan, 'float'),
@@ -242,14 +252,23 @@ functions = {
     'sinh' : func(numpy.sinh, 'float'),
     'cosh' : func(numpy.cosh, 'float'),
     'tanh' : func(numpy.tanh, 'float'),
+    'arcsinh' : func(numpy.arcsinh, 'float'),
+    'arccosh' : func(numpy.arccosh, 'float'),
+    'arctanh' : func(numpy.arctanh, 'float'),
 
-    'arctan2' : func(numpy.arctan2, 'float'),
     'fmod' : func(numpy.fmod, 'float'),
+    'arctan2' : func(numpy.arctan2, 'float'),
+
+    'log' : func(numpy.log, 'float'),
+    'log1p' : func(numpy.log1p, 'float'),
+    'log10' : func(numpy.log10, 'float'),
+    'exp' : func(numpy.exp, 'float'),
+    'expm1' : func(numpy.expm1, 'float'),
 
     'where' : where_func,
 
-    'real': func(numpy.real, 'float', 'float'),
-    'imag': func(numpy.imag, 'float', 'float'),
+    'real' : func(numpy.real, 'float', 'float'),
+    'imag' : func(numpy.imag, 'float', 'float'),
     'complex' : func(complex, 'complex'),
 
     'sum' : sum_func,

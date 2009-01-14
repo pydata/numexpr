@@ -17,7 +17,7 @@ interpreter_ext = Extension('numexpr.interpreter',
                             depends = ['numexpr/interp_body.c',
                                        'numexpr/complex_functions.inc'],
                             include_dirs=[numpy.get_include()],
-                            extra_compile_args=['-O2', '-funroll-all-loops'],
+                            extra_compile_args=['-funroll-all-loops']
                             )
 
 class build_ext(old_build_ext):
@@ -44,10 +44,10 @@ class build_ext(old_build_ext):
 extra_setup_opts['cmdclass'] = {'build_ext': build_ext}
 
 setup(name='numexpr',
-      version='1.0',
+      version='1.1',
       description='Fast numerical expression evaluator for NumPy',
-      author='David M. Cooke',
-      author_email='david.m.cooke@gmail.com',
+      author='David M. Cooke, Tim Hochberg, Francesc Alted, Ivan Vilata',
+      author_email='david.m.cooke@gmail.com, faltet@pytables.org',
       url='http://code.google.com/p/numexpr/',
       packages=['numexpr', 'numexpr.tests'],
       ext_modules=[interpreter_ext],

@@ -218,11 +218,7 @@
         case OP_POW_FFF: VEC_ARG2(f_dest = pow(f1, f2));
         case OP_MOD_FFF: VEC_ARG2(f_dest = f1 - floor(f1/f2) * f2);
 
-        case OP_SIN_FF: VEC_ARG1(f_dest = sin(f1));
-        case OP_COS_FF: VEC_ARG1(f_dest = cos(f1));
-        case OP_TAN_FF: VEC_ARG1(f_dest = tan(f1));
         case OP_SQRT_FF: VEC_ARG1(f_dest = sqrt(f1));
-        case OP_ARCTAN2_FFF: VEC_ARG2(f_dest = atan2(f1, f2));
 
         case OP_WHERE_FBFF: VEC_ARG3(f_dest = b1 ? f2 : f3);
 

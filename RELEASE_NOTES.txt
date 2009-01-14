@@ -1,0 +1,46 @@
+===============================
+ Release notes for Numexpr 1.1
+===============================
+
+Changes from 1.0 to 1.1
+=======================
+
+- Numexpr can work now in threaded environments.  Fixes #2.
+
+- The test suite can be run programatically by using
+  ``numexpr.test()``.
+
+- Support a more complete set of functions for expressions (including
+  those that are not supported by MSVC 7.1 compiler, like the inverse
+  hiperbolic or log1p and expm1 functions.  The complete list now is:
+
+    * where(bool, number1, number2): number
+        Number1 if the bool condition is true, number2 otherwise.
+    * {sin,cos,tan}(float|complex): float|complex
+        Trigonometric sinus, cosinus or tangent.
+    * {arcsin,arccos,arctan}(float|complex): float|complex
+        Trigonometric inverse sinus, cosinus or tangent.
+    * arctan2(float1, float2): float
+        Trigonometric inverse tangent of float1/float2.
+    * {sinh,cosh,tanh}(float|complex): float|complex
+        Hyperbolic sinus, cosinus or tangent.
+    * {arcsinh,arccosh,arctanh}(float|complex): float|complex
+        Hyperbolic inverse sinus, cosinus or tangent.
+    * {log,log10,log1p}(float|complex): float|complex
+        Natural, base-10 and log(1+x) logarithms.
+    * {exp,expm1}(float|complex): float|complex
+        Exponential and exponential minus one.
+    * sqrt(float|complex): float|complex
+        Square root.
+    * {real,imag}(complex): float
+        Real or imaginary part of complex.
+    * complex(float, float): complex
+        Complex from real and imaginary parts.
+
+
+
+.. Local Variables:
+.. mode: rst
+.. coding: utf-8
+.. fill-column: 70
+.. End:

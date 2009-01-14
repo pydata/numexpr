@@ -42,6 +42,15 @@ The next functions are also supported:
     {sinh,cosh,tanh}(float|complex): float|complex - hyperbolic sinus,
     cosinus or tangent.
 
+    {arcsinh,arccosh,arctanh}(float|complex): float|complex -
+    hyperbolic inverse sinus, cosinus or tangent.
+
+    {log,log10,log1p}(float|complex): float|complex</literal> -
+    natural, base-10 and log(1+x) logarithms.
+
+    {exp,expm1}(float|complex): float|complex</literal> - exponential
+    and exponential minus one.
+
     sqrt(float|complex): float|complex - square root.
 
     {real,imag}(complex): float - real or imaginary part of complex.
@@ -50,7 +59,9 @@ The next functions are also supported:
     parts.
 
 
-Copyright 2006,2007 David M. Cooke <david.m.cooke@gmail.com>
-Licenced under the MIT license. See the README file included with the
-source.
+Copyright 2006,2007 David M. Cooke <cookedm@physics.mcmaster.ca>
+Licenced under a BSD-style license. See LICENSE.txt in the scipy source
+directory.
 """
+
+depends = ['core', 'testing']

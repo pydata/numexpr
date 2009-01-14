@@ -1,0 +1,34 @@
+========================
+ Announcing Numexpr 1.1
+========================
+
+Numexpr is a fast numerical expression evaluator for NumPy.  With it,
+expressions that operate on arrays (like "3*a+4*b") are accelerated
+and use less memory than doing the same calculation in Python.
+
+This release is mainly intended to put in sync many of the
+improvements that has the Numexpr version integrated in PyTables.
+With this, the standalone version of Numexpr will benefit of this
+well-proven version in production for more than a year now.  Also, the
+documentation has been improved and tests can be run programatically.
+
+In case you want to know more in detail what has changed in this
+version, have a look at ``RELEASE_NOTES.txt`` in the tarball.
+
+
+Where I can find Numexpr?
+=========================
+
+The project is hosted at Google code in:
+
+http://code.google.com/p/numexpr/
+
+
+Share your experience
+=====================
+
+Let us know of any bugs, suggestions, gripes, kudos, etc. you may
+have.
+
+
+Enjoy!

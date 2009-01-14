@@ -1,14 +1,20 @@
-from numpy import *
-try:
-    # numpy version 1.0.4 and earlier export test()
-    # Remove it so that nose doesn't run it.
-    del test
-except NameError:
-    pass
-from unittest import TestCase
-from numpy.testing.utils import *
+import new, sys
+import numpy
+from numpy import (
+    array, arange, empty, zeros, int32, uint16, complex_, float64, rec,
+    copy, ones_like, where, alltrue,
+    sum, prod, sqrt, fmod,
+    sin, cos, tan, arcsin, arccos, arctan, arctan2,
+    sinh, cosh, tanh, arcsinh, arccosh, arctanh,
+    log, log1p, log10, exp, expm1)
+from numpy.testing import *
+from numpy import shape, allclose, ravel, isnan
 
 from numexpr import E, numexpr, evaluate, disassemble
+
+import unittest
+TestCase = unittest.TestCase
+
 
 class test_numexpr(TestCase):
     def test_simple(self):
@@ -39,18 +45,21 @@ class test_numexpr(TestCase):
 
     def test_reductions(self):
         # Check that they compile OK.
-        assert_equal(disassemble(numexpr("sum(x**2+2, axis=None)", [('x', float)])),
-                    [('mul_fff', 't3', 'r1[x]', 'r1[x]'),
-                     ('add_fff', 't3', 't3', 'c2[2.0]'),
-                     ('sum_ffn', 'r0', 't3', None)])
-        assert_equal(disassemble(numexpr("sum(x**2+2, axis=1)", [('x', float)])),
-                    [('mul_fff', 't3', 'r1[x]', 'r1[x]'),
-                     ('add_fff', 't3', 't3', 'c2[2.0]'),
-                     ('sum_ffn', 'r0', 't3', 1)])
-        assert_equal(disassemble(numexpr("prod(x**2+2, axis=2)", [('x', float)])),
-                    [('mul_fff', 't3', 'r1[x]', 'r1[x]'),
-                     ('add_fff', 't3', 't3', 'c2[2.0]'),
-                     ('prod_ffn', 'r0', 't3', 2)])
+        assert_equal(disassemble(
+            numexpr("sum(x**2+2, axis=None)", [('x', float)])),
+                     [('mul_fff', 't3', 'r1[x]', 'r1[x]'),
+                      ('add_fff', 't3', 't3', 'c2[2.0]'),
+                      ('sum_ffn', 'r0', 't3', None)])
+        assert_equal(disassemble(
+            numexpr("sum(x**2+2, axis=1)", [('x', float)])),
+                     [('mul_fff', 't3', 'r1[x]', 'r1[x]'),
+                      ('add_fff', 't3', 't3', 'c2[2.0]'),
+                      ('sum_ffn', 'r0', 't3', 1)])
+        assert_equal(disassemble(
+            numexpr("prod(x**2+2, axis=2)", [('x', float)])),
+                     [('mul_fff', 't3', 'r1[x]', 'r1[x]'),
+                      ('add_fff', 't3', 't3', 'c2[2.0]'),
+                      ('prod_ffn', 'r0', 't3', 2)])
         # Check that full reductions work.
         x = arange(10.0)
         assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
@@ -191,7 +200,7 @@ tests = [
           '2*a + (cos(3)+5)*sinh(cos(b))',
           '2*a + arctan2(a, b)',
           'arcsin(0.5)',
-          'where(a != 0.0, 2, b)',
+          'where(a != 0.0, 2, a)',
           'where((a-10).real != 0.0, a, 2)',
           'cos(1+1)',
           '1+1',
@@ -219,7 +228,10 @@ for op in ['<', '<=', '==', '>=', '>', '!=']:
 tests.append(('COMPARISONS', cmptests))
 
 func1tests = []
-for func in ['copy', 'ones_like', 'sin', 'cos', 'tan', 'sqrt', 'sinh', 'cosh', 'tanh']:
+for func in ['copy', 'ones_like', 'sqrt',
+             'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
+             'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
+             'log', 'log1p', 'log10', 'exp', 'expm1']:
     func1tests.append("a + %s(b+c)" % func)
 tests.append(('1-ARG FUNCS', func1tests))
 
@@ -236,42 +248,52 @@ for n in (-2.5, -1.5, -1.3, -.5, 0, 0.5, 1, 0.5, 1, 2.3, 2.5):
 tests.append(('POW TESTS', powtests))
 
 def equal(a, b, exact):
+    if hasattr(a, 'dtype') and a.dtype == 'f8':
+        nnans = isnan(a).sum()
+        if isnan(a).sum() > 0:
+            # For results containing NaNs, just check that the number
+            # of NaNs is the same in both arrays.  This check could be
+            # made more exhaustive, but checking element by element in
+            # python space is very expensive in general.
+            return nnans == isnan(b).sum()
     if exact:
-        return (shape(a) == shape(b)) and alltrue(ravel(a) == ravel(b),axis=0)
+        return (shape(a) == shape(b)) and alltrue(ravel(a) == ravel(b), axis=0)
     else:
-        return (shape(a) == shape(b)) and (allclose(ravel(a), ravel(b)) or alltrue(ravel(a) == ravel(b),axis=0)) # XXX report a bug?
+        return (shape(a) == shape(b) and allclose(ravel(a), ravel(b)))
 
 class Skip(Exception): pass
 
-def check_expression(a, a2, b, c, d, e, x, expr, test_scalar, dtype,
-                     optimization, exact):
-    this_locals = locals()
-    def check():
-        try:
-            npval = eval(expr, globals(), this_locals)
-        except:
-            return
-        try:
-            neval = evaluate(expr, local_dict=this_locals,
-                             optimization=optimization)
-            assert equal(npval, neval, exact), \
-                """%r
-    (test_scalar=%r, dtype=%r, optimization=%r, exact=%r,
-    npval=%r (%r), neval=%r (%r))""" % (expr, test_scalar, dtype.__name__,
-                                 optimization, exact,
-                                 npval, type(npval), neval, type(neval))
-        except AssertionError:
-            raise
-        except NotImplementedError:
-            self.warn('%r not implemented for %s' % (expr,dtype.__name__))
-        except:
-            self.warn('numexpr error for expression %r' % (expr,))
-            raise
-    return check
+class test_expressions(TestCase):
+    pass
 
-def test_expressions():
+def generate_test_expressions():
+    test_no = [0]
+    def make_test_method(a, a2, b, c, d, e, x, expr,
+                         test_scalar, dtype, optimization, exact):
+        this_locals = locals()
+        def method(self):
+            npval = eval(expr, globals(), this_locals)
+            try:
+                neval = evaluate(expr, local_dict=this_locals,
+                                 optimization=optimization)
+                assert equal(npval, neval, exact), \
+                    """%r
+(test_scalar=%r, dtype=%r, optimization=%r, exact=%r,
+ npval=%r (%r), neval=%r (%r))""" % (expr, test_scalar, dtype.__name__,
+                                     optimization, exact,
+                                     npval, type(npval), neval, type(neval))
+            except AssertionError:
+                raise
+            except NotImplementedError:
+                print('%r not implemented for %s' % (expr,dtype.__name__))
+            except:
+                print('numexpr error for expression %r' % (expr,))
+                raise
+        test_no[0] += 1
+        name = 'test_%04d' % (test_no[0],)
+        setattr(test_expressions, name,
+                new.instancemethod(method, None, test_expressions))
     x = None
-    test_no = 0
     for test_scalar in [0,1,2]:
         for dtype in [int, long, float, complex]:
             array_size = 100
@@ -290,23 +312,24 @@ def test_expressions():
                 a = a[array_size/2]
             if test_scalar == 2:
                 b = b[array_size/2]
-            for optimization, exact in [('none', False),
-                                        ('moderate', False),
-                                        ('aggressive', False)]:
+            for optimization, exact in [
+                ('none', False), ('moderate', False), ('aggressive', False)]:
                 for section_name, section_tests in tests:
                     for expr in section_tests:
                         if dtype == complex and (
                                '<' in expr or '>' in expr or '%' in expr
                                or "arctan2" in expr or "fmod" in expr):
-                            continue # skip complex comparisons
-                        if dtype in (int, long) and test_scalar and expr == '(a+1) ** -1':
+                             # skip complex comparisons or functions not
+                             # defined in complex domain.
                             continue
-                        c = check_expression(a, a2, b, c, d, e, x,
-                                          expr, test_scalar, dtype,
-                                          optimization, exact)
-                        test_no += 1
-                        c.description = 'test_expression_%04d' %(test_no,)
-                        yield c,
+                        if (dtype in (int, long) and test_scalar and
+                            expr == '(a+1) ** -1'):
+                            continue
+                        make_test_method(a, a2, b, c, d, e, x,
+                                         expr, test_scalar, dtype,
+                                         optimization, exact)
+
+generate_test_expressions()
 
 class test_int32_int64(TestCase):
     def test_small_long(self):
@@ -447,6 +470,44 @@ class test_irregular_stride(TestCase):
         assert_array_equal(f0[i0], arange(5, dtype=int32))
         assert_array_equal(f1[i1], arange(5, dtype=float64))
 
+# Case test for threads
+class test_threading(TestCase):
+    def test_select(self):
+        import threading
+        class ThreadTest(threading.Thread):
+            def run(self):
+                a = arange(3)
+                assert_array_equal(evaluate('a**3'), array([0, 1, 8]))
+
+        test = ThreadTest()
+        test.start()
+
+
+def test(verbose=False, heavy=False):
+    """
+    Run all the tests in the test suite.
+    """
+
+    unittest.TextTestRunner().run(suite())
+
+
+def suite():
+    import unittest
+
+    theSuite = unittest.TestSuite()
+    niter = 1
+
+    for n in range(niter):
+        theSuite.addTest(unittest.makeSuite(test_numexpr))
+        theSuite.addTest(unittest.makeSuite(test_evaluate))
+        theSuite.addTest(unittest.makeSuite(test_expressions))
+        theSuite.addTest(unittest.makeSuite(test_int32_int64))
+        theSuite.addTest(unittest.makeSuite(test_strings))
+        theSuite.addTest(
+            unittest.makeSuite(test_irregular_stride) )
+        theSuite.addTest(unittest.makeSuite(test_threading, prefix='check'))
+
+    return theSuite
 
 if __name__ == '__main__':
-    NumpyTest().run()
+    unittest.main(defaultTest = 'suite')

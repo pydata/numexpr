@@ -1,7 +1,7 @@
 import timeit, numpy
 
 array_size = 1e6
-iterations = 10
+iterations = 5
 
 def compare_times(setup, expr):
     print "Expression:", expr
@@ -112,6 +112,8 @@ def compare(check_only=False):
     print
     total += compare_times(setup4, expr4)
     print
+    total += compare_times(setup5, expr5)
+    print
     total += compare_times(setup5, expr6)
     print
     total += compare_times(setup5, expr7)
@@ -126,7 +128,7 @@ def compare(check_only=False):
     print
     total += compare_times(setup5, expr12)
     print
-    print "Average =", total / 11.0
+    print "Average =", total / 12.0
     return total
 
 if __name__ == '__main__':

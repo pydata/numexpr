@@ -1,0 +1,38 @@
+These are instructions for installing Numexpr on Unix systems.  For
+Windows, it is best to install it from binaries.
+
+Prerequisites
+~~~~~~~~~~~~~
+
+You will need a recent version of NumPy (1.2 or higher).
+
+
+Compile sources
+~~~~~~~~~~~~~~~
+
+Unpack the tarball and follow the typical procedure for compiling:
+
+python setup.py build_ext --inplace
+
+
+Testing the package
+~~~~~~~~~~~~~~~~~~~
+
+export PYTHONPATH=your_numexpr_sources_dir
+python numexpr/tests/test_numexpr.py
+
+
+Installing the package
+~~~~~~~~~~~~~~~~~~~~~~
+
+If all the tests go well, you can proceed with the installation:
+
+python setup.py install
+
+
+
+.. Local Variables:
+.. mode: text
+.. coding: utf-8
+.. fill-column: 70
+.. End:

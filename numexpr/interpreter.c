@@ -9,9 +9,11 @@
 
 #ifdef _WIN32
 #define inline __inline
+#include "missing_posix_functions.inc"
 #endif
 
-#define BLOCK_SIZE1 128
+//#define BLOCK_SIZE1 128
+#define BLOCK_SIZE1 512
 #define BLOCK_SIZE2 8
 
 /* This file and interp_body should really be generated from a description of
@@ -84,11 +86,7 @@ enum OpCodes {
     OP_DIV_FFF,
     OP_POW_FFF,
     OP_MOD_FFF,
-    OP_SIN_FF,
-    OP_COS_FF,
-    OP_TAN_FF,
     OP_SQRT_FF,
-    OP_ARCTAN2_FFF,
     OP_WHERE_FBFF,
     OP_FUNC_FF,
     OP_FUNC_FFF,
@@ -227,9 +225,6 @@ op_signature(int op, int n) {
         case OP_COPY_FF:
         case OP_ONES_LIKE_FF:
         case OP_NEG_FF:
-        case OP_SIN_FF:
-        case OP_COS_FF:
-        case OP_TAN_FF:
         case OP_SQRT_FF:
             if (n == 0 || n == 1) return 'f';
             break;
@@ -239,7 +234,6 @@ op_signature(int op, int n) {
         case OP_DIV_FFF:
         case OP_POW_FFF:
         case OP_MOD_FFF:
-        case OP_ARCTAN2_FFF:
             if (n == 0 || n == 1 || n == 2) return 'f';
             break;
         case OP_WHERE_FBFF:
@@ -336,11 +330,6 @@ op_signature(int op, int n) {
 
 
 /*
-   Lots of functions still to be added: exp, ln, log10, etc, etc. Still not
-   sure which get there own opcodes and which get relegated to loopup table.
-   Some functions at least (sin and arctan2 for instance) seem to have a large
-   slowdown when run through lookup table. Not entirely sure why.
-
    To add a function to the lookup table, add to FUNC_CODES (first
    group is 1-arg functions, second is 2-arg functions), also to
    functions_f or functions_ff as appropriate. Finally, use add_func
@@ -348,11 +337,10 @@ op_signature(int op, int n) {
    aren't implemented at present, but should be easy; just copy the 1-
    or 2-arg case.
 
-   To add a function opcode, just copy OP_SIN or OP_ARCTAN2.
-
-   Some functions are repeated in this table that are opcodes, but there's
-   no problem with that as the compiler selects opcodes over functions,
-   and this makes it easier to compare opcode vs. function speeds.
+   Some functions (for example, sqrt) are repeated in this table that
+   are opcodes, but there's no problem with that as the compiler
+   selects opcodes over functions, and this makes it easier to compare
+   opcode vs. function speeds.
 */
 
 enum FuncFFCodes {
@@ -366,6 +354,15 @@ enum FuncFFCodes {
     FUNC_SINH_FF,
     FUNC_COSH_FF,
     FUNC_TANH_FF,
+    FUNC_ARCSINH_FF,
+    FUNC_ARCCOSH_FF,
+    FUNC_ARCTANH_FF,
+
+    FUNC_LOG_FF,
+    FUNC_LOG1P_FF,
+    FUNC_LOG10_FF,
+    FUNC_EXP_FF,
+    FUNC_EXPM1_FF,
 
     FUNC_FF_LAST
 };
@@ -384,10 +381,19 @@ FuncFFPtr functions_f[] = {
     sinh,
     cosh,
     tanh,
+    asinh,
+    acosh,
+    atanh,
+    log,
+    log1p,
+    log10,
+    exp,
+    expm1,
 };
 
 enum FuncFFFCodes {
     FUNC_FMOD_FFF = 0,
+    FUNC_ARCTAN2_FFF,
 
     FUNC_FFF_LAST
 };
@@ -396,6 +402,7 @@ typedef double (*FuncFFFPtr)(double, double);
 
 FuncFFFPtr functions_ff[] = {
     fmod,
+    atan2,
 };
 
 enum FuncCCCodes {
@@ -409,6 +416,15 @@ enum FuncCCCodes {
     FUNC_SINH_CC,
     FUNC_COSH_CC,
     FUNC_TANH_CC,
+    FUNC_ARCSINH_CC,
+    FUNC_ARCCOSH_CC,
+    FUNC_ARCTANH_CC,
+
+    FUNC_LOG_CC,
+    FUNC_LOG1P_CC,
+    FUNC_LOG10_CC,
+    FUNC_EXP_CC,
+    FUNC_EXPM1_CC,
 
     FUNC_CC_LAST
 };
@@ -428,6 +444,14 @@ FuncCCPtr functions_cc[] = {
     nc_sinh,
     nc_cosh,
     nc_tanh,
+    nc_asinh,
+    nc_acosh,
+    nc_atanh,
+    nc_log,
+    nc_log1p,
+    nc_log10,
+    nc_exp,
+    nc_expm1,
 };
 
 enum FuncCCCCodes {
@@ -688,6 +712,11 @@ check_program(NumExprObject *self)
                     PyErr_Format(PyExc_RuntimeError, "invalid program: internal checker errror processing %i", argloc);
                     return -1;
                 }
+            /* The next is to avoid problems with the ('i','l') duality,
+               specially in 64-bit platforms */
+            } else if (((sig == 'l') && (fullsig[arg] == 'i')) ||
+                       ((sig == 'i') && (fullsig[arg] == 'l'))) {
+              ;
             } else if (sig != fullsig[arg]) {
                 PyErr_Format(PyExc_RuntimeError,
                 "invalid : opcode signature doesn't match buffer (%c vs %c) at %i", sig, fullsig[arg], argloc);
@@ -1572,11 +1601,7 @@ initinterpreter(void)
     add_op("div_fff", OP_DIV_FFF);
     add_op("pow_fff", OP_POW_FFF);
     add_op("mod_fff", OP_MOD_FFF);
-    add_op("sin_ff", OP_SIN_FF);
-    add_op("cos_ff", OP_COS_FF);
-    add_op("tan_ff", OP_TAN_FF);
     add_op("sqrt_ff", OP_SQRT_FF);
-    add_op("arctan2_fff", OP_ARCTAN2_FFF);
     add_op("where_fbff", OP_WHERE_FBFF);
     add_op("func_ff", OP_FUNC_FF);
     add_op("func_fff", OP_FUNC_FFF);
@@ -1636,7 +1661,17 @@ initinterpreter(void)
     add_func("sinh_ff", FUNC_SINH_FF);
     add_func("cosh_ff", FUNC_COSH_FF);
     add_func("tanh_ff", FUNC_TANH_FF);
+    add_func("arcsinh_ff", FUNC_ARCSINH_FF);
+    add_func("arccosh_ff", FUNC_ARCCOSH_FF);
+    add_func("arctanh_ff", FUNC_ARCTANH_FF);
 
+    add_func("log_ff", FUNC_LOG_FF);
+    add_func("log1p_ff", FUNC_LOG1P_FF);
+    add_func("log10_ff", FUNC_LOG10_FF);
+    add_func("exp_ff", FUNC_EXP_FF);
+    add_func("expm1_ff", FUNC_EXPM1_FF);
+
+    add_func("arctan2_fff", FUNC_ARCTAN2_FFF);
     add_func("fmod_fff", FUNC_FMOD_FFF);
 
     add_func("sqrt_cc", FUNC_SQRT_CC);
@@ -1649,7 +1684,15 @@ initinterpreter(void)
     add_func("sinh_cc", FUNC_SINH_CC);
     add_func("cosh_cc", FUNC_COSH_CC);
     add_func("tanh_cc", FUNC_TANH_CC);
+    add_func("arcsinh_cc", FUNC_ARCSINH_CC);
+    add_func("arccosh_cc", FUNC_ARCCOSH_CC);
+    add_func("arctanh_cc", FUNC_ARCTANH_CC);
 
+    add_func("log_cc", FUNC_LOG_CC);
+    add_func("log1p_cc", FUNC_LOG1P_CC);
+    add_func("log10_cc", FUNC_LOG10_CC);
+    add_func("exp_cc", FUNC_EXP_CC);
+    add_func("expm1_cc", FUNC_EXPM1_CC);
     add_func("pow_ccc", FUNC_POW_CCC);
 
 #undef add_func

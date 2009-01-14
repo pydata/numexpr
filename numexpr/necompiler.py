@@ -191,9 +191,9 @@ class Immediate(Register):
 def stringToExpression(s, types, context):
     """Given a string, convert it to a tree of ExpressionNode's.
     """
-    old_ctx = expressions._context.ctx
+    old_ctx = expressions._context.get_current_context()
     try:
-        expressions._context.ctx = context
+        expressions._context.set_new_context(context)
         # first compile to a code object to determine the names
         c = compile(s, '<expr>', 'eval')
         # make VariableNode's for the names
@@ -216,7 +216,7 @@ def stringToExpression(s, types, context):
         elif not isinstance(ex, expressions.ExpressionNode):
             raise TypeError("unsupported expression type: %s" % type(ex))
     finally:
-        expressions._context.ctx = old_ctx
+        expressions._context.set_new_context(old_ctx)
     return ex
 
 
