@@ -3,8 +3,7 @@ What it is Numexpr?
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
-and use less memory (and very important, less memory *bandwith*) than
-doing the same calculation in Python.
+and use less memory than doing the same calculation in Python.
 
 
 Examples of use
@@ -12,7 +11,8 @@ Examples of use
 
 >>> import numpy as np
 >>> import numexpr as ne
->>> a = np.arange(1e6)
+
+>>> a = np.arange(1e6)   # Choose large arrays
 >>> b = np.arange(1e6)
 
 >>> ne.evaluate("a + 1")   # a simple expression
@@ -31,39 +31,110 @@ array([        NaN,  1.72284457,  1.79067101, ...,  1.09567006,
 array([ True, False, False], dtype=bool)
 
 
-How it works?
-=============
+Datatypes supported internally
+==============================
 
-Briefly, Numexpr parses the expression into its own op-codes, that
-will be used in its computing kernel.  Then, the kernel decomposes the
-arrays operands in small chunks that easily fit in the cache of the
-CPU, and then applies the op-code operations for these, saving each
-portion in the resulting array.  It is worth noting that all the
-temporaries or constants are kept in chunks of the same size than the
-operand ones, so avoiding additional memory (and memory bandwith)
-consumption.
+Numexpr operates internally only with the following types:
+
+    * 8-bit boolean (bool)
+    * 32-bit signed integer (int)
+    * 64-bit signed integer (long)
+    * 64-bit, double-precision floating point number (float)
+    * 2x64-bit, double-precision complex number (complex)
+    * Raw string of bytes (str)
+
+If the arrays in the expression does not match any of these types,
+they will be upcasted to one of the above types (following the usual
+type inference rules).  Have this in mind when doing estimations about
+the memory consumption during the computation of your expressions.
+
+Also, the types in Numexpr conditions are somewhat stricter than those
+of Python.  For instance, the only valid constants for booleans are
+`True` and `False`, and they are never automatically cast to integers.
+
+
+Supported Operators
+===================
+
+Numexpr supports the set of operators listed below:
+
+    * Logical operators: &, |, ~
+    * Comparison operators: <, <=, ==, !=, >=, >
+    * Unary arithmetic operators: -
+    * Binary arithmetic operators: +, -, *, /, **, %
+
+
+Supported functions
+===================
+
+The next are the current supported set:
+
+    * where(bool, number1, number2): number
+        Number1 if the bool condition is true, number2 otherwise.
+    * {sin,cos,tan}(float|complex): float|complex
+        Trigonometric sinus, cosinus or tangent.
+    * {arcsin,arccos,arctan}(float|complex): float|complex
+        Trigonometric inverse sinus, cosinus or tangent.
+    * arctan2(float1, float2): float
+        Trigonometric inverse tangent of float1/float2.
+    * {sinh,cosh,tanh}(float|complex): float|complex
+        Hyperbolic sinus, cosinus or tangent.
+    * {arcsinh,arccosh,arctanh}(float|complex): float|complex
+        Hyperbolic inverse sinus, cosinus or tangent.
+    * {log,log10,log1p}(float|complex): float|complex
+        Natural, base-10 and log(1+x) logarithms.
+    * {exp,expm1}(float|complex): float|complex
+        Exponential and exponential minus one.
+    * sqrt(float|complex): float|complex
+        Square root.
+    * {real,imag}(complex): float
+        Real or imaginary part of complex.
+    * complex(float, float): complex
+        Complex from real and imaginary parts.
+
+More functions can be added if you need them.
+
+
+How Numexpr can achieve such a high performance?
+================================================
+
+The main reason why it achieves better performance than NumPy (or
+plain C code) is that it avoids the creation of complete temporaries
+for keeping intermediate results, so saving memory bandwith (the main
+bottleneck in many computations in nowadays computers).  Due to this,
+it works best with arrays that are large enough (typically larger than
+processor caches).
+
+Briefly, it works as follows.  Numexpr parses the expression into its
+own op-codes, that will be used in its computing kernel.  Then, the
+kernel decomposes the arrays operands in small chunks that easily fit
+in the cache of the CPU, and then applies the op-code operations for
+these, saving each portion in the resulting array.  It is worth noting
+that all the temporaries or constants are kept in chunks of the same
+size than the operand ones, so avoiding additional memory (and memory
+bandwith) consumption.
 
 The result is that Numexpr can get the most of your machine computing
 capabilities for array-wise computations.  Just to give you an idea of
-its performance, common speed-ups are usually between 0.95x (for very
-simple expressions, like ’a + 1’) and 4x (for relatively complex ones,
-like 'a*b-4.1*a > 2.5*b'), although much higher speed-ups can be
-achieved (up to 15x can be seen in not too esoteric expressions)
-because this depends on the kind of the operations and how many
-operands participates in the expression.  In order ot get a better
-idea on the different speed-ups for your own platform, you may want to
-run the benchmarks in the directory bench/.
+its performance, common speed-ups with regard to NumPy are usually
+between 0.95x (for very simple expressions, like ’a + 1’) and 4x (for
+relatively complex ones, like 'a*b-4.1*a > 2.5*b'), although much
+higher speed-ups can be achieved (up to 15x can be seen in not too
+esoteric expressions) because this depends on the kind of the
+operations and how many operands participates in the expression.  In
+order ot get a better idea on the different speed-ups for your own
+platform, you may want to run the benchmarks in the directory bench/.
 
 
 Authors
 =======
 
 Numexpr is written by David Cooke <david.m.cooke@gmail.com> and Tim
-Hochberg <tim.hochberg@ieee.org>. Francesc Alted <faltet@pytables.org>
-contributed support for booleans and for efficient strided and
-unaligned array operations. Ivan Vilata <ivilata@selidor.net>
-contributed support for strings.  It is distributed under the MIT
-license (see LICENSE file).
+Hochberg <tim.hochberg@ieee.org>.  Francesc Alted
+<faltet@pytables.org> contributed support for booleans and for
+efficient strided and unaligned array operations.  Ivan Vilata
+<ivilata@selidor.net> contributed support for strings.  It is
+distributed under the MIT license (see LICENSE.txt file).
 
 
 

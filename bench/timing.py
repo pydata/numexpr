@@ -1,7 +1,7 @@
 import timeit, numpy
 
 array_size = 1e6
-iterations = 5
+iterations = 10
 
 def compare_times(setup, expr):
     print "Expression:", expr
@@ -17,7 +17,7 @@ def compare_times(setup, expr):
         weave_time = weave_timer.timeit(number=iterations)
         print "Weave:", weave_time/iterations
 
-        print "Speed-up of weave over numpy:", numpy_time/weave_time
+        print "Speed-up of weave over numpy:", round(numpy_time/weave_time, 2)
     except:
         print "Skipping weave timing"
 
@@ -25,8 +25,9 @@ def compare_times(setup, expr):
     numexpr_time = numexpr_timer.timeit(number=iterations)
     print "numexpr:", numexpr_time/iterations
 
-    print "Speed-up of numexpr over numpy:", numpy_time/numexpr_time
-    return numpy_time/numexpr_time
+    tratio = numpy_time/numexpr_time
+    print "Speed-up of numexpr over numpy:", round(tratio, 2)
+    return tratio
 
 setup1 = """\
 from numpy import arange
@@ -103,33 +104,18 @@ expr11 = '(a+1)**50'
 expr12 = 'sqrt(a**2 + b**2)'
 
 def compare(check_only=False):
+    experiments = [(setup1, expr1), (setup2, expr2), (setup3, expr3),
+                   (setup4, expr4), (setup5, expr5), (setup5, expr6),
+                   (setup5, expr7), (setup5, expr8), (setup5, expr9),
+                   (setup5, expr10), (setup5, expr11), (setup5, expr12),
+                   ]
     total = 0
-    total += compare_times(setup1, expr1)
-    print
-    total += compare_times(setup2, expr2)
-    print
-    total += compare_times(setup3, expr3)
-    print
-    total += compare_times(setup4, expr4)
-    print
-    total += compare_times(setup5, expr5)
-    print
-    total += compare_times(setup5, expr6)
-    print
-    total += compare_times(setup5, expr7)
-    print
-    total += compare_times(setup5, expr8)
-    print
-    total += compare_times(setup5, expr9)
-    print
-    total += compare_times(setup5, expr10)
-    print
-    total += compare_times(setup5, expr11)
-    print
-    total += compare_times(setup5, expr12)
-    print
-    print "Average =", total / 12.0
-    return total
+    for params in experiments:
+        total += compare_times(*params)
+        print
+    average = total / len(experiments)
+    print "Average =", round(average, 2)
+    return average
 
 if __name__ == '__main__':
     averages = []

@@ -19,7 +19,7 @@ Testing the package
 ~~~~~~~~~~~~~~~~~~~
 
 export PYTHONPATH=your_numexpr_sources_dir
-python numexpr/tests/test_numexpr.py
+python -c "import numexpr; numexpr.test()"
 
 
 Installing the package
