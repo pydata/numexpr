@@ -12,8 +12,8 @@
 #include "missing_posix_functions.inc"
 #endif
 
-//#define BLOCK_SIZE1 128
-#define BLOCK_SIZE1 512
+/* The values below have been tuned for a nowadays Core2 processor */
+#define BLOCK_SIZE1 256
 #define BLOCK_SIZE2 8
 
 /* This file and interp_body should really be generated from a description of
