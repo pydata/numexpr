@@ -4,6 +4,7 @@ except ImportError:
     setuptools = None
 from distutils.core import setup, Extension
 from distutils.command.build_ext import build_ext as old_build_ext
+import os.path
 
 import numpy
 
@@ -42,8 +43,11 @@ class build_ext(old_build_ext):
 
 extra_setup_opts['cmdclass'] = {'build_ext': build_ext}
 
-setup(name='numexpr',
-      version='1.1',
+pkgname = 'numexpr'
+version = open(os.path.join(pkgname, 'VERSION').read().strip()
+
+setup(name=pkgname,
+      version=version,
       description='Fast numerical expression evaluator for NumPy',
       author='David M. Cooke, Tim Hochberg, Francesc Alted, Ivan Vilata',
       author_email='david.m.cooke@gmail.com, faltet@pytables.org',

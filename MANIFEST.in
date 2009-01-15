@@ -2,5 +2,5 @@ include MANIFEST.in
 
 include *.txt
 
-recursive-include numexpr *.c *.inc Makefile
+recursive-include numexpr *.c *.inc VERSION
 recursive-include bench *.py
