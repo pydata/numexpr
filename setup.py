@@ -44,7 +44,7 @@ class build_ext(old_build_ext):
 extra_setup_opts['cmdclass'] = {'build_ext': build_ext}
 
 pkgname = 'numexpr'
-version = open(os.path.join(pkgname, 'VERSION').read().strip()
+version = open(os.path.join(pkgname, 'VERSION')).read().strip()
 
 setup(name=pkgname,
       version=version,
