@@ -52,7 +52,8 @@ setup(name=pkgname,
       author='David M. Cooke, Tim Hochberg, Francesc Alted, Ivan Vilata',
       author_email='david.m.cooke@gmail.com, faltet@pytables.org',
       url='http://code.google.com/p/numexpr/',
-      packages=['numexpr', 'numexpr.tests'],
+      packages=[pkgname, pkgname+'.tests'],
+      package_data={pkgname: ['VERSION']},
       ext_modules=[interpreter_ext],
       **extra_setup_opts
     )
