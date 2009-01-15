@@ -1,0 +1,6 @@
+include MANIFEST.in
+
+include *.txt
+
+recursive-include numexpr *.c *.inc Makefile
+recursive-include bench *.py

@@ -18,7 +18,8 @@ python setup.py build_ext --inplace
 Testing the package
 ~~~~~~~~~~~~~~~~~~~
 
-export PYTHONPATH=your_numexpr_sources_dir
+From the directory of sources, run:
+
 python -c "import numexpr; numexpr.test()"
 
 
