@@ -7,12 +7,12 @@ Changes from 1.0 to 1.1
 
 - Numexpr can work now in threaded environments.  Fixes #2.
 
-- The test suite can be run programatically by using
+- The test suite can be run programmatically by using
   ``numexpr.test()``.
 
 - Support a more complete set of functions for expressions (including
   those that are not supported by MSVC 7.1 compiler, like the inverse
-  hiperbolic or log1p and expm1 functions.  The complete list now is:
+  hyperbolic or log1p and expm1 functions.  The complete list now is:
 
     * where(bool, number1, number2): number
         Number1 if the bool condition is true, number2 otherwise.

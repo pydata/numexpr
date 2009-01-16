@@ -27,7 +27,7 @@ array([        NaN,  1.72284457,  1.79067101, ...,  1.09567006,
         0.17523598, -0.09597844])
 
 >>> s = np.array(['abba', 'abbb', 'abbcdef'])
->>> ne.evaluate("'abba' == s")   # string arrays are suported too
+>>> ne.evaluate("'abba' == s")   # string arrays are supported too
 array([ True, False, False], dtype=bool)
 
 
@@ -72,15 +72,15 @@ The next are the current supported set:
     * where(bool, number1, number2): number
         Number1 if the bool condition is true, number2 otherwise.
     * {sin,cos,tan}(float|complex): float|complex
-        Trigonometric sinus, cosinus or tangent.
+        Trigonometric sine, cosine or tangent.
     * {arcsin,arccos,arctan}(float|complex): float|complex
-        Trigonometric inverse sinus, cosinus or tangent.
+        Trigonometric inverse sine, cosine or tangent.
     * arctan2(float1, float2): float
         Trigonometric inverse tangent of float1/float2.
     * {sinh,cosh,tanh}(float|complex): float|complex
-        Hyperbolic sinus, cosinus or tangent.
+        Hyperbolic sine, cosine or tangent.
     * {arcsinh,arccosh,arctanh}(float|complex): float|complex
-        Hyperbolic inverse sinus, cosinus or tangent.
+        Hyperbolic inverse sine, cosine or tangent.
     * {log,log10,log1p}(float|complex): float|complex
         Natural, base-10 and log(1+x) logarithms.
     * {exp,expm1}(float|complex): float|complex
@@ -100,19 +100,21 @@ How Numexpr can achieve such a high performance?
 
 The main reason why it achieves better performance than NumPy (or
 plain C code) is that it avoids the creation of complete temporaries
-for keeping intermediate results, so saving memory bandwith (the main
+for keeping intermediate results, so saving memory bandwidth (the main
 bottleneck in many computations in nowadays computers).  Due to this,
 it works best with arrays that are large enough (typically larger than
 processor caches).
 
 Briefly, it works as follows.  Numexpr parses the expression into its
-own op-codes, that will be used in its computing kernel.  Then, the
-kernel decomposes the arrays operands in small chunks that easily fit
-in the cache of the CPU, and then applies the op-code operations for
-these, saving each portion in the resulting array.  It is worth noting
-that all the temporaries or constants are kept in chunks of the same
-size than the operand ones, so avoiding additional memory (and memory
-bandwith) consumption.
+own op-codes, that will be used in its computing virtual machine.
+Then, the array operands are splitted in small chunks (that easily fit
+in the cache of the CPU) and passed to the virtual machine.  Then, the
+computational phase starts, and the virtual machine applies the
+op-code operations for each chunk, saving the outcome in the resulting
+array.  It is worth noting that all the temporaries and constants in
+the expression are kept in chunks of the same size than the operand
+ones, avoiding additional memory (and most specially, memory bandwidth)
+consumption.
 
 The result is that Numexpr can get the most of your machine computing
 capabilities for array-wise computations.  Just to give you an idea of
@@ -121,9 +123,12 @@ between 0.95x (for very simple expressions, like ’a + 1’) and 4x (for
 relatively complex ones, like 'a*b-4.1*a > 2.5*b'), although much
 higher speed-ups can be achieved (up to 15x can be seen in not too
 esoteric expressions) because this depends on the kind of the
-operations and how many operands participates in the expression.  In
-order ot get a better idea on the different speed-ups for your own
-platform, you may want to run the benchmarks in the directory bench/.
+operations and how many operands participates in the expression.  Of
+course, Numexpr will perform better (in comparison with NumPy) with
+larger matrices, i.e. typically those that does not fit in the cache
+of your CPU.  In order to get a better idea on the different speed-ups
+that can be achieved for your own platform, you may want to run the
+benchmarks in the directory bench/.
 
 
 Authors
