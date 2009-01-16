@@ -6,6 +6,13 @@ Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
+The expected speed-ups for Numexpr respect to NumPy are between 0.95x
+and 15x, being 3x or 4x typical values.  The strided and unaligned
+case has been optimized too, so if the expresion contains strided or
+unaligned arrays, this speed-up can increase significantly.  Of
+course, you will need to operate with large arrays (typically larger
+than the cache size of your CPU) to see these improvements.
+
 This release is mainly intended to put in sync many of the
 improvements that has the Numexpr version integrated in PyTables.
 With this, the standalone version of Numexpr will benefit of this
