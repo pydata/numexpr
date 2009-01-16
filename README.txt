@@ -98,23 +98,23 @@ More functions can be added if you need them.
 How Numexpr can achieve such a high performance?
 ================================================
 
-The main reason why it achieves better performance than NumPy (or
-plain C code) is that it avoids the creation of complete temporaries
-for keeping intermediate results, so saving memory bandwidth (the main
-bottleneck in many computations in nowadays computers).  Due to this,
-it works best with arrays that are large enough (typically larger than
-processor caches).
+The main reason why Numexpr achieves better performance than NumPy (or
+even than plain C code) is that it avoids the creation of whole
+temporaries for keeping intermediate results, so saving memory
+bandwidth (the main bottleneck in many computations in nowadays
+computers). Due to this, it works best with arrays that are large
+enough (typically larger than processor caches).
 
-Briefly, it works as follows.  Numexpr parses the expression into its
-own op-codes, that will be used in its computing virtual machine.
-Then, the array operands are splitted in small chunks (that easily fit
-in the cache of the CPU) and passed to the virtual machine.  Then, the
-computational phase starts, and the virtual machine applies the
-op-code operations for each chunk, saving the outcome in the resulting
-array.  It is worth noting that all the temporaries and constants in
-the expression are kept in chunks of the same size than the operand
-ones, avoiding additional memory (and most specially, memory bandwidth)
-consumption.
+Briefly, it works as follows. Numexpr parses the expression into its
+own op-codes, that will be used by the integrated computing virtual
+machine. Then, the array operands are split in small chunks (that
+easily fit in the cache of the CPU) and passed to the virtual
+machine. Then, the computational phase starts, and the virtual machine
+applies the op-code operations for each chunk, saving the outcome in
+the resulting array. It is worth noting that all the temporaries and
+constants in the expression are kept in the same small chunksizes than
+the operand ones, avoiding additional memory (and most specially,
+memory bandwidth) waste.
 
 The result is that Numexpr can get the most of your machine computing
 capabilities for array-wise computations.  Just to give you an idea of

@@ -8,10 +8,10 @@ and use less memory than doing the same calculation in Python.
 
 The expected speed-ups for Numexpr respect to NumPy are between 0.95x
 and 15x, being 3x or 4x typical values.  The strided and unaligned
-case has been optimized too, so if the expresion contains such arrays,
-the speed-up can increase significantly.  Of course, you will need to
-operate with large arrays (typically larger than the cache size of
-your CPU) to see these improvements in performance.
+cases have been optimized too, so if the expresion contains strided or
+unaligned arrays, this speed-up can increase significantly.  Of
+course, you will need to operate with large arrays (typically larger
+than the cache size of your CPU) to see these improvements.
 
 This release is mainly intended to put in sync some of the
 improvements that had the Numexpr version integrated in PyTables.  So,
@@ -29,6 +29,17 @@ Where I can find Numexpr?
 The project is hosted at Google code in:
 
 http://code.google.com/p/numexpr/
+
+
+How it works?
+=============
+
+See:
+
+http://code.google.com/p/numexpr/wiki/Overview
+
+for a detailed description by the original author of Numexpr (David M.
+Cooke).
 
 
 Share your experience
