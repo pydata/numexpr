@@ -1311,8 +1311,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                here, and not in Python space. */
             intp inner_size;
             for (j = PyArray_NDIM(a)-2; j >= 0; j--) {
-                inner_size = PyArray_STRIDE(a, j) * PyArray_DIM(a, j);
-                if (PyArray_STRIDE(a, j+1) != inner_size) {
+                inner_size = PyArray_STRIDE(a, j+1) * PyArray_DIM(a, j+1);
+                if (PyArray_STRIDE(a, j) != inner_size) {
                     intp dims[1] = {BLOCK_SIZE1};
                     inddata[i+1].count = PyArray_NDIM(a);
                     inddata[i+1].findex = -1;
