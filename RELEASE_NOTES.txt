@@ -1,6 +1,12 @@
-=================================
- Release notes for Numexpr 1.1.1
-=================================
+===============================
+ Release notes for Numexpr 1.2
+===============================
+
+Changes from 1.1.1 to 1.2
+=========================
+
+# XXX Add new features and bug fixes here...
+
 
 Changes from 1.1 to 1.1.1
 =========================

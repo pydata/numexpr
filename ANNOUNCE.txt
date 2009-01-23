@@ -1,27 +1,12 @@
-==========================
- Announcing Numexpr 1.1.1
-==========================
+========================
+ Announcing Numexpr 1.2
+========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
-This is a bug-fix release, where the next issues have been addressed:
-
-- The case for multidimensional array operands is properly accelerated
-  now.  Added a new benchmark (based on a script provided by Andrew
-  Collette, thanks!) for easily testing this case in the future.
-  Closes #12.
-
-- Added a fix to avoid the caches in numexpr to grow too much.  The
-  dictionary caches are kept now always with less than 256 entries.
-  Closes #11.
-
-- The VERSION file is correctly copied now (it was not present for the
-  1.1 tar file, I don't know exactly why).  Closes #8.
-
-- The package is accessible now from PyPI, so that people from 'evil'
-  countries can access it too.
+# XXX Add blurb for the new release here
 
 In case you want to know more in detail what has changed in this
 version, have a look at ``RELEASE_NOTES.txt`` in the tarball.
