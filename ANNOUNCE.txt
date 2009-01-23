@@ -1,23 +1,27 @@
-========================
- Announcing Numexpr 1.1
-========================
+==========================
+ Announcing Numexpr 1.1.1
+==========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
-The expected speed-ups for Numexpr respect to NumPy are between 0.95x
-and 15x, being 3x or 4x typical values.  The strided and unaligned
-cases have been optimized too, so if the expresion contains strided or
-unaligned arrays, this speed-up can increase significantly.  Of
-course, you will need to operate with large arrays (typically larger
-than the cache size of your CPU) to see these improvements.
+This is a bug-fix release, where the next issues have been addressed:
 
-This release is mainly intended to put in sync some of the
-improvements that had the Numexpr version integrated in PyTables.  So,
-this standalone version of Numexpr will benefit of the well tested
-PyTables' version that has been in production for more than a year
-now.
+- The case for multidimensional array operands is properly accelerated
+  now.  Added a new benchmark (based on a script provided by Andrew
+  Collette, thanks!) for easily testing this case in the future.
+  Closes #12.
+
+- Added a fix to avoid the caches in numexpr to grow too much.  The
+  dictionary caches are kept now always with less than 256 entries.
+  Closes #11.
+
+- The VERSION file is correctly copied now (it was not present for the
+  1.1 tar file, I don't know exactly why).  Closes #8.
+
+- The package is accessible now from PyPI, so that people from 'evil'
+  countries can access it too.
 
 In case you want to know more in detail what has changed in this
 version, have a look at ``RELEASE_NOTES.txt`` in the tarball.
@@ -29,6 +33,10 @@ Where I can find Numexpr?
 The project is hosted at Google code in:
 
 http://code.google.com/p/numexpr/
+
+And you can get the packages from PyPI as well:
+
+http://pypi.python.org/pypi
 
 
 How it works?
