@@ -5,8 +5,12 @@
 Changes from 1.1 to 1.1.1
 =========================
 
+- The case for multidimensional array operands is properly accelerated
+  now.  Closes #12.
+
 - Added a fix to avoid the caches in numexpr to grow too much.  The
   dictionary caches are kept now always with less than 256 entries.
+  Closes #11.
 
 
 Changes from 1.0 to 1.1
