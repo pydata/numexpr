@@ -49,9 +49,18 @@ version = open(os.path.join(pkgname, 'VERSION')).read().strip()
 setup(name=pkgname,
       version=version,
       description='Fast numerical expression evaluator for NumPy',
+      long_description = """\
+
+Numexpr is a fast numerical expression evaluator for NumPy.  With it,
+expressions that operate on arrays (like "3*a+4*b") are accelerated
+and use less memory than doing the same calculation in Python.
+
+""",
       author='David M. Cooke, Tim Hochberg, Francesc Alted, Ivan Vilata',
       author_email='david.m.cooke@gmail.com, faltet@pytables.org',
       url='http://code.google.com/p/numexpr/',
+      license='http://www.opensource.org/licenses/mit-license.php',
+      platforms = ['any'],
       packages=[pkgname, pkgname+'.tests'],
       package_data={pkgname: ['VERSION']},
       ext_modules=[interpreter_ext],
