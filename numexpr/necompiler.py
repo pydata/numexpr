@@ -586,6 +586,10 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
     # Get the names for this expression
     expr_key = (ex, tuple(sorted(kwargs.items())))
     if expr_key not in _names_cache:
+        # Avoid the cache from growing too much
+        if len(_names_cache) > 256:
+            for key in _names_cache.keys()[:10]:
+                del _names_cache[key]
         context = getContext(kwargs)
         _names_cache[expr_key] = getExprNames(ex, context)
     names = _names_cache[expr_key]
@@ -634,6 +638,10 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
     try:
         compiled_ex = _numexpr_cache[numexpr_key]
     except KeyError:
+        # Avoid the cache from growing too much
+        if len(_numexpr_cache) > 256:
+            for key in _numexpr_cache.keys()[:10]:
+                del _numexpr_cache[key]
         compiled_ex = _numexpr_cache[numexpr_key] = \
                       numexpr(ex, signature, copy_args, **kwargs)
     return compiled_ex(*arguments)

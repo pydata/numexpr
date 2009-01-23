@@ -1,6 +1,13 @@
-===============================
- Release notes for Numexpr 1.1
-===============================
+=================================
+ Release notes for Numexpr 1.1.1
+=================================
+
+Changes from 1.1 to 1.1.1
+=========================
+
+- Added a fix to avoid the caches in numexpr to grow too much.  The
+  dictionary caches are kept now always with less than 256 entries.
+
 
 Changes from 1.0 to 1.1
 =======================
