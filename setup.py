@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-import os.path
+import shutil
+import os
+import os.path as op
+from distutils.command.clean import clean
 from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
 
 try:
@@ -10,6 +13,16 @@ extra_setup_opts = {}
 if setuptools:
     extra_setup_opts['zip_safe'] = False
 
+DEBUG = False
+
+def localpath(*args):
+    return op.abspath(reduce(op.join, (op.dirname(__file__),)+args))
+
+def debug(instring):
+    if DEBUG:
+        print " DEBUG: "+instring
+
+
 def configuration():
     from numpy.distutils.misc_util import Configuration, dict_append
     from numpy.distutils.system_info import system_info
@@ -17,7 +30,7 @@ def configuration():
     config = Configuration(package_name = 'numexpr')
 
     #try to find configuration for MKL, either from environment or site.cfg
-    if os.path.exists('site.cfg'):
+    if op.exists('site.cfg'):
         mkl_config_data = config.get_info('mkl')
         # some version of MKL need to be linked with libgfortran, for this, use
         # entries of DEFAULT section in site.cfg
@@ -45,11 +58,38 @@ def configuration():
     config.get_version('numexpr/version.py')
     return config
 
+
+class cleaner(clean):
+
+    def run(self):
+        # Recursive deletion of build/ directory
+        path = localpath("build")
+        try:
+            shutil.rmtree(path)
+        except Exception:
+            debug("Failed to remove directory %s" % path)
+        else:
+            debug("Cleaned up %s" % path)
+
+        # Now, the extension
+        path = localpath("numexpr/interpreter.so")
+        try:
+            os.remove(path)
+        except Exception:
+            debug("Failed to clean up file %s" % path)
+        else:
+            debug("Cleaning up %s" % path)
+
+        clean.run(self)
+
+
 def setup_package():
     import os
     from numpy.distutils.core import setup
 
-    extra_setup_opts['cmdclass'] = {'build_ext': build_ext}
+    extra_setup_opts['cmdclass'] = {'build_ext': build_ext,
+                                    'clean': cleaner,
+                                    }
     setup(name='numexpr',
           description='Fast numerical expression evaluator for NumPy',
           author='David M. Cooke, Francesc Alted and others',
