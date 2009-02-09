@@ -1,6 +1,6 @@
 include MANIFEST.in
 
-include *.txt
+include *.txt *.example
 
-recursive-include numexpr *.c *.inc VERSION
+recursive-include numexpr *.c *.inc *.py
 recursive-include bench *.py

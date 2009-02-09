@@ -7,14 +7,34 @@
 
 #include "complex_functions.inc"
 
+#ifdef SCIPY_MKL_H
+#define USE_VML
+#endif
+
+#ifdef USE_VML
+#include "mkl_vml.h"
+#include "mkl_service.h"
+#endif
+
 #ifdef _WIN32
 #define inline __inline
 #include "missing_posix_functions.inc"
 #endif
 
+#ifdef USE_VML
 /* The values below have been tuned for a nowadays Core2 processor */
+/* Note: with VML functions a larger block size (e.g. 4096) allows to make use
+ * of the automatic multithreading capabilities of the VML library */
+#define BLOCK_SIZE1 4096
+#define BLOCK_SIZE2 32
+#else
+/* The values below have been tuned for a nowadays Core2 processor */
+/* Note: without VML available a smaller block size is best, specially
+ * for the strided and unaligned cases.  However, this may change
+ * when/if numexpr would support multithreading for the non-VML case. */
 #define BLOCK_SIZE1 256
 #define BLOCK_SIZE2 8
+#endif
 
 /* This file and interp_body should really be generated from a description of
    the opcodes -- there's too much repetition here for manually editing */
@@ -370,7 +390,7 @@ enum FuncFFCodes {
 typedef double (*FuncFFPtr)(double);
 
 /* The order of this array must match the FuncFFCodes enum above */
-FuncFFPtr functions_f[] = {
+FuncFFPtr functions_ff[] = {
     sqrt,
     sin,
     cos,
@@ -391,6 +411,30 @@ FuncFFPtr functions_f[] = {
     expm1,
 };
 
+#ifdef USE_VML
+typedef void (*FuncFFPtr_vml)(int, const double*, double*);
+FuncFFPtr_vml functions_ff_vml[] = {
+    vdSqrt,
+    vdSin,
+    vdCos,
+    vdTan,
+    vdAsin,
+    vdAcos,
+    vdAtan,
+    vdSinh,
+    vdCosh,
+    vdTanh,
+    vdAsinh,
+    vdAcosh,
+    vdAtanh,
+    vdLn,
+    vdLog1p,
+    vdLog10,
+    vdExp,
+    vdExpm1,
+};
+#endif
+
 enum FuncFFFCodes {
     FUNC_FMOD_FFF = 0,
     FUNC_ARCTAN2_FFF,
@@ -400,10 +444,28 @@ enum FuncFFFCodes {
 
 typedef double (*FuncFFFPtr)(double, double);
 
-FuncFFFPtr functions_ff[] = {
+FuncFFFPtr functions_fff[] = {
     fmod,
     atan2,
 };
+
+#ifdef USE_VML
+/* fmod not available in VML */
+static void vdfmod(int n, const double* x1, const double* x2, double* dest)
+{
+    int j;
+    for(j=0; j < n; j++) {
+	dest[j] = fmod(x1[j], x2[j]);
+    };
+};
+
+typedef void (*FuncFFFPtr_vml)(int, const double*, const double*, double*);
+FuncFFFPtr_vml functions_fff_vml[] = {
+    vdfmod,
+    vdAtan2,
+};
+#endif
+
 
 enum FuncCCCodes {
     FUNC_SQRT_CC = 0,
@@ -453,6 +515,53 @@ FuncCCPtr functions_cc[] = {
     nc_exp,
     nc_expm1,
 };
+
+#ifdef USE_VML
+/* complex expm1 not available in VML */
+static void vzExpm1(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
+{
+    int j;
+    vzExp(n, x1, dest);
+    for (j=0; j<n; j++) {
+	dest[j].real -= 1.0;
+    };
+};
+
+static void vzLog1p(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
+{
+    int j;
+    for (j=0; j<n; j++) {
+	dest[j].real = x1[j].real + 1;
+	dest[j].imag = x1[j].imag;
+    };
+    vzLn(n, dest, dest);
+};
+
+typedef void (*FuncCCPtr_vml)(int, const MKL_Complex16[], MKL_Complex16[]);
+
+/* The order of this array must match the FuncCCCodes enum above */
+FuncCCPtr_vml functions_cc_vml[] = {
+    vzSqrt,
+    vzSin,
+    vzCos,
+    vzTan,
+    vzAsin,
+    vzAcos,
+    vzAtan,
+    vzSinh,
+    vzCosh,
+    vzTanh,
+    vzAsinh,
+    vzAcosh,
+    vzAtanh,
+    vzLn,
+    vzLog1p, //poor approximation
+    vzLog10,
+    vzExp,
+    vzExpm1, //poor approximation
+};
+#endif
+
 
 enum FuncCCCCodes {
     FUNC_POW_CCC = 0,
@@ -1125,6 +1234,7 @@ run_interpreter(NumExprObject *self, int len, char *output, char **inputs,
     params.prog_len = plen;
     if ((params.n_inputs = PyObject_Length(self->signature)) == -1)
         return -1;
+
     params.output = output;
     params.inputs = inputs;
     params.index_data = index_data;
@@ -1507,7 +1617,38 @@ static PyTypeObject NumExprType = {
     NumExpr_new,               /* tp_new */
 };
 
+
+#ifdef USE_VML
+static PyObject *
+_set_vml_accuracy_mode(PyObject *self, PyObject *args)
+{
+    int mode_in, mode_old;
+    if (!PyArg_ParseTuple(args, "i", &mode_in))
+	return NULL;
+    mode_old = vmlGetMode() & VML_ACCURACY_MASK; 
+    vmlSetMode((mode_in & VML_ACCURACY_MASK) | VML_ERRMODE_IGNORE );
+    return Py_BuildValue("i", mode_old);
+}
+
+static PyObject *
+_set_vml_num_threads(PyObject *self, PyObject *args)
+{
+    int max_num_threads;
+    if (!PyArg_ParseTuple(args, "i", &max_num_threads))
+	return NULL;
+    mkl_domain_set_num_threads(max_num_threads, MKL_VML);
+    Py_RETURN_NONE;
+}
+
+#endif
+
 static PyMethodDef module_methods[] = {
+#ifdef USE_VML
+    {"_set_vml_accuracy_mode", _set_vml_accuracy_mode, METH_VARARGS,
+     "set accuracy mode for VML functions"},
+    {"_set_vml_num_threads", _set_vml_num_threads, METH_VARARGS,
+     "set maximum number of threads used for VML functions"},
+#endif
     {NULL}
 };
 

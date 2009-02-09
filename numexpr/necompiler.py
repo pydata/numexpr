@@ -1,7 +1,7 @@
 import sys
 import numpy
 
-from numexpr import interpreter, expressions
+from numexpr import interpreter, expressions, use_vml
 
 typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float',
                     'c': 'complex', 's': 'str', 'n' : 'none'}
@@ -520,7 +520,10 @@ def disassemble(nex):
     def getArg(pc, offset):
         arg = ord(nex.program[pc+offset])
         op = rev_opcodes.get(ord(nex.program[pc]))
-        code = op.split('_')[1][offset-1]
+        try:
+            code = op.split('_')[1][offset-1]
+        except IndexError:
+            return None
         if arg == 255:
             return None
         if code != 'n':
@@ -560,12 +563,29 @@ def getType(a):
         return str
     raise ValueError("unkown type %s" % a.dtype.name)
 
-
 def getExprNames(text, context):
     ex = stringToExpression(text, {}, context)
     ast = expressionToAST(ex)
     input_order = getInputOrder(ast, None)
-    return [a.value for a in input_order]
+    #try to figure out if vml operations are used by expression
+    if not use_vml:
+        ex_uses_vml = False
+    else:
+        for node in ast.postorderWalk():
+            if node.astType == 'op' \
+                   and node.value in ['sin', 'cos', 'exp', 'log',
+                                      'expm1', 'log1p',
+                                      'pow', 'div',
+                                      'sqrt', 'inv',
+                                      'sinh', 'cosh', 'tanh',
+                                      'arcsin', 'arccos', 'arctan',
+                                      'arccosh', 'arcsinh', 'arctanh', 'arctan2']:
+                ex_uses_vml = True
+                break
+        else:
+            ex_uses_vml = False
+
+    return [a.value for a in input_order], ex_uses_vml
 
 
 _names_cache = {}
@@ -592,7 +612,7 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
                 del _names_cache[key]
         context = getContext(kwargs)
         _names_cache[expr_key] = getExprNames(ex, context)
-    names = _names_cache[expr_key]
+    names, ex_uses_vml = _names_cache[expr_key]
     # Get the arguments based on the names.
     call_frame = sys._getframe(1)
     if local_dict is None:
@@ -601,6 +621,7 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
         global_dict = call_frame.f_globals
     arguments = []
     copy_args = []
+
     for name in names:
         try:
             a = local_dict[name]
@@ -612,6 +633,7 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
         # long as they are undimensional (strides in other
         # dimensions are dealt within the extension), so we don't
         # need a copy for the strided case.
+
         if not b.flags.aligned:
             # For the unaligned case, we have two cases:
             if b.ndim == 1:
@@ -628,6 +650,14 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
                 # other than the last one (whose case is supported by
                 # the copy opcode).
                 b = b.copy()
+        elif use_vml and ex_uses_vml: #only make a copy of strided arrays if
+                                      #vml is in use
+            if not b.flags.contiguous:
+                if b.ndim == 1:
+                    copy_args.append(name)
+                else:
+                    b = b.copy()
+
         arguments.append(b)
 
     # Create a signature

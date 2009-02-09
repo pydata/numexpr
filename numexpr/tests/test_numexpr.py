@@ -41,7 +41,7 @@ class test_numexpr(TestCase):
         b = arange(1e5) * 0.1
         x = (a + 2*b) / (1 + a + 4*b*b)
         y = func(a, b)
-        assert_array_equal(x, y)
+        assert_array_almost_equal(x, y)
 
     def test_reductions(self):
         # Check that they compile OK.
@@ -131,7 +131,7 @@ class test_evaluate(TestCase):
         b = arange(1e5) * 0.1
         x = (a + 2*b) / (1 + a + 4*b*b)
         y = evaluate("(a + 2*b) / (1 + a + 4*b*b)")
-        assert_array_equal(x, y)
+        assert_array_almost_equal(x, y)
 
     def test_complex_expr(self):
         def complex(a, b):

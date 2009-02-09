@@ -1,0 +1,27 @@
+# if setup does not find the MKL or does not use the configuration, copy this
+# file to "site.cfg" and edit the paths according to your installation of the
+# Intel MKL.
+
+# Note: some versions of MKL need to be linked to gfortran if compiled with
+# GNU C compiler. Uncomment next line if you get an error like "undefined
+# symbol: _gfortran_malloc"
+[DEFAULT]
+#libraries = gfortran
+
+[mkl]
+
+# Example for using MKL 10.0
+#library_dirs = /opt/intel/mkl/10.0.2.018/lib/em64t
+#include_dirs =  /opt/intel/mkl/10.0.2.018/include
+
+# Example for the MKL included in Intel C 11.0 compiler
+# (you may need a recent NumPy version for being able to search libraries
+# in different directories at a time)
+#library_dirs = /opt/intel/Compiler/11.0/074/mkl/lib/em64t/:/opt/intel/Compiler/11.0/074/lib/intel64
+#include_dirs =  /opt/intel/Compiler/11.0/074/mkl/include/
+
+##the following set of libraries is suited for compilation with the GNU C
+##compiler (gcc). Refer to the MKL documentation if you use other compilers
+##(e.g., Intel C compiler)
+#mkl_libs = mkl_gf_lp64, mkl_gnu_thread, mkl_core, iomp5
+

@@ -1,34 +1,42 @@
 These are instructions for installing Numexpr on Unix systems.  For
-Windows, it is best to install it from binaries.
-
-Prerequisites
-~~~~~~~~~~~~~
-
-You will need a recent version of NumPy (1.2 or higher).
+Windows, it is best to install it from binaries.  However, you should
+note that, for the time being, we cannot provide Windows binaries with
+VML support.
 
 
-Compile sources
-~~~~~~~~~~~~~~~
+Building
+========
 
-Unpack the tarball and follow the typical procedure for compiling:
+`Numexpr` requires Python 2.4 or greater, and NumPy 1.0 or greater.
+It's built in the standard Python way:
 
-python setup.py build_ext --inplace
+$ python setup.py build
+$ python setup.py install
 
+You can test `numexpr` with:
 
-Testing the package
-~~~~~~~~~~~~~~~~~~~
-
-From the directory of sources, run:
-
-python -c "import numexpr; numexpr.test()"
+$ python -c "import numexpr; numexpr.test()"
 
 
-Installing the package
-~~~~~~~~~~~~~~~~~~~~~~
+Enabling Intel's VML support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If all the tests go well, you can proceed with the installation:
+Starting from release 1.2 on, numexpr includes support for Intel's VML
+library.  This allows for better performance on Intel architectures,
+mainly when evaluating transcendental functions (trigonometrical,
+exponential...).  It also enables numexpr using several CPU cores.
 
-python setup.py install
+If you have Intel's MKL (the library that embeds VML), just copy the
+`site.cfg.example` that comes in the distribution to `site.cfg` and
+edit the latter giving proper directions on how to find your MKL
+libraries in your system.  After doing this, you can proceed with the
+usual building instructions listed above.  Pay attention to the
+messages during the building process in order to know whether MKL has
+been detected or not.  Finally, you can check the speed-ups on your
+machine by running the `bench/vml_timing.py` script (you can play with
+different parameters to the `set_vml_accuracy_mode()` and
+`set_num_threads()` functions in the script so as to see how it would
+affect performance).
 
 
 

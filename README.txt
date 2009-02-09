@@ -95,6 +95,37 @@ The next are the current supported set:
 More functions can be added if you need them.
 
 
+== Intel's VML specific support ==
+
+When compiled with Intel's VML (Vector Math Library), you will be able
+to use some additional functions for controling its use. These are:
+
+  * set_vml_accuracy_mode(mode):  Set the accuracy for VML operations.
+
+  The `mode` parameter can take the values:
+    - 'low': Equivalent to VML_LA - low accuracy VML functions are called
+    - 'high': Equivalent to VML_HA - high accuracy VML functions are called
+    - 'fast': Equivalent to VML_EP - enhanced performance VML functions are called
+
+  This call is equivalent to the `vmlSetMode()` in the VML library.
+  See:
+
+  http://www.intel.com/software/products/mkl/docs/webhelp/vml/vml_DataTypesAccuracyModes.html
+
+  for more info on the accuracy modes.
+
+  * set_vml_num_threads(nthreads): Suggests a maximum number of
+    threads to be used in VML operations.
+
+  This function is equivalent to the call
+  `mkl_domain_set_num_threads(nthreads, MKL_VML)` in the MKL library.
+  See:
+
+  http://www.intel.com/software/products/mkl/docs/webhelp/support/functn_mkl_domain_set_num_threads.html
+
+  for more info about it.
+
+
 How Numexpr can achieve such a high performance?
 ================================================
 
@@ -138,8 +169,15 @@ Numexpr is written by David Cooke <david.m.cooke@gmail.com> and Tim
 Hochberg <tim.hochberg@ieee.org>.  Francesc Alted
 <faltet@pytables.org> contributed support for booleans and for
 efficient strided and unaligned array operations.  Ivan Vilata
-<ivilata@selidor.net> contributed support for strings.  It is
-distributed under the MIT license (see LICENSE.txt file).
+<ivilata@selidor.net> contributed support for strings.  Gregor
+Thalhammer <Gregor.Thalhammer@gmail.com> implemented the support for
+Intel VML (Vector Math Library).
+
+
+License
+=======
+
+Numexpr is distributed under the MIT license (see LICENSE.txt file).
 
 
 
