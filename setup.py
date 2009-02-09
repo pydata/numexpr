@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os.path
 from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
 
 try:
@@ -16,13 +17,16 @@ def configuration():
     config = Configuration(package_name = 'numexpr')
 
     #try to find configuration for MKL, either from environment or site.cfg
-    mkl_config_data = config.get_info('mkl')
-    #some version of MKL need to be linked with libgfortran, for this, use
-    #entries of DEFAULT section in site.cfg
-    default_config = system_info()
-    dict_append(mkl_config_data,
-                libraries = default_config.get_libraries(),
-                library_dirs = default_config.get_lib_dirs() )
+    if os.path.exists('site.cfg'):
+        mkl_config_data = config.get_info('mkl')
+        # some version of MKL need to be linked with libgfortran, for this, use
+        # entries of DEFAULT section in site.cfg
+        default_config = system_info()
+        dict_append(mkl_config_data,
+                    libraries = default_config.get_libraries(),
+                    library_dirs = default_config.get_lib_dirs() )
+    else:
+        mkl_config_data = {}
 
     #setup information for C extension
     extension_config_data = {'sources': ['numexpr/interpreter.c'],
