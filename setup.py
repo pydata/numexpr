@@ -38,12 +38,7 @@ def configuration():
                          **extension_config_data)
 
     config.make_config_py()
-    # XXX Commenting the next lines out suppresses warnings during building
-    # What are they for?
-#     config.add_data_files( ('', '*.txt'),
-#                            #('', 'site.cfg.example'),
-#                            )
-#     config.add_subpackage('tests', 'numexpr/tests')
+    config.add_subpackage('tests', 'numexpr/tests')
 
     #version handling
     config.make_svn_version_py()
