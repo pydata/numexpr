@@ -14,13 +14,16 @@ Changes from 1.1.1 to 1.2
   few.  For example, typical speed-ups when using one single core for
   contiguous arrays are 3x with peaks of 7.5x (for the pow() function).
   When using 2 cores the speed-ups are around 4x and 14x respectively.
+  Closes #9.
 
-- Two new functions have been added:
+- Some new VML-related functions have been added:
 
   * set_vml_accuracy_mode(mode):  Set the accuracy for VML operations.
 
   * set_vml_num_threads(nthreads): Suggests a maximum number of
     threads to be used in VML operations.
+
+  * get_vml_version():  Get the VML/MKL library version.
 
   See the README.txt for more info about them.
 
@@ -28,6 +31,10 @@ Changes from 1.1.1 to 1.2
   been updated to use the numpy.distutils.  So, if you are already
   used to link NumPy/SciPy with MKL, then you will find that giving
   VML support to numexpr works almost the same.
+
+- A new `print_versions()` function has been made available.  This
+  allows to quickly print the versions on which numexpr is based on.
+  Very handy for issue reporting purposes.
 
 - The `numexpr.numexpr` compiler function has been renamed to
   `numexpr.NumExpr` in order to avoid name collisions with the name of

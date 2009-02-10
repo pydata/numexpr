@@ -11,7 +11,7 @@ from numpy.testing import *
 from numpy import shape, allclose, ravel, isnan
 
 import numexpr
-from numexpr import E, NumExpr, evaluate, disassemble
+from numexpr import E, NumExpr, evaluate, disassemble, use_vml
 
 import unittest
 TestCase = unittest.TestCase
@@ -487,7 +487,7 @@ class test_threading(TestCase):
 
 
 def print_versions():
-    """Print all the versions of software tha numexpr relies on."""
+    """Print the versions of software that numexpr relies on."""
     if numpy.__version__ < minimum_numpy_version:
         print "*Warning*: NumPy version is lower than recommended: %s < %s" % \
               (numpy.__version__, minimum_numpy_version)
@@ -498,10 +498,13 @@ def print_versions():
     if os.name == 'posix':
         (sysname, nodename, release, version, machine) = os.uname()
         print 'Platform:          %s-%s' % (sys.platform, machine)
+    print "VML available?     %s" % use_vml
+    if use_vml:
+        print "VML/MKL version:   %s" % numexpr.get_vml_version()
     print '-=' * 38
 
 
-def test(verbose=False, heavy=False):
+def test():
     """
     Run all the tests in the test suite.
     """

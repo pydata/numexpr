@@ -596,7 +596,7 @@ _names_cache = CacheDict(256)
 _numexpr_cache = CacheDict(256)
 
 def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
-    """Evaluate a simple array expression elementwise.
+    """Evaluate a simple array expression element-wise.
 
     ex is a string forming an expression, like "2*a+3*b". The values for "a"
     and "b" will by default be taken from the calling function's frame

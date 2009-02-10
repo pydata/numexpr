@@ -1619,13 +1619,23 @@ static PyTypeObject NumExprType = {
 
 
 #ifdef USE_VML
+
+static PyObject *
+_get_vml_version(PyObject *self, PyObject *args)
+{
+    int len=198;
+    char buf[198];
+    MKLGetVersionString(buf, len);
+    return Py_BuildValue("s", buf);
+}
+
 static PyObject *
 _set_vml_accuracy_mode(PyObject *self, PyObject *args)
 {
     int mode_in, mode_old;
     if (!PyArg_ParseTuple(args, "i", &mode_in))
 	return NULL;
-    mode_old = vmlGetMode() & VML_ACCURACY_MASK; 
+    mode_old = vmlGetMode() & VML_ACCURACY_MASK;
     vmlSetMode((mode_in & VML_ACCURACY_MASK) | VML_ERRMODE_IGNORE );
     return Py_BuildValue("i", mode_old);
 }
@@ -1644,10 +1654,12 @@ _set_vml_num_threads(PyObject *self, PyObject *args)
 
 static PyMethodDef module_methods[] = {
 #ifdef USE_VML
+    {"_get_vml_version", _get_vml_version, METH_VARARGS,
+     "Get the VML/MKL library version."},
     {"_set_vml_accuracy_mode", _set_vml_accuracy_mode, METH_VARARGS,
-     "set accuracy mode for VML functions"},
+     "Set accuracy mode for VML functions."},
     {"_set_vml_num_threads", _set_vml_num_threads, METH_VARARGS,
-     "set maximum number of threads used for VML functions"},
+     "Suggests a maximum number of threads to be used in VML operations."},
 #endif
     {NULL}
 };

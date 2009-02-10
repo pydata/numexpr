@@ -95,7 +95,19 @@ The next are the current supported set:
 More functions can be added if you need them.
 
 
-== Intel's VML specific support ==
+General functions
+=================
+
+  * evaluate(expression, local_dict=None, global_dict=None, **kwargs):
+  Evaluate a simple array expression element-wise.  See examples above.
+
+  * test():  Run all the tests in the test suite.
+
+  * print_versions():  Print the versions of software that numexpr relies on.
+
+
+Intel's VML specific support functions
+======================================
 
 When compiled with Intel's VML (Vector Math Library), you will be able
 to use some additional functions for controling its use. These are:
@@ -124,6 +136,8 @@ to use some additional functions for controling its use. These are:
   http://www.intel.com/software/products/mkl/docs/webhelp/support/functn_mkl_domain_set_num_threads.html
 
   for more info about it.
+
+  * get_vml_version():  Get the VML/MKL library version.
 
 
 How Numexpr can achieve such a high performance?

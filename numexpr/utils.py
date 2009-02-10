@@ -1,7 +1,16 @@
 from numexpr import use_vml
 
 if use_vml:
-    from numexpr.interpreter import _set_vml_accuracy_mode, _set_vml_num_threads
+    from numexpr.interpreter import (
+        _get_vml_version, _set_vml_accuracy_mode, _set_vml_num_threads)
+
+
+def get_vml_version():
+    """Get the VML/MKL library version."""
+    if use_vml:
+        return _get_vml_version()
+    else:
+        return None
 
 
 def set_vml_accuracy_mode(mode):
@@ -33,6 +42,7 @@ def set_vml_accuracy_mode(mode):
         return acc_reverse_dict.get(retval)
     else:
         return None
+
 
 def set_vml_num_threads(nthreads):
     """
