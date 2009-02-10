@@ -50,3 +50,20 @@ def set_vml_num_threads(nthreads):
         _set_vml_num_threads(nthreads)
 
 
+class CacheDict(dict):
+    """
+    A dictionary that prevents itself from growing too much.
+    """
+
+    def __init__(self, maxentries):
+        self.maxentries = maxentries
+        super(CacheDict, self).__init__(self)
+
+    def __setitem__(self, key, value):
+        # Protection against growing the cache too much
+        if len(self) > self.maxentries:
+            # Remove 16 (arbitrary) elements from the cache
+            for k in self.keys()[:16]:
+                super(CacheDict, self).__delitem__(k)
+        super(CacheDict, self).__setitem__(key, value)
+

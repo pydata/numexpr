@@ -2,6 +2,7 @@ import sys
 import numpy
 
 from numexpr import interpreter, expressions, use_vml
+from numexpr.utils import CacheDict
 
 typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float',
                     'c': 'complex', 's': 'str', 'n' : 'none'}
@@ -590,8 +591,10 @@ def getExprNames(text, context):
     return [a.value for a in input_order], ex_uses_vml
 
 
-_names_cache = {}
-_numexpr_cache = {}
+# Dictionaries for caching variable names and compiled expressions
+_names_cache = CacheDict(256)
+_numexpr_cache = CacheDict(256)
+
 def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
     """Evaluate a simple array expression elementwise.
 
@@ -608,10 +611,6 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
     # Get the names for this expression
     expr_key = (ex, tuple(sorted(kwargs.items())))
     if expr_key not in _names_cache:
-        # Avoid the cache from growing too much
-        if len(_names_cache) > 256:
-            for key in _names_cache.keys()[:10]:
-                del _names_cache[key]
         context = getContext(kwargs)
         _names_cache[expr_key] = getExprNames(ex, context)
     names, ex_uses_vml = _names_cache[expr_key]
@@ -670,10 +669,6 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
     try:
         compiled_ex = _numexpr_cache[numexpr_key]
     except KeyError:
-        # Avoid the cache from growing too much
-        if len(_numexpr_cache) > 256:
-            for key in _numexpr_cache.keys()[:10]:
-                del _numexpr_cache[key]
         compiled_ex = _numexpr_cache[numexpr_key] = \
                       NumExpr(ex, signature, copy_args, **kwargs)
     return compiled_ex(*arguments)
