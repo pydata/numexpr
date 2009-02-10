@@ -4,8 +4,8 @@ release=False
 if not release:
     version += '.dev'
     import os
-    svn_version_file = '__svn_version__.py'
-
+    svn_version_file = os.path.join(os.path.dirname(__file__),
+                                    '__svn_version__.py')
     if os.path.isfile(svn_version_file):
         import imp
         svn = imp.load_module('numexpr.__svn_version__',
