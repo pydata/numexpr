@@ -1,4 +1,4 @@
-import new, sys
+import new, sys, os
 import numpy
 from numpy import (
     array, arange, empty, zeros, int32, uint16, complex_, float64, rec,
@@ -10,33 +10,36 @@ from numpy import (
 from numpy.testing import *
 from numpy import shape, allclose, ravel, isnan
 
-from numexpr import E, numexpr, evaluate, disassemble
+import numexpr
+from numexpr import E, NumExpr, evaluate, disassemble
 
 import unittest
 TestCase = unittest.TestCase
 
+# Recommended minimum versions
+minimum_numpy_version = "1.2"
 
 class test_numexpr(TestCase):
     def test_simple(self):
         ex = 2.0 * E.a + 3.0 * E.b * E.c
-        func = numexpr(ex, signature=[('a', float), ('b', float), ('c', float)])
+        func = NumExpr(ex, signature=[('a', float), ('b', float), ('c', float)])
         x = func(array([1., 2, 3]), array([4., 5, 6]), array([7., 8, 9]))
         assert_array_equal(x, array([  86.,  124.,  168.]))
 
     def test_simple_expr_small_array(self):
-        func = numexpr(E.a)
+        func = NumExpr(E.a)
         x = arange(100.0)
         y = func(x)
         assert_array_equal(x, y)
 
     def test_simple_expr(self):
-        func = numexpr(E.a)
+        func = NumExpr(E.a)
         x = arange(1e5)
         y = func(x)
         assert_array_equal(x, y)
 
     def test_rational_expr(self):
-        func = numexpr((E.a + 2.0*E.b) / (1 + E.a + 4*E.b*E.b))
+        func = NumExpr((E.a + 2.0*E.b) / (1 + E.a + 4*E.b*E.b))
         a = arange(1e5)
         b = arange(1e5) * 0.1
         x = (a + 2*b) / (1 + a + 4*b*b)
@@ -46,17 +49,17 @@ class test_numexpr(TestCase):
     def test_reductions(self):
         # Check that they compile OK.
         assert_equal(disassemble(
-            numexpr("sum(x**2+2, axis=None)", [('x', float)])),
+            NumExpr("sum(x**2+2, axis=None)", [('x', float)])),
                      [('mul_fff', 't3', 'r1[x]', 'r1[x]'),
                       ('add_fff', 't3', 't3', 'c2[2.0]'),
                       ('sum_ffn', 'r0', 't3', None)])
         assert_equal(disassemble(
-            numexpr("sum(x**2+2, axis=1)", [('x', float)])),
+            NumExpr("sum(x**2+2, axis=1)", [('x', float)])),
                      [('mul_fff', 't3', 'r1[x]', 'r1[x]'),
                       ('add_fff', 't3', 't3', 'c2[2.0]'),
                       ('sum_ffn', 'r0', 't3', 1)])
         assert_equal(disassemble(
-            numexpr("prod(x**2+2, axis=2)", [('x', float)])),
+            NumExpr("prod(x**2+2, axis=2)", [('x', float)])),
                      [('mul_fff', 't3', 'r1[x]', 'r1[x]'),
                       ('add_fff', 't3', 't3', 'c2[2.0]'),
                       ('prod_ffn', 'r0', 't3', 2)])
@@ -104,7 +107,7 @@ class test_numexpr(TestCase):
 
 
     def test_r0_reuse(self):
-        assert_equal(disassemble(numexpr("x**2+2", [('x', float)])),
+        assert_equal(disassemble(NumExpr("x**2+2", [('x', float)])),
                     [('mul_fff', 'r0', 'r1[x]', 'r1[x]'),
                      ('add_fff', 'r0', 'r0', 'c2[2.0]')])
 
@@ -167,20 +170,20 @@ class test_evaluate(TestCase):
         d = arange(5).reshape(5,1)
         assert_array_equal(evaluate("a+c"), a+c)
         assert_array_equal(evaluate("a+d"), a+d)
-        expr = numexpr("2.0*a+3.0*c",[('a',float),('c', float)])
+        expr = NumExpr("2.0*a+3.0*c",[('a',float),('c', float)])
         assert_array_equal(expr(a,c), 2.0*a+3.0*c)
 
     def test_all_scalar(self):
         a = 3.
         b = 4.
         assert_equal(evaluate("a+b"), a+b)
-        expr = numexpr("2*a+3*b",[('a',float),('b', float)])
+        expr = NumExpr("2*a+3*b",[('a',float),('b', float)])
         assert_equal(expr(a,b), 2*a+3*b)
 
     def test_run(self):
         a = arange(100).reshape(10,10)[::2]
         b = arange(10)
-        expr = numexpr("2*a+3*b",[('a',float),('b', float)])
+        expr = NumExpr("2*a+3*b",[('a',float),('b', float)])
         assert_array_equal(expr(a,b), expr.run(a,b))
 
     def test_illegal_value(self):
@@ -483,11 +486,27 @@ class test_threading(TestCase):
         test.start()
 
 
+def print_versions():
+    """Print all the versions of software tha numexpr relies on."""
+    if numpy.__version__ < minimum_numpy_version:
+        print "*Warning*: NumPy version is lower than recommended: %s < %s" % \
+              (numpy.__version__, minimum_numpy_version)
+    print '-=' * 38
+    print "Numexpr version:   %s" % numexpr.__version__
+    print "NumPy version:     %s" % numpy.__version__
+    print 'Python version:    %s' % sys.version
+    if os.name == 'posix':
+        (sysname, nodename, release, version, machine) = os.uname()
+        print 'Platform:          %s-%s' % (sys.platform, machine)
+    print '-=' * 38
+
+
 def test(verbose=False, heavy=False):
     """
     Run all the tests in the test suite.
     """
 
+    print_versions()
     unittest.TextTestRunner().run(suite())
 
 
@@ -510,4 +529,5 @@ def suite():
     return theSuite
 
 if __name__ == '__main__':
+    print_versions()
     unittest.main(defaultTest = 'suite')

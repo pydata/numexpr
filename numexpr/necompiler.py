@@ -492,14 +492,16 @@ def precompile(ex, signature=(), copy_args=(), **kwargs):
     return threeAddrProgram, signature, tempsig, constants, input_names
 
 
-def numexpr(ex, signature=(), copy_args=(), **kwargs):
-    """Compile an expression built using E.<variable> variables to a function.
+def NumExpr(ex, signature=(), copy_args=(), **kwargs):
+    """
+    Compile an expression built using E.<variable> variables to a function.
 
     ex can also be specified as a string "2*a+3*b".
 
     The order of the input variables and their types can be specified using the
     signature parameter, which is a list of (name, type) pairs.
 
+    Returns a `NumExpr` object containing the compiled function.
     """
     threeAddrProgram, inputsig, tempsig, constants, input_names = \
                       precompile(ex, signature, copy_args, **kwargs)
@@ -509,8 +511,8 @@ def numexpr(ex, signature=(), copy_args=(), **kwargs):
 
 
 def disassemble(nex):
-    """Given a NumExpr object, return a list which is the program
-    disassembled.
+    """
+    Given a NumExpr object, return a list which is the program disassembled.
     """
     rev_opcodes = {}
     for op in interpreter.opcodes:
@@ -673,5 +675,5 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
             for key in _numexpr_cache.keys()[:10]:
                 del _numexpr_cache[key]
         compiled_ex = _numexpr_cache[numexpr_key] = \
-                      numexpr(ex, signature, copy_args, **kwargs)
+                      NumExpr(ex, signature, copy_args, **kwargs)
     return compiled_ex(*arguments)

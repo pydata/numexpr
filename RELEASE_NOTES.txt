@@ -2,10 +2,37 @@
  Release notes for Numexpr 1.2
 ===============================
 
+
 Changes from 1.1.1 to 1.2
 =========================
 
-# XXX Add new features and bug fixes here...
+- Support for Intel's VML (Vector Math Library) added, normally
+  included in Intel's MKL (Math Kernel Library).  In addition, when
+  the VML support is on, several processors can be used in parallel
+  (see the new `set_vml_num_threads()` function).  With that, the
+  computations of transcendental functions can be accelerated quite a
+  few.  For example, typical speed-ups when using one single core for
+  contiguous arrays are 3x with peaks of 7.5x (for the pow() function).
+  When using 2 cores the speed-ups are around 4x and 14x respectively.
+
+- Two new functions have been added:
+
+  * set_vml_accuracy_mode(mode):  Set the accuracy for VML operations.
+
+  * set_vml_num_threads(nthreads): Suggests a maximum number of
+    threads to be used in VML operations.
+
+  See the README.txt for more info about them.
+
+- In order to easily allow the detection of the MKL, the setup.py has
+  been updated to use the numpy.distutils.  So, if you are already
+  used to link NumPy/SciPy with MKL, then you will find that giving
+  VML support to numexpr works almost the same.
+
+- The `numexpr.numexpr` compiler function has been renamed to
+  `numexpr.NumExpr` in order to avoid name collisions with the name of
+  the package (!).  This function is mainly for internal use, so you
+  should not need to upgrade your existing numexpr scripts.
 
 
 Changes from 1.1 to 1.1.1
