@@ -1,4 +1,5 @@
-Copyright (c) 2007-2009 David M. Cooke <david.m.cooke@gmail.com>
+Copyright (c) 2007,2008  David M. Cooke <david.m.cooke@gmail.com>
+Copyright (c) 2009  Francesc Alted <faltet@pytables.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
