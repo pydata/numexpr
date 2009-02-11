@@ -1,6 +1,6 @@
 include MANIFEST.in
 
-include *.txt *.example
+include *.txt site.cfg.example
 
 recursive-include numexpr *.c *.inc *.py
 recursive-include bench *.py
