@@ -71,7 +71,10 @@ class cleaner(clean):
             debug("Cleaned up %s" % path)
 
         # Now, the extension and other files
-        paths = [localpath("numexpr/interpreter.so")]
+        if os.name == 'posix':
+            paths = [localpath("numexpr/interpreter.so")]
+        else:
+            paths = [localpath("numexpr/interpreter.pyd")]
         paths.append(localpath("numexpr/__config__.py"))
         paths.append(localpath("numexpr/__config__.pyc"))
         for path in paths:
