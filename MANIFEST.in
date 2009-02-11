@@ -3,4 +3,6 @@ include MANIFEST.in
 include *.txt site.cfg.example
 
 recursive-include numexpr *.c *.inc *.py
+exclude numexpr/__config__.py
+
 recursive-include bench *.py

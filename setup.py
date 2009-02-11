@@ -27,7 +27,7 @@ def configuration():
     from numpy.distutils.misc_util import Configuration, dict_append
     from numpy.distutils.system_info import system_info
 
-    config = Configuration(None)
+    config = Configuration('numexpr')
 
     #try to find configuration for MKL, either from environment or site.cfg
     if op.exists('site.cfg'):
@@ -47,8 +47,7 @@ def configuration():
                                          'numexpr/complex_functions.inc'],
                              'extra_compile_args': ['-funroll-all-loops'],}
     dict_append(extension_config_data, **mkl_config_data)
-    config.add_extension('numexpr.interpreter',
-                         **extension_config_data)
+    config.add_extension('interpreter', **extension_config_data)
 
     config.make_config_py()
     config.add_subpackage('tests', 'numexpr/tests')
@@ -71,14 +70,17 @@ class cleaner(clean):
         else:
             debug("Cleaned up %s" % path)
 
-        # Now, the extension
-        path = localpath("numexpr/interpreter.so")
-        try:
-            os.remove(path)
-        except Exception:
-            debug("Failed to clean up file %s" % path)
-        else:
-            debug("Cleaning up %s" % path)
+        # Now, the extension and other files
+        paths = [localpath("numexpr/interpreter.so")]
+        paths.append(localpath("numexpr/__config__.py"))
+        paths.append(localpath("numexpr/__config__.pyc"))
+        for path in paths:
+            try:
+                os.remove(path)
+            except Exception:
+                debug("Failed to clean up file %s" % path)
+            else:
+                debug("Cleaning up %s" % path)
 
         clean.run(self)
 
@@ -90,7 +92,7 @@ def setup_package():
     extra_setup_opts['cmdclass'] = {'build_ext': build_ext,
                                     'clean': cleaner,
                                     }
-    setup(name='numexpr',
+    setup(#name='numexpr',  # name already set in numpy.distutils
           description='Fast numerical expression evaluator for NumPy',
           author='David M. Cooke, Francesc Alted and others',
           author_email='david.m.cooke@gmail.com, faltet@pytables.org',
