@@ -35,7 +35,7 @@ messages during the building process in order to know whether MKL has
 been detected or not.  Finally, you can check the speed-ups on your
 machine by running the `bench/vml_timing.py` script (you can play with
 different parameters to the `set_vml_accuracy_mode()` and
-`set_num_threads()` functions in the script so as to see how it would
+`set_vml_num_threads()` functions in the script so as to see how it would
 affect performance).
 
 

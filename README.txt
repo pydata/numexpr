@@ -53,7 +53,7 @@ of Python.  For instance, the only valid constants for booleans are
 `True` and `False`, and they are never automatically cast to integers.
 
 
-Supported Operators
+Supported operators
 ===================
 
 Numexpr supports the set of operators listed below:
@@ -95,8 +95,8 @@ The next are the current supported set:
 More functions can be added if you need them.
 
 
-General functions
-=================
+General routines
+================
 
   * evaluate(expression, local_dict=None, global_dict=None, **kwargs):
   Evaluate a simple array expression element-wise.  See examples above.
@@ -106,8 +106,8 @@ General functions
   * print_versions():  Print the versions of software that numexpr relies on.
 
 
-Intel's VML specific support functions
-======================================
+Intel's VML specific support routines
+=====================================
 
 When compiled with Intel's VML (Vector Math Library), you will be able
 to use some additional functions for controlling its use. These are:
@@ -183,14 +183,11 @@ http://code.google.com/p/numexpr/wiki/Overview
 Authors
 =======
 
-Numexpr was initially written by David Cooke
-<david.m.cooke@gmail.com>, and extended to more types by Tim Hochberg
-<tim.hochberg@ieee.org>.  Francesc Alted <faltet@pytables.org>
-contributed support for booleans and for efficient strided and
-unaligned array operations.  Ivan Vilata <ivilata@selidor.net>
-contributed support for strings.  Gregor Thalhammer
-<Gregor.Thalhammer@gmail.com> implemented the support for Intel VML
-(Vector Math Library).
+Numexpr was initially written by David Cooke, and extended to more
+types by Tim Hochberg.  Francesc Alted contributed support for
+booleans and for efficient strided and unaligned array operations.
+Ivan Vilata contributed support for strings.  Gregor Thalhammer
+implemented the support for Intel VML (Vector Math Library).
 
 
 License
