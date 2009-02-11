@@ -110,7 +110,7 @@ Intel's VML specific support functions
 ======================================
 
 When compiled with Intel's VML (Vector Math Library), you will be able
-to use some additional functions for controling its use. These are:
+to use some additional functions for controlling its use. These are:
 
   * set_vml_accuracy_mode(mode):  Set the accuracy for VML operations.
 
@@ -157,8 +157,8 @@ easily fit in the cache of the CPU) and passed to the virtual
 machine. Then, the computational phase starts, and the virtual machine
 applies the op-code operations for each chunk, saving the outcome in
 the resulting array. It is worth noting that all the temporaries and
-constants in the expression are kept in the same small chunksizes than
-the operand ones, avoiding additional memory (and most specially,
+constants in the expression are kept in the same small chunk sizes
+than the operand ones, avoiding additional memory (and most specially,
 memory bandwidth) waste.
 
 The result is that Numexpr can get the most of your machine computing
@@ -175,17 +175,22 @@ of your CPU.  In order to get a better idea on the different speed-ups
 that can be achieved for your own platform, you may want to run the
 benchmarks in the directory bench/.
 
+See more info about how Numexpr works in:
+
+http://code.google.com/p/numexpr/wiki/Overview
+
 
 Authors
 =======
 
-Numexpr is written by David Cooke <david.m.cooke@gmail.com> and Tim
-Hochberg <tim.hochberg@ieee.org>.  Francesc Alted
-<faltet@pytables.org> contributed support for booleans and for
-efficient strided and unaligned array operations.  Ivan Vilata
-<ivilata@selidor.net> contributed support for strings.  Gregor
-Thalhammer <Gregor.Thalhammer@gmail.com> implemented the support for
-Intel VML (Vector Math Library).
+Numexpr was initially written by David Cooke
+<david.m.cooke@gmail.com>, and extended to more types by Tim Hochberg
+<tim.hochberg@ieee.org>.  Francesc Alted <faltet@pytables.org>
+contributed support for booleans and for efficient strided and
+unaligned array operations.  Ivan Vilata <ivilata@selidor.net>
+contributed support for strings.  Gregor Thalhammer
+<Gregor.Thalhammer@gmail.com> implemented the support for Intel VML
+(Vector Math Library).
 
 
 License
