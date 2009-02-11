@@ -27,7 +27,7 @@ def configuration():
     from numpy.distutils.misc_util import Configuration, dict_append
     from numpy.distutils.system_info import system_info
 
-    config = Configuration(package_name = 'numexpr')
+    config = Configuration(None)
 
     #try to find configuration for MKL, either from environment or site.cfg
     if op.exists('site.cfg'):
@@ -47,7 +47,7 @@ def configuration():
                                          'numexpr/complex_functions.inc'],
                              'extra_compile_args': ['-funroll-all-loops'],}
     dict_append(extension_config_data, **mkl_config_data)
-    config.add_extension('interpreter',
+    config.add_extension('numexpr.interpreter',
                          **extension_config_data)
 
     config.make_config_py()
