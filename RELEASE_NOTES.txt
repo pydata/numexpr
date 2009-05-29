@@ -3,10 +3,15 @@
 =================================
 
 
-Changes from 1.2 to 1.2.1
-=========================
+Changes from 1.2 to 1.3
+=======================
 
-- (None yet.)
+- When linking with the MKL, added a '-rpath' option to the link step
+  so that the paths to MKL libraries are automatically included into
+  the runtime library search path of the final package (i.e. the user
+  won't need to update its LD_LIBRARY_PATH or LD_RUN_PATH environment
+  variables anymore).  Fixes #16.
+
 
 Changes from 1.1.1 to 1.2
 =========================

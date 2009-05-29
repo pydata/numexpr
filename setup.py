@@ -42,11 +42,17 @@ def configuration():
         mkl_config_data = {}
 
     #setup information for C extension
-    extension_config_data = {'sources': ['numexpr/interpreter.c'],
-                             'depends': ['numexpr/interp_body.c',
-                                         'numexpr/complex_functions.inc'],
-                             'extra_compile_args': ['-funroll-all-loops'],}
+    extension_config_data = {
+        'sources': ['numexpr/interpreter.c'],
+        'depends': ['numexpr/interp_body.c',
+                    'numexpr/complex_functions.inc'],
+        'extra_compile_args': ['-funroll-all-loops',],
+        }
     dict_append(extension_config_data, **mkl_config_data)
+    if 'library_dirs' in mkl_config_data:
+        library_dirs = ':'.join(mkl_config_data['library_dirs'])
+        rpath_link = '-Xlinker --rpath -Xlinker %s' % library_dirs
+        extension_config_data['extra_link_args'] = [rpath_link]
     config.add_extension('interpreter', **extension_config_data)
 
     config.make_config_py()
