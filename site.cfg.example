@@ -5,6 +5,11 @@
 # Note: some versions of MKL need to be linked to gfortran if compiled with
 # GNU C compiler. Uncomment next line if you get an error like "undefined
 # symbol: _gfortran_malloc"
+#
+# Note2: Some Fedora users reported that they had to install a
+# compatible version of the gfortran lib.  See:
+# http://code.google.com/p/numexpr/issues/detail?id=15
+# for more info.
 [DEFAULT]
 #libraries = gfortran
 
