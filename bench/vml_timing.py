@@ -74,7 +74,7 @@ from numpy import rec as records
 from numexpr import evaluate
 
 # Initialize a recarray of 16 MB in size
-r=records.array(None, formats='a%s,i4,f8,f8', shape=%s)
+r=records.array(None, formats='a%s,i4,f4,f8', shape=%s)
 c1 = r.field('f0')%s
 i2 = r.field('f1')%s
 f3 = r.field('f2')%s

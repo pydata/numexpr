@@ -2,13 +2,15 @@
   like MSVC 7.1  */
 
 
-inline double log1p(double x)
+/* Double precision versions */
+
+inline static double log1p(double x)
 {
-    double u = 1. + x;
+    double u = 1.0 + x;
     if (u == 1.0) {
         return x;
     } else {
-        return log(u) * x / (u-1.);
+        return log(u) * x / (u-1.0);
     }
 }
 
@@ -39,9 +41,9 @@ inline static double asinh(double xx)
     if (x > 1e8) {
         d = x;
     } else {
-        d = sqrt(x*x + 1);
+        d = sqrt(x*x + 1.0);
     }
-    return sign*log1p(x*(1.0 + x/(d+1)));
+    return sign*log1p(x*(1.0 + x/(d+1.0)));
 }
 
 inline static double acosh(double x)
@@ -57,3 +59,30 @@ inline static double atanh(double x)
     return 0.5*log((1.0+x)/(1.0-x));
 }
 
+
+/* Single precision versions */
+
+inline static float log1pf(float x)
+{
+    return (float) log1p((double)x);
+}
+
+inline static float expm1f(float x)
+{
+    return (float) expm1((double)x);
+}
+
+inline static float asinhf(float x)
+{
+    return (float) asinh((double)x);
+}
+
+inline static float acoshf(float x)
+{
+    return (float) acosh((double)x);
+}
+
+inline static float atanhf(float x)
+{
+    return (float) atanh((double)x);
+}

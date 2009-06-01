@@ -11,7 +11,7 @@ test_shapes = [
     (100,100,100),
     ]
 
-test_dtype = 'f8'
+test_dtype = 'f4'
 nruns = 10                   # Ensemble for timing
 
 def chunkify(chunksize):

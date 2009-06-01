@@ -16,8 +16,8 @@ a = np.arange(M)
 
 t1 = time()
 for i in xrange(N):
-    #r = ne.evaluate("a == %d" % 1)   # expressions are cached
-    r = ne.evaluate("a == %d" % i)   # expressions cannot be cached
+    #r = ne.evaluate("a == i")        # expression is cached
+    r = ne.evaluate("a == %d" % i)   # expression cannot be cached
     if i % 1000 == 0:
         sys.stdout.write('.')
 

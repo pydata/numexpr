@@ -4,12 +4,18 @@ import numpy
 from numexpr import interpreter, expressions, use_vml
 from numexpr.utils import CacheDict
 
+# Declare a double type that does not exist in Python space
+double = numpy.double
+
 typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float',
-                    'c': 'complex', 's': 'str', 'n' : 'none'}
+                    'd': 'double', 'c': 'complex', 's': 'str', 'n' : 'none'}
 kind_to_typecode = {'bool': 'b', 'int': 'i', 'long': 'l', 'float': 'f',
-                    'complex': 'c', 'str': 's', 'none' : 'n'}
+                    'double': 'd', 'complex': 'c', 'str': 's', 'none' : 'n'}
+type_to_typecode = {bool: 'b', int: 'i', long:'l', float:'f',
+                    double: 'd', complex: 'c', str: 's'}
 type_to_kind = expressions.type_to_kind
 kind_to_type = expressions.kind_to_type
+default_type = kind_to_type[expressions.default_kind]
 
 class ASTNode(object):
     """Abstract Syntax Tree node.
@@ -84,7 +90,7 @@ def expressionToAST(ex):
     like a number.
     """
     this_ast = ASTNode(ex.astType, ex.astKind, ex.value,
-                           [expressionToAST(c) for c in ex.children])
+                       [expressionToAST(c) for c in ex.children])
     return this_ast
 
 
@@ -92,7 +98,7 @@ def sigPerms(s):
     """Generate all possible signatures derived by upcasting the given
     signature.
     """
-    codes = 'bilfc'
+    codes = 'bilfdc'
     if not s:
         yield ''
     elif s[0] in codes:
@@ -189,6 +195,7 @@ class Immediate(Register):
     def __str__(self):
         return 'Immediate(%d)' % (self.node.value,)
 
+
 def stringToExpression(s, types, context):
     """Given a string, convert it to a tree of ExpressionNode's.
     """
@@ -207,7 +214,7 @@ def stringToExpression(s, types, context):
             elif name == "False":
                 names[name] = False
             else:
-                t = types.get(name, float)
+                t = types.get(name, default_type)
                 names[name] = expressions.VariableNode(name, type_to_kind[t])
         names.update(expressions.functions)
         # now build the expression
@@ -223,6 +230,7 @@ def stringToExpression(s, types, context):
 
 def isReduction(ast):
     return ast.value.startswith('sum_') or ast.value.startswith('prod_')
+
 
 def getInputOrder(ast, input_order=None):
     """Derive the input order of the variables in an expression.
@@ -243,6 +251,9 @@ def getInputOrder(ast, input_order=None):
     return ordered_variables
 
 def convertConstantToKind(x, kind):
+    # Exception for 'float' types that will return the NumPy float32 type
+    if kind == 'float':
+        return numpy.float32(x)
     return kind_to_type[kind](x)
 
 def getConstants(ast):
@@ -318,8 +329,8 @@ def optimizeTemporariesAllocation(ast):
         for c in n.children:
             if c.reg.temporary:
                 users_of[c.reg].add(n)
-    unused = {'bool' : set(), 'int' : set(), 'long': set(),
-              'float' : set(), 'complex' : set(), 'str': set()}
+    unused = {'bool' : set(), 'int' : set(), 'long': set(), 'float' : set(),
+              'double': set(), 'complex' : set(), 'str': set()}
     for n in nodes:
         for reg, users in users_of.iteritems():
             if n in users:
@@ -434,7 +445,7 @@ def precompile(ex, signature=(), copy_args=(), **kwargs):
     """Compile the expression to an intermediate form.
     """
     types = dict(signature)
-    input_order = [name for (name, type) in signature]
+    input_order = [name for (name, type_) in signature]
     context = getContext(kwargs)
 
     if isinstance(ex, str):
@@ -488,8 +499,8 @@ def precompile(ex, signature=(), copy_args=(), **kwargs):
 
     threeAddrProgram = convertASTtoThreeAddrForm(ast)
     input_names = tuple([a.value for a in input_order])
-    signature = ''.join(types.get(x, float).__name__[0] for x in input_names)
-
+    signature = ''.join(type_to_typecode[types.get(x, default_type)]
+                        for x in input_names)
     return threeAddrProgram, signature, tempsig, constants, input_names
 
 
@@ -559,12 +570,15 @@ def getType(a):
             return long  # ``long`` is for integers of more than 32 bits
         return int
     if kind == 'f':
+        if a.dtype.itemsize > 4:
+            return double  # ``double`` is for floats of more than 32 bits
         return float
     if kind == 'c':
         return complex
     if kind == 'S':
         return str
     raise ValueError("unkown type %s" % a.dtype.name)
+
 
 def getExprNames(text, context):
     ex = stringToExpression(text, {}, context)
@@ -582,7 +596,8 @@ def getExprNames(text, context):
                                       'sqrt', 'inv',
                                       'sinh', 'cosh', 'tanh',
                                       'arcsin', 'arccos', 'arctan',
-                                      'arccosh', 'arcsinh', 'arctanh', 'arctan2']:
+                                      'arccosh', 'arcsinh', 'arctanh',
+                                      'arctan2']:
                 ex_uses_vml = True
                 break
         else:
@@ -602,9 +617,6 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
     and "b" will by default be taken from the calling function's frame
     (through use of sys._getframe()). Alternatively, they can be specifed
     using the 'local_dict' or 'global_dict' arguments.
-
-    Not all operations are supported, and only real
-    constants and arrays of floats currently work.
     """
     if not isinstance(ex, str):
         raise ValueError("must specify expression as a string")

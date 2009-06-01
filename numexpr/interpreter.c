@@ -1,6 +1,7 @@
 #include "Python.h"
 #include "structmember.h"
 #include "numpy/noprefix.h"
+#include "numpy/arrayscalars.h"
 #include "math.h"
 #include "string.h"
 #include "assert.h"
@@ -19,6 +20,7 @@
 #ifdef _WIN32
 #define inline __inline
 #include "missing_posix_functions.inc"
+#include "msvc_function_stubs.inc"
 #endif
 
 #ifdef USE_VML
@@ -67,6 +69,11 @@ enum OpCodes {
     OP_EQ_BFF,
     OP_NE_BFF,
 
+    OP_GT_BDD,
+    OP_GE_BDD,
+    OP_EQ_BDD,
+    OP_NE_BDD,
+
     OP_GT_BSS,
     OP_GE_BSS,
     OP_EQ_BSS,
@@ -111,12 +118,30 @@ enum OpCodes {
     OP_FUNC_FF,
     OP_FUNC_FFF,
 
+    OP_CAST_DI,
+    OP_CAST_DL,
+    OP_CAST_DF,
+    OP_COPY_DD,
+    OP_ONES_LIKE_DD,
+    OP_NEG_DD,
+    OP_ADD_DDD,
+    OP_SUB_DDD,
+    OP_MUL_DDD,
+    OP_DIV_DDD,
+    OP_POW_DDD,
+    OP_MOD_DDD,
+    OP_SQRT_DD,
+    OP_WHERE_DBDD,
+    OP_FUNC_DD,
+    OP_FUNC_DDD,
+
     OP_EQ_BCC,
     OP_NE_BCC,
 
     OP_CAST_CI,
     OP_CAST_CL,
     OP_CAST_CF,
+    OP_CAST_CD,
     OP_ONES_LIKE_CC,
     OP_COPY_CC,
     OP_NEG_CC,
@@ -128,9 +153,9 @@ enum OpCodes {
     OP_FUNC_CC,
     OP_FUNC_CCC,
 
-    OP_REAL_FC,
-    OP_IMAG_FC,
-    OP_COMPLEX_CFF,
+    OP_REAL_DC,
+    OP_IMAG_DC,
+    OP_COMPLEX_CDD,
 
     OP_COPY_SS,
 
@@ -140,12 +165,14 @@ enum OpCodes {
     OP_SUM_IIN,
     OP_SUM_LLN,
     OP_SUM_FFN,
+    OP_SUM_DDN,
     OP_SUM_CCN,
 
     OP_PROD,
     OP_PROD_IIN,
     OP_PROD_LLN,
     OP_PROD_FFN,
+    OP_PROD_DDN,
     OP_PROD_CCN
 
 };
@@ -189,6 +216,19 @@ op_signature(int op, int n) {
             if (n == 0) return 'b';
             if (n == 1 || n == 2) return 'f';
             break;
+        case OP_GT_BDD:
+        case OP_GE_BDD:
+        case OP_EQ_BDD:
+        case OP_NE_BDD:
+            if (n == 0) return 'b';
+            if (n == 1 || n == 2) return 'd';
+            break;
+        case OP_EQ_BCC:
+        case OP_NE_BCC:
+            if (n == 0) return 'b';
+            if (n == 1 || n == 2) return 'c';
+            break;
+
         case OP_GT_BSS:
         case OP_GE_BSS:
         case OP_EQ_BSS:
@@ -234,6 +274,7 @@ op_signature(int op, int n) {
             if (n == 0 || n == 2 || n == 3) return 'l';
             if (n == 1) return 'b';
             break;
+
         case OP_CAST_FI:
             if (n == 0) return 'f';
             if (n == 1) return 'i';
@@ -268,11 +309,46 @@ op_signature(int op, int n) {
             if (n == 0 || n == 1 || n == 2) return 'f';
             if (n == 3) return 'n';
             break;
-        case OP_EQ_BCC:
-        case OP_NE_BCC:
-            if (n == 0) return 'b';
-            if (n == 1 || n == 2) return 'c';
+
+        case OP_CAST_DI:
+            if (n == 0) return 'd';
+            if (n == 1) return 'i';
             break;
+        case OP_CAST_DL:
+            if (n == 0) return 'd';
+            if (n == 1) return 'l';
+            break;
+        case OP_CAST_DF:
+            if (n == 0) return 'd';
+            if (n == 1) return 'f';
+            break;
+        case OP_COPY_DD:
+        case OP_ONES_LIKE_DD:
+        case OP_NEG_DD:
+        case OP_SQRT_DD:
+            if (n == 0 || n == 1) return 'd';
+            break;
+        case OP_ADD_DDD:
+        case OP_SUB_DDD:
+        case OP_MUL_DDD:
+        case OP_DIV_DDD:
+        case OP_POW_DDD:
+        case OP_MOD_DDD:
+            if (n == 0 || n == 1 || n == 2) return 'd';
+            break;
+        case OP_WHERE_DBDD:
+            if (n == 0 || n == 2 || n == 3) return 'd';
+            if (n == 1) return 'b';
+            break;
+        case OP_FUNC_DD:
+            if (n == 0 || n == 1) return 'd';
+            if (n == 2) return 'n';
+            break;
+        case OP_FUNC_DDD:
+            if (n == 0 || n == 1 || n == 2) return 'd';
+            if (n == 3) return 'n';
+            break;
+
         case OP_CAST_CI:
             if (n == 0) return 'c';
             if (n == 1) return 'i';
@@ -284,6 +360,10 @@ op_signature(int op, int n) {
         case OP_CAST_CF:
             if (n == 0) return 'c';
             if (n == 1) return 'f';
+            break;
+        case OP_CAST_CD:
+            if (n == 0) return 'c';
+            if (n == 1) return 'd';
             break;
         case OP_COPY_CC:
         case OP_ONES_LIKE_CC:
@@ -308,14 +388,14 @@ op_signature(int op, int n) {
             if (n == 0 || n == 1 || n == 2) return 'c';
             if (n == 3) return 'n';
             break;
-        case OP_REAL_FC:
-        case OP_IMAG_FC:
-            if (n == 0) return 'f';
+        case OP_REAL_DC:
+        case OP_IMAG_DC:
+            if (n == 0) return 'd';
             if (n == 1) return 'c';
             break;
-        case OP_COMPLEX_CFF:
+        case OP_COMPLEX_CDD:
             if (n == 0) return 'c';
-            if (n == 1 || n == 2) return 'f';
+            if (n == 1 || n == 2) return 'd';
             break;
         case OP_COPY_SS:
             if (n == 0 || n == 1) return 's';
@@ -333,6 +413,11 @@ op_signature(int op, int n) {
         case OP_PROD_FFN:
         case OP_SUM_FFN:
             if (n == 0 || n == 1) return 'f';
+            if (n == 2) return 'n';
+            break;
+        case OP_PROD_DDN:
+        case OP_SUM_DDN:
+            if (n == 0 || n == 1) return 'd';
             if (n == 2) return 'n';
             break;
         case OP_PROD_CCN:
@@ -387,10 +472,144 @@ enum FuncFFCodes {
     FUNC_FF_LAST
 };
 
-typedef double (*FuncFFPtr)(double);
+typedef float (*FuncFFPtr)(float);
 
 /* The order of this array must match the FuncFFCodes enum above */
+#ifdef _WIN32
 FuncFFPtr functions_ff[] = {
+    sqrtf2,
+    sinf2,
+    cosf2,
+    tanf2,
+    asinf2,
+    acosf2,
+    atanf2,
+    sinhf2,
+    coshf2,
+    tanhf2,
+    asinhf2,
+    acoshf2,
+    atanhf2,
+    logf2,
+    log1pf2,
+    log10f2,
+    expf2,
+    expm1f2,
+};
+#else
+FuncFFPtr functions_ff[] = {
+    sqrtf,
+    sinf,
+    cosf,
+    tanf,
+    asinf,
+    acosf,
+    atanf,
+    sinhf,
+    coshf,
+    tanhf,
+    asinhf,
+    acoshf,
+    atanhf,
+    logf,
+    log1pf,
+    log10f,
+    expf,
+    expm1f,
+};
+#endif  // #ifdef _WIN32
+
+#ifdef USE_VML
+typedef void (*FuncFFPtr_vml)(int, const float*, float*);
+FuncFFPtr_vml functions_ff_vml[] = {
+    vsSqrt,
+    vsSin,
+    vsCos,
+    vsTan,
+    vsAsin,
+    vsAcos,
+    vsAtan,
+    vsSinh,
+    vsCosh,
+    vsTanh,
+    vsAsinh,
+    vsAcosh,
+    vsAtanh,
+    vsLn,
+    vsLog1p,
+    vsLog10,
+    vsExp,
+    vsExpm1,
+};
+#endif
+
+enum FuncFFFCodes {
+    FUNC_FMOD_FFF = 0,
+    FUNC_ARCTAN2_FFF,
+
+    FUNC_FFF_LAST
+};
+
+typedef float (*FuncFFFPtr)(float, float);
+
+#ifdef _WIN32
+FuncFFFPtr functions_fff[] = {
+    fmodf2,
+    atan2f2,
+};
+#else
+FuncFFFPtr functions_fff[] = {
+    fmodf,
+    atan2f,
+};
+#endif  // #ifdef _WIN32
+
+#ifdef USE_VML
+/* fmod not available in VML */
+static void vsfmod(int n, const float* x1, const float* x2, float* dest)
+{
+    int j;
+    for(j=0; j < n; j++) {
+	dest[j] = fmod(x1[j], x2[j]);
+    };
+};
+
+typedef void (*FuncFFFPtr_vml)(int, const float*, const float*, float*);
+FuncFFFPtr_vml functions_fff_vml[] = {
+    vsfmod,
+    vsAtan2,
+};
+#endif
+
+
+enum FuncDDCodes {
+    FUNC_SQRT_DD = 0,
+    FUNC_SIN_DD,
+    FUNC_COS_DD,
+    FUNC_TAN_DD,
+    FUNC_ARCSIN_DD,
+    FUNC_ARCCOS_DD,
+    FUNC_ARCTAN_DD,
+    FUNC_SINH_DD,
+    FUNC_COSH_DD,
+    FUNC_TANH_DD,
+    FUNC_ARCSINH_DD,
+    FUNC_ARCCOSH_DD,
+    FUNC_ARCTANH_DD,
+
+    FUNC_LOG_DD,
+    FUNC_LOG1P_DD,
+    FUNC_LOG10_DD,
+    FUNC_EXP_DD,
+    FUNC_EXPM1_DD,
+
+    FUNC_DD_LAST
+};
+
+typedef double (*FuncDDPtr)(double);
+
+/* The order of this array must match the FuncDDCodes enum above */
+FuncDDPtr functions_dd[] = {
     sqrt,
     sin,
     cos,
@@ -412,8 +631,8 @@ FuncFFPtr functions_ff[] = {
 };
 
 #ifdef USE_VML
-typedef void (*FuncFFPtr_vml)(int, const double*, double*);
-FuncFFPtr_vml functions_ff_vml[] = {
+typedef void (*FuncDDPtr_vml)(int, const double*, double*);
+FuncDDPtr_vml functions_dd_vml[] = {
     vdSqrt,
     vdSin,
     vdCos,
@@ -435,16 +654,16 @@ FuncFFPtr_vml functions_ff_vml[] = {
 };
 #endif
 
-enum FuncFFFCodes {
-    FUNC_FMOD_FFF = 0,
-    FUNC_ARCTAN2_FFF,
+enum FuncDDDCodes {
+    FUNC_FMOD_DDD = 0,
+    FUNC_ARCTAN2_DDD,
 
-    FUNC_FFF_LAST
+    FUNC_DDD_LAST
 };
 
-typedef double (*FuncFFFPtr)(double, double);
+typedef double (*FuncDDDPtr)(double, double);
 
-FuncFFFPtr functions_fff[] = {
+FuncDDDPtr functions_ddd[] = {
     fmod,
     atan2,
 };
@@ -459,8 +678,8 @@ static void vdfmod(int n, const double* x1, const double* x2, double* dest)
     };
 };
 
-typedef void (*FuncFFFPtr_vml)(int, const double*, const double*, double*);
-FuncFFFPtr_vml functions_fff_vml[] = {
+typedef void (*FuncDDDPtr_vml)(int, const double*, const double*, double*);
+FuncDDDPtr_vml functions_ddd_vml[] = {
     vdfmod,
     vdAtan2,
 };
@@ -664,11 +883,12 @@ size_from_char(char c)
         case 'b': return sizeof(char);
         case 'i': return sizeof(int);
         case 'l': return sizeof(long long);
-        case 'f': return sizeof(double);
+        case 'f': return sizeof(float);
+        case 'd': return sizeof(double);
         case 'c': return 2*sizeof(double);
         case 's': return 0;  /* strings are ok but size must be computed */
         default:
-            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfcs'");
+            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcs'");
             return -1;
     }
 }
@@ -694,11 +914,12 @@ typecode_from_char(char c)
         case 'b': return PyArray_BOOL;
         case 'i': return PyArray_INT;
         case 'l': return PyArray_LONGLONG;
-        case 'f': return PyArray_DOUBLE;
+        case 'f': return PyArray_FLOAT;
+        case 'd': return PyArray_DOUBLE;
         case 'c': return PyArray_CDOUBLE;
         case 's': return PyArray_STRING;
         default:
-            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfcs'");
+            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcs'");
             return -1;
     }
 }
@@ -805,6 +1026,16 @@ check_program(NumExprObject *self)
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
+                } else if (op == OP_FUNC_DD) {
+                    if (arg < 0 || arg >= FUNC_DD_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                } else if (op == OP_FUNC_DDD) {
+                    if (arg < 0 || arg >= FUNC_DDD_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
                 } else if (op == OP_FUNC_CC) {
                     if (arg < 0 || arg >= FUNC_CC_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
@@ -906,9 +1137,16 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
                 itemsizes[i] = size_from_char('l');
                 continue;
             }
-            if (PyFloat_Check(o)) {
+            /* The Float32 scalars are the only ones that should reach here */
+            if (PyArray_IsScalar(o, Float32)) {
                 PyString_AS_STRING(constsig)[i] = 'f';
                 itemsizes[i] = size_from_char('f');
+                continue;
+            }
+            if (PyFloat_Check(o)) {
+                /* Python float constants are double precision by default */
+                PyString_AS_STRING(constsig)[i] = 'd';
+                itemsizes[i] = size_from_char('d');
                 continue;
             }
             if (PyComplex_Check(o)) {
@@ -921,7 +1159,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
                 itemsizes[i] = PyString_GET_SIZE(o);
                 continue;
             }
-            PyErr_SetString(PyExc_TypeError, "constants must be of type bool/int/long/float/complex/str");
+            PyErr_SetString(PyExc_TypeError, "constants must be of type bool/int/long/float/double/complex/str");
             Py_DECREF(constsig);
             Py_DECREF(constants);
             PyMem_Del(itemsizes);
@@ -1007,6 +1245,15 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
                 lmem[j] = value;
             }
         } else if (c == 'f') {
+            /* In this particular case the constant is in a NumPy scalar
+             and in a regular Python object */
+            float *fmem = (float*)mem[i+n_inputs+1];
+            float value = PyArrayScalar_VAL(PyTuple_GET_ITEM(constants, i),
+                                            Float);
+            for (j = 0; j < BLOCK_SIZE1; j++) {
+                fmem[j] = value;
+            }
+        } else if (c == 'd') {
             double *dmem = (double*)mem[i+n_inputs+1];
             double value = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(constants, i));
             for (j = 0; j < BLOCK_SIZE1; j++) {
@@ -1393,6 +1640,10 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 long long value = ((long long*)PyArray_DATA(a))[0];
                 for (j = 0; j < BLOCK_SIZE1; j++)
                     ((long long*)PyArray_DATA(b))[j] = value;
+            } else if (typecode == PyArray_FLOAT) {
+                float value = ((float*)PyArray_DATA(a))[0];
+                for (j = 0; j < BLOCK_SIZE1; j++)
+                    ((float*)PyArray_DATA(b))[j] = value;
             } else if (typecode == PyArray_DOUBLE) {
                 double value = ((double*)PyArray_DATA(a))[0];
                 for (j = 0; j < BLOCK_SIZE1; j++)
@@ -1537,7 +1788,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     }
 
 
-    r = run_interpreter(self, size, PyArray_DATA(output), inputs, inddata, &pc_error);
+    r = run_interpreter(self, size, PyArray_DATA(output), inputs, inddata,
+                        &pc_error);
 
     if (r < 0) {
         Py_XDECREF(output);
@@ -1714,6 +1966,11 @@ initinterpreter(void)
     add_op("eq_bff", OP_EQ_BFF);
     add_op("ne_bff", OP_NE_BFF);
 
+    add_op("gt_bdd", OP_GT_BDD);
+    add_op("ge_bdd", OP_GE_BDD);
+    add_op("eq_bdd", OP_EQ_BDD);
+    add_op("ne_bdd", OP_NE_BDD);
+
     add_op("gt_bss", OP_GT_BSS);
     add_op("ge_bss", OP_GE_BSS);
     add_op("eq_bss", OP_EQ_BSS);
@@ -1746,7 +2003,6 @@ initinterpreter(void)
     add_op("cast_fl", OP_CAST_FL);
     add_op("copy_ff", OP_COPY_FF);
     add_op("ones_like_ff", OP_ONES_LIKE_FF);
-    add_op("neg_cc", OP_NEG_CC);
     add_op("neg_ff", OP_NEG_FF);
     add_op("add_fff", OP_ADD_FFF);
     add_op("sub_fff", OP_SUB_FFF);
@@ -1759,12 +2015,30 @@ initinterpreter(void)
     add_op("func_ff", OP_FUNC_FF);
     add_op("func_fff", OP_FUNC_FFF);
 
+    add_op("cast_di", OP_CAST_DI);
+    add_op("cast_dl", OP_CAST_DL);
+    add_op("cast_df", OP_CAST_DF);
+    add_op("copy_dd", OP_COPY_DD);
+    add_op("ones_like_dd", OP_ONES_LIKE_DD);
+    add_op("neg_dd", OP_NEG_DD);
+    add_op("add_ddd", OP_ADD_DDD);
+    add_op("sub_ddd", OP_SUB_DDD);
+    add_op("mul_ddd", OP_MUL_DDD);
+    add_op("div_ddd", OP_DIV_DDD);
+    add_op("pow_ddd", OP_POW_DDD);
+    add_op("mod_ddd", OP_MOD_DDD);
+    add_op("sqrt_dd", OP_SQRT_DD);
+    add_op("where_dbdd", OP_WHERE_DBDD);
+    add_op("func_dd", OP_FUNC_DD);
+    add_op("func_ddd", OP_FUNC_DDD);
+
     add_op("eq_bcc", OP_EQ_BCC);
     add_op("ne_bcc", OP_NE_BCC);
 
     add_op("cast_ci", OP_CAST_CI);
     add_op("cast_cl", OP_CAST_CL);
     add_op("cast_cf", OP_CAST_CF);
+    add_op("cast_cd", OP_CAST_CD);
     add_op("copy_cc", OP_COPY_CC);
     add_op("ones_like_cc", OP_ONES_LIKE_CC);
     add_op("neg_cc", OP_NEG_CC);
@@ -1776,20 +2050,22 @@ initinterpreter(void)
     add_op("func_cc", OP_FUNC_CC);
     add_op("func_ccc", OP_FUNC_CCC);
 
-    add_op("real_fc", OP_REAL_FC);
-    add_op("imag_fc", OP_IMAG_FC);
-    add_op("complex_cff", OP_COMPLEX_CFF);
+    add_op("real_dc", OP_REAL_DC);
+    add_op("imag_dc", OP_IMAG_DC);
+    add_op("complex_cdd", OP_COMPLEX_CDD);
 
     add_op("copy_ss", OP_COPY_SS);
 
     add_op("sum_iin", OP_SUM_IIN);
     add_op("sum_lln", OP_SUM_LLN);
     add_op("sum_ffn", OP_SUM_FFN);
+    add_op("sum_ddn", OP_SUM_DDN);
     add_op("sum_ccn", OP_SUM_CCN);
 
     add_op("prod_iin", OP_PROD_IIN);
     add_op("prod_lln", OP_PROD_LLN);
     add_op("prod_ffn", OP_PROD_FFN);
+    add_op("prod_ddn", OP_PROD_DDN);
     add_op("prod_ccn", OP_PROD_CCN);
 
 #undef add_op
@@ -1826,6 +2102,29 @@ initinterpreter(void)
 
     add_func("arctan2_fff", FUNC_ARCTAN2_FFF);
     add_func("fmod_fff", FUNC_FMOD_FFF);
+
+    add_func("sqrt_dd", FUNC_SQRT_DD);
+    add_func("sin_dd", FUNC_SIN_DD);
+    add_func("cos_dd", FUNC_COS_DD);
+    add_func("tan_dd", FUNC_TAN_DD);
+    add_func("arcsin_dd", FUNC_ARCSIN_DD);
+    add_func("arccos_dd", FUNC_ARCCOS_DD);
+    add_func("arctan_dd", FUNC_ARCTAN_DD);
+    add_func("sinh_dd", FUNC_SINH_DD);
+    add_func("cosh_dd", FUNC_COSH_DD);
+    add_func("tanh_dd", FUNC_TANH_DD);
+    add_func("arcsinh_dd", FUNC_ARCSINH_DD);
+    add_func("arccosh_dd", FUNC_ARCCOSH_DD);
+    add_func("arctanh_dd", FUNC_ARCTANH_DD);
+
+    add_func("log_dd", FUNC_LOG_DD);
+    add_func("log1p_dd", FUNC_LOG1P_DD);
+    add_func("log10_dd", FUNC_LOG10_DD);
+    add_func("exp_dd", FUNC_EXP_DD);
+    add_func("expm1_dd", FUNC_EXPM1_DD);
+
+    add_func("arctan2_ddd", FUNC_ARCTAN2_DDD);
+    add_func("fmod_ddd", FUNC_FMOD_DDD);
 
     add_func("sqrt_cc", FUNC_SQRT_CC);
     add_func("sin_cc", FUNC_SIN_CC);

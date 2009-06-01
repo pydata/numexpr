@@ -3,6 +3,14 @@ import timeit, numpy
 array_size = 1e6
 iterations = 10
 
+# Choose the type you want to benchmark
+#dtype = 'int8'
+#dtype = 'int16'
+#dtype = 'int32'
+#dtype = 'int64'
+dtype = 'float32'
+#dtype = 'float64'
+
 def compare_times(setup, expr):
     print "Expression:", expr
     namespace = {}
@@ -34,12 +42,12 @@ from numpy import arange
 try: from scipy.weave import blitz
 except: pass
 from numexpr import evaluate
-result = arange(%f)
-b = arange(%f)
-c = arange(%f)
-d = arange(%f)
-e = arange(%f)
-""" % ((array_size,)*5)
+result = arange(%f, dtype='%s')
+b = arange(%f, dtype='%s')
+c = arange(%f, dtype='%s')
+d = arange(%f, dtype='%s')
+e = arange(%f, dtype='%s')
+""" % ((array_size, dtype)*5)
 expr1 = 'b*c+d*e'
 
 setup2 = """\
@@ -47,10 +55,10 @@ from numpy import arange
 try: from scipy.weave import blitz
 except: pass
 from numexpr import evaluate
-a = arange(%f)
-b = arange(%f)
-result = arange(%f)
-""" % ((array_size,)*3)
+a = arange(%f, dtype='%s')
+b = arange(%f, dtype='%s')
+result = arange(%f, dtype='%s')
+""" % ((array_size, dtype)*3)
 expr2 = '2*a+3*b'
 
 
@@ -59,10 +67,10 @@ from numpy import arange, sin, cos, sinh
 try: from scipy.weave import blitz
 except: pass
 from numexpr import evaluate
-a = arange(2*%f)[::2]
-b = arange(%f)
-result = arange(%f)
-""" % ((array_size,)*3)
+a = arange(2*%f, dtype='%s')[::2]
+b = arange(%f, dtype='%s')
+result = arange(%f, dtype='%s')
+""" % ((array_size, dtype)*3)
 expr3 = '2*a + (cos(3)+5)*sinh(cos(b))'
 
 
@@ -71,10 +79,10 @@ from numpy import arange, sin, cos, sinh, arctan2
 try: from scipy.weave import blitz
 except: pass
 from numexpr import evaluate
-a = arange(2*%f)[::2]
-b = arange(%f)
-result = arange(%f)
-""" % ((array_size,)*3)
+a = arange(2*%f, dtype='%s')[::2]
+b = arange(%f, dtype='%s')
+result = arange(%f, dtype='%s')
+""" % ((array_size, dtype)*3)
 expr4 = '2*a + arctan2(a, b)'
 
 
@@ -83,10 +91,10 @@ from numpy import arange, sin, cos, sinh, arctan2, sqrt, where
 try: from scipy.weave import blitz
 except: pass
 from numexpr import evaluate
-a = arange(2*%f, dtype=float)[::2]
-b = arange(%f, dtype=float)
-result = arange(%f, dtype=float)
-""" % ((array_size,)*3)
+a = arange(2*%f, dtype='%s')[::2]
+b = arange(%f, dtype='%s')
+result = arange(%f, dtype='%s')
+""" % ((array_size, dtype)*3)
 expr5 = 'where(0.1*a > arctan2(a, b), 2*a, arctan2(a,b))'
 
 expr6 = 'where(a != 0.0, 2, b)'

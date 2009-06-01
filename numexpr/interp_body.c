@@ -137,39 +137,44 @@
         #define reduce_ptr  (dest + flat_index(&store_index, j))
         #define i_reduce    *(int *)reduce_ptr
         #define l_reduce    *(long long *)reduce_ptr
-        #define f_reduce    *(double *)reduce_ptr
+        #define f_reduce    *(float *)reduce_ptr
+        #define d_reduce    *(double *)reduce_ptr
         #define cr_reduce   *(double *)ptr
         #define ci_reduce   *((double *)ptr+1)
         #define b_dest ((char *)dest)[j]
         #define i_dest ((int *)dest)[j]
         #define l_dest ((long long *)dest)[j]
-        #define f_dest ((double *)dest)[j]
+        #define f_dest ((float *)dest)[j]
+        #define d_dest ((double *)dest)[j]
         #define cr_dest ((double *)dest)[2*j]
         #define ci_dest ((double *)dest)[2*j+1]
         #define s_dest ((char *)dest + j*params.memsteps[store_in])
         #define b1    ((char   *)(x1+j*sb1))[0]
         #define i1    ((int    *)(x1+j*sb1))[0]
         #define l1    ((long long *)(x1+j*sb1))[0]
-        #define f1    ((double *)(x1+j*sb1))[0]
+        #define f1    ((float  *)(x1+j*sb1))[0]
+        #define d1    ((double *)(x1+j*sb1))[0]
         #define c1r   ((double *)(x1+j*sb1))[0]
         #define c1i   ((double *)(x1+j*sb1))[1]
         #define s1    ((char   *)x1+j*sb1)
         #define b2    ((char   *)(x2+j*sb2))[0]
         #define i2    ((int    *)(x2+j*sb2))[0]
         #define l2    ((long long *)(x2+j*sb2))[0]
-        #define f2    ((double *)(x2+j*sb2))[0]
+        #define f2    ((float  *)(x2+j*sb2))[0]
+        #define d2    ((double *)(x2+j*sb2))[0]
         #define c2r   ((double *)(x2+j*sb2))[0]
         #define c2i   ((double *)(x2+j*sb2))[1]
         #define s2    ((char   *)x2+j*sb2)
         #define b3    ((char   *)(x3+j*sb3))[0]
         #define i3    ((int    *)(x3+j*sb3))[0]
         #define l3    ((long long *)(x3+j*sb3))[0]
-        #define f3    ((double *)(x3+j*sb3))[0]
+        #define f3    ((float  *)(x3+j*sb3))[0]
+        #define d3    ((double *)(x3+j*sb3))[0]
         #define c3r   ((double *)(x3+j*sb3))[0]
         #define c3i   ((double *)(x3+j*sb3))[1]
         #define s3    ((char   *)x3+j*sb3)
 	/* Some temporaries */
-        double fa, fb;
+        double da, db;
         cdouble ca, cb;
         char *ptr;
 
@@ -183,8 +188,9 @@
            data even on platforms that crash while accessing it
            (like the Sparc architecture under Solaris). */
         case OP_COPY_II: VEC_ARG1(memcpy(&i_dest, s1, sizeof(int)));
-        case OP_COPY_LL: VEC_ARG1(memcpy(&f_dest, s1, sizeof(long long)));
-        case OP_COPY_FF: VEC_ARG1(memcpy(&f_dest, s1, sizeof(double)));
+        case OP_COPY_LL: VEC_ARG1(memcpy(&l_dest, s1, sizeof(long long)));
+        case OP_COPY_FF: VEC_ARG1(memcpy(&f_dest, s1, sizeof(float)));
+        case OP_COPY_DD: VEC_ARG1(memcpy(&d_dest, s1, sizeof(double)));
         case OP_COPY_CC: VEC_ARG1(memcpy(&cr_dest, s1, sizeof(double)*2));
 
         case OP_INVERT_BB: VEC_ARG1(b_dest = !b1);
@@ -208,6 +214,11 @@
         case OP_GE_BFF: VEC_ARG2(b_dest = (f1 >= f2));
         case OP_EQ_BFF: VEC_ARG2(b_dest = (f1 == f2));
         case OP_NE_BFF: VEC_ARG2(b_dest = (f1 != f2));
+
+        case OP_GT_BDD: VEC_ARG2(b_dest = (d1 > d2));
+        case OP_GE_BDD: VEC_ARG2(b_dest = (d1 >= d2));
+        case OP_EQ_BDD: VEC_ARG2(b_dest = (d1 == d2));
+        case OP_NE_BDD: VEC_ARG2(b_dest = (d1 != d2));
 
         case OP_GT_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) > 0));
         case OP_GE_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) >= 0));
@@ -239,8 +250,9 @@
 
         case OP_WHERE_LBLL: VEC_ARG3(l_dest = b1 ? l2 : l3);
 
-        case OP_CAST_FI: VEC_ARG1(f_dest = (double)(i1));
-        case OP_CAST_FL: VEC_ARG1(f_dest = (double)(l1));
+          /* Float */
+        case OP_CAST_FI: VEC_ARG1(f_dest = (float)(i1));
+        case OP_CAST_FL: VEC_ARG1(f_dest = (float)(l1));
         case OP_ONES_LIKE_FF: VEC_ARG1(f_dest = 1.0);
         case OP_NEG_FF: VEC_ARG1(f_dest = -f1);
 
@@ -249,45 +261,104 @@
         case OP_MUL_FFF: VEC_ARG2(f_dest = f1 * f2);
         case OP_DIV_FFF:
 #ifdef USE_VML
-	    VEC_ARG2_VML(vdDiv(VECTOR_SIZE, (double*)x1, (double*)x2, (double*)dest));
+	    VEC_ARG2_VML(vsDiv(VECTOR_SIZE,
+                               (float*)x1, (float*)x2, (float*)dest));
 #else
 	    VEC_ARG2(f_dest = f1 / f2);
 #endif
         case OP_POW_FFF:
 #ifdef USE_VML
-	    VEC_ARG2_VML(vdPow(VECTOR_SIZE, (double*)x1, (double*)x2, (double*)dest));
+	    VEC_ARG2_VML(vsPow(VECTOR_SIZE,
+                               (float*)x1, (float*)x2, (float*)dest));
 #else
-	    VEC_ARG2(f_dest = pow(f1, f2));
+	    VEC_ARG2(f_dest = powf(f1, f2));
 #endif
-        case OP_MOD_FFF: VEC_ARG2(f_dest = f1 - floor(f1/f2) * f2);
+        case OP_MOD_FFF: VEC_ARG2(f_dest = f1 - floorf(f1/f2) * f2);
 
         case OP_SQRT_FF:
 #ifdef USE_VML
-	    VEC_ARG1_VML(vdSqrt(VECTOR_SIZE, (double*)x1, (double*)dest));
+	    VEC_ARG1_VML(vsSqrt(VECTOR_SIZE, (float*)x1, (float*)dest));
 #else
-	    VEC_ARG1(f_dest = sqrt(f1));
+	    VEC_ARG1(f_dest = sqrtf(f1));
 #endif
 
         case OP_WHERE_FBFF: VEC_ARG3(f_dest = b1 ? f2 : f3);
 
         case OP_FUNC_FF:
 #ifdef USE_VML
-	    VEC_ARG1_VML(functions_ff_vml[arg2](VECTOR_SIZE, (double*)x1,(double*)dest));
+	    VEC_ARG1_VML(functions_ff_vml[arg2](VECTOR_SIZE,
+                                                (float*)x1, (float*)dest));
 #else
 	    VEC_ARG1(f_dest = functions_ff[arg2](f1));
 #endif
         case OP_FUNC_FFF:
 #ifdef USE_VML
-	    VEC_ARG2_VML(functions_fff_vml[arg3](VECTOR_SIZE, (double*)x1,(double*)x2,(double*)dest));
+	    VEC_ARG2_VML(functions_fff_vml[arg3](VECTOR_SIZE,
+                                                 (float*)x1, (float*)x2,
+                                                 (float*)dest));
 #else
 	    VEC_ARG2(f_dest = functions_fff[arg3](f1, f2));
 #endif
 
+          /* Double */
+        case OP_CAST_DI: VEC_ARG1(d_dest = (double)(i1));
+        case OP_CAST_DL: VEC_ARG1(d_dest = (double)(l1));
+        case OP_CAST_DF: VEC_ARG1(d_dest = (double)(f1));
+        case OP_ONES_LIKE_DD: VEC_ARG1(d_dest = 1.0);
+        case OP_NEG_DD: VEC_ARG1(d_dest = -d1);
+
+        case OP_ADD_DDD: VEC_ARG2(d_dest = d1 + d2);
+        case OP_SUB_DDD: VEC_ARG2(d_dest = d1 - d2);
+        case OP_MUL_DDD: VEC_ARG2(d_dest = d1 * d2);
+        case OP_DIV_DDD:
+#ifdef USE_VML
+	    VEC_ARG2_VML(vdDiv(VECTOR_SIZE,
+                               (double*)x1, (double*)x2, (double*)dest));
+#else
+	    VEC_ARG2(d_dest = d1 / d2);
+#endif
+        case OP_POW_DDD:
+#ifdef USE_VML
+	    VEC_ARG2_VML(vdPow(VECTOR_SIZE,
+                               (double*)x1, (double*)x2, (double*)dest));
+#else
+	    VEC_ARG2(d_dest = pow(d1, d2));
+#endif
+        case OP_MOD_DDD: VEC_ARG2(d_dest = d1 - floor(d1/d2) * d2);
+
+        case OP_SQRT_DD:
+#ifdef USE_VML
+	    VEC_ARG1_VML(vdSqrt(VECTOR_SIZE, (double*)x1, (double*)dest));
+#else
+	    VEC_ARG1(d_dest = sqrt(d1));
+#endif
+
+        case OP_WHERE_DBDD: VEC_ARG3(d_dest = b1 ? d2 : d3);
+
+        case OP_FUNC_DD:
+#ifdef USE_VML
+	    VEC_ARG1_VML(functions_dd_vml[arg2](VECTOR_SIZE,
+                                                (double*)x1, (double*)dest));
+#else
+	    VEC_ARG1(d_dest = functions_dd[arg2](d1));
+#endif
+        case OP_FUNC_DDD:
+#ifdef USE_VML
+	    VEC_ARG2_VML(functions_ddd_vml[arg3](VECTOR_SIZE,
+                                                 (double*)x1, (double*)x2,
+                                                 (double*)dest));
+#else
+	    VEC_ARG2(d_dest = functions_ddd[arg3](d1, d2));
+#endif
+
+            /* Complex */
         case OP_CAST_CI: VEC_ARG1(cr_dest = (double)(i1);
                                   ci_dest = 0);
         case OP_CAST_CL: VEC_ARG1(cr_dest = (double)(l1);
                                   ci_dest = 0);
         case OP_CAST_CF: VEC_ARG1(cr_dest = f1;
+                                  ci_dest = 0);
+        case OP_CAST_CD: VEC_ARG1(cr_dest = d1;
                                   ci_dest = 0);
         case OP_ONES_LIKE_CC: VEC_ARG1(cr_dest = 1;
                                   ci_dest = 0);
@@ -298,17 +369,18 @@
                                   ci_dest = c1i + c2i);
         case OP_SUB_CCC: VEC_ARG2(cr_dest = c1r - c2r;
                                   ci_dest = c1i - c2i);
-        case OP_MUL_CCC: VEC_ARG2(fa = c1r*c2r - c1i*c2i;
+        case OP_MUL_CCC: VEC_ARG2(da = c1r*c2r - c1i*c2i;
 				  ci_dest = c1r*c2i + c1i*c2r;
-				  cr_dest = fa);
+				  cr_dest = da);
         case OP_DIV_CCC:
 #ifdef USE_VMLXXX /* VML complex division is slower */
-	    VEC_ARG2_VML(vzDiv(VECTOR_SIZE, (const MKL_Complex16*)x1, (const MKL_Complex16*)x2, (MKL_Complex16*)dest));
+	    VEC_ARG2_VML(vzDiv(VECTOR_SIZE, (const MKL_Complex16*)x1,
+                               (const MKL_Complex16*)x2, (MKL_Complex16*)dest));
 #else
-	    VEC_ARG2(fa = c2r*c2r + c2i*c2i;
-		     fb = (c1r*c2r + c1i*c2i) / fa;
-		     ci_dest = (c1i*c2r - c1r*c2i) / fa;
-		     cr_dest = fb);
+	    VEC_ARG2(da = c2r*c2r + c2i*c2i;
+		     db = (c1r*c2r + c1i*c2i) / da;
+		     ci_dest = (c1i*c2r - c1r*c2i) / da;
+		     cr_dest = db);
 #endif
         case OP_EQ_BCC: VEC_ARG2(b_dest = (c1r == c2r && c1i == c2i));
         case OP_NE_BCC: VEC_ARG2(b_dest = (c1r != c2r || c1i != c2i));
@@ -317,7 +389,9 @@
                                      ci_dest = b1 ? c2i : c3i);
         case OP_FUNC_CC:
 #ifdef USE_VML
-	    VEC_ARG1_VML(functions_cc_vml[arg2](VECTOR_SIZE, (const MKL_Complex16*)x1, (MKL_Complex16*)dest));
+	    VEC_ARG1_VML(functions_cc_vml[arg2](VECTOR_SIZE,
+                                                (const MKL_Complex16*)x1,
+                                                (MKL_Complex16*)dest));
 #else
 	    VEC_ARG1(ca.real = c1r;
 		     ca.imag = c1i;
@@ -333,14 +407,15 @@
                                    cr_dest = ca.real;
                                    ci_dest = ca.imag);
 
-        case OP_REAL_FC: VEC_ARG1(f_dest = c1r);
-        case OP_IMAG_FC: VEC_ARG1(f_dest = c1i);
-        case OP_COMPLEX_CFF: VEC_ARG2(cr_dest = f1;
-                                      ci_dest = f2);
+        case OP_REAL_DC: VEC_ARG1(d_dest = c1r);
+        case OP_IMAG_DC: VEC_ARG1(d_dest = c1i);
+        case OP_COMPLEX_CDD: VEC_ARG2(cr_dest = d1;
+                                      ci_dest = d2);
 
         case OP_SUM_IIN: VEC_ARG1(i_reduce += i1);
         case OP_SUM_LLN: VEC_ARG1(l_reduce += l1);
         case OP_SUM_FFN: VEC_ARG1(f_reduce += f1);
+        case OP_SUM_DDN: VEC_ARG1(d_reduce += d1);
         case OP_SUM_CCN: VEC_ARG1(ptr = reduce_ptr;
                                   cr_reduce += c1r;
                                   ci_reduce += c1i);
@@ -348,10 +423,11 @@
         case OP_PROD_IIN: VEC_ARG1(i_reduce *= i1);
         case OP_PROD_LLN: VEC_ARG1(l_reduce *= l1);
         case OP_PROD_FFN: VEC_ARG1(f_reduce *= f1);
+        case OP_PROD_DDN: VEC_ARG1(d_reduce *= d1);
         case OP_PROD_CCN: VEC_ARG1(ptr = reduce_ptr;
-                                   fa = cr_reduce*c1r - ci_reduce*c1i;
+                                   da = cr_reduce*c1r - ci_reduce*c1i;
                                    ci_reduce = cr_reduce*c1i + ci_reduce*c1r;
-                                   cr_reduce = fa);
+                                   cr_reduce = da);
 
         default:
             *pc_error = pc;
@@ -365,10 +441,17 @@
 #undef VEC_ARG2
 #undef VEC_ARG3
 
+#undef i_reduce
+#undef l_reduce
+#undef f_reduce
+#undef d_reduce
+#undef cr_reduce
+#undef ci_reduce
 #undef b_dest
 #undef i_dest
 #undef l_dest
 #undef f_dest
+#undef d_dest
 #undef cr_dest
 #undef ci_dest
 #undef s_dest
@@ -376,6 +459,7 @@
 #undef i1
 #undef l1
 #undef f1
+#undef d1
 #undef c1r
 #undef c1i
 #undef s1
@@ -383,6 +467,7 @@
 #undef i2
 #undef l2
 #undef f2
+#undef d2
 #undef c2r
 #undef c2i
 #undef s2
@@ -390,6 +475,7 @@
 #undef i3
 #undef l3
 #undef f3
+#undef d3
 #undef c3r
 #undef c3i
 #undef s3

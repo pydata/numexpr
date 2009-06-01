@@ -37,20 +37,45 @@ Datatypes supported internally
 Numexpr operates internally only with the following types:
 
     * 8-bit boolean (bool)
-    * 32-bit signed integer (int)
-    * 64-bit signed integer (long)
-    * 64-bit, double-precision floating point number (float)
-    * 2x64-bit, double-precision complex number (complex)
+    * 32-bit signed integer (int or int32)
+    * 64-bit signed integer (long or int64)
+    * 32-bit single-precision floating point number (float or float32)
+    * 64-bit, double-precision floating point number (double or float64)
+    * 2x64-bit, double-precision complex number (complex or complex128)
     * Raw string of bytes (str)
 
 If the arrays in the expression does not match any of these types,
 they will be upcasted to one of the above types (following the usual
-type inference rules).  Have this in mind when doing estimations about
-the memory consumption during the computation of your expressions.
+type inference rules, see below).  Have this in mind when doing
+estimations about the memory consumption during the computation of
+your expressions.
 
 Also, the types in Numexpr conditions are somewhat stricter than those
 of Python.  For instance, the only valid constants for booleans are
 `True` and `False`, and they are never automatically cast to integers.
+
+
+Casting rules
+=============
+
+Casting rules in Numexpr follow closely those of NumPy.  However, for
+implementation reasons, there are some known exceptions to this rule,
+namely:
+
+    * A floating point function (e.g. `sin`) acting on `int8` or
+      `int16` types returns a `float64` type, instead of the `float32`
+      that is returned by NumPy functions.  This is mainly due to the
+      absence of native `int8` or `int16` types in Numexpr.
+
+    * In operations implying a scalar and an array, the normal rules
+      of casting are used in Numexpr, in contrast with NumPy, where
+      array types takes priority.  For example, if 'a' is an array of
+      type `float32` and 'b' is an scalar of type `float64` (or Python
+      `float` type, which is equivalent), then 'a*b' returns a
+      `float64` in Numexpr, but a `float32` in NumPy (i.e. array
+      operands take priority in determining the result type).  If you
+      need to keep the result a `float32`, be sure you use a `float32`
+      scalar too.
 
 
 Supported operators
@@ -185,9 +210,10 @@ Authors
 
 Numexpr was initially written by David Cooke, and extended to more
 types by Tim Hochberg.  Francesc Alted contributed support for
-booleans and for efficient strided and unaligned array operations.
-Ivan Vilata contributed support for strings.  Gregor Thalhammer
-implemented the support for Intel VML (Vector Math Library).
+booleans and simple-precision floating point types and for efficient
+strided and unaligned array operations.  Ivan Vilata contributed
+support for strings.  Gregor Thalhammer implemented the support for
+Intel VML (Vector Math Library).
 
 
 License
