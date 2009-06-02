@@ -1,5 +1,5 @@
 ========================
- Announcing Numexpr 1.3
+ Announcing Numexpr 1.4
 ========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
