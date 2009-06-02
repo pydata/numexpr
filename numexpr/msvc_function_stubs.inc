@@ -2,6 +2,39 @@
    definitions in <math.h> are actually #define'd and are not usable
    as function pointers :-/ */
 
+#if _MSC_VER < 1400  // 1200 == MSVC 6.0
+/* Apparently, single precision functions are not included in MSVC 6 */
+
+#define sqrtf(x)    ((float)sqrt((double)(x)))
+#define sinf(x)    ((float)sin((double)(x)))
+#define cosf(x)    ((float)cos((double)(x)))
+#define tanf(x)    ((float)tan((double)(x)))
+#define asinf(x)    ((float)asin((double)(x)))
+#define acosf(x)    ((float)acos((double)(x)))
+#define atanf(x)    ((float)atan((double)(x)))
+#define sinhf(x)    ((float)sinh((double)(x)))
+#define coshf(x)    ((float)cosh((double)(x)))
+#define tanhf(x)    ((float)tanh((double)(x)))
+#define asinhf(x)    ((float)asinh((double)(x)))
+#define acoshf(x)    ((float)acosh((double)(x)))
+#define atanhf(x)    ((float)atanh((double)(x)))
+#define logf(x)    ((float)log((double)(x)))
+#define log1pf(x)    ((float)log1p((double)(x)))
+#define log10f(x)    ((float)log10((double)(x)))
+#define expf(x)    ((float)exp((double)(x)))
+#define expm1f(x)    ((float)expm1((double)(x)))
+#define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
+#define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
+
+/* The next are directly called from interp_body.c */
+#define powf(x, y)    ((float)pow((double)(x), (double)(y)))
+#define floorf(x)    ((float)floor((double)(x)))
+
+#endif  // _MSC_VER < 1400
+
+
+/* Now the actual stubs */
+
 inline float sqrtf2(float x) {
     return sqrtf(x);
 }
