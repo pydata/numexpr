@@ -9,7 +9,11 @@ and use less memory than doing the same calculation in Python.
  #XXX version-specific blurb XXX#
 
 In case you want to know more in detail what has changed in this
-version, have a look at ``RELEASE_NOTES.txt`` in the tarball.
+version, see:
+
+http://code.google.com/p/numexpr/wiki/ReleaseNotes
+
+or have a look at RELEASE_NOTES.txt in the tarball.
 
 
 Where I can find Numexpr?
