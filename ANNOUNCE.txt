@@ -6,18 +6,7 @@ Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
-On this release, and due to popular demand, support for single
-precision floating point types has been added.  This allows for both
-improved performance and optimal usage of memory for the
-single precision computations.  Of course, support for single
-precision in combination with Intel's VML is there too :)
-
-However, caveat emptor: the casting rules for floating point types
-slightly differs from those of NumPy.  See the casting section at:
-
-      http://code.google.com/p/numexpr/wiki/Overview
-
-or the README.txt file for more info on this issue.
+ #XXX version-specific blurb XXX#
 
 In case you want to know more in detail what has changed in this
 version, have a look at ``RELEASE_NOTES.txt`` in the tarball.
