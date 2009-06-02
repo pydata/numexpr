@@ -56,6 +56,15 @@ Uploading
 Announcing
 ----------
 
+- Update the release notes in the numexpr site:
+
+  http://code.google.com/p/numexpr/wiki/ReleaseNotes
+
+  *WARNING*: Remember that the syntax for Google Code pages is
+   wiki-oriented and not rest-oriented.  When copying the text from
+   ``RELEASE_NOTES.txt`` to the wiki, double chek that it reads as it
+   should (the ``Preview`` button is your friend!).
+
 - Send an announcement to the NumPy list and python-announce list.
   Use the ``ANNOUNCE.txt`` file as skeleton (or possibly as the
   definitive version).
