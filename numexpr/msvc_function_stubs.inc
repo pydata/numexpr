@@ -2,8 +2,8 @@
    definitions in <math.h> are actually #define'd and are not usable
    as function pointers :-/ */
 
-#if _MSC_VER < 1400  // 1200 == MSVC 6.0
-/* Apparently, single precision functions are not included in MSVC 6 */
+#if _MSC_VER < 1400  // 1310 == MSVC 7.1
+/* Apparently, single precision functions are not included in MSVC 7.1 */
 
 #define sqrtf(x)    ((float)sqrt((double)(x)))
 #define sinf(x)    ((float)sin((double)(x)))
