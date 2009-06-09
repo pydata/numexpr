@@ -45,7 +45,8 @@ def configuration():
     extension_config_data = {
         'sources': ['numexpr/interpreter.c'],
         'depends': ['numexpr/interp_body.c',
-                    'numexpr/complex_functions.inc'],
+                    'numexpr/complex_functions.inc',
+                    'numexpr/msvc_function_stubs.inc'],
         'extra_compile_args': ['-funroll-all-loops',],
         }
     dict_append(extension_config_data, **mkl_config_data)
