@@ -120,6 +120,7 @@ The next are the current supported set:
     * sqrt(float|complex): float|complex
         Square root.
     * abs(float|complex): float|complex
+        Absolute value.
     * {real,imag}(complex): float
         Real or imaginary part of complex.
     * complex(float, float): complex
