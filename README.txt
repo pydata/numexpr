@@ -112,10 +112,21 @@ The next are the current supported set:
         Exponential and exponential minus one.
     * sqrt(float|complex): float|complex
         Square root.
+    * abs(float|complex): float|complex
     * {real,imag}(complex): float
         Real or imaginary part of complex.
     * complex(float, float): complex
         Complex from real and imaginary parts.
+
+.. Notes:
+
+   + `abs()` for complex inputs returns a ``complex`` output too.
+   This is a departure from NumPy where a ``float`` is returned
+   instead.  However, Numexpr is not flexible enough yet so as to
+   allow this to happen.  Meanwhile, if you want to mimic NumPy
+   behaviour, you may want to select the real part via the ``real``
+   function (e.g. "real(abs(cplx))") or via the ``real`` selector
+   (e.g. "abs(cplx).real").
 
 More functions can be added if you need them.
 

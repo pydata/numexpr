@@ -23,6 +23,7 @@
 #define log10f(x)    ((float)log10((double)(x)))
 #define expf(x)    ((float)exp((double)(x)))
 #define expm1f(x)    ((float)expm1((double)(x)))
+#define fabsf(x)    ((float)fabs((double)(x)))
 #define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
 
@@ -105,6 +106,10 @@ inline float expf2(float x) {
 
 inline float expm1f2(float x) {
     return expm1f(x);
+}
+
+inline float fabsf2(float x) {
+    return fabsf(x);
 }
 
 inline float fmodf2(float x, float y) {

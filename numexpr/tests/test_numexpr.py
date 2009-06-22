@@ -237,7 +237,7 @@ func1tests = []
 for func in ['copy', 'ones_like', 'sqrt',
              'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-             'log', 'log1p', 'log10', 'exp', 'expm1']:
+             'log', 'log1p', 'log10', 'exp', 'expm1', 'abs']:
     func1tests.append("a + %s(b+c)" % func)
 tests.append(('1-ARG FUNCS', func1tests))
 
@@ -312,9 +312,12 @@ def generate_test_expressions():
         for dtype in [int, long, numpy.float32, double, complex]:
             array_size = 100
             a = arange(2*array_size, dtype=dtype)[::2]
+            #print "a-->", a
             a2 = zeros([array_size, array_size], dtype=dtype)
             b = arange(array_size, dtype=dtype) / array_size
+            #print "b-->", b
             c = arange(array_size, dtype=dtype)
+            #print "c-->", c
             d = arange(array_size, dtype=dtype)
             e = arange(array_size, dtype=dtype)
             if dtype == complex:

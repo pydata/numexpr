@@ -381,4 +381,9 @@ nc_tanh(cdouble *x, cdouble *r)
     return;
 }
 
-
+static void
+nc_abs(cdouble *x, cdouble *r)
+{
+    r->real = sqrt(x->real*x->real + x->imag*x->imag);
+    r->imag = 0;
+}

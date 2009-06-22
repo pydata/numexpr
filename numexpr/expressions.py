@@ -288,6 +288,8 @@ functions = {
     'exp' : func(numpy.exp, 'float'),
     'expm1' : func(numpy.expm1, 'float'),
 
+    'abs': func(numpy.absolute, 'float'),
+
     'where' : where_func,
 
     'real' : func(numpy.real, 'double', 'double'),

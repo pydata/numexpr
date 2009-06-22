@@ -597,7 +597,7 @@ def getExprNames(text, context):
                                       'sinh', 'cosh', 'tanh',
                                       'arcsin', 'arccos', 'arctan',
                                       'arccosh', 'arcsinh', 'arctanh',
-                                      'arctan2']:
+                                      'arctan2', 'abs']:
                 ex_uses_vml = True
                 break
         else:
