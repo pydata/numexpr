@@ -312,12 +312,9 @@ def generate_test_expressions():
         for dtype in [int, long, numpy.float32, double, complex]:
             array_size = 100
             a = arange(2*array_size, dtype=dtype)[::2]
-            #print "a-->", a
             a2 = zeros([array_size, array_size], dtype=dtype)
             b = arange(array_size, dtype=dtype) / array_size
-            #print "b-->", b
             c = arange(array_size, dtype=dtype)
-            #print "c-->", c
             d = arange(array_size, dtype=dtype)
             e = arange(array_size, dtype=dtype)
             if dtype == complex:
