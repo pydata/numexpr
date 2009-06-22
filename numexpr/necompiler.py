@@ -568,6 +568,8 @@ def getType(a):
     if kind in 'iu':
         if a.dtype.itemsize > 4:
             return long  # ``long`` is for integers of more than 32 bits
+        if kind == 'u' and a.dtype.itemsize == 4:
+            return long  # use ``long`` here as an ``int`` is not enough
         return int
     if kind == 'f':
         if a.dtype.itemsize > 4:

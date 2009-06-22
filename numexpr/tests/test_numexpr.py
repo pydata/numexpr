@@ -380,6 +380,35 @@ class test_int32_int64(TestCase):
         assert_array_equal(respy, resnx)
         self.assertEqual(resnx.dtype.name, 'int64')
 
+
+class test_uint32_int64(TestCase):
+    def test_small_uint32(self):
+        # Small uint32 should not be downgraded to ints.
+        a = numpy.uint32(42)
+        res = evaluate('a')
+        assert_array_equal(res, 42)
+        self.assertEqual(res.dtype.name, 'int64')
+
+    def test_uint32_constant_promotion(self):
+        int32array = arange(100, dtype='int32')
+        a = numpy.uint32(2)
+        res = int32array * a
+        res32 = evaluate('int32array * 2')
+        res64 = evaluate('int32array * a')
+        assert_array_equal(res, res32)
+        assert_array_equal(res, res64)
+        self.assertEqual(res32.dtype.name, 'int32')
+        self.assertEqual(res64.dtype.name, 'int64')
+
+    def test_int64_array_promotion(self):
+        uint32array = arange(100, dtype='uint32')
+        int64array = arange(100, dtype='int64')
+        respy = uint32array * int64array
+        resnx = evaluate('uint32array * int64array')
+        assert_array_equal(respy, resnx)
+        self.assertEqual(resnx.dtype.name, 'int64')
+
+
 class test_strings(TestCase):
     BLOCK_SIZE1 = 128
     BLOCK_SIZE2 = 8
@@ -538,6 +567,7 @@ def suite():
         theSuite.addTest(unittest.makeSuite(test_evaluate))
         theSuite.addTest(unittest.makeSuite(test_expressions))
         theSuite.addTest(unittest.makeSuite(test_int32_int64))
+        theSuite.addTest(unittest.makeSuite(test_uint32_int64))
         theSuite.addTest(unittest.makeSuite(test_strings))
         theSuite.addTest(
             unittest.makeSuite(test_irregular_stride) )
