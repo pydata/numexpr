@@ -469,6 +469,8 @@ enum FuncFFCodes {
     FUNC_EXP_FF,
     FUNC_EXPM1_FF,
 
+    FUNC_ABS_FF,
+
     FUNC_FF_LAST
 };
 
@@ -495,6 +497,7 @@ FuncFFPtr functions_ff[] = {
     log10f2,
     expf2,
     expm1f2,
+    fabsf2,
 };
 #else
 FuncFFPtr functions_ff[] = {
@@ -516,6 +519,7 @@ FuncFFPtr functions_ff[] = {
     log10f,
     expf,
     expm1f,
+    fabsf,
 };
 #endif  // #ifdef _WIN32
 
@@ -540,6 +544,7 @@ FuncFFPtr_vml functions_ff_vml[] = {
     vsLog10,
     vsExp,
     vsExpm1,
+    vsAbs,
 };
 #endif
 
@@ -603,6 +608,8 @@ enum FuncDDCodes {
     FUNC_EXP_DD,
     FUNC_EXPM1_DD,
 
+    FUNC_ABS_DD,
+
     FUNC_DD_LAST
 };
 
@@ -628,6 +635,7 @@ FuncDDPtr functions_dd[] = {
     log10,
     exp,
     expm1,
+    fabs,
 };
 
 #ifdef USE_VML
@@ -651,6 +659,7 @@ FuncDDPtr_vml functions_dd_vml[] = {
     vdLog10,
     vdExp,
     vdExpm1,
+    vdAbs,
 };
 #endif
 
@@ -707,6 +716,8 @@ enum FuncCCCodes {
     FUNC_EXP_CC,
     FUNC_EXPM1_CC,
 
+    FUNC_ABS_CC,
+
     FUNC_CC_LAST
 };
 
@@ -733,6 +744,7 @@ FuncCCPtr functions_cc[] = {
     nc_log10,
     nc_exp,
     nc_expm1,
+    nc_abs,
 };
 
 #ifdef USE_VML
@@ -754,6 +766,16 @@ static void vzLog1p(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
 	dest[j].imag = x1[j].imag;
     };
     vzLn(n, dest, dest);
+};
+
+/* Use this instead of native vzAbs in VML as it seems to work badly */
+static void vzAbs_(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
+{
+    int j;
+    for (j=0; j<n; j++) {
+        dest[j].real = sqrt(x1[j].real*x1[j].real + x1[j].imag*x1[j].imag);
+	dest[j].imag = 0;
+    };
 };
 
 typedef void (*FuncCCPtr_vml)(int, const MKL_Complex16[], MKL_Complex16[]);
@@ -778,6 +800,7 @@ FuncCCPtr_vml functions_cc_vml[] = {
     vzLog10,
     vzExp,
     vzExpm1, //poor approximation
+    vzAbs_,  // native vzAbs seems to have a bug
 };
 #endif
 
@@ -2100,6 +2123,8 @@ initinterpreter(void)
     add_func("exp_ff", FUNC_EXP_FF);
     add_func("expm1_ff", FUNC_EXPM1_FF);
 
+    add_func("absolute_ff", FUNC_ABS_FF);
+
     add_func("arctan2_fff", FUNC_ARCTAN2_FFF);
     add_func("fmod_fff", FUNC_FMOD_FFF);
 
@@ -2123,6 +2148,8 @@ initinterpreter(void)
     add_func("exp_dd", FUNC_EXP_DD);
     add_func("expm1_dd", FUNC_EXPM1_DD);
 
+    add_func("absolute_dd", FUNC_ABS_DD);
+
     add_func("arctan2_ddd", FUNC_ARCTAN2_DDD);
     add_func("fmod_ddd", FUNC_FMOD_DDD);
 
@@ -2145,6 +2172,9 @@ initinterpreter(void)
     add_func("log10_cc", FUNC_LOG10_CC);
     add_func("exp_cc", FUNC_EXP_CC);
     add_func("expm1_cc", FUNC_EXPM1_CC);
+
+    add_func("absolute_cc", FUNC_ABS_CC);
+
     add_func("pow_ccc", FUNC_POW_CCC);
 
 #undef add_func

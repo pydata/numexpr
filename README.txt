@@ -62,6 +62,13 @@ Casting rules in Numexpr follow closely those of NumPy.  However, for
 implementation reasons, there are some known exceptions to this rule,
 namely:
 
+    * When an array with type `int8`, `uint8`, `int16` or `uint16` is
+      used inside Numexpr, it is internally upcasted to an `int` (or
+      `int32` in NumPy notation).
+
+    * When an array with type `uint32` is used inside Numexpr, it is
+      internally upcasted to a `long` (or `int64` in NumPy notation).
+
     * A floating point function (e.g. `sin`) acting on `int8` or
       `int16` types returns a `float64` type, instead of the `float32`
       that is returned by NumPy functions.  This is mainly due to the
@@ -112,10 +119,22 @@ The next are the current supported set:
         Exponential and exponential minus one.
     * sqrt(float|complex): float|complex
         Square root.
+    * abs(float|complex): float|complex
+        Absolute value.
     * {real,imag}(complex): float
         Real or imaginary part of complex.
     * complex(float, float): complex
         Complex from real and imaginary parts.
+
+.. Notes:
+
+   + `abs()` for complex inputs returns a ``complex`` output too.
+   This is a departure from NumPy where a ``float`` is returned
+   instead.  However, Numexpr is not flexible enough yet so as to
+   allow this to happen.  Meanwhile, if you want to mimic NumPy
+   behaviour, you may want to select the real part via the ``real``
+   function (e.g. "real(abs(cplx))") or via the ``real`` selector
+   (e.g. "abs(cplx).real").
 
 More functions can be added if you need them.
 
