@@ -114,8 +114,8 @@ def compare(expression=False):
 
 if __name__ == '__main__':
 
-    print 'Python version:    %s' % sys.version
-    print "NumPy version:     %s" % numpy.__version__
+    import numexpr
+    numexpr.print_versions()
 
     if len(sys.argv) > 1:
         expression = sys.argv[1]

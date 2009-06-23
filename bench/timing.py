@@ -126,6 +126,9 @@ def compare(check_only=False):
     return average
 
 if __name__ == '__main__':
+    import numexpr
+    numexpr.print_versions()
+
     averages = []
     for i in range(iterations):
         averages.append(compare())

@@ -114,10 +114,8 @@ def compare(expression=False):
     print
 
 if __name__ == '__main__':
-
-    print 'Python version:    %s' % sys.version
-    print "NumPy version:     %s" % numpy.__version__
-    print "use vml            %s" % numexpr.use_vml
+    import numexpr
+    numexpr.print_versions()
 
     numexpr.set_vml_accuracy_mode('low')
     numexpr.set_vml_num_threads(2)
