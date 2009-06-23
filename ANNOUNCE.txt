@@ -11,6 +11,28 @@ has been added (it is internally upcasted to 'int64'), and a new
 `abs()` function has been added (thanks to Pauli Virtanen for the
 patch).
 
+Also, a little tweaking in the treatment of unaligned arrays on Intel
+architectures allows for up to 2x speedups in computations involving
+unaligned arrays.  For example, in the included
+``unaligned-simple.py`` benchmark, the output before the tweaking was:
+
+NumPy aligned:      0.63 s
+NumPy unaligned:    1.66 s
+Numexpr aligned:    0.65 s
+Numexpr unaligned:  1.09 s
+
+while now it is:
+
+NumPy aligned:      0.63 s
+NumPy unaligned:    1.65 s
+Numexpr aligned:    0.65 s
+Numexpr unaligned:  0.57 s   <-- almost 2x faster than above
+
+where you can see how the unaligned case can be even faster than the
+aligned one.  And no, there is no black magic going on here; it is
+just that, the 'aligned' array was actually a strided one, and the
+total working datasize was a bit larger for this case.
+
 In case you want to know more in detail what has changed in this
 version, see:
 

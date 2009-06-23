@@ -5,6 +5,19 @@
 Changes from 1.3 to 1.3.1
 =========================
 
+- When on AMD/Intel platforms, copies for unaligned arrays are
+  disabled.  This is because AMD/Intel processors can deal very
+  efficiently with unaligned data, so avoiding the copy is generally a
+  good thing (up to 2x speed-ups wrt doing a copy can easily be seen).
+
+  However, this optimization is not active when Numexpr is compiled
+  with support for Intel VML (Vector Math Library).  The rational is
+  that (surprisingly enough) Intel has not optimized the access to
+  unaligned arrays on his VML, and hence the performance of its
+  functions can drop a lot (as much as 10x in some cases!).
+
+  Fixes #21.
+
 - Due to an oversight, ``uint32`` types were not properly supported.
   That has been solved.  Fixes #19.
 
