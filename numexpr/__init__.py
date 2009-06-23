@@ -18,6 +18,12 @@ if get_info('mkl'):
 else:
     use_vml = False
 
+from cpuinfo import cpu
+if cpu.is_AMD() or cpu.is_Intel():
+    is_cpu_amd_intel = True
+else:
+    is_cpu_amd_intel = False
+
 import os.path
 from numexpr.expressions import E
 from numexpr.necompiler import NumExpr, disassemble, evaluate

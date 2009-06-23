@@ -538,6 +538,7 @@ def print_versions():
     if os.name == 'posix':
         (sysname, nodename, release, version, machine) = os.uname()
         print 'Platform:          %s-%s' % (sys.platform, machine)
+    print "AMD/Intel CPU?     %s" % numexpr.is_cpu_amd_intel
     print "VML available?     %s" % use_vml
     if use_vml:
         print "VML/MKL version:   %s" % numexpr.get_vml_version()

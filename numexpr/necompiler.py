@@ -1,7 +1,7 @@
 import sys
 import numpy
 
-from numexpr import interpreter, expressions, use_vml
+from numexpr import interpreter, expressions, use_vml, is_cpu_amd_intel
 from numexpr.utils import CacheDict
 
 # Declare a double type that does not exist in Python space
@@ -650,21 +650,27 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
         # need a copy for the strided case.
 
         if not b.flags.aligned:
-            # For the unaligned case, we have two cases:
-            if b.ndim == 1:
-                # For unidimensional arrays we can use the copy opcode
-                # because it can deal with unaligned arrays as long
-                # as they are unidimensionals with a possible stride
-                # (very common case for recarrays).  This can be up to
-                # 2x faster than doing a copy using NumPy.
-                copy_args.append(name)
-            else:
-                # For multimensional unaligned arrays do a plain copy.
-                # We could refine more this and do a plain copy only
-                # in the case that strides doesn't exist in dimensions
-                # other than the last one (whose case is supported by
-                # the copy opcode).
-                b = b.copy()
+            # Only take actions if CPU is different from AMD and Intel
+            # as they can deal with unaligned arrays very efficiently.
+            # If using VML, do the copy as the VML functions works
+            # much faster with aligned arrays.
+            if not is_cpu_amd_intel or use_vml:
+                # For the unaligned case, we have two cases:
+                if b.ndim == 1:
+                    # For unidimensional arrays we can use the copy
+                    # opcode because it can deal with unaligned arrays
+                    # as long as they are unidimensionals with a
+                    # possible stride (very common case for
+                    # recarrays).  This can be up to 2x faster than
+                    # doing a copy using NumPy.
+                    copy_args.append(name)
+                else:
+                    # For multimensional unaligned arrays do a plain
+                    # copy.  We could refine more this and do a plain
+                    # copy only in the case that strides doesn't exist
+                    # in dimensions other than the last one (whose
+                    # case is supported by the copy opcode).
+                    b = b.copy()
         elif use_vml and ex_uses_vml: #only make a copy of strided arrays if
                                       #vml is in use
             if not b.flags.contiguous:

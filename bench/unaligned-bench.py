@@ -7,7 +7,10 @@ import numpy as np
 import numexpr as ne
 
 niter = 10
-shape = (1000, 10000)
+#shape = (1000*10000)   # unidimensional test
+shape = (1000, 10000)   # multidimensional test
+
+ne.print_versions()
 
 Z_fast = np.zeros(shape, dtype=[('x',np.float64),('y',np.int64)])
 Z_slow = np.zeros(shape, dtype=[('x',np.float64),('y',np.bool)])
