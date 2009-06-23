@@ -7,11 +7,11 @@ expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
 This is a maintenance release.  On it, support for the `unit32` type
-has been added (it is internally upcasted to 'int64'), and a new
-`abs()` function has been added (thanks to Pauli Virtanen).
+has been added (it is internally upcasted to `int64`), as well as a
+new `abs()` function (thanks to Pauli Virtanen for the patch).
 
 Also, a little tweaking in the treatment of unaligned arrays on Intel
-architectures allows for up to 2x speedups in computations involving
+architectures allowed for up to 2x speedups in computations involving
 unaligned arrays.  For example, for multiplying 2 arrays (see the
 included ``unaligned-simple.py`` benchmark), figures before the
 tweaking were:
@@ -31,7 +31,7 @@ Numexpr unaligned:  0.57 s   <-- almost 2x faster than above
 You can also see how the unaligned case can be even faster than the
 aligned one.  The explanation is that the 'aligned' array was actually
 a strided one (actually a column of an structured array), and the
-total working datasize was a bit larger for this case.
+total working data size was a bit larger for this case.
 
 In case you want to know more in detail what has changed in this
 version, see:
