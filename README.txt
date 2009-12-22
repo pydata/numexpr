@@ -163,6 +163,8 @@ to use some additional functions for controlling its use. These are:
     - 'high': Equivalent to VML_HA - high accuracy VML functions are called
     - 'fast': Equivalent to VML_EP - enhanced performance VML functions are called
 
+  It returns the previous mode.
+
   This call is equivalent to the `vmlSetMode()` in the VML library.
   See:
 
