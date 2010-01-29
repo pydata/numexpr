@@ -104,123 +104,55 @@ op_signature(int op, unsigned int n) {
 */
 
 enum FuncFFCodes {
-    FUNC_SQRT_FF = 0,
-    FUNC_SIN_FF,
-    FUNC_COS_FF,
-    FUNC_TAN_FF,
-    FUNC_ARCSIN_FF,
-    FUNC_ARCCOS_FF,
-    FUNC_ARCTAN_FF,
-    FUNC_SINH_FF,
-    FUNC_COSH_FF,
-    FUNC_TANH_FF,
-    FUNC_ARCSINH_FF,
-    FUNC_ARCCOSH_FF,
-    FUNC_ARCTANH_FF,
-
-    FUNC_LOG_FF,
-    FUNC_LOG1P_FF,
-    FUNC_LOG10_FF,
-    FUNC_EXP_FF,
-    FUNC_EXPM1_FF,
-
-    FUNC_ABS_FF,
-
-    FUNC_FF_LAST
+#define FUNC_FF(fop, ...) fop,
+#include "functions.inc"
+#undef FUNC_FF
 };
 
 typedef float (*FuncFFPtr)(float);
 
-/* The order of this array must match the FuncFFCodes enum above */
 #ifdef _WIN32
 FuncFFPtr functions_ff[] = {
-    sqrtf2,
-    sinf2,
-    cosf2,
-    tanf2,
-    asinf2,
-    acosf2,
-    atanf2,
-    sinhf2,
-    coshf2,
-    tanhf2,
-    asinhf2,
-    acoshf2,
-    atanhf2,
-    logf2,
-    log1pf2,
-    log10f2,
-    expf2,
-    expm1f2,
-    fabsf2,
+#define FUNC_FF(fop, s, f, f_win32, ...) f_win32,
+#include "functions.inc"
+#undef FUNC_FF
 };
 #else
 FuncFFPtr functions_ff[] = {
-    sqrtf,
-    sinf,
-    cosf,
-    tanf,
-    asinf,
-    acosf,
-    atanf,
-    sinhf,
-    coshf,
-    tanhf,
-    asinhf,
-    acoshf,
-    atanhf,
-    logf,
-    log1pf,
-    log10f,
-    expf,
-    expm1f,
-    fabsf,
+#define FUNC_FF(fop, s, f, ...) f,
+#include "functions.inc"
+#undef FUNC_FF
 };
 #endif  // #ifdef _WIN32
 
 #ifdef USE_VML
 typedef void (*FuncFFPtr_vml)(int, const float*, float*);
 FuncFFPtr_vml functions_ff_vml[] = {
-    vsSqrt,
-    vsSin,
-    vsCos,
-    vsTan,
-    vsAsin,
-    vsAcos,
-    vsAtan,
-    vsSinh,
-    vsCosh,
-    vsTanh,
-    vsAsinh,
-    vsAcosh,
-    vsAtanh,
-    vsLn,
-    vsLog1p,
-    vsLog10,
-    vsExp,
-    vsExpm1,
-    vsAbs,
+#define FUNC_FF(fop, s, f, f_win32, f_vml) f_vml,
+#include "functions.inc"
+#undef FUNC_FF
 };
 #endif
 
 enum FuncFFFCodes {
-    FUNC_FMOD_FFF = 0,
-    FUNC_ARCTAN2_FFF,
-
-    FUNC_FFF_LAST
+#define FUNC_FFF(fop, ...) fop,
+#include "functions.inc"
+#undef FUNC_FFF
 };
 
 typedef float (*FuncFFFPtr)(float, float);
 
 #ifdef _WIN32
 FuncFFFPtr functions_fff[] = {
-    fmodf2,
-    atan2f2,
+#define FUNC_FFF(fop, s, f, f_win32, ...) f_win32,
+#include "functions.inc"
+#undef FUNC_FFF
 };
 #else
 FuncFFFPtr functions_fff[] = {
-    fmodf,
-    atan2f,
+#define FUNC_FFF(fop, s, f, ...) f,
+#include "functions.inc"
+#undef FUNC_FFF
 };
 #endif  // #ifdef _WIN32
 
@@ -236,100 +168,48 @@ static void vsfmod(int n, const float* x1, const float* x2, float* dest)
 
 typedef void (*FuncFFFPtr_vml)(int, const float*, const float*, float*);
 FuncFFFPtr_vml functions_fff_vml[] = {
-    vsfmod,
-    vsAtan2,
+#define FUNC_FFF(fop, s, f, f_win32, f_vml) f_vml,
+#include "functions.inc"
+#undef FUNC_FFF
 };
 #endif
 
 
 enum FuncDDCodes {
-    FUNC_SQRT_DD = 0,
-    FUNC_SIN_DD,
-    FUNC_COS_DD,
-    FUNC_TAN_DD,
-    FUNC_ARCSIN_DD,
-    FUNC_ARCCOS_DD,
-    FUNC_ARCTAN_DD,
-    FUNC_SINH_DD,
-    FUNC_COSH_DD,
-    FUNC_TANH_DD,
-    FUNC_ARCSINH_DD,
-    FUNC_ARCCOSH_DD,
-    FUNC_ARCTANH_DD,
-
-    FUNC_LOG_DD,
-    FUNC_LOG1P_DD,
-    FUNC_LOG10_DD,
-    FUNC_EXP_DD,
-    FUNC_EXPM1_DD,
-
-    FUNC_ABS_DD,
-
-    FUNC_DD_LAST
+#define FUNC_DD(fop, ...) fop,
+#include "functions.inc"
+#undef FUNC_DD
 };
 
 typedef double (*FuncDDPtr)(double);
 
-/* The order of this array must match the FuncDDCodes enum above */
 FuncDDPtr functions_dd[] = {
-    sqrt,
-    sin,
-    cos,
-    tan,
-    asin,
-    acos,
-    atan,
-    sinh,
-    cosh,
-    tanh,
-    asinh,
-    acosh,
-    atanh,
-    log,
-    log1p,
-    log10,
-    exp,
-    expm1,
-    fabs,
+#define FUNC_DD(fop, s, f, ...) f,
+#include "functions.inc"
+#undef FUNC_DD
 };
 
 #ifdef USE_VML
 typedef void (*FuncDDPtr_vml)(int, const double*, double*);
 FuncDDPtr_vml functions_dd_vml[] = {
-    vdSqrt,
-    vdSin,
-    vdCos,
-    vdTan,
-    vdAsin,
-    vdAcos,
-    vdAtan,
-    vdSinh,
-    vdCosh,
-    vdTanh,
-    vdAsinh,
-    vdAcosh,
-    vdAtanh,
-    vdLn,
-    vdLog1p,
-    vdLog10,
-    vdExp,
-    vdExpm1,
-    vdAbs,
+#define FUNC_DD(fop, s, f, f_vml) f_vml,
+#include "functions.inc"
+#undef FUNC_DD
 };
 #endif
 
 enum FuncDDDCodes {
-    FUNC_FMOD_DDD = 0,
-    FUNC_ARCTAN2_DDD,
-
-    FUNC_DDD_LAST
+#define FUNC_DDD(fop, ...) fop,
+#include "functions.inc"
+#undef FUNC_DDD
 };
 
 typedef double (*FuncDDDPtr)(double, double);
 
 FuncDDDPtr functions_ddd[] = {
-    fmod,
-    atan2,
+#define FUNC_DDD(fop, s, f, ...) f,
+#include "functions.inc"
+#undef FUNC_DDD
 };
 
 #ifdef USE_VML
@@ -344,62 +224,26 @@ static void vdfmod(int n, const double* x1, const double* x2, double* dest)
 
 typedef void (*FuncDDDPtr_vml)(int, const double*, const double*, double*);
 FuncDDDPtr_vml functions_ddd_vml[] = {
-    vdfmod,
-    vdAtan2,
+#define FUNC_DDD(fop, s, f, f_vml) f_vml,
+#include "functions.inc"
+#undef FUNC_DDD
 };
 #endif
 
 
 enum FuncCCCodes {
-    FUNC_SQRT_CC = 0,
-    FUNC_SIN_CC,
-    FUNC_COS_CC,
-    FUNC_TAN_CC,
-    FUNC_ARCSIN_CC,
-    FUNC_ARCCOS_CC,
-    FUNC_ARCTAN_CC,
-    FUNC_SINH_CC,
-    FUNC_COSH_CC,
-    FUNC_TANH_CC,
-    FUNC_ARCSINH_CC,
-    FUNC_ARCCOSH_CC,
-    FUNC_ARCTANH_CC,
-
-    FUNC_LOG_CC,
-    FUNC_LOG1P_CC,
-    FUNC_LOG10_CC,
-    FUNC_EXP_CC,
-    FUNC_EXPM1_CC,
-
-    FUNC_ABS_CC,
-
-    FUNC_CC_LAST
+#define FUNC_CC(fop, ...) fop,
+#include "functions.inc"
+#undef FUNC_CC
 };
 
 
 typedef void (*FuncCCPtr)(cdouble*, cdouble*);
 
-/* The order of this array must match the FuncCCCodes enum above */
 FuncCCPtr functions_cc[] = {
-    nc_sqrt,
-    nc_sin,
-    nc_cos,
-    nc_tan,
-    nc_asin,
-    nc_acos,
-    nc_atan,
-    nc_sinh,
-    nc_cosh,
-    nc_tanh,
-    nc_asinh,
-    nc_acosh,
-    nc_atanh,
-    nc_log,
-    nc_log1p,
-    nc_log10,
-    nc_exp,
-    nc_expm1,
-    nc_abs,
+#define FUNC_CC(fop, s, f, ...) f,
+#include "functions.inc"
+#undef FUNC_CC
 };
 
 #ifdef USE_VML
@@ -435,41 +279,26 @@ static void vzAbs_(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
 
 typedef void (*FuncCCPtr_vml)(int, const MKL_Complex16[], MKL_Complex16[]);
 
-/* The order of this array must match the FuncCCCodes enum above */
 FuncCCPtr_vml functions_cc_vml[] = {
-    vzSqrt,
-    vzSin,
-    vzCos,
-    vzTan,
-    vzAsin,
-    vzAcos,
-    vzAtan,
-    vzSinh,
-    vzCosh,
-    vzTanh,
-    vzAsinh,
-    vzAcosh,
-    vzAtanh,
-    vzLn,
-    vzLog1p, //poor approximation
-    vzLog10,
-    vzExp,
-    vzExpm1, //poor approximation
-    vzAbs_,  // native vzAbs seems to have a bug
+#define FUNC_CC(fop, s, f, f_vml) f_vml,
+#include "functions.inc"
+#undef FUNC_CC
 };
 #endif
 
 
 enum FuncCCCCodes {
-    FUNC_POW_CCC = 0,
-
-    FUNC_CCC_LAST
+#define FUNC_CCC(fop, ...) fop,
+#include "functions.inc"
+#undef FUNC_CCC
 };
 
 typedef void (*FuncCCCPtr)(cdouble*, cdouble*, cdouble*);
 
 FuncCCCPtr functions_ccc[] = {
-    nc_pow,
+#define FUNC_CCC(fop, s, f) f,
+#include "functions.inc"
+#undef FUNC_CCC
 };
 
 typedef struct
@@ -1594,6 +1423,27 @@ static PyMethodDef module_methods[] = {
     {NULL}
 };
 
+static int
+add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
+{
+    PyObject *o, *s, *key;
+    int r;
+
+    if (!sname) {
+        return 0;
+    }
+    
+    o = PyInt_FromLong(name);
+    s = PyString_FromString(sname);
+    if (!s) {
+        PyErr_SetString(PyExc_RuntimeError, routine_name);
+        return -1;
+    }
+    r = PyDict_SetItem(d, s, o);
+    Py_XDECREF(o);
+    return r;
+}
+
 void
 initinterpreter(void)
 {
@@ -1615,13 +1465,8 @@ initinterpreter(void)
     d = PyDict_New();
     if (!d) return;
 
-#define OPCODE(name, sname, ...)                                        \
-    if (sname) {                                                        \
-        o = PyInt_FromLong(name);                                       \
-        r = PyDict_SetItemString(d, sname, o);                          \
-        Py_XDECREF(o);                                                  \
-        if (r < 0) {PyErr_SetString(PyExc_RuntimeError, "add_op"); return;} \
-    }
+#define OPCODE(name, sname, ...) \
+    if (add_symbol(d, sname, name, "add_op") < 0) { return; }
 #include "opcodes.inc"
 #undef OPCODE
 
@@ -1630,85 +1475,22 @@ initinterpreter(void)
     d = PyDict_New();
     if (!d) return;
 
-#define add_func(sname, name) o = PyInt_FromLong(name); \
-    r = PyDict_SetItemString(d, sname, o);              \
-    Py_XDECREF(o);                                      \
-    if (r < 0) {PyErr_SetString(PyExc_RuntimeError, "add_func"); return;}
-
-    add_func("sqrt_ff", FUNC_SQRT_FF);
-    add_func("sin_ff", FUNC_SIN_FF);
-    add_func("cos_ff", FUNC_COS_FF);
-    add_func("tan_ff", FUNC_TAN_FF);
-    add_func("arcsin_ff", FUNC_ARCSIN_FF);
-    add_func("arccos_ff", FUNC_ARCCOS_FF);
-    add_func("arctan_ff", FUNC_ARCTAN_FF);
-    add_func("sinh_ff", FUNC_SINH_FF);
-    add_func("cosh_ff", FUNC_COSH_FF);
-    add_func("tanh_ff", FUNC_TANH_FF);
-    add_func("arcsinh_ff", FUNC_ARCSINH_FF);
-    add_func("arccosh_ff", FUNC_ARCCOSH_FF);
-    add_func("arctanh_ff", FUNC_ARCTANH_FF);
-
-    add_func("log_ff", FUNC_LOG_FF);
-    add_func("log1p_ff", FUNC_LOG1P_FF);
-    add_func("log10_ff", FUNC_LOG10_FF);
-    add_func("exp_ff", FUNC_EXP_FF);
-    add_func("expm1_ff", FUNC_EXPM1_FF);
-
-    add_func("absolute_ff", FUNC_ABS_FF);
-
-    add_func("arctan2_fff", FUNC_ARCTAN2_FFF);
-    add_func("fmod_fff", FUNC_FMOD_FFF);
-
-    add_func("sqrt_dd", FUNC_SQRT_DD);
-    add_func("sin_dd", FUNC_SIN_DD);
-    add_func("cos_dd", FUNC_COS_DD);
-    add_func("tan_dd", FUNC_TAN_DD);
-    add_func("arcsin_dd", FUNC_ARCSIN_DD);
-    add_func("arccos_dd", FUNC_ARCCOS_DD);
-    add_func("arctan_dd", FUNC_ARCTAN_DD);
-    add_func("sinh_dd", FUNC_SINH_DD);
-    add_func("cosh_dd", FUNC_COSH_DD);
-    add_func("tanh_dd", FUNC_TANH_DD);
-    add_func("arcsinh_dd", FUNC_ARCSINH_DD);
-    add_func("arccosh_dd", FUNC_ARCCOSH_DD);
-    add_func("arctanh_dd", FUNC_ARCTANH_DD);
-
-    add_func("log_dd", FUNC_LOG_DD);
-    add_func("log1p_dd", FUNC_LOG1P_DD);
-    add_func("log10_dd", FUNC_LOG10_DD);
-    add_func("exp_dd", FUNC_EXP_DD);
-    add_func("expm1_dd", FUNC_EXPM1_DD);
-
-    add_func("absolute_dd", FUNC_ABS_DD);
-
-    add_func("arctan2_ddd", FUNC_ARCTAN2_DDD);
-    add_func("fmod_ddd", FUNC_FMOD_DDD);
-
-    add_func("sqrt_cc", FUNC_SQRT_CC);
-    add_func("sin_cc", FUNC_SIN_CC);
-    add_func("cos_cc", FUNC_COS_CC);
-    add_func("tan_cc", FUNC_TAN_CC);
-    add_func("arcsin_cc", FUNC_ARCSIN_CC);
-    add_func("arccos_cc", FUNC_ARCCOS_CC);
-    add_func("arctan_cc", FUNC_ARCTAN_CC);
-    add_func("sinh_cc", FUNC_SINH_CC);
-    add_func("cosh_cc", FUNC_COSH_CC);
-    add_func("tanh_cc", FUNC_TANH_CC);
-    add_func("arcsinh_cc", FUNC_ARCSINH_CC);
-    add_func("arccosh_cc", FUNC_ARCCOSH_CC);
-    add_func("arctanh_cc", FUNC_ARCTANH_CC);
-
-    add_func("log_cc", FUNC_LOG_CC);
-    add_func("log1p_cc", FUNC_LOG1P_CC);
-    add_func("log10_cc", FUNC_LOG10_CC);
-    add_func("exp_cc", FUNC_EXP_CC);
-    add_func("expm1_cc", FUNC_EXPM1_CC);
-
-    add_func("absolute_cc", FUNC_ABS_CC);
-
-    add_func("pow_ccc", FUNC_POW_CCC);
-
+#define add_func(name, sname)                           \
+    if (add_symbol(d, sname, name, "add_func") < 0) { return; }
+#define FUNC_FF(name, sname, ...)  add_func(name, sname);
+#define FUNC_FFF(name, sname, ...) add_func(name, sname);
+#define FUNC_DD(name, sname, ...)  add_func(name, sname);
+#define FUNC_DDD(name, sname, ...) add_func(name, sname);
+#define FUNC_CC(name, sname, ...)  add_func(name, sname);
+#define FUNC_CCC(name, sname, ...) add_func(name, sname);
+#include "functions.inc"
+#undef FUNC_CCC
+#undef FUNC_CC
+#undef FUNC_DDD
+#undef FUNC_DD
+#undef FUNC_DD
+#undef FUNC_FFF
+#undef FUNC_FF
 #undef add_func
 
     if (PyModule_AddObject(m, "funccodes", d) < 0) return;
