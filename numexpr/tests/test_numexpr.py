@@ -1,7 +1,7 @@
 import new, sys, os
 import numpy
 from numpy import (
-    array, arange, empty, zeros, int32, uint16, complex_, float64, rec,
+    array, arange, empty, zeros, int32, int64, uint16, complex_, float64, rec,
     copy, ones_like, where, alltrue,
     sum, prod, sqrt, fmod,
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
@@ -202,6 +202,7 @@ class test_evaluate(TestCase):
 tests = [
 ('MISC', ['b*c+d*e',
           '2*a+3*b',
+          '-a',
           'sinh(a)',
           '2*a + (cos(3)+5)*sinh(cos(b))',
           '2*a + arctan2(a, b)',
@@ -344,6 +345,13 @@ def generate_test_expressions():
                                          optimization, exact)
 
 generate_test_expressions()
+
+class test_int64(TestCase):
+    def test_neg(self):
+        a = array([2**31-1, 2**31, 2**32, 2**63-1], dtype=int64)
+        res = evaluate('-a')
+        assert_array_equal(res, [1-2**31, -(2**31), -(2**32), 1-2**63])
+        self.assertEqual(res.dtype.name, 'int64')
 
 class test_int32_int64(TestCase):
     def test_small_long(self):

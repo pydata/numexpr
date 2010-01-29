@@ -239,7 +239,7 @@
 
         case OP_CAST_LI: VEC_ARG1(l_dest = (long long)(i1));
         case OP_ONES_LIKE_LL: VEC_ARG1(l_dest = 1);
-        case OP_NEG_LL: VEC_ARG1(l_dest = -i1);
+        case OP_NEG_LL: VEC_ARG1(l_dest = -l1);
 
         case OP_ADD_LLL: VEC_ARG2(l_dest = l1 + l2);
         case OP_SUB_LLL: VEC_ARG2(l_dest = l1 - l2);
