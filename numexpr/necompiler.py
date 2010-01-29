@@ -131,7 +131,7 @@ def typeCompileAst(ast):
             for sig in sigPerms(basesig):
                 funcname = ast.value + '_' + retsig + sig
                 if funcname in interpreter.funccodes:
-                    value = 'func_%s' % (retsig+sig)
+                    value = 'func_%sn' % (retsig+sig)
                     children += [ASTNode('raw', 'none',
                                          interpreter.funccodes[funcname])]
                     break

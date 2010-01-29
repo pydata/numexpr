@@ -284,14 +284,14 @@
 
         case OP_WHERE_FBFF: VEC_ARG3(f_dest = b1 ? f2 : f3);
 
-        case OP_FUNC_FF:
+        case OP_FUNC_FFN:
 #ifdef USE_VML
 	    VEC_ARG1_VML(functions_ff_vml[arg2](VECTOR_SIZE,
                                                 (float*)x1, (float*)dest));
 #else
 	    VEC_ARG1(f_dest = functions_ff[arg2](f1));
 #endif
-        case OP_FUNC_FFF:
+        case OP_FUNC_FFFN:
 #ifdef USE_VML
 	    VEC_ARG2_VML(functions_fff_vml[arg3](VECTOR_SIZE,
                                                  (float*)x1, (float*)x2,
@@ -335,14 +335,14 @@
 
         case OP_WHERE_DBDD: VEC_ARG3(d_dest = b1 ? d2 : d3);
 
-        case OP_FUNC_DD:
+        case OP_FUNC_DDN:
 #ifdef USE_VML
 	    VEC_ARG1_VML(functions_dd_vml[arg2](VECTOR_SIZE,
                                                 (double*)x1, (double*)dest));
 #else
 	    VEC_ARG1(d_dest = functions_dd[arg2](d1));
 #endif
-        case OP_FUNC_DDD:
+        case OP_FUNC_DDDN:
 #ifdef USE_VML
 	    VEC_ARG2_VML(functions_ddd_vml[arg3](VECTOR_SIZE,
                                                  (double*)x1, (double*)x2,
@@ -387,7 +387,7 @@
 
         case OP_WHERE_CBCC: VEC_ARG3(cr_dest = b1 ? c2r : c3r;
                                      ci_dest = b1 ? c2i : c3i);
-        case OP_FUNC_CC:
+        case OP_FUNC_CCN:
 #ifdef USE_VML
 	    VEC_ARG1_VML(functions_cc_vml[arg2](VECTOR_SIZE,
                                                 (const MKL_Complex16*)x1,
@@ -399,13 +399,13 @@
 		     cr_dest = ca.real;
 		     ci_dest = ca.imag);
 #endif
-        case OP_FUNC_CCC: VEC_ARG2(ca.real = c1r;
-                                   ca.imag = c1i;
-                                   cb.real = c2r;
-                                   cb.imag = c2i;
-                                   functions_ccc[arg3](&ca, &cb, &ca);
-                                   cr_dest = ca.real;
-                                   ci_dest = ca.imag);
+        case OP_FUNC_CCCN: VEC_ARG2(ca.real = c1r;
+                                    ca.imag = c1i;
+                                    cb.real = c2r;
+                                    cb.imag = c2i;
+                                    functions_ccc[arg3](&ca, &cb, &ca);
+                                    cr_dest = ca.real;
+                                    ci_dest = ca.imag);
 
         case OP_REAL_DC: VEC_ARG1(d_dest = c1r);
         case OP_IMAG_DC: VEC_ARG1(d_dest = c1i);

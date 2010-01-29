@@ -43,393 +43,48 @@
 
 
 enum OpCodes {
-    OP_NOOP = 0,
+#define OPCODE(e, ...) e,
+#include "opcodes.inc"
+#undef OPCODE
+};
 
-    OP_COPY_BB,
+/* bit of a misnomer; includes the return value. */
+#define max_args 4
 
-    OP_INVERT_BB,
-    OP_AND_BBB,
-    OP_OR_BBB,
-
-    OP_EQ_BBB,
-    OP_NE_BBB,
-
-    OP_GT_BII,
-    OP_GE_BII,
-    OP_EQ_BII,
-    OP_NE_BII,
-
-    OP_GT_BLL,
-    OP_GE_BLL,
-    OP_EQ_BLL,
-    OP_NE_BLL,
-
-    OP_GT_BFF,
-    OP_GE_BFF,
-    OP_EQ_BFF,
-    OP_NE_BFF,
-
-    OP_GT_BDD,
-    OP_GE_BDD,
-    OP_EQ_BDD,
-    OP_NE_BDD,
-
-    OP_GT_BSS,
-    OP_GE_BSS,
-    OP_EQ_BSS,
-    OP_NE_BSS,
-
-    OP_COPY_II,
-    OP_ONES_LIKE_II,
-    OP_NEG_II,
-    OP_ADD_III,
-    OP_SUB_III,
-    OP_MUL_III,
-    OP_DIV_III,
-    OP_POW_III,
-    OP_MOD_III,
-    OP_WHERE_IBII,
-
-    OP_CAST_LI,
-    OP_COPY_LL,
-    OP_ONES_LIKE_LL,
-    OP_NEG_LL,
-    OP_ADD_LLL,
-    OP_SUB_LLL,
-    OP_MUL_LLL,
-    OP_DIV_LLL,
-    OP_POW_LLL,
-    OP_MOD_LLL,
-    OP_WHERE_LBLL,
-
-    OP_CAST_FI,
-    OP_CAST_FL,
-    OP_COPY_FF,
-    OP_ONES_LIKE_FF,
-    OP_NEG_FF,
-    OP_ADD_FFF,
-    OP_SUB_FFF,
-    OP_MUL_FFF,
-    OP_DIV_FFF,
-    OP_POW_FFF,
-    OP_MOD_FFF,
-    OP_SQRT_FF,
-    OP_WHERE_FBFF,
-    OP_FUNC_FF,
-    OP_FUNC_FFF,
-
-    OP_CAST_DI,
-    OP_CAST_DL,
-    OP_CAST_DF,
-    OP_COPY_DD,
-    OP_ONES_LIKE_DD,
-    OP_NEG_DD,
-    OP_ADD_DDD,
-    OP_SUB_DDD,
-    OP_MUL_DDD,
-    OP_DIV_DDD,
-    OP_POW_DDD,
-    OP_MOD_DDD,
-    OP_SQRT_DD,
-    OP_WHERE_DBDD,
-    OP_FUNC_DD,
-    OP_FUNC_DDD,
-
-    OP_EQ_BCC,
-    OP_NE_BCC,
-
-    OP_CAST_CI,
-    OP_CAST_CL,
-    OP_CAST_CF,
-    OP_CAST_CD,
-    OP_ONES_LIKE_CC,
-    OP_COPY_CC,
-    OP_NEG_CC,
-    OP_ADD_CCC,
-    OP_SUB_CCC,
-    OP_MUL_CCC,
-    OP_DIV_CCC,
-    OP_WHERE_CBCC,
-    OP_FUNC_CC,
-    OP_FUNC_CCC,
-
-    OP_REAL_DC,
-    OP_IMAG_DC,
-    OP_COMPLEX_CDD,
-
-    OP_COPY_SS,
-
-    OP_REDUCTION,
-
-    OP_SUM,
-    OP_SUM_IIN,
-    OP_SUM_LLN,
-    OP_SUM_FFN,
-    OP_SUM_DDN,
-    OP_SUM_CCN,
-
-    OP_PROD,
-    OP_PROD_IIN,
-    OP_PROD_LLN,
-    OP_PROD_FFN,
-    OP_PROD_DDN,
-    OP_PROD_CCN
-
+static char op_signature_table[][max_args] = {
+#define Tb 'b'
+#define Ti 'i'
+#define Tl 'l'
+#define Tf 'f'
+#define Td 'd'
+#define Tc 'c'
+#define Ts 's'
+#define Tn 'n'
+#define T0 0
+#define OPCODE(e, ex, rt, a1, a2, a3) {rt, a1, a2, a3},
+#include "opcodes.inc"
+#undef OPCODE
+#undef Tb
+#undef Ti
+#undef Tl
+#undef Tf
+#undef Td
+#undef Tc
+#undef Ts
+#undef Tn
+#undef T0
 };
 
 /* returns the sig of the nth op, '\0' if no more ops -1 on failure */
 static int
-op_signature(int op, int n) {
-    switch (op) {
-        case OP_NOOP:
-            break;
-        case OP_COPY_BB:
-            if (n == 0 || n == 1) return 'b';
-            break;
-        case OP_INVERT_BB:
-            if (n == 0 || n == 1) return 'b';
-            break;
-        case OP_AND_BBB:
-        case OP_OR_BBB:
-        case OP_EQ_BBB:
-        case OP_NE_BBB:
-            if (n == 0 || n == 1 || n == 2) return 'b';
-            break;
-        case OP_GT_BII:
-        case OP_GE_BII:
-        case OP_EQ_BII:
-        case OP_NE_BII:
-            if (n == 0) return 'b';
-            if (n == 1 || n == 2) return 'i';
-            break;
-        case OP_GT_BLL:
-        case OP_GE_BLL:
-        case OP_EQ_BLL:
-        case OP_NE_BLL:
-            if (n == 0) return 'b';
-            if (n == 1 || n == 2) return 'l';
-            break;
-        case OP_GT_BFF:
-        case OP_GE_BFF:
-        case OP_EQ_BFF:
-        case OP_NE_BFF:
-            if (n == 0) return 'b';
-            if (n == 1 || n == 2) return 'f';
-            break;
-        case OP_GT_BDD:
-        case OP_GE_BDD:
-        case OP_EQ_BDD:
-        case OP_NE_BDD:
-            if (n == 0) return 'b';
-            if (n == 1 || n == 2) return 'd';
-            break;
-        case OP_EQ_BCC:
-        case OP_NE_BCC:
-            if (n == 0) return 'b';
-            if (n == 1 || n == 2) return 'c';
-            break;
-
-        case OP_GT_BSS:
-        case OP_GE_BSS:
-        case OP_EQ_BSS:
-        case OP_NE_BSS:
-            if (n == 0) return 'b';
-            if (n == 1 || n == 2) return 's';
-            break;
-        case OP_COPY_II:
-        case OP_ONES_LIKE_II:
-        case OP_NEG_II:
-            if (n == 0 || n == 1) return 'i';
-            break;
-        case OP_ADD_III:
-        case OP_SUB_III:
-        case OP_MUL_III:
-        case OP_DIV_III:
-        case OP_MOD_III:
-        case OP_POW_III:
-            if (n == 0 || n == 1 || n == 2) return 'i';
-            break;
-        case OP_WHERE_IBII:
-            if (n == 0 || n == 2 || n == 3) return 'i';
-            if (n == 1) return 'b';
-            break;
-        case OP_CAST_LI:
-            if (n == 0) return 'l';
-            if (n == 1) return 'i';
-            break;
-        case OP_COPY_LL:
-        case OP_ONES_LIKE_LL:
-        case OP_NEG_LL:
-            if (n == 0 || n == 1) return 'l';
-            break;
-        case OP_ADD_LLL:
-        case OP_SUB_LLL:
-        case OP_MUL_LLL:
-        case OP_DIV_LLL:
-        case OP_MOD_LLL:
-        case OP_POW_LLL:
-            if (n == 0 || n == 1 || n == 2) return 'l';
-            break;
-        case OP_WHERE_LBLL:
-            if (n == 0 || n == 2 || n == 3) return 'l';
-            if (n == 1) return 'b';
-            break;
-
-        case OP_CAST_FI:
-            if (n == 0) return 'f';
-            if (n == 1) return 'i';
-            break;
-        case OP_CAST_FL:
-            if (n == 0) return 'f';
-            if (n == 1) return 'l';
-            break;
-        case OP_COPY_FF:
-        case OP_ONES_LIKE_FF:
-        case OP_NEG_FF:
-        case OP_SQRT_FF:
-            if (n == 0 || n == 1) return 'f';
-            break;
-        case OP_ADD_FFF:
-        case OP_SUB_FFF:
-        case OP_MUL_FFF:
-        case OP_DIV_FFF:
-        case OP_POW_FFF:
-        case OP_MOD_FFF:
-            if (n == 0 || n == 1 || n == 2) return 'f';
-            break;
-        case OP_WHERE_FBFF:
-            if (n == 0 || n == 2 || n == 3) return 'f';
-            if (n == 1) return 'b';
-            break;
-        case OP_FUNC_FF:
-            if (n == 0 || n == 1) return 'f';
-            if (n == 2) return 'n';
-            break;
-        case OP_FUNC_FFF:
-            if (n == 0 || n == 1 || n == 2) return 'f';
-            if (n == 3) return 'n';
-            break;
-
-        case OP_CAST_DI:
-            if (n == 0) return 'd';
-            if (n == 1) return 'i';
-            break;
-        case OP_CAST_DL:
-            if (n == 0) return 'd';
-            if (n == 1) return 'l';
-            break;
-        case OP_CAST_DF:
-            if (n == 0) return 'd';
-            if (n == 1) return 'f';
-            break;
-        case OP_COPY_DD:
-        case OP_ONES_LIKE_DD:
-        case OP_NEG_DD:
-        case OP_SQRT_DD:
-            if (n == 0 || n == 1) return 'd';
-            break;
-        case OP_ADD_DDD:
-        case OP_SUB_DDD:
-        case OP_MUL_DDD:
-        case OP_DIV_DDD:
-        case OP_POW_DDD:
-        case OP_MOD_DDD:
-            if (n == 0 || n == 1 || n == 2) return 'd';
-            break;
-        case OP_WHERE_DBDD:
-            if (n == 0 || n == 2 || n == 3) return 'd';
-            if (n == 1) return 'b';
-            break;
-        case OP_FUNC_DD:
-            if (n == 0 || n == 1) return 'd';
-            if (n == 2) return 'n';
-            break;
-        case OP_FUNC_DDD:
-            if (n == 0 || n == 1 || n == 2) return 'd';
-            if (n == 3) return 'n';
-            break;
-
-        case OP_CAST_CI:
-            if (n == 0) return 'c';
-            if (n == 1) return 'i';
-            break;
-        case OP_CAST_CL:
-            if (n == 0) return 'c';
-            if (n == 1) return 'l';
-            break;
-        case OP_CAST_CF:
-            if (n == 0) return 'c';
-            if (n == 1) return 'f';
-            break;
-        case OP_CAST_CD:
-            if (n == 0) return 'c';
-            if (n == 1) return 'd';
-            break;
-        case OP_COPY_CC:
-        case OP_ONES_LIKE_CC:
-        case OP_NEG_CC:
-            if (n == 0 || n == 1) return 'c';
-            break;
-        case OP_ADD_CCC:
-        case OP_SUB_CCC:
-        case OP_MUL_CCC:
-        case OP_DIV_CCC:
-            if (n == 0 || n == 1 || n == 2) return 'c';
-            break;
-        case OP_WHERE_CBCC:
-            if (n == 0 || n == 2 || n == 3) return 'c';
-            if (n == 1) return 'b';
-            break;
-        case OP_FUNC_CC:
-            if (n == 0 || n == 1) return 'c';
-            if (n == 2) return 'n';
-            break;
-        case OP_FUNC_CCC:
-            if (n == 0 || n == 1 || n == 2) return 'c';
-            if (n == 3) return 'n';
-            break;
-        case OP_REAL_DC:
-        case OP_IMAG_DC:
-            if (n == 0) return 'd';
-            if (n == 1) return 'c';
-            break;
-        case OP_COMPLEX_CDD:
-            if (n == 0) return 'c';
-            if (n == 1 || n == 2) return 'd';
-            break;
-        case OP_COPY_SS:
-            if (n == 0 || n == 1) return 's';
-            break;
-        case OP_PROD_IIN:
-        case OP_SUM_IIN:
-            if (n == 0 || n == 1) return 'i';
-            if (n == 2) return 'n';
-            break;
-        case OP_PROD_LLN:
-        case OP_SUM_LLN:
-            if (n == 0 || n == 1) return 'l';
-            if (n == 2) return 'n';
-            break;
-        case OP_PROD_FFN:
-        case OP_SUM_FFN:
-            if (n == 0 || n == 1) return 'f';
-            if (n == 2) return 'n';
-            break;
-        case OP_PROD_DDN:
-        case OP_SUM_DDN:
-            if (n == 0 || n == 1) return 'd';
-            if (n == 2) return 'n';
-            break;
-        case OP_PROD_CCN:
-        case OP_SUM_CCN:
-            if (n == 0 || n == 1) return 'c';
-            if (n == 2) return 'n';
-            break;
-        default:
-            return -1;
-            break;
+op_signature(int op, unsigned int n) {
+    if (n >= max_args) {
+        return 0;
     }
-    return 0;
+    if (op < 0 || op > OP_END) {
+        return -1;
+    }
+    return op_signature_table[op][n];
 }
 
 
@@ -1018,7 +673,7 @@ check_program(NumExprObject *self)
         for (argno = 0; ; argno++) {
             sig = op_signature(op, argno);
             if (sig == -1) {
-                PyErr_Format(PyExc_RuntimeError, "invalid program: illegal opcode at %i (%c)", pc, op);
+                PyErr_Format(PyExc_RuntimeError, "invalid program: illegal opcode at %i (%d)", pc, op);
                 return -1;
             }
             if (sig == 0) break;
@@ -1039,32 +694,32 @@ check_program(NumExprObject *self)
                 return -1;
             }
             if (sig == 'n') {
-                if (op == OP_FUNC_FF) {
+                if (op == OP_FUNC_FFN) {
                     if (arg < 0 || arg >= FUNC_FF_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op == OP_FUNC_FFF) {
+                } else if (op == OP_FUNC_FFFN) {
                     if (arg < 0 || arg >= FUNC_FFF_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op == OP_FUNC_DD) {
+                } else if (op == OP_FUNC_DDN) {
                     if (arg < 0 || arg >= FUNC_DD_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op == OP_FUNC_DDD) {
+                } else if (op == OP_FUNC_DDDN) {
                     if (arg < 0 || arg >= FUNC_DDD_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op == OP_FUNC_CC) {
+                } else if (op == OP_FUNC_CCN) {
                     if (arg < 0 || arg >= FUNC_CC_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op == OP_FUNC_CCC) {
+                } else if (op == OP_FUNC_CCCN) {
                     if (arg < 0 || arg >= FUNC_CCC_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
@@ -1960,138 +1615,15 @@ initinterpreter(void)
     d = PyDict_New();
     if (!d) return;
 
-#define add_op(sname, name) o = PyInt_FromLong(name);   \
-    r = PyDict_SetItemString(d, sname, o);              \
-    Py_XDECREF(o);                                      \
-    if (r < 0) {PyErr_SetString(PyExc_RuntimeError, "add_op"); return;}
-    add_op("noop", OP_NOOP);
-
-    add_op("copy_bb", OP_COPY_BB);
-    add_op("invert_bb", OP_INVERT_BB);
-    add_op("and_bbb", OP_AND_BBB);
-    add_op("or_bbb", OP_OR_BBB);
-
-    add_op("eq_bbb", OP_EQ_BBB);
-    add_op("ne_bbb", OP_NE_BBB);
-
-    add_op("gt_bii", OP_GT_BII);
-    add_op("ge_bii", OP_GE_BII);
-    add_op("eq_bii", OP_EQ_BII);
-    add_op("ne_bii", OP_NE_BII);
-
-    add_op("gt_bll", OP_GT_BLL);
-    add_op("ge_bll", OP_GE_BLL);
-    add_op("eq_bll", OP_EQ_BLL);
-    add_op("ne_bll", OP_NE_BLL);
-
-    add_op("gt_bff", OP_GT_BFF);
-    add_op("ge_bff", OP_GE_BFF);
-    add_op("eq_bff", OP_EQ_BFF);
-    add_op("ne_bff", OP_NE_BFF);
-
-    add_op("gt_bdd", OP_GT_BDD);
-    add_op("ge_bdd", OP_GE_BDD);
-    add_op("eq_bdd", OP_EQ_BDD);
-    add_op("ne_bdd", OP_NE_BDD);
-
-    add_op("gt_bss", OP_GT_BSS);
-    add_op("ge_bss", OP_GE_BSS);
-    add_op("eq_bss", OP_EQ_BSS);
-    add_op("ne_bss", OP_NE_BSS);
-
-    add_op("ones_like_ii", OP_ONES_LIKE_II);
-    add_op("copy_ii", OP_COPY_II);
-    add_op("neg_ii", OP_NEG_II);
-    add_op("add_iii", OP_ADD_III);
-    add_op("sub_iii", OP_SUB_III);
-    add_op("mul_iii", OP_MUL_III);
-    add_op("div_iii", OP_DIV_III);
-    add_op("pow_iii", OP_POW_III);
-    add_op("mod_iii", OP_MOD_III);
-    add_op("where_ibii", OP_WHERE_IBII);
-
-    add_op("cast_li", OP_CAST_LI);
-    add_op("ones_like_ll", OP_ONES_LIKE_LL);
-    add_op("copy_ll", OP_COPY_LL);
-    add_op("neg_ll", OP_NEG_LL);
-    add_op("add_lll", OP_ADD_LLL);
-    add_op("sub_lll", OP_SUB_LLL);
-    add_op("mul_lll", OP_MUL_LLL);
-    add_op("div_lll", OP_DIV_LLL);
-    add_op("pow_lll", OP_POW_LLL);
-    add_op("mod_lll", OP_MOD_LLL);
-    add_op("where_lbll", OP_WHERE_LBLL);
-
-    add_op("cast_fi", OP_CAST_FI);
-    add_op("cast_fl", OP_CAST_FL);
-    add_op("copy_ff", OP_COPY_FF);
-    add_op("ones_like_ff", OP_ONES_LIKE_FF);
-    add_op("neg_ff", OP_NEG_FF);
-    add_op("add_fff", OP_ADD_FFF);
-    add_op("sub_fff", OP_SUB_FFF);
-    add_op("mul_fff", OP_MUL_FFF);
-    add_op("div_fff", OP_DIV_FFF);
-    add_op("pow_fff", OP_POW_FFF);
-    add_op("mod_fff", OP_MOD_FFF);
-    add_op("sqrt_ff", OP_SQRT_FF);
-    add_op("where_fbff", OP_WHERE_FBFF);
-    add_op("func_ff", OP_FUNC_FF);
-    add_op("func_fff", OP_FUNC_FFF);
-
-    add_op("cast_di", OP_CAST_DI);
-    add_op("cast_dl", OP_CAST_DL);
-    add_op("cast_df", OP_CAST_DF);
-    add_op("copy_dd", OP_COPY_DD);
-    add_op("ones_like_dd", OP_ONES_LIKE_DD);
-    add_op("neg_dd", OP_NEG_DD);
-    add_op("add_ddd", OP_ADD_DDD);
-    add_op("sub_ddd", OP_SUB_DDD);
-    add_op("mul_ddd", OP_MUL_DDD);
-    add_op("div_ddd", OP_DIV_DDD);
-    add_op("pow_ddd", OP_POW_DDD);
-    add_op("mod_ddd", OP_MOD_DDD);
-    add_op("sqrt_dd", OP_SQRT_DD);
-    add_op("where_dbdd", OP_WHERE_DBDD);
-    add_op("func_dd", OP_FUNC_DD);
-    add_op("func_ddd", OP_FUNC_DDD);
-
-    add_op("eq_bcc", OP_EQ_BCC);
-    add_op("ne_bcc", OP_NE_BCC);
-
-    add_op("cast_ci", OP_CAST_CI);
-    add_op("cast_cl", OP_CAST_CL);
-    add_op("cast_cf", OP_CAST_CF);
-    add_op("cast_cd", OP_CAST_CD);
-    add_op("copy_cc", OP_COPY_CC);
-    add_op("ones_like_cc", OP_ONES_LIKE_CC);
-    add_op("neg_cc", OP_NEG_CC);
-    add_op("add_ccc", OP_ADD_CCC);
-    add_op("sub_ccc", OP_SUB_CCC);
-    add_op("mul_ccc", OP_MUL_CCC);
-    add_op("div_ccc", OP_DIV_CCC);
-    add_op("where_cbcc", OP_WHERE_CBCC);
-    add_op("func_cc", OP_FUNC_CC);
-    add_op("func_ccc", OP_FUNC_CCC);
-
-    add_op("real_dc", OP_REAL_DC);
-    add_op("imag_dc", OP_IMAG_DC);
-    add_op("complex_cdd", OP_COMPLEX_CDD);
-
-    add_op("copy_ss", OP_COPY_SS);
-
-    add_op("sum_iin", OP_SUM_IIN);
-    add_op("sum_lln", OP_SUM_LLN);
-    add_op("sum_ffn", OP_SUM_FFN);
-    add_op("sum_ddn", OP_SUM_DDN);
-    add_op("sum_ccn", OP_SUM_CCN);
-
-    add_op("prod_iin", OP_PROD_IIN);
-    add_op("prod_lln", OP_PROD_LLN);
-    add_op("prod_ffn", OP_PROD_FFN);
-    add_op("prod_ddn", OP_PROD_DDN);
-    add_op("prod_ccn", OP_PROD_CCN);
-
-#undef add_op
+#define OPCODE(name, sname, ...)                                        \
+    if (sname) {                                                        \
+        o = PyInt_FromLong(name);                                       \
+        r = PyDict_SetItemString(d, sname, o);                          \
+        Py_XDECREF(o);                                                  \
+        if (r < 0) {PyErr_SetString(PyExc_RuntimeError, "add_op"); return;} \
+    }
+#include "opcodes.inc"
+#undef OPCODE
 
     if (PyModule_AddObject(m, "opcodes", d) < 0) return;
 
