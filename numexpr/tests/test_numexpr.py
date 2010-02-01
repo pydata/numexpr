@@ -279,15 +279,12 @@ def equal(a, b, exact):
 
 class Skip(Exception): pass
 
-class test_expressions(TestCase):
-    pass
-
-def generate_test_expressions():
+def test_expressions():
     test_no = [0]
     def make_test_method(a, a2, b, c, d, e, x, expr,
                          test_scalar, dtype, optimization, exact):
         this_locals = locals()
-        def method(self):
+        def method():
             npval = eval(expr, globals(), this_locals)
             try:
                 neval = evaluate(expr, local_dict=this_locals,
@@ -304,10 +301,12 @@ def generate_test_expressions():
             except:
                 print('numexpr error for expression %r' % (expr,))
                 raise
+        method.description = ('test_expressions(%s, test_scalar=%r, '
+                              'dtype=%r, optimization=%r, exact=%r)') \
+                    % (expr, test_scalar, dtype.__name__, optimization, exact)
         test_no[0] += 1
-        name = 'test_%04d' % (test_no[0],)
-        setattr(test_expressions, name,
-                new.instancemethod(method, None, test_expressions))
+        method.__name__ = 'test_%04d' % (test_no[0],)
+        return method
     x = None
     for test_scalar in [0,1,2]:
         for dtype in [int, long, numpy.float32, double, complex]:
@@ -340,11 +339,10 @@ def generate_test_expressions():
                         if (dtype in (int, long) and test_scalar and
                             expr == '(a+1) ** -1'):
                             continue
-                        make_test_method(a, a2, b, c, d, e, x,
-                                         expr, test_scalar, dtype,
-                                         optimization, exact)
-
-generate_test_expressions()
+                        m = make_test_method(a, a2, b, c, d, e, x,
+                                             expr, test_scalar, dtype,
+                                             optimization, exact)
+                        yield m,
 
 class test_int64(TestCase):
     def test_neg(self):
@@ -560,6 +558,7 @@ def test():
 
     print_versions()
     unittest.TextTestRunner().run(suite())
+test.__test__ = False
 
 
 def suite():
@@ -568,10 +567,18 @@ def suite():
     theSuite = unittest.TestSuite()
     niter = 1
 
+    class TestExpressions(TestCase):
+        pass
+    for m, in test_expressions():
+        def method(self):
+            return m()
+        setattr(TestExpressions, m.__name__,
+                new.instancemethod(method, None, TestExpressions))
+
     for n in range(niter):
         theSuite.addTest(unittest.makeSuite(test_numexpr))
         theSuite.addTest(unittest.makeSuite(test_evaluate))
-        theSuite.addTest(unittest.makeSuite(test_expressions))
+        theSuite.addTest(unittest.makeSuite(TestExpressions))
         theSuite.addTest(unittest.makeSuite(test_int32_int64))
         theSuite.addTest(unittest.makeSuite(test_uint32_int64))
         theSuite.addTest(unittest.makeSuite(test_strings))
