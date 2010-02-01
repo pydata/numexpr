@@ -43,7 +43,7 @@
 
 
 enum OpCodes {
-#define OPCODE(e, ...) e,
+#define OPCODE(n, e, ...) e = n,
 #include "opcodes.inc"
 #undef OPCODE
 };
@@ -61,7 +61,7 @@ static char op_signature_table[][max_args] = {
 #define Ts 's'
 #define Tn 'n'
 #define T0 0
-#define OPCODE(e, ex, rt, a1, a2, a3) {rt, a1, a2, a3},
+#define OPCODE(n, e, ex, rt, a1, a2, a3) [e] = {rt, a1, a2, a3},
 #include "opcodes.inc"
 #undef OPCODE
 #undef Tb
@@ -437,7 +437,6 @@ last_opcode(PyObject *program_object) {
     unsigned char *program;
     PyString_AsStringAndSize(program_object, (char **)&program, &n);
     return program[n-4];
-
 }
 
 static int
@@ -1426,7 +1425,7 @@ static PyMethodDef module_methods[] = {
 static int
 add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
 {
-    PyObject *o, *s, *key;
+    PyObject *o, *s;
     int r;
 
     if (!sname) {
@@ -1447,8 +1446,7 @@ add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
 void
 initinterpreter(void)
 {
-    PyObject *m, *d, *o;
-    int r;
+    PyObject *m, *d;
 
     if (PyType_Ready(&NumExprType) < 0)
         return;
@@ -1465,7 +1463,7 @@ initinterpreter(void)
     d = PyDict_New();
     if (!d) return;
 
-#define OPCODE(name, sname, ...) \
+#define OPCODE(n, name, sname, ...)                              \
     if (add_symbol(d, sname, name, "add_op") < 0) { return; }
 #include "opcodes.inc"
 #undef OPCODE
