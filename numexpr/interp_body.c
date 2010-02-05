@@ -225,7 +225,7 @@
         case OP_EQ_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) == 0));
         case OP_NE_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) != 0));
 
-        case OP_ONES_LIKE_II: VEC_ARG1(i_dest = 1);
+        case OP_ONES_LIKE_I: VEC_ARG1(i_dest = 1);
         case OP_NEG_II: VEC_ARG1(i_dest = -i1);
 
         case OP_ADD_III: VEC_ARG2(i_dest = i1 + i2);
@@ -238,7 +238,7 @@
         case OP_WHERE_IBII: VEC_ARG3(i_dest = b1 ? i2 : i3);
 
         case OP_CAST_LI: VEC_ARG1(l_dest = (long long)(i1));
-        case OP_ONES_LIKE_LL: VEC_ARG1(l_dest = 1);
+        case OP_ONES_LIKE_L: VEC_ARG1(l_dest = 1);
         case OP_NEG_LL: VEC_ARG1(l_dest = -l1);
 
         case OP_ADD_LLL: VEC_ARG2(l_dest = l1 + l2);
@@ -253,7 +253,7 @@
           /* Float */
         case OP_CAST_FI: VEC_ARG1(f_dest = (float)(i1));
         case OP_CAST_FL: VEC_ARG1(f_dest = (float)(l1));
-        case OP_ONES_LIKE_FF: VEC_ARG1(f_dest = 1.0);
+        case OP_ONES_LIKE_F: VEC_ARG1(f_dest = 1.0);
         case OP_NEG_FF: VEC_ARG1(f_dest = -f1);
 
         case OP_ADD_FFF: VEC_ARG2(f_dest = f1 + f2);
@@ -304,7 +304,7 @@
         case OP_CAST_DI: VEC_ARG1(d_dest = (double)(i1));
         case OP_CAST_DL: VEC_ARG1(d_dest = (double)(l1));
         case OP_CAST_DF: VEC_ARG1(d_dest = (double)(f1));
-        case OP_ONES_LIKE_DD: VEC_ARG1(d_dest = 1.0);
+        case OP_ONES_LIKE_D: VEC_ARG1(d_dest = 1.0);
         case OP_NEG_DD: VEC_ARG1(d_dest = -d1);
 
         case OP_ADD_DDD: VEC_ARG2(d_dest = d1 + d2);
@@ -360,7 +360,7 @@
                                   ci_dest = 0);
         case OP_CAST_CD: VEC_ARG1(cr_dest = d1;
                                   ci_dest = 0);
-        case OP_ONES_LIKE_CC: VEC_ARG1(cr_dest = 1;
+        case OP_ONES_LIKE_C: VEC_ARG1(cr_dest = 1;
                                   ci_dest = 0);
         case OP_NEG_CC: VEC_ARG1(cr_dest = -c1r;
                                  ci_dest = -c1i);
