@@ -28,11 +28,11 @@
 ##the following set of libraries is suited for compilation with the GNU C
 ##compiler (gcc). Refer to the MKL documentation if you use other compilers
 ##(e.g., Intel C compiler)
-#mkl_libs = mkl_gf_lp64, mkl_gnu_thread, mkl_core, iomp5
+#mkl_libs = mkl_solver_ilp64, mkl_intel_ilp64,  mkl_intel_thread, mkl_core, iomp5, pthread
 
 # Example for using MKL 10.2 for Windows 64-bit
 #include_dirs = \Program Files\Intel\MKL\10.2.5.035\include
 #library_dirs = \Program Files\Intel\MKL\10.2.5.035\em64t\lib
-#mkl_libs = mkl_core, mkl_intel_thread, mkl_intel_ilp64, libiomp5md
+#mkl_libs = mkl_solver_ilp64, mkl_core, mkl_intel_thread, mkl_intel_ilp64, libiomp5md
 # The next works too, but for LP64 arithmetic
 #mkl_libs = mkl_core, mkl_intel_thread, mkl_intel_lp64, libiomp5md
