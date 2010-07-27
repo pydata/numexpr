@@ -433,7 +433,7 @@ typecode_from_char(char c)
 
 static int
 last_opcode(PyObject *program_object) {
-    Py_ssize_t n;
+    intp n;
     unsigned char *program;
     PyString_AsStringAndSize(program_object, (char **)&program, &n);
     return program[n-4];
@@ -454,7 +454,7 @@ static int
 check_program(NumExprObject *self)
 {
     unsigned char *program;
-    Py_ssize_t prog_len, n_buffers, n_inputs;
+    intp prog_len, n_buffers, n_inputs;
     int rno, pc, arg, argloc, argno, sig;
     char *fullsig, *signature;
 
@@ -936,9 +936,9 @@ stringcmp(const char *s1, const char *s2, intp maxlen1, intp maxlen2)
 }
 
 static inline int
-vm_engine_1(size_t start, size_t blen, struct vm_params params, int *pc_error)
+vm_engine_1(intp start, intp blen, struct vm_params params, int *pc_error)
 {
-    size_t index;
+    intp index;
     for (index = start; index < blen; index += BLOCK_SIZE1) {
 #define VECTOR_SIZE BLOCK_SIZE1
 #include "interp_body.c"
@@ -948,9 +948,9 @@ vm_engine_1(size_t start, size_t blen, struct vm_params params, int *pc_error)
 }
 
 static inline int
-vm_engine_2(size_t start, size_t blen, struct vm_params params, int *pc_error)
+vm_engine_2(intp start, intp blen, struct vm_params params, int *pc_error)
 {
-    size_t index;
+    intp index;
     for (index = start; index < blen; index += BLOCK_SIZE2) {
 #define VECTOR_SIZE BLOCK_SIZE2
 #include "interp_body.c"
@@ -960,11 +960,11 @@ vm_engine_2(size_t start, size_t blen, struct vm_params params, int *pc_error)
 }
 
 static inline int
-vm_engine_rest(size_t start, size_t blen,
+vm_engine_rest(intp start, intp blen,
                struct vm_params params, int *pc_error)
 {
-    size_t index = start;
-    size_t rest = blen - start;
+    intp index = start;
+    intp rest = blen - start;
 #define VECTOR_SIZE rest
 #include "interp_body.c"
 #undef VECTOR_SIZE
@@ -972,12 +972,12 @@ vm_engine_rest(size_t start, size_t blen,
 }
 
 static int
-run_interpreter(NumExprObject *self, size_t len, char *output, char **inputs,
+run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
                 struct index_data *index_data, int *pc_error)
 {
     int r;
-    Py_ssize_t plen;
-    size_t blen1, blen2;
+    intp plen;
+    intp blen1, blen2;
     struct vm_params params;
 
     *pc_error = -1;
@@ -1020,7 +1020,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     unsigned int n_inputs, n_dimensions = 0;
     intp shape[MAX_DIMS];
     int i, j, r, pc_error;
-    size_t size;
+    intp size;
     char **inputs = NULL;
     intp strides[MAX_DIMS]; /* clean up XXX */
 
