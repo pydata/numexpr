@@ -936,9 +936,9 @@ stringcmp(const char *s1, const char *s2, intp maxlen1, intp maxlen2)
 }
 
 static inline int
-vm_engine_1(int start, int blen, struct vm_params params, int *pc_error)
+vm_engine_1(size_t start, size_t blen, struct vm_params params, int *pc_error)
 {
-    unsigned int index;
+    size_t index;
     for (index = start; index < blen; index += BLOCK_SIZE1) {
 #define VECTOR_SIZE BLOCK_SIZE1
 #include "interp_body.c"
@@ -948,9 +948,9 @@ vm_engine_1(int start, int blen, struct vm_params params, int *pc_error)
 }
 
 static inline int
-vm_engine_2(int start, int blen, struct vm_params params, int *pc_error)
+vm_engine_2(size_t start, size_t blen, struct vm_params params, int *pc_error)
 {
-    unsigned int index;
+    size_t index;
     for (index = start; index < blen; index += BLOCK_SIZE2) {
 #define VECTOR_SIZE BLOCK_SIZE2
 #include "interp_body.c"
@@ -960,10 +960,11 @@ vm_engine_2(int start, int blen, struct vm_params params, int *pc_error)
 }
 
 static inline int
-vm_engine_rest(int start, int blen, struct vm_params params, int *pc_error)
+vm_engine_rest(size_t start, size_t blen,
+               struct vm_params params, int *pc_error)
 {
-    unsigned int index = start;
-    unsigned int rest = blen - start;
+    size_t index = start;
+    size_t rest = blen - start;
 #define VECTOR_SIZE rest
 #include "interp_body.c"
 #undef VECTOR_SIZE
@@ -971,12 +972,12 @@ vm_engine_rest(int start, int blen, struct vm_params params, int *pc_error)
 }
 
 static int
-run_interpreter(NumExprObject *self, int len, char *output, char **inputs,
+run_interpreter(NumExprObject *self, size_t len, char *output, char **inputs,
                 struct index_data *index_data, int *pc_error)
 {
     int r;
     Py_ssize_t plen;
-    unsigned int blen1, blen2;
+    size_t blen1, blen2;
     struct vm_params params;
 
     *pc_error = -1;
@@ -1018,7 +1019,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     struct index_data *inddata = NULL;
     unsigned int n_inputs, n_dimensions = 0;
     intp shape[MAX_DIMS];
-    int i, j, size, r, pc_error;
+    int i, j, r, pc_error;
+    size_t size;
     char **inputs = NULL;
     intp strides[MAX_DIMS]; /* clean up XXX */
 
