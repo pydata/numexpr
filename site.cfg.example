@@ -28,7 +28,7 @@
 ##the following set of libraries is suited for compilation with the GNU C
 ##compiler (gcc). Refer to the MKL documentation if you use other compilers
 ##(e.g., Intel C compiler)
-#mkl_libs = mkl_solver_ilp64, mkl_intel_ilp64,  mkl_intel_thread, mkl_core, iomp5, pthread
+#mkl_libs = mkl_solver_ilp64, mkl_intel_ilp64,  mkl_intel_thread, mkl_core, iomp5
 
 # Example for using MKL 10.2 for Windows 64-bit
 #include_dirs = \Program Files\Intel\MKL\10.2.5.035\include
