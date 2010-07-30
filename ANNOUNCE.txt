@@ -6,8 +6,35 @@ Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
-  #XXX version-specific blurb XXX#
 
+What's new
+==========
+
+The main improvement in this version is the support for
+multi-threading in pure C.  Threading in C provides the best
+performance in nowadays multi-core machines.  In addition, this avoids
+the GIL that hampers performance in many Python apps.
+
+Just to wet your appetite, here it is the speed-ups achieved for
+computing a CPU-bounded function (sin(x)) on a 6-core machine:
+
+Time numpy: 0.204
+Time numexpr with 1 threads: 0.209
+Time numexpr with 2 threads: 0.119
+Time numexpr with 3 threads: 0.082
+Time numexpr with 4 threads: 0.066
+Time numexpr with 5 threads: 0.058
+Time numexpr with 6 threads: 0.052
+
+That is, a 4x speed-up, which is pretty good.
+
+For memory-bounded computations, the speed-up is not as spectacular,
+but multi-thread still helps to reduce Numexpr's virtual machine
+overhead.  For example, for computing this polynomial::
+   ((.25*x +.75)*x - 1.5)*x - 2
+on the same 6-core machine, I got:
+
+...
 In case you want to know more in detail what has changed in this
 version, see:
 
