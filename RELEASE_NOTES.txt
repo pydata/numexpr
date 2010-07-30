@@ -5,6 +5,10 @@
 Changes from 1.3.1 to development
 =================================
 
+- Added support for multi-threading in pure C.  This is to avoid the
+  GIL and allows to squeeze the best performance in both multi-core
+  machines.
+
 - Fix negation of `int64` numbers. Closes #25.
 
 - Using a `npy_intp` datatype (instead of plain `int`) so as to be

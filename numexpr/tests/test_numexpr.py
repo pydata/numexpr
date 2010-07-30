@@ -1,4 +1,5 @@
 import new, sys, os
+
 import numpy
 from numpy import (
     array, arange, empty, zeros, int32, int64, uint16, complex_, float64, rec,
@@ -22,6 +23,10 @@ double = numpy.double
 minimum_numpy_version = "1.2"
 
 class test_numexpr(TestCase):
+
+    def setUp(self):
+        numexpr.set_num_threads(self.nthreads)
+
     def test_simple(self):
         ex = 2.0 * E.a + 3.0 * E.b * E.c
         sig = [('a', double), ('b', double), ('c', double)]
@@ -37,14 +42,14 @@ class test_numexpr(TestCase):
 
     def test_simple_expr(self):
         func = NumExpr(E.a)
-        x = arange(1e5)
+        x = arange(1e6)
         y = func(x)
         assert_array_equal(x, y)
 
     def test_rational_expr(self):
         func = NumExpr((E.a + 2.0*E.b) / (1 + E.a + 4*E.b*E.b))
-        a = arange(1e5)
-        b = arange(1e5) * 0.1
+        a = arange(1e6)
+        b = arange(1e6) * 0.1
         x = (a + 2*b) / (1 + a + 4*b*b)
         y = func(a, b)
         assert_array_almost_equal(x, y)
@@ -114,6 +119,16 @@ class test_numexpr(TestCase):
                     [('mul_ddd', 'r0', 'r1[x]', 'r1[x]'),
                      ('add_ddd', 'r0', 'r0', 'c2[2.0]')])
 
+
+class test_numexpr1(test_numexpr):
+    """Testing with 1 thread"""
+    nthreads = 1
+
+class test_numexpr2(test_numexpr):
+    """Testing with 2 threads"""
+    nthreads = 2
+
+
 class test_evaluate(TestCase):
     def test_simple(self):
         a = array([1., 2., 3.])
@@ -128,13 +143,13 @@ class test_evaluate(TestCase):
         assert_array_equal(x, y)
 
     def test_simple_expr(self):
-        x = arange(1e5)
+        x = arange(1e6)
         y = evaluate("x")
         assert_array_equal(x, y)
 
     def test_rational_expr(self):
-        a = arange(1e5)
-        b = arange(1e5) * 0.1
+        a = arange(1e6)
+        b = arange(1e6) * 0.1
         x = (a + 2*b) / (1 + a + 4*b*b)
         y = evaluate("(a + 2*b) / (1 + a + 4*b*b)")
         assert_array_almost_equal(x, y)
@@ -548,6 +563,7 @@ def print_versions():
     print "VML available?     %s" % use_vml
     if use_vml:
         print "VML/MKL version:   %s" % numexpr.get_vml_version()
+    print 'Detected cores:    %s' % numexpr.ncores
     print '-=' * 38
 
 
@@ -576,7 +592,8 @@ def suite():
                 new.instancemethod(method, None, TestExpressions))
 
     for n in range(niter):
-        theSuite.addTest(unittest.makeSuite(test_numexpr))
+        theSuite.addTest(unittest.makeSuite(test_numexpr1))
+        theSuite.addTest(unittest.makeSuite(test_numexpr2))
         theSuite.addTest(unittest.makeSuite(test_evaluate))
         theSuite.addTest(unittest.makeSuite(TestExpressions))
         theSuite.addTest(unittest.makeSuite(test_int32_int64))

@@ -42,8 +42,12 @@ def configuration():
         mkl_config_data = {}
 
     #setup information for C extension
+    if os.name == 'nt':
+        pthread_win = ['numexpr/win32/pthread.c']
+    else:
+        pthread_win = []
     extension_config_data = {
-        'sources': ['numexpr/interpreter.c'],
+        'sources': ['numexpr/interpreter.c'] + pthread_win,
         'depends': ['numexpr/interp_body.c',
                     'numexpr/complex_functions.inc',
                     'numexpr/msvc_function_stubs.inc'],

@@ -147,7 +147,14 @@ General routines
 
   * test():  Run all the tests in the test suite.
 
-  * print_versions():  Print the versions of software that numexpr relies on.
+  * print_versions():  Print the versions of software that numexpr
+    relies on.
+
+  * set_num_threads(nthreads): Suggests a maximum number of threads to
+    be used in operations.
+
+  * detect_number_of_cores(): Detects the number of cores on a system.
+
 
 
 Intel's VML specific support routines
@@ -231,10 +238,10 @@ Authors
 
 Numexpr was initially written by David Cooke, and extended to more
 types by Tim Hochberg.  Francesc Alted contributed support for
-booleans and simple-precision floating point types and for efficient
-strided and unaligned array operations.  Ivan Vilata contributed
-support for strings.  Gregor Thalhammer implemented the support for
-Intel VML (Vector Math Library).
+booleans and simple-precision floating point types, efficient strided
+and unaligned array operations and multi-threading code.  Ivan Vilata
+contributed support for strings.  Gregor Thalhammer implemented the
+support for Intel VML (Vector Math Library).
 
 
 License

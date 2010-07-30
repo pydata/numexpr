@@ -6,6 +6,12 @@
 #include "string.h"
 #include "assert.h"
 
+#if defined(_WIN32) && !defined(__MINGW32__)
+  #include "win32/pthread.h"
+#else
+  #include <pthread.h>
+#endif
+
 #include "complex_functions.inc"
 
 #ifdef SCIPY_MKL_H
@@ -32,11 +38,35 @@
 #else
 /* The values below have been tuned for a nowadays Core2 processor */
 /* Note: without VML available a smaller block size is best, specially
- * for the strided and unaligned cases.  However, this may change
- * when/if numexpr would support multithreading for the non-VML case. */
-#define BLOCK_SIZE1 256
-#define BLOCK_SIZE2 8
+ * for the strided and unaligned cases.  Recent implementation of
+ * multithreading make it clear that larger block sizes benefit
+ * performance (although it seems like we don't need very large sizes
+ * like VML yet). */
+#define BLOCK_SIZE1 1024
+#define BLOCK_SIZE2 16
 #endif
+
+
+/* The maximum number of threads (for some static arrays) */
+#define MAX_THREADS 256
+
+/* Global variables for threads */
+int nthreads = 1;                /* number of desired threads in pool */
+int init_threads_done = 0;       /* pool of threads initialized? */
+int end_threads = 0;             /* should exisiting threads end? */
+pthread_t threads[MAX_THREADS];  /* opaque structure for threads */
+int tids[MAX_THREADS];           /* ID per each thread */
+intp gindex;                     /* global index for all threads */
+int init_sentinels_done;         /* sentinels initialized? */
+int giveup;                      /* should parallel code giveup? */
+
+/* Syncronization variables */
+pthread_mutex_t count_mutex;
+int count_threads;
+pthread_mutex_t count_threads_mutex;
+pthread_cond_t count_threads_cv;
+
+
 
 /* This file and interp_body should really be generated from a description of
    the opcodes -- there's too much repetition here for manually editing */
@@ -61,7 +91,7 @@ static char op_signature_table[][max_args] = {
 #define Ts 's'
 #define Tn 'n'
 #define T0 0
-#define OPCODE(n, e, ex, rt, a1, a2, a3) [e] = {rt, a1, a2, a3},
+#define OPCODE(n, e, ex, rt, a1, a2, a3) {rt, a1, a2, a3},
 #include "opcodes.inc"
 #undef OPCODE
 #undef Tb
@@ -123,7 +153,7 @@ FuncFFPtr functions_ff[] = {
 #include "functions.inc"
 #undef FUNC_FF
 };
-#endif  // #ifdef _WIN32
+#endif
 
 #ifdef USE_VML
 typedef void (*FuncFFPtr_vml)(int, const float*, float*);
@@ -154,7 +184,7 @@ FuncFFFPtr functions_fff[] = {
 #include "functions.inc"
 #undef FUNC_FFF
 };
-#endif  // #ifdef _WIN32
+#endif
 
 #ifdef USE_VML
 /* fmod not available in VML */
@@ -316,6 +346,9 @@ typedef struct
     intp *memsteps;
     intp *memsizes;
     int  rawmemsize;
+    int  n_inputs;
+    int  n_constants;
+    int  n_temps;
 } NumExprObject;
 
 static void
@@ -360,6 +393,9 @@ NumExpr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         self->memsteps = NULL;
         self->memsizes = NULL;
         self->rawmemsize = 0;
+        self->n_inputs = 0;
+        self->n_constants = 0;
+        self->n_temps = 0;
 #undef INIT_WITH
     }
     return (PyObject *)self;
@@ -579,7 +615,7 @@ static int
 NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
 {
     int i, j, mem_offset;
-    int n_constants, n_inputs, n_temps;
+    int n_inputs, n_constants, n_temps;
     PyObject *signature = NULL, *tempsig = NULL, *constsig = NULL;
     PyObject *fullsig = NULL, *program = NULL, *constants = NULL;
     PyObject *input_names = NULL, *o_constants = NULL;
@@ -699,7 +735,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
     rawmemsize = 0;
     for (i = 0; i < n_constants; i++)
         rawmemsize += itemsizes[i];
-    rawmemsize += size_from_sig(tempsig);  /* no string temporaries */
+    rawmemsize += size_from_sig(tempsig) * nthreads; /* one temp per thread */
     rawmemsize *= BLOCK_SIZE1;
 
     mem = PyMem_New(char *, 1 + n_inputs + n_constants + n_temps);
@@ -796,8 +832,10 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
             break;
         }
         mem[i+n_inputs+n_constants+1] = rawmem + mem_offset;
-        mem_offset += BLOCK_SIZE1 * size;
-        memsteps[i+n_inputs+n_constants+1] = memsizes[i+n_inputs+n_constants+1] = size;
+        /* Each thread should have its own temporary space */
+        mem_offset += BLOCK_SIZE1 * size * nthreads;
+        memsteps[i+n_inputs+n_constants+1] = size;
+        memsizes[i+n_inputs+n_constants+1] = size;
     }
     /* See if any errors occured (e.g., in size_from_char) or if mem_offset is wrong */
     if (PyErr_Occurred() || mem_offset != rawmemsize) {
@@ -834,6 +872,9 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
     REPLACE_MEM(memsteps);
     REPLACE_MEM(memsizes);
     self->rawmemsize = rawmemsize;
+    self->n_inputs = n_inputs;
+    self->n_constants = n_constants;
+    self->n_temps = n_temps;
 
     #undef REPLACE_OBJ
     #undef INCREF_REPLACE_OBJ
@@ -869,7 +910,9 @@ struct index_data {
 struct vm_params {
     int prog_len;
     unsigned char *program;
-    unsigned int n_inputs;
+    int n_inputs;
+    int n_constants;
+    int n_temps;
     unsigned int r_end;
     char *output;
     char **inputs;
@@ -878,6 +921,17 @@ struct vm_params {
     intp *memsizes;
     struct index_data *index_data;
 };
+
+/* Structure for parameters in worker threads */
+struct thread_data {
+    intp start;
+    intp vlen;
+    intp block_size;
+    struct vm_params params;
+    int ret_code;
+    int *pc_error;
+} th_params;
+
 
 static inline unsigned int
 flat_index(struct index_data *id, unsigned int j) {
@@ -935,28 +989,191 @@ stringcmp(const char *s1, const char *s2, intp maxlen1, intp maxlen2)
     return 0;
 }
 
+/* Serial version of VM engine */
 static inline int
-vm_engine_1(intp start, intp blen, struct vm_params params, int *pc_error)
+vm_engine_serial(intp start, intp vlen, intp block_size,
+                 struct vm_params params, int *pc_error)
 {
     intp index;
-    for (index = start; index < blen; index += BLOCK_SIZE1) {
-#define VECTOR_SIZE BLOCK_SIZE1
+    int tid = 0;
+    for (index = start; index < vlen; index += block_size) {
+#define BLOCK_SIZE block_size
 #include "interp_body.c"
-#undef VECTOR_SIZE
+#undef BLOCK_SIZE
     }
     return 0;
 }
 
+/* Serial version of VM engine (specific for BLOCK_SIZE1) */
 static inline int
-vm_engine_2(intp start, intp blen, struct vm_params params, int *pc_error)
+vm_engine_serial1(intp start, intp vlen,
+                  struct vm_params params, int *pc_error)
 {
     intp index;
-    for (index = start; index < blen; index += BLOCK_SIZE2) {
-#define VECTOR_SIZE BLOCK_SIZE2
+    int tid = 0;
+    for (index = start; index < vlen; index += BLOCK_SIZE1) {
+#define BLOCK_SIZE BLOCK_SIZE1
 #include "interp_body.c"
-#undef VECTOR_SIZE
+#undef BLOCK_SIZE
     }
     return 0;
+}
+
+
+/* Parallel version of VM engine */
+static inline int
+vm_engine_parallel(intp start, intp vlen, intp block_size,
+                   struct vm_params params, int *pc_error)
+{
+    /* Populate parameters for worker threads */
+    th_params.start = start;
+    th_params.vlen = vlen;
+    th_params.block_size = block_size;
+    th_params.params = params;
+    th_params.ret_code = 0;
+    th_params.pc_error = pc_error;
+
+    /* Synchronization point for all threads (wait for initialization) */
+    pthread_mutex_lock(&count_threads_mutex);
+    if (count_threads < nthreads) {
+        count_threads++;
+        pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
+    }
+    else {
+        pthread_cond_broadcast(&count_threads_cv);
+    }
+    pthread_mutex_unlock(&count_threads_mutex);
+
+    /* Synchronization point for all threads (wait for finalization) */
+    pthread_mutex_lock(&count_threads_mutex);
+    if (count_threads > 0) {
+        count_threads--;
+        pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
+    }
+    else {
+        pthread_cond_broadcast(&count_threads_cv);
+    }
+    pthread_mutex_unlock(&count_threads_mutex);
+
+    return th_params.ret_code;
+}
+
+/* VM engine for each thread (specific for BLOCK_SIZE1) */
+static inline int
+vm_engine_thread1(int tid, intp index,
+                  struct vm_params params, int *pc_error)
+{
+#define BLOCK_SIZE BLOCK_SIZE1
+#include "interp_body.c"
+#undef BLOCK_SIZE
+    return 0;
+}
+
+/* Do the worker job for a certain thread */
+void *th_worker(void *tids)
+{
+    int tid = *(int *)tids;
+    intp index;                 /* private copy of gindex */
+    /* Parameters for threads */
+    intp start;
+    intp vlen;
+    intp block_size;
+    struct vm_params params;
+    int *pc_error;
+    int ret;
+
+    while (1) {
+
+        init_sentinels_done = 0;     /* sentinels have to be initialised yet */
+
+        /* Meeting point for all threads (wait for initialization) */
+        pthread_mutex_lock(&count_threads_mutex);
+        if (count_threads < nthreads) {
+            count_threads++;
+            pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
+        }
+        else {
+            pthread_cond_broadcast(&count_threads_cv);
+        }
+        pthread_mutex_unlock(&count_threads_mutex);
+
+        /* Check if thread has been asked to return */
+        if (end_threads) {
+            return(0);
+        }
+
+        /* Get parameters for this thread before entering the main loop */
+        start = th_params.start;
+        vlen = th_params.vlen;
+        block_size = th_params.block_size;
+        params = th_params.params;
+        pc_error = th_params.pc_error;
+
+        /* Loop over blocks */
+        pthread_mutex_lock(&count_mutex);
+        if (!init_sentinels_done) {
+            /* Set sentinels and other global variables */
+            gindex = start;
+            index = gindex;
+            init_sentinels_done = 1;    /* sentinels have been initialised */
+            giveup = 0;            /* no giveup initially */
+        } else {
+            gindex += block_size;
+            index = gindex;
+        }
+        pthread_mutex_unlock(&count_mutex);
+        while (index < vlen && !giveup) {
+            ret = vm_engine_thread1(tid, index, params, pc_error);
+            if (ret < 0) {
+                pthread_mutex_lock(&count_mutex);
+                giveup = 1;
+                /* Propagate error to main thread */
+                th_params.ret_code = ret;
+                pthread_mutex_unlock(&count_mutex);
+            }
+            pthread_mutex_lock(&count_mutex);
+            gindex += block_size;
+            index = gindex;
+            pthread_mutex_unlock(&count_mutex);
+        }
+
+        /* Meeting point for all threads (wait for finalization) */
+        pthread_mutex_lock(&count_threads_mutex);
+        if (count_threads > 0) {
+            count_threads--;
+            pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
+        }
+        else {
+            pthread_cond_broadcast(&count_threads_cv);
+        }
+        pthread_mutex_unlock(&count_threads_mutex);
+
+    }  /* closes while(1) */
+
+    /* This should never be reached, but anyway */
+    return(0);
+}
+
+/* Compute expresion in [start:vlen], if possible with threads */
+static inline int
+vm_engine_block(intp start, intp vlen, intp block_size,
+                struct vm_params params, int *pc_error)
+{
+    /* Run the serial version when nthreads is 1 or when the
+       block_size is small */
+    int r;
+    if (nthreads == 1) {
+        if (block_size == BLOCK_SIZE1) {
+            r = vm_engine_serial1(start, vlen, params, pc_error);
+        }
+        else {
+            r = vm_engine_serial(start, vlen, block_size, params, pc_error);
+        }
+    }
+    else {
+        r = vm_engine_parallel(start, vlen, block_size, params, pc_error);
+    }
+    return r;
 }
 
 static inline int
@@ -964,10 +1181,11 @@ vm_engine_rest(intp start, intp blen,
                struct vm_params params, int *pc_error)
 {
     intp index = start;
-    intp rest = blen - start;
-#define VECTOR_SIZE rest
+    intp block_size = blen - start;
+    int tid = 0;
+#define BLOCK_SIZE block_size
 #include "interp_body.c"
-#undef VECTOR_SIZE
+#undef BLOCK_SIZE
     return 0;
 }
 
@@ -986,22 +1204,25 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
         return -1;
     }
     params.prog_len = plen;
-    if ((params.n_inputs = PyObject_Length(self->signature)) == -1)
-        return -1;
-
     params.output = output;
     params.inputs = inputs;
     params.index_data = index_data;
+    params.n_inputs = self->n_inputs;
+    params.n_constants = self->n_constants;
+    params.n_temps = self->n_temps;
     params.mem = self->mem;
     params.memsteps = self->memsteps;
     params.memsizes = self->memsizes;
     params.r_end = PyString_Size(self->fullsig);
     blen1 = len - len % BLOCK_SIZE1;
-    r = vm_engine_1(0, blen1, params, pc_error);
+    /* vm_engine_block can only be called for BLOCK_SIZE1 becuase of
+     problems in vm_engine_parallel that I haven't been able to
+     elucidate. */
+    r = vm_engine_block(0, blen1, BLOCK_SIZE1, params, pc_error);
     if (r < 0) return r;
     if (len != blen1) {
         blen2 = len - len % BLOCK_SIZE2;
-        r = vm_engine_2(blen1, blen2, params, pc_error);
+        r = vm_engine_serial(blen1, blen2, BLOCK_SIZE2, params, pc_error);
         if (r < 0) return r;
         if (len != blen2) {
             r = vm_engine_rest(blen2, len, params, pc_error);
@@ -1009,6 +1230,132 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
         }
     }
     return 0;
+}
+
+/* Initialize threads */
+int init_threads(void)
+{
+    int tid, rc;
+
+    /* Initialize mutex and condition variable objects */
+    pthread_mutex_init(&count_mutex, NULL);
+
+    /* Barrier initialization */
+    pthread_mutex_init(&count_threads_mutex, NULL);
+    pthread_cond_init(&count_threads_cv, NULL);
+    count_threads = 0;      /* Reset threads counter */
+
+    /* Finally, create the threads */
+    for (tid = 0; tid < nthreads; tid++) {
+        tids[tid] = tid;
+        rc = pthread_create(&threads[tid], NULL, th_worker,
+                            (void *)&tids[tid]);
+        if (rc) {
+            fprintf(stderr,
+                    "ERROR; return code from pthread_create() is %d\n", rc);
+            fprintf(stderr, "\tError detail: %s\n", strerror(rc));
+            exit(-1);
+        }
+    }
+
+    init_threads_done = 1;                 /* Initialization done! */
+
+    return(0);
+}
+
+/* Set the number of threads in numexpr's VM */
+int numexpr_set_nthreads(int nthreads_new)
+{
+    int nthreads_old = nthreads;
+    int t, rc;
+    void *status;
+
+    if (nthreads_new > MAX_THREADS) {
+        fprintf(stderr,
+                "Error.  nthreads cannot be larger than MAX_THREADS (%d)",
+                MAX_THREADS);
+        return -1;
+    }
+    else if (nthreads_new <= 0) {
+        fprintf(stderr, "Error.  nthreads must be a positive integer");
+        return -1;
+    }
+    else if (nthreads_new != nthreads) {
+        if (nthreads > 1 && init_threads_done) {
+            /* Tell all existing threads to finish */
+            end_threads = 1;
+            pthread_mutex_lock(&count_threads_mutex);
+            if (count_threads < nthreads) {
+                count_threads++;
+                pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
+            }
+            else {
+                pthread_cond_broadcast(&count_threads_cv);
+            }
+            pthread_mutex_unlock(&count_threads_mutex);
+
+            /* Join exiting threads */
+            for (t=0; t<nthreads; t++) {
+                rc = pthread_join(threads[t], &status);
+                if (rc) {
+                    fprintf(stderr,
+                            "ERROR; return code from pthread_join() is %d\n",
+                            rc);
+                    fprintf(stderr, "\tError detail: %s\n", strerror(rc));
+                    exit(-1);
+                }
+            }
+            init_threads_done = 0;
+            end_threads = 0;
+        }
+        nthreads = nthreads_new;
+        if (nthreads > 1) {
+            /* Launch a new pool of threads */
+            init_threads();
+        }
+    }
+    return nthreads_old;
+}
+
+/* Free possible memory temporaries and thread resources */
+void numexpr_free_resources(void)
+{
+    int t, rc;
+    void *status;
+
+    /* Finish the possible thread pool */
+    if (nthreads > 1 && init_threads_done) {
+        /* Tell all existing threads to finish */
+        end_threads = 1;
+        pthread_mutex_lock(&count_threads_mutex);
+        if (count_threads < nthreads) {
+            count_threads++;
+            pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
+        }
+        else {
+            pthread_cond_broadcast(&count_threads_cv);
+        }
+        pthread_mutex_unlock(&count_threads_mutex);
+
+        /* Join exiting threads */
+        for (t=0; t<nthreads; t++) {
+            rc = pthread_join(threads[t], &status);
+            if (rc) {
+                fprintf(stderr,
+                        "ERROR; return code from pthread_join() is %d\n", rc);
+                fprintf(stderr, "\tError detail: %s\n", strerror(rc));
+                exit(-1);
+            }
+        }
+
+        /* Release mutex and condition variable objects */
+        pthread_mutex_destroy(&count_mutex);
+        pthread_mutex_destroy(&count_threads_mutex);
+        pthread_cond_destroy(&count_threads_cv);
+
+        init_threads_done = 0;
+        end_threads = 0;
+    }
 }
 
 /* keyword arguments are ignored! */
@@ -1412,6 +1759,16 @@ _set_vml_num_threads(PyObject *self, PyObject *args)
 
 #endif
 
+static PyObject *
+_set_nthreads(PyObject *self, PyObject *args)
+{
+    int num_threads, nthreads_old;
+    if (!PyArg_ParseTuple(args, "i", &num_threads))
+	return NULL;
+    nthreads_old = numexpr_set_nthreads(num_threads);
+    return Py_BuildValue("i", nthreads_old);
+}
+
 static PyMethodDef module_methods[] = {
 #ifdef USE_VML
     {"_get_vml_version", _get_vml_version, METH_VARARGS,
@@ -1421,6 +1778,8 @@ static PyMethodDef module_methods[] = {
     {"_set_vml_num_threads", _set_vml_num_threads, METH_VARARGS,
      "Suggests a maximum number of threads to be used in VML operations."},
 #endif
+    {"_set_num_threads", _set_nthreads, METH_VARARGS,
+     "Suggests a maximum number of threads to be used in operations."},
     {NULL}
 };
 
@@ -1433,7 +1792,7 @@ add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
     if (!sname) {
         return 0;
     }
-    
+
     o = PyInt_FromLong(name);
     s = PyString_FromString(sname);
     if (!s) {
@@ -1499,3 +1858,10 @@ initinterpreter(void)
     if (PyModule_AddObject(m, "maxdims", PyInt_FromLong(MAX_DIMS)) < 0) return;
 
 }
+
+
+/*
+Local Variables:
+   c-basic-offset: 4
+End:
+*/

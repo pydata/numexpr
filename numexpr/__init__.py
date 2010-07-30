@@ -29,13 +29,16 @@ from numexpr.expressions import E
 from numexpr.necompiler import NumExpr, disassemble, evaluate
 from numexpr.tests import test, print_versions
 from numexpr.utils import (
-    get_vml_version, set_vml_accuracy_mode, set_vml_num_threads)
+    get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
+    set_num_threads, detect_number_of_cores)
 
+# Initialize the number of threads to be used
+ncores = detect_number_of_cores()
+set_num_threads(ncores)
 
 import version
 
 dirname = os.path.dirname(__file__)
 
 __version__ = version.version
-
 
