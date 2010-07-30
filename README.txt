@@ -150,8 +150,8 @@ General routines
   * print_versions():  Print the versions of software that numexpr
     relies on.
 
-  * set_num_threads(nthreads): Suggests a maximum number of threads to
-    be used in operations.
+  * set_num_threads(nthreads): Sets a number of threads to be used in
+    operations.
 
   * detect_number_of_cores(): Detects the number of cores on a system.
 
