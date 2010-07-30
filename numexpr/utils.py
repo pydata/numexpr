@@ -67,9 +67,14 @@ def set_num_threads(nthreads):
     """
     Sets a number of threads to be used in operations.
 
-    This option allows to use several cores even though numexpr has
-    not been compiled with VML support.  In case you are using numexpr
-    with VML support, you may want to use `set_vml_num_threads()` too.
+    By default, Numexpr sets this number to the number of detected
+    cores in the system (see `detect_number_of_cores()`).
+
+    If you are using Intel's VML, you may want to use
+    `set_vml_num_threads(nthreads)` to perform the parallel job with
+    VML instead.  However, you should get very similar performance
+    with VML-optimized functions, and VML parallelizer cannot deal
+    with common expresions like `(x+1)*(x-2)`, while Numexpr' one can.
     """
     _set_num_threads(nthreads)
 

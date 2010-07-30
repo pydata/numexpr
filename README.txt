@@ -151,9 +151,17 @@ General routines
     relies on.
 
   * set_num_threads(nthreads): Sets a number of threads to be used in
-    operations.
+    operations.  By default, Numexpr sets this number to the number of
+    detected cores in the system (see `detect_number_of_cores()`).
 
-  * detect_number_of_cores(): Detects the number of cores on a system.
+    If you are using Intel's VML, you may want to use
+    `set_vml_num_threads(nthreads)` to perform the parallel job with
+    VML instead.  However, you should get very similar performance
+    with VML-optimized functions, and VML parallelizer cannot deal
+    with common expresions like `(x+1)*(x-2)`, while Numexpr' one can.
+
+  * detect_number_of_cores(): Detects the number of cores in the
+    system.
 
 
 
