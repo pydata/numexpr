@@ -9,6 +9,19 @@ Changes from 1.3.1 to development
   GIL and allows to squeeze the best performance in both multi-core
   machines.
 
+- David Cooke contributed a thorough refactorization of the opcode
+  machinery for the virtual machine.  With this, it is really easy to
+  add more opcodes.  See:
+
+  http://code.google.com/p/numexpr/issues/detail?id=28
+
+  as an example.
+
+- Added a couple of opcodes to VM: where_bbbb and cast_ib. The first
+  allow to get boolean arrays out of the `where` function.  The second
+  allows to cast a boolean array into an integer one.  Thanks to
+  gdementen for his contribution.
+
 - Fix negation of `int64` numbers. Closes #25.
 
 - Using a `npy_intp` datatype (instead of plain `int`) so as to be

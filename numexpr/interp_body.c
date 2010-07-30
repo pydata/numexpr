@@ -221,6 +221,7 @@
 
         case OP_EQ_BBB: VEC_ARG2(b_dest = (b1 == b2));
         case OP_NE_BBB: VEC_ARG2(b_dest = (b1 != b2));
+        case OP_WHERE_BBBB: VEC_ARG3(b_dest = b1 ? b2 : b3);
 
         case OP_GT_BII: VEC_ARG2(b_dest = (i1 > i2));
         case OP_GE_BII: VEC_ARG2(b_dest = (i1 >= i2));
@@ -247,6 +248,7 @@
         case OP_EQ_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) == 0));
         case OP_NE_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) != 0));
 
+        case OP_CAST_IB: VEC_ARG1(i_dest = (int)(b1));
         case OP_ONES_LIKE_I: VEC_ARG1(i_dest = 1);
         case OP_NEG_II: VEC_ARG1(i_dest = -i1);
 
