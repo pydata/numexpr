@@ -3,7 +3,7 @@ import new, sys, os
 import numpy
 from numpy import (
     array, arange, empty, zeros, int32, int64, uint16, complex_, float64, rec,
-    copy, ones_like, where, alltrue,
+    copy, ones_like, where, alltrue, linspace,
     sum, prod, sqrt, fmod,
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
@@ -168,7 +168,6 @@ class test_evaluate(TestCase):
         y = evaluate("sin(complex(a, b)).real + z.imag")
         assert_array_almost_equal(x, y)
 
-
     def test_complex_strides(self):
         a = arange(100).reshape(10,10)[::2]
         b = arange(50).reshape(5,10)
@@ -180,7 +179,6 @@ class test_evaluate(TestCase):
         a0 = a[0]
         assert_array_equal(evaluate("c1"), c1)
         assert_array_equal(evaluate("a0+c1"), a0+c1)
-
 
     def test_broadcasting(self):
         a = arange(100).reshape(10,10)[::2]
@@ -212,6 +210,15 @@ class test_evaluate(TestCase):
             pass
         else:
             self.fail()
+
+    def test_changing_nthreads(self):
+        a = linspace(-1, 1, 1e6)
+        b = ((.25*a + .75)*a - 1.5)*a - 2
+        for nthreads in range(6):
+            numexpr.set_num_threads(nthreads+1)
+            c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
+            assert_array_almost_equal(b, c)
+
 
 
 tests = [

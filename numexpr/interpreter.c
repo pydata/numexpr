@@ -1760,7 +1760,7 @@ _set_vml_num_threads(PyObject *self, PyObject *args)
 #endif
 
 static PyObject *
-_set_nthreads(PyObject *self, PyObject *args)
+_set_num_threads(PyObject *self, PyObject *args)
 {
     int num_threads, nthreads_old;
     if (!PyArg_ParseTuple(args, "i", &num_threads))
@@ -1778,7 +1778,7 @@ static PyMethodDef module_methods[] = {
     {"_set_vml_num_threads", _set_vml_num_threads, METH_VARARGS,
      "Suggests a maximum number of threads to be used in VML operations."},
 #endif
-    {"_set_num_threads", _set_nthreads, METH_VARARGS,
+    {"_set_num_threads", _set_num_threads, METH_VARARGS,
      "Suggests a maximum number of threads to be used in operations."},
     {NULL}
 };
