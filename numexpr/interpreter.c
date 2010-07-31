@@ -976,11 +976,9 @@ stringcmp(const char *s1, const char *s2, intp maxlen1, intp maxlen2)
 int
 get_temps_space(struct vm_params params, char **mem, size_t block_size)
 {
-    int r, k;
-    int n_temps = params.n_temps;
+    int r, k = 1 + params.n_inputs + params.n_constants;
 
-    k = 1 + params.n_inputs + params.n_constants;
-    for (r = k; r < k+n_temps; r++) {
+    for (r = k; r < k + params.n_temps; r++) {
         mem[r] = malloc(block_size * params.memsizes[r]);
         if (mem[r] == NULL) {
             return -1;
@@ -993,11 +991,9 @@ get_temps_space(struct vm_params params, char **mem, size_t block_size)
 void
 free_temps_space(struct vm_params params, char **mem)
 {
-    int k, r;
-    int n_temps = params.n_temps;
+    int r, k = 1 + params.n_inputs + params.n_constants;
 
-    k = 1 + params.n_inputs + params.n_constants;
-    for (r = k; r < k+n_temps; r++) {
+    for (r = k; r < k + params.n_temps; r++) {
         free(mem[r]);
     }
 }
