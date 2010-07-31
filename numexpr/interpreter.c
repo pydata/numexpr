@@ -437,20 +437,6 @@ size_from_char(char c)
 }
 
 static int
-size_from_sig(PyObject *o)
-{
-    intp size = 0;
-    char *s = PyString_AsString(o);
-    if (!s) return -1;
-    for (; *s != '\0'; s++) {
-        int x = size_from_char(*s);
-        if (x == -1) return -1;
-        size += x;
-    }
-    return size;
-}
-
-static int
 typecode_from_char(char c)
 {
     switch (c) {
@@ -1081,6 +1067,17 @@ vm_engine_thread1(char **mem, intp index,
     return 0;
 }
 
+/* VM engine for each threadi (general) */
+static inline int
+vm_engine_thread(char **mem, intp index, intp block_size,
+                  struct vm_params params, int *pc_error)
+{
+#define BLOCK_SIZE block_size
+#include "interp_body.c"
+#undef BLOCK_SIZE
+    return 0;
+}
+
 /* Do the worker job for a certain thread */
 void *th_worker(void *tids)
 {
@@ -1158,7 +1155,13 @@ void *th_worker(void *tids)
         }
         pthread_mutex_unlock(&count_mutex);
         while (index < vlen && !giveup) {
-            ret = vm_engine_thread1(mem, index, params, pc_error);
+            if (block_size == BLOCK_SIZE1) {
+                ret = vm_engine_thread1(mem, index, params, pc_error);
+            }
+            else {
+                ret = vm_engine_thread(mem, index, block_size,
+                                       params, pc_error);
+            }
             if (ret < 0) {
                 pthread_mutex_lock(&count_mutex);
                 giveup = 1;
@@ -1256,14 +1259,11 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
     params.memsizes = self->memsizes;
     params.r_end = PyString_Size(self->fullsig);
     blen1 = len - len % BLOCK_SIZE1;
-    /* vm_engine_block can only be called for BLOCK_SIZE1 becuase of
-     problems in vm_engine_parallel that I haven't been able to
-     elucidate. */
     r = vm_engine_block(0, blen1, BLOCK_SIZE1, params, pc_error);
     if (r < 0) return r;
     if (len != blen1) {
         blen2 = len - len % BLOCK_SIZE2;
-        r = vm_engine_serial(blen1, blen2, BLOCK_SIZE2, params, pc_error);
+        r = vm_engine_block(blen1, blen2, BLOCK_SIZE2, params, pc_error);
         if (r < 0) return r;
         if (len != blen2) {
             r = vm_engine_rest(blen2, len, params, pc_error);
