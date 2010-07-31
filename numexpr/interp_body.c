@@ -97,12 +97,8 @@
 
 
     unsigned int pc, j, k, r;
-    char **mem;
 
     /* set up pointers to next block of inputs and outputs */
-    /* Get a private copy of mem pointer structure because its
-       info depens on the thread */
-    mem = params.memth[tid];
     mem[0] = params.output + index * params.memsteps[0];
     for (r = 0; r < params.n_inputs; r++) {
         struct index_data id = params.index_data[r+1];

@@ -919,7 +919,6 @@ struct vm_params {
     char **mem;
     intp *memsteps;
     intp *memsizes;
-    char **memth[MAX_THREADS];
     struct index_data *index_data;
 };
 
@@ -996,7 +995,7 @@ vm_engine_serial(intp start, intp vlen, intp block_size,
                  struct vm_params params, int *pc_error)
 {
     intp index;
-    int tid = 0;
+    char **mem = params.mem;
     for (index = start; index < vlen; index += block_size) {
 #define BLOCK_SIZE block_size
 #include "interp_body.c"
@@ -1011,7 +1010,7 @@ vm_engine_serial1(intp start, intp vlen,
                   struct vm_params params, int *pc_error)
 {
     intp index;
-    int tid = 0;
+    char **mem = params.mem;
     for (index = start; index < vlen; index += BLOCK_SIZE1) {
 #define BLOCK_SIZE BLOCK_SIZE1
 #include "interp_body.c"
@@ -1061,7 +1060,7 @@ vm_engine_parallel(intp start, intp vlen, intp block_size,
 
 /* VM engine for each thread (specific for BLOCK_SIZE1) */
 static inline int
-vm_engine_thread1(int tid, intp index,
+vm_engine_thread1(char **mem, intp index,
                   struct vm_params params, int *pc_error)
 {
 #define BLOCK_SIZE BLOCK_SIZE1
@@ -1073,7 +1072,7 @@ vm_engine_thread1(int tid, intp index,
 /* Do the worker job for a certain thread */
 void *th_worker(void *tids)
 {
-    int tid = *(int *)tids;
+    /* int tid = *(int *)tids; */
     intp index;                 /* private copy of gindex */
     /* Parameters for threads */
     intp start;
@@ -1129,8 +1128,6 @@ void *th_worker(void *tids)
         for (r = k; r < k+n_temps; r++) {
             mem[r] = malloc(BLOCK_SIZE1 * params.memsizes[r]);
         }
-        /* Put private mem pointers in the params area */
-        params.memth[tid] = mem;
 
         /* Loop over blocks */
         pthread_mutex_lock(&count_mutex);
@@ -1146,7 +1143,7 @@ void *th_worker(void *tids)
         }
         pthread_mutex_unlock(&count_mutex);
         while (index < vlen && !giveup) {
-            ret = vm_engine_thread1(tid, index, params, pc_error);
+            ret = vm_engine_thread1(mem, index, params, pc_error);
             if (ret < 0) {
                 pthread_mutex_lock(&count_mutex);
                 giveup = 1;
@@ -1212,7 +1209,7 @@ vm_engine_rest(intp start, intp blen,
 {
     intp index = start;
     intp block_size = blen - start;
-    int tid = 0;
+    char **mem = params.mem;
 #define BLOCK_SIZE block_size
 #include "interp_body.c"
 #undef BLOCK_SIZE
@@ -1241,7 +1238,6 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
     params.n_constants = self->n_constants;
     params.n_temps = self->n_temps;
     params.mem = self->mem;
-    params.memth[0] = params.mem;    /* first slot for threads is always mem */
     params.memsteps = self->memsteps;
     params.memsizes = self->memsizes;
     params.r_end = PyString_Size(self->fullsig);
