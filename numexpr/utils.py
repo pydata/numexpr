@@ -1,7 +1,6 @@
 import os
 
 from numexpr.interpreter import _set_num_threads
-import numexpr
 from numexpr import use_vml
 
 if use_vml:
@@ -81,11 +80,6 @@ def set_num_threads(nthreads):
     can.
     """
     old_nthreads = _set_num_threads(nthreads)
-    # If the number of threads to use changes, then space for
-    # temporaries changes too, so we cannot use numexpr cache for
-    # expressions anymore.
-    if old_nthreads != nthreads:
-        numexpr.necompiler._numexpr_cache = CacheDict(256)
 
 
 def detect_number_of_cores():

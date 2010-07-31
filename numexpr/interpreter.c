@@ -735,7 +735,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
     rawmemsize = 0;
     for (i = 0; i < n_constants; i++)
         rawmemsize += itemsizes[i];
-    rawmemsize += size_from_sig(tempsig) * nthreads; /* one temp per thread */
+    rawmemsize += size_from_sig(tempsig);
     rawmemsize *= BLOCK_SIZE1;
 
     mem = PyMem_New(char *, 1 + n_inputs + n_constants + n_temps);
@@ -820,7 +820,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
        in temporaries (there are no string temporaries). */
     PyMem_Del(itemsizes);
 
-    /* Fill in 'mem' for temps */
+    /* Fill in 'mem' and 'memsteps' and 'memsizes' for temps */
     for (i = 0; i < n_temps; i++) {
         char c = PyString_AS_STRING(tempsig)[i];
         int size = size_from_char(c);
@@ -833,7 +833,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
         mem[i+n_inputs+n_constants+1] = rawmem + mem_offset;
         /* Each thread should have its own temporary space */
-        mem_offset += BLOCK_SIZE1 * size * nthreads;
+        mem_offset += BLOCK_SIZE1 * size;
         memsteps[i+n_inputs+n_constants+1] = size;
         memsizes[i+n_inputs+n_constants+1] = size;
     }
@@ -919,6 +919,7 @@ struct vm_params {
     char **mem;
     intp *memsteps;
     intp *memsizes;
+    char **memth[MAX_THREADS];
     struct index_data *index_data;
 };
 
@@ -1081,6 +1082,12 @@ void *th_worker(void *tids)
     struct vm_params params;
     int *pc_error;
     int ret;
+    int k, r;
+    int n_inputs;
+    int n_constants;
+    int n_temps;
+    size_t memsize;
+    char **mem;
 
     while (1) {
 
@@ -1108,6 +1115,22 @@ void *th_worker(void *tids)
         block_size = th_params.block_size;
         params = th_params.params;
         pc_error = th_params.pc_error;
+
+        /* Populate private data for each thread */
+        n_inputs = params.n_inputs;
+        n_constants = params.n_constants;
+        n_temps = params.n_temps;
+        memsize = (1+n_inputs+n_constants+n_temps) * sizeof(char *);
+        /* XXX malloc seems thread safe for POSIX, but for Win? */
+        mem = malloc(memsize);
+        memcpy(mem, params.mem, memsize);
+        /* Get temporary space for each thread */
+        k = 1+n_inputs+n_constants;
+        for (r = k; r < k+n_temps; r++) {
+            mem[r] = malloc(BLOCK_SIZE1 * params.memsizes[r]);
+        }
+        /* Put private mem pointers in the params area */
+        params.memth[tid] = mem;
 
         /* Loop over blocks */
         pthread_mutex_lock(&count_mutex);
@@ -1147,6 +1170,13 @@ void *th_worker(void *tids)
             pthread_cond_broadcast(&count_threads_cv);
         }
         pthread_mutex_unlock(&count_threads_mutex);
+
+        /* Release resources */
+        k = 1+n_inputs+n_constants;
+        for (r = k; r < k+n_temps; r++) {
+            free(mem[r]);
+        }
+        free(mem);
 
     }  /* closes while(1) */
 
@@ -1211,6 +1241,7 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
     params.n_constants = self->n_constants;
     params.n_temps = self->n_temps;
     params.mem = self->mem;
+    params.memth[0] = params.mem;    /* first slot for threads is always mem */
     params.memsteps = self->memsteps;
     params.memsizes = self->memsizes;
     params.r_end = PyString_Size(self->fullsig);

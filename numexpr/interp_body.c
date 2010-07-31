@@ -97,22 +97,12 @@
 
 
     unsigned int pc, j, k, r;
-    int n_inputs = params.n_inputs;
-    int n_constants = params.n_constants;
-    int n_temps = params.n_temps;
-    size_t memsize = (1+n_inputs+n_constants+n_temps) * sizeof(char *);
     char **mem;
 
     /* set up pointers to next block of inputs and outputs */
-    if (nthreads > 1) {
-        /* Do a private copy of mem pointer structure because its info
-           depens on the thread */
-        mem = malloc(memsize);
-        memcpy(mem, params.mem, memsize);
-    }
-    else {
-        mem = params.mem;
-    }
+    /* Get a private copy of mem pointer structure because its
+       info depens on the thread */
+    mem = params.memth[tid];
     mem[0] = params.output + index * params.memsteps[0];
     for (r = 0; r < params.n_inputs; r++) {
         struct index_data id = params.index_data[r+1];
@@ -135,13 +125,6 @@
             }
         } else {
             mem[1+r] = params.inputs[r] + index * params.memsteps[1+r];
-        }
-    }
-    if (nthreads > 1) {
-        /* Get the proper places for temporaries (they depend on thread ID) */
-        k = 1+n_inputs+n_constants;
-        for (r = k; r < k+n_temps; r++) {
-            mem[r] += BLOCK_SIZE * params.memsizes[r] * tid;
         }
     }
 
@@ -195,7 +178,7 @@
         #define c3r   ((double *)(x3+j*sb3))[0]
         #define c3i   ((double *)(x3+j*sb3))[1]
         #define s3    ((char   *)x3+j*sb3)
-	/* Some temporaries */
+        /* Some temporaries */
         double da, db;
         cdouble ca, cb;
         char *ptr;
@@ -285,43 +268,43 @@
         case OP_MUL_FFF: VEC_ARG2(f_dest = f1 * f2);
         case OP_DIV_FFF:
 #ifdef USE_VML
-	    VEC_ARG2_VML(vsDiv(BLOCK_SIZE,
+            VEC_ARG2_VML(vsDiv(BLOCK_SIZE,
                                (float*)x1, (float*)x2, (float*)dest));
 #else
-	    VEC_ARG2(f_dest = f1 / f2);
+            VEC_ARG2(f_dest = f1 / f2);
 #endif
         case OP_POW_FFF:
 #ifdef USE_VML
-	    VEC_ARG2_VML(vsPow(BLOCK_SIZE,
+            VEC_ARG2_VML(vsPow(BLOCK_SIZE,
                                (float*)x1, (float*)x2, (float*)dest));
 #else
-	    VEC_ARG2(f_dest = powf(f1, f2));
+            VEC_ARG2(f_dest = powf(f1, f2));
 #endif
         case OP_MOD_FFF: VEC_ARG2(f_dest = f1 - floorf(f1/f2) * f2);
 
         case OP_SQRT_FF:
 #ifdef USE_VML
-	    VEC_ARG1_VML(vsSqrt(BLOCK_SIZE, (float*)x1, (float*)dest));
+            VEC_ARG1_VML(vsSqrt(BLOCK_SIZE, (float*)x1, (float*)dest));
 #else
-	    VEC_ARG1(f_dest = sqrtf(f1));
+            VEC_ARG1(f_dest = sqrtf(f1));
 #endif
 
         case OP_WHERE_FBFF: VEC_ARG3(f_dest = b1 ? f2 : f3);
 
         case OP_FUNC_FFN:
 #ifdef USE_VML
-	    VEC_ARG1_VML(functions_ff_vml[arg2](BLOCK_SIZE,
+            VEC_ARG1_VML(functions_ff_vml[arg2](BLOCK_SIZE,
                                                 (float*)x1, (float*)dest));
 #else
-	    VEC_ARG1(f_dest = functions_ff[arg2](f1));
+            VEC_ARG1(f_dest = functions_ff[arg2](f1));
 #endif
         case OP_FUNC_FFFN:
 #ifdef USE_VML
-	    VEC_ARG2_VML(functions_fff_vml[arg3](BLOCK_SIZE,
+            VEC_ARG2_VML(functions_fff_vml[arg3](BLOCK_SIZE,
                                                  (float*)x1, (float*)x2,
                                                  (float*)dest));
 #else
-	    VEC_ARG2(f_dest = functions_fff[arg3](f1, f2));
+            VEC_ARG2(f_dest = functions_fff[arg3](f1, f2));
 #endif
 
           /* Double */
@@ -336,43 +319,43 @@
         case OP_MUL_DDD: VEC_ARG2(d_dest = d1 * d2);
         case OP_DIV_DDD:
 #ifdef USE_VML
-	    VEC_ARG2_VML(vdDiv(BLOCK_SIZE,
+            VEC_ARG2_VML(vdDiv(BLOCK_SIZE,
                                (double*)x1, (double*)x2, (double*)dest));
 #else
-	    VEC_ARG2(d_dest = d1 / d2);
+            VEC_ARG2(d_dest = d1 / d2);
 #endif
         case OP_POW_DDD:
 #ifdef USE_VML
-	    VEC_ARG2_VML(vdPow(BLOCK_SIZE,
+            VEC_ARG2_VML(vdPow(BLOCK_SIZE,
                                (double*)x1, (double*)x2, (double*)dest));
 #else
-	    VEC_ARG2(d_dest = pow(d1, d2));
+            VEC_ARG2(d_dest = pow(d1, d2));
 #endif
         case OP_MOD_DDD: VEC_ARG2(d_dest = d1 - floor(d1/d2) * d2);
 
         case OP_SQRT_DD:
 #ifdef USE_VML
-	    VEC_ARG1_VML(vdSqrt(BLOCK_SIZE, (double*)x1, (double*)dest));
+            VEC_ARG1_VML(vdSqrt(BLOCK_SIZE, (double*)x1, (double*)dest));
 #else
-	    VEC_ARG1(d_dest = sqrt(d1));
+            VEC_ARG1(d_dest = sqrt(d1));
 #endif
 
         case OP_WHERE_DBDD: VEC_ARG3(d_dest = b1 ? d2 : d3);
 
         case OP_FUNC_DDN:
 #ifdef USE_VML
-	    VEC_ARG1_VML(functions_dd_vml[arg2](BLOCK_SIZE,
+            VEC_ARG1_VML(functions_dd_vml[arg2](BLOCK_SIZE,
                                                 (double*)x1, (double*)dest));
 #else
-	    VEC_ARG1(d_dest = functions_dd[arg2](d1));
+            VEC_ARG1(d_dest = functions_dd[arg2](d1));
 #endif
         case OP_FUNC_DDDN:
 #ifdef USE_VML
-	    VEC_ARG2_VML(functions_ddd_vml[arg3](BLOCK_SIZE,
+            VEC_ARG2_VML(functions_ddd_vml[arg3](BLOCK_SIZE,
                                                  (double*)x1, (double*)x2,
                                                  (double*)dest));
 #else
-	    VEC_ARG2(d_dest = functions_ddd[arg3](d1, d2));
+            VEC_ARG2(d_dest = functions_ddd[arg3](d1, d2));
 #endif
 
             /* Complex */
@@ -394,17 +377,17 @@
         case OP_SUB_CCC: VEC_ARG2(cr_dest = c1r - c2r;
                                   ci_dest = c1i - c2i);
         case OP_MUL_CCC: VEC_ARG2(da = c1r*c2r - c1i*c2i;
-				  ci_dest = c1r*c2i + c1i*c2r;
-				  cr_dest = da);
+                                  ci_dest = c1r*c2i + c1i*c2r;
+                                  cr_dest = da);
         case OP_DIV_CCC:
 #ifdef USE_VMLXXX /* VML complex division is slower */
-	    VEC_ARG2_VML(vzDiv(BLOCK_SIZE, (const MKL_Complex16*)x1,
+            VEC_ARG2_VML(vzDiv(BLOCK_SIZE, (const MKL_Complex16*)x1,
                                (const MKL_Complex16*)x2, (MKL_Complex16*)dest));
 #else
-	    VEC_ARG2(da = c2r*c2r + c2i*c2i;
-		     db = (c1r*c2r + c1i*c2i) / da;
-		     ci_dest = (c1i*c2r - c1r*c2i) / da;
-		     cr_dest = db);
+            VEC_ARG2(da = c2r*c2r + c2i*c2i;
+                     db = (c1r*c2r + c1i*c2i) / da;
+                     ci_dest = (c1i*c2r - c1r*c2i) / da;
+                     cr_dest = db);
 #endif
         case OP_EQ_BCC: VEC_ARG2(b_dest = (c1r == c2r && c1i == c2i));
         case OP_NE_BCC: VEC_ARG2(b_dest = (c1r != c2r || c1i != c2i));
@@ -413,15 +396,15 @@
                                      ci_dest = b1 ? c2i : c3i);
         case OP_FUNC_CCN:
 #ifdef USE_VML
-	    VEC_ARG1_VML(functions_cc_vml[arg2](BLOCK_SIZE,
+            VEC_ARG1_VML(functions_cc_vml[arg2](BLOCK_SIZE,
                                                 (const MKL_Complex16*)x1,
                                                 (MKL_Complex16*)dest));
 #else
-	    VEC_ARG1(ca.real = c1r;
-		     ca.imag = c1i;
-		     functions_cc[arg2](&ca, &ca);
-		     cr_dest = ca.real;
-		     ci_dest = ca.imag);
+            VEC_ARG1(ca.real = c1r;
+                     ca.imag = c1i;
+                     functions_cc[arg2](&ca, &ca);
+                     cr_dest = ca.real;
+                     ci_dest = ca.imag);
 #endif
         case OP_FUNC_CCCN: VEC_ARG2(ca.real = c1r;
                                     ca.imag = c1i;
@@ -460,10 +443,6 @@
         }
     }
 
-    /* Release resources */
-    if (nthreads > 1) {
-        free(mem);
-    }
 
 #undef VEC_LOOP
 #undef VEC_ARG1
