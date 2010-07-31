@@ -491,7 +491,7 @@ check_program(NumExprObject *self)
 {
     unsigned char *program;
     intp prog_len, n_buffers, n_inputs;
-    int rno, pc, arg, argloc, argno, sig;
+    int pc, arg, argloc, argno, sig;
     char *fullsig, *signature;
 
     if (PyString_AsStringAndSize(self->program, (char **)&program,
@@ -516,13 +516,6 @@ check_program(NumExprObject *self)
     if (n_buffers > 255) {
         PyErr_Format(PyExc_RuntimeError, "invalid program: too many buffers");
         return -1;
-    }
-    for (rno = n_inputs+1; rno < n_buffers; rno++) {
-        char *bufend = self->mem[rno] + BLOCK_SIZE1 * size_from_char(fullsig[rno]);
-        if ( (bufend - self->rawmem) > self->rawmemsize) {
-            PyErr_Format(PyExc_RuntimeError, "invalid program: too many buffers");
-            return -1;
-        }
     }
     for (pc = 0; pc < prog_len; pc += 4) {
         unsigned int op = program[pc];
@@ -731,11 +724,11 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
         input_names = Py_None;
     }
 
-    /* Compute the size of registers. */
+    /* Compute the size of registers. We leave temps out (will be
+       malloc'ed later on). */
     rawmemsize = 0;
     for (i = 0; i < n_constants; i++)
         rawmemsize += itemsizes[i];
-    rawmemsize += size_from_sig(tempsig);
     rawmemsize *= BLOCK_SIZE1;
 
     mem = PyMem_New(char *, 1 + n_inputs + n_constants + n_temps);
@@ -820,20 +813,10 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
        in temporaries (there are no string temporaries). */
     PyMem_Del(itemsizes);
 
-    /* Fill in 'mem' and 'memsteps' and 'memsizes' for temps */
+    /* Fill in 'memsteps' and 'memsizes' for temps */
     for (i = 0; i < n_temps; i++) {
         char c = PyString_AS_STRING(tempsig)[i];
         int size = size_from_char(c);
-        /* XXX: This check is quite useless, since using a string temporary
-           still causes a crash when freeing rawmem.  Why? */
-        if (c == 's') {
-            PyErr_SetString(PyExc_NotImplementedError,
-                            "string temporaries are not supported");
-            break;
-        }
-        mem[i+n_inputs+n_constants+1] = rawmem + mem_offset;
-        /* Each thread should have its own temporary space */
-        mem_offset += BLOCK_SIZE1 * size;
         memsteps[i+n_inputs+n_constants+1] = size;
         memsizes[i+n_inputs+n_constants+1] = size;
     }
@@ -989,6 +972,36 @@ stringcmp(const char *s1, const char *s2, intp maxlen1, intp maxlen2)
     return 0;
 }
 
+/* Get space for VM temporary registers */
+int
+get_temps_space(struct vm_params params, char **mem, size_t block_size)
+{
+    int r, k;
+    int n_temps = params.n_temps;
+
+    k = 1 + params.n_inputs + params.n_constants;
+    for (r = k; r < k+n_temps; r++) {
+        mem[r] = malloc(block_size * params.memsizes[r]);
+        if (mem[r] == NULL) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+/* Free space for VM temporary registers */
+void
+free_temps_space(struct vm_params params, char **mem)
+{
+    int k, r;
+    int n_temps = params.n_temps;
+
+    k = 1 + params.n_inputs + params.n_constants;
+    for (r = k; r < k+n_temps; r++) {
+        free(mem[r]);
+    }
+}
+
 /* Serial version of VM engine */
 static inline int
 vm_engine_serial(intp start, intp vlen, intp block_size,
@@ -996,11 +1009,13 @@ vm_engine_serial(intp start, intp vlen, intp block_size,
 {
     intp index;
     char **mem = params.mem;
+    get_temps_space(params, mem, block_size);
     for (index = start; index < vlen; index += block_size) {
 #define BLOCK_SIZE block_size
 #include "interp_body.c"
 #undef BLOCK_SIZE
     }
+    free_temps_space(params, mem);
     return 0;
 }
 
@@ -1011,14 +1026,15 @@ vm_engine_serial1(intp start, intp vlen,
 {
     intp index;
     char **mem = params.mem;
+    get_temps_space(params, mem, BLOCK_SIZE1);
     for (index = start; index < vlen; index += BLOCK_SIZE1) {
 #define BLOCK_SIZE BLOCK_SIZE1
 #include "interp_body.c"
 #undef BLOCK_SIZE
     }
+    free_temps_space(params, mem);
     return 0;
 }
-
 
 /* Parallel version of VM engine */
 static inline int
@@ -1081,7 +1097,6 @@ void *th_worker(void *tids)
     struct vm_params params;
     int *pc_error;
     int ret;
-    int k, r;
     int n_inputs;
     int n_constants;
     int n_temps;
@@ -1124,9 +1139,13 @@ void *th_worker(void *tids)
         mem = malloc(memsize);
         memcpy(mem, params.mem, memsize);
         /* Get temporary space for each thread */
-        k = 1+n_inputs+n_constants;
-        for (r = k; r < k+n_temps; r++) {
-            mem[r] = malloc(BLOCK_SIZE1 * params.memsizes[r]);
+        ret = get_temps_space(params, mem, block_size);
+        if (ret < 0) {
+            pthread_mutex_lock(&count_mutex);
+            giveup = 1;
+            /* Propagate error to main thread */
+            th_params.ret_code = ret;
+            pthread_mutex_unlock(&count_mutex);
         }
 
         /* Loop over blocks */
@@ -1169,10 +1188,7 @@ void *th_worker(void *tids)
         pthread_mutex_unlock(&count_threads_mutex);
 
         /* Release resources */
-        k = 1+n_inputs+n_constants;
-        for (r = k; r < k+n_temps; r++) {
-            free(mem[r]);
-        }
+        free_temps_space(params, mem);
         free(mem);
 
     }  /* closes while(1) */
@@ -1210,9 +1226,11 @@ vm_engine_rest(intp start, intp blen,
     intp index = start;
     intp block_size = blen - start;
     char **mem = params.mem;
+    get_temps_space(params, mem, block_size);
 #define BLOCK_SIZE block_size
 #include "interp_body.c"
 #undef BLOCK_SIZE
+    free_temps_space(params, mem);
     return 0;
 }
 
