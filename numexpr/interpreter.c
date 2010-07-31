@@ -59,6 +59,7 @@ int tids[MAX_THREADS];           /* ID per each thread */
 intp gindex;                     /* global index for all threads */
 int init_sentinels_done;         /* sentinels initialized? */
 int giveup;                      /* should parallel code giveup? */
+int force_serial;                /* force serial code instead of parallel? */
 
 /* Syncronization variables */
 pthread_mutex_t count_mutex;
@@ -1204,7 +1205,7 @@ vm_engine_block(intp start, intp vlen, intp block_size,
     /* Run the serial version when nthreads is 1 or when the
        block_size is small */
     int r;
-    if (nthreads == 1) {
+    if ((nthreads == 1) || force_serial) {
         if (block_size == BLOCK_SIZE1) {
             r = vm_engine_serial1(start, vlen, params, pc_error);
         }
@@ -1412,6 +1413,9 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     char **inputs = NULL;
     intp strides[MAX_DIMS]; /* clean up XXX */
 
+    /* Don't force serial mode by default */
+    force_serial = 0;
+
     n_inputs = PyTuple_Size(args);
     if (PyString_Size(self->signature) != n_inputs) {
         return PyErr_Format(PyExc_ValueError,
@@ -1584,6 +1588,9 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                     a = PyArray_SimpleNewFromDescr(1, dims, PyArray_DESCR(a));
                     /* steals reference below */
                     PyTuple_SET_ITEM(a_inputs, i+2*n_inputs, a);
+                    /* Broadcasting code only seems to work well for
+                       serial code (don't know exactly why) */
+                    force_serial = 1;
                     break;
                 }
             }

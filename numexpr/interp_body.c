@@ -108,7 +108,7 @@
                 unsigned int flatindex = 0;
                 for (k = 0; k < id.count; k ++)
                     flatindex += id.strides[k] * id.index[k];
-                memcpy(mem[1+r]+ (j*id.size), id.buffer + flatindex, id.size);
+                memcpy(mem[1+r] + (j*id.size), id.buffer + flatindex, id.size);
                 k = id.count - 1;
                 id.index[k] += 1;
                 if (id.index[k] >= id.shape[k])
