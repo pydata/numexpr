@@ -45,12 +45,13 @@ Time numexpr with 4 threads: 0.053
 Time numexpr with 5 threads: 0.047
 Time numexpr with 6 threads: 0.046
 
-This time, the speed-up is around 2.4x wrt. using 1 core, and amost 9x
-wrt plain NumPy.  It is worth noting that a pure C program took 48 ms,
-which is close to the 46 ms mark that achieved Numexpr with 6 cores.,
+This time, the speed-up is around 2.4x wrt using 1 core, and amost 9x
+wrt plain NumPy.  It is worth noting that a pure C program took 48 ms
+for doing the same computation (in single-threaded mode, that is).
+This is close to the 46 ms mark that achieved Numexpr with 6 cores.
 This means that the virtual machine overhead of Numexpr can be
 compensated almost completely by using multi-threading (and a machine
-with cores enough, that is ;-).
+with cores enough ;-).
 
 In case you want to know more in detail what has changed in this
 version, see:
