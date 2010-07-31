@@ -211,14 +211,21 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
-    def test_changing_nthreads(self):
+    def test_changing_nthreads_inc(self):
         a = linspace(-1, 1, 1e6)
         b = ((.25*a + .75)*a - 1.5)*a - 2
-        for nthreads in range(6):
-            numexpr.set_num_threads(nthreads+1)
+        for nthreads in range(1,7):
+            numexpr.set_num_threads(nthreads)
             c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
             assert_array_almost_equal(b, c)
 
+    def test_changing_nthreads_dec(self):
+        a = linspace(-1, 1, 1e6)
+        b = ((.25*a + .75)*a - 1.5)*a - 2
+        for nthreads in range(6, 0):
+            numexpr.set_num_threads(nthreads)
+            c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
+            assert_array_almost_equal(b, c)
 
 
 tests = [
