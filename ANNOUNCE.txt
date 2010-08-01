@@ -6,7 +6,6 @@ Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
-
 What's new
 ==========
 
@@ -15,43 +14,11 @@ multi-threading in pure C.  Threading in C provides the best
 performance in nowadays multi-core machines.  In addition, this avoids
 the GIL that hampers performance in many Python apps.
 
-Just to wet your appetite, here it is the speed-ups achieved for
-computing a CPU-bounded function like::
-  (sin(x)**2+cos(x)**2)
-on a 6-core machine:
+Just to wet your appetite, look into this page where the
+implementation is briefly described and where some benchmarks are
+shown:
 
-Time numpy: 0.630
-Time numexpr with 1 threads: 0.467
-Time numexpr with 2 threads: 0.234
-Time numexpr with 3 threads: 0.161
-Time numexpr with 4 threads: 0.123
-Time numexpr with 5 threads: 0.101
-Time numexpr with 6 threads: 0.089
-
-That is, more than a 5x speed-up with respect to using 1 core and more
-than 7x with respect to plain NumPy.
-
-For memory-bounded computations, the speed-up is not as spectacular,
-but multi-thread still helps to reduce Numexpr's virtual machine
-overhead.  For example, for computing this polynomial::
-   ((.25*x +.75)*x - 1.5)*x - 2
-on the same 6-core machine:
-
-Time numpy: 0.411
-Time numexpr with 1 threads: 0.112
-Time numexpr with 2 threads: 0.070
-Time numexpr with 3 threads: 0.060
-Time numexpr with 4 threads: 0.053
-Time numexpr with 5 threads: 0.047
-Time numexpr with 6 threads: 0.046
-
-This time, the speed-up is around 2.4x wrt using 1 core, and amost 9x
-wrt plain NumPy.  It is worth noting that a pure C program took 48 ms
-for doing the same computation (in single-threaded mode, that is).
-This is close to the 46 ms mark that achieved Numexpr with 6 cores.
-This means that the virtual machine overhead of Numexpr can be
-compensated almost completely by using multi-threading (and a machine
-with cores enough ;-).
+http://code.google.com/p/numexpr/wiki/MultiThreadVM
 
 In case you want to know more in detail what has changed in this
 version, see:
@@ -59,7 +26,6 @@ version, see:
 http://code.google.com/p/numexpr/wiki/ReleaseNotes
 
 or have a look at RELEASE_NOTES.txt in the tarball.
-
 
 Where I can find Numexpr?
 =========================
@@ -71,17 +37,6 @@ http://code.google.com/p/numexpr/
 And you can get the packages from PyPI as well:
 
 http://pypi.python.org/pypi
-
-
-How it works?
-=============
-
-See:
-
-http://code.google.com/p/numexpr/wiki/Overview
-
-for a detailed description by the original author (David M. Cooke).
-
 
 Share your experience
 =====================
