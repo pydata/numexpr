@@ -1264,7 +1264,8 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
     if (r < 0) return r;
     if (len != blen1) {
         blen2 = len - len % BLOCK_SIZE2;
-        r = vm_engine_block(blen1, blen2, BLOCK_SIZE2, params, pc_error);
+        /* A block is generally too small for threading to be an advantage */
+        r = vm_engine_serial(blen1, blen2, BLOCK_SIZE2, params, pc_error);
         if (r < 0) return r;
         if (len != blen2) {
             r = vm_engine_rest(blen2, len, params, pc_error);
