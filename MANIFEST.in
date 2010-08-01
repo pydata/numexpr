@@ -2,7 +2,7 @@ include MANIFEST.in
 
 include *.txt site.cfg.example
 
-recursive-include numexpr *.c *.inc *.py
+recursive-include numexpr *.c *.inc *.py *.h
 exclude numexpr/__config__.py
 exclude RELEASING.txt
 
