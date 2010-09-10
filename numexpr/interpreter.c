@@ -6,7 +6,7 @@
 #include "string.h"
 #include "assert.h"
 
-#if defined(_WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32)
   #include "win32/pthread.h"
 #else
   #include <pthread.h>
