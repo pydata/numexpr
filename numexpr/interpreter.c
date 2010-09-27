@@ -1323,7 +1323,7 @@ int numexpr_set_nthreads(int nthreads_new)
         fprintf(stderr, "Error.  nthreads must be a positive integer");
         return -1;
     }
-    else if (nthreads_new != nthreads) {
+    else {
         if (nthreads > 1 && init_threads_done) {
             /* Tell all existing threads to finish */
             end_threads = 1;
@@ -1413,6 +1413,9 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     intp size;
     char **inputs = NULL;
     intp strides[MAX_DIMS]; /* clean up XXX */
+
+    /* Init threads again (just in case we are in a subprocess) */
+    numexpr_set_nthreads(nthreads);
 
     /* Don't force serial mode by default */
     force_serial = 0;
