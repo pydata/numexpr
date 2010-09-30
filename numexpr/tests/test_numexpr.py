@@ -566,7 +566,7 @@ class test_threading(TestCase):
 
 # Case test for subprocesses (via multiprocessing module)
 class test_subprocess(TestCase):
-    def test_subprocess(self):
+    def test_multiprocess(self):
         import multiprocessing as mp
         # Check for two threads at least
         numexpr.set_num_threads(2)
