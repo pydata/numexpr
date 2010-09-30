@@ -1314,8 +1314,8 @@ int init_threads(void)
 /* Set the number of threads in numexpr's VM */
 int numexpr_set_nthreads(int nthreads_new)
 {
-    int_t nthreads_old = nthreads;
-    int_t t, rc;
+    int nthreads_old = nthreads;
+    int t, rc;
     void *status;
 
     if (nthreads_new > MAX_THREADS) {
