@@ -1362,7 +1362,7 @@ int numexpr_set_nthreads(int nthreads_new)
 
     /* Launch a new pool of threads (if necessary) */
     nthreads = nthreads_new;
-    if (nthreads > 1) {
+    if (nthreads > 1 && (!init_threads_done || pid != getpid())) {
         init_threads();
     }
 
