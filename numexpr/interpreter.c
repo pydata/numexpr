@@ -1329,40 +1329,43 @@ int numexpr_set_nthreads(int nthreads_new)
         return -1;
     }
 
-    if (nthreads_new != nthreads || pid != getpid()) {
-        if (nthreads > 1 && init_threads_done && pid == getpid()) {
-            /* Tell all existing threads to finish */
-            end_threads = 1;
-            pthread_mutex_lock(&count_threads_mutex);
-            if (count_threads < nthreads) {
-                count_threads++;
-                pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
-            }
-            else {
-                pthread_cond_broadcast(&count_threads_cv);
-            }
-            pthread_mutex_unlock(&count_threads_mutex);
+    /* Only join threads if they are not initialized or if our PID is
+       different from that in pid var (probably means that we are a
+       subprocess, and thus threads are non-existent). */
+    if (nthreads > 1 && init_threads_done && pid == getpid()) {
+        /* Tell all existing threads to finish */
+        end_threads = 1;
+        pthread_mutex_lock(&count_threads_mutex);
+        if (count_threads < nthreads) {
+            count_threads++;
+            pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
+        }
+        else {
+            pthread_cond_broadcast(&count_threads_cv);
+        }
+        pthread_mutex_unlock(&count_threads_mutex);
 
-            /* Join exiting threads */
-            for (t=0; t<nthreads; t++) {
-                rc = pthread_join(threads[t], &status);
-                if (rc) {
-                    fprintf(stderr,
-                            "ERROR; return code from pthread_join() is %d\n",
-                            rc);
-                    fprintf(stderr, "\tError detail: %s\n", strerror(rc));
-                    exit(-1);
-                }
+        /* Join exiting threads */
+        for (t=0; t<nthreads; t++) {
+            rc = pthread_join(threads[t], &status);
+            if (rc) {
+                fprintf(stderr,
+                        "ERROR; return code from pthread_join() is %d\n",
+                        rc);
+                fprintf(stderr, "\tError detail: %s\n", strerror(rc));
+                exit(-1);
             }
-            init_threads_done = 0;
-            end_threads = 0;
         }
-        nthreads = nthreads_new;
-        if (nthreads > 1) {
-            /* Launch a new pool of threads */
-            init_threads();
-        }
+        init_threads_done = 0;
+        end_threads = 0;
     }
+
+    /* Launch a new pool of threads (if necessary) */
+    nthreads = nthreads_new;
+    if (nthreads > 1) {
+        init_threads();
+    }
+
     return nthreads_old;
 }
 
@@ -1420,10 +1423,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     char **inputs = NULL;
     intp strides[MAX_DIMS]; /* clean up XXX */
 
-    if (pid != getpid()) {
-        /* We are in a forked subprocess: init threads again */
-        numexpr_set_nthreads(nthreads);
-    }
+    /* Check whether we need to restart threads */
+    numexpr_set_nthreads(nthreads);
 
     /* Don't force serial mode by default */
     force_serial = 0;
