@@ -5,9 +5,12 @@
 #include "math.h"
 #include "string.h"
 #include "assert.h"
+#include "unistd.h"
 
 #if defined(_WIN32)
   #include "win32/pthread.h"
+  #include <process.h>
+  #define getpid _getpid
 #else
   #include <pthread.h>
 #endif
@@ -60,6 +63,7 @@ intp gindex;                     /* global index for all threads */
 int init_sentinels_done;         /* sentinels initialized? */
 int giveup;                      /* should parallel code giveup? */
 int force_serial;                /* force serial code instead of parallel? */
+int pid = 0;                     /* the PID for this process */
 
 /* Syncronization variables */
 pthread_mutex_t count_mutex;
@@ -1302,6 +1306,7 @@ int init_threads(void)
     }
 
     init_threads_done = 1;                 /* Initialization done! */
+    pid = (int)getpid();                   /* save the PID for this process */
 
     return(0);
 }
@@ -1309,8 +1314,8 @@ int init_threads(void)
 /* Set the number of threads in numexpr's VM */
 int numexpr_set_nthreads(int nthreads_new)
 {
-    int nthreads_old = nthreads;
-    int t, rc;
+    int_t nthreads_old = nthreads;
+    int_t t, rc;
     void *status;
 
     if (nthreads_new > MAX_THREADS) {
@@ -1323,8 +1328,9 @@ int numexpr_set_nthreads(int nthreads_new)
         fprintf(stderr, "Error.  nthreads must be a positive integer");
         return -1;
     }
-    else {
-        if (nthreads > 1 && init_threads_done) {
+
+    if (nthreads_new != nthreads || pid != getpid()) {
+        if (nthreads > 1 && init_threads_done && pid == getpid()) {
             /* Tell all existing threads to finish */
             end_threads = 1;
             pthread_mutex_lock(&count_threads_mutex);
@@ -1414,8 +1420,10 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     char **inputs = NULL;
     intp strides[MAX_DIMS]; /* clean up XXX */
 
-    /* Init threads again (just in case we are in a subprocess) */
-    numexpr_set_nthreads(nthreads);
+    if (pid != getpid()) {
+        /* We are in a forked subprocess: init threads again */
+        numexpr_set_nthreads(nthreads);
+    }
 
     /* Don't force serial mode by default */
     force_serial = 0;
