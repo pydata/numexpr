@@ -1424,7 +1424,9 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     intp strides[MAX_DIMS]; /* clean up XXX */
 
     /* Check whether we need to restart threads */
-    numexpr_set_nthreads(nthreads);
+    if (!init_threads_done || pid != getpid()) {
+        numexpr_set_nthreads(nthreads);
+    }
 
     /* Don't force serial mode by default */
     force_serial = 0;
