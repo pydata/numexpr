@@ -5,7 +5,6 @@
 #include "math.h"
 #include "string.h"
 #include "assert.h"
-#include "unistd.h"
 
 #if defined(_WIN32)
   #include "win32/pthread.h"
@@ -13,6 +12,7 @@
   #define getpid _getpid
 #else
   #include <pthread.h>
+  #include "unistd.h"
 #endif
 
 #include "complex_functions.inc"
