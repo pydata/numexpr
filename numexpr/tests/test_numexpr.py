@@ -552,15 +552,15 @@ class test_irregular_stride(TestCase):
         assert_array_equal(f0[i0], arange(5, dtype=int32))
         assert_array_equal(f1[i1], arange(5, dtype=float64))
 
+        
 # Case test for threads
 class test_threading(TestCase):
-    def test_select(self):
+    def test_thread(self):
         import threading
         class ThreadTest(threading.Thread):
             def run(self):
                 a = arange(3)
                 assert_array_equal(evaluate('a**3'), array([0, 1, 8]))
-
         test = ThreadTest()
         test.start()
 
@@ -647,8 +647,12 @@ def suite():
         theSuite.addTest(unittest.makeSuite(test_strings))
         theSuite.addTest(
             unittest.makeSuite(test_irregular_stride) )
-        theSuite.addTest(unittest.makeSuite(test_threading))
         theSuite.addTest(unittest.makeSuite(test_subprocess))
+        # I need to put this test after test_subprocess because
+        # if not, the test suite locks immediately before test_subproces.
+        # This only happens with Windows, so I suspect of a subtle bad
+        # interaction with threads and subprocess :-/
+        theSuite.addTest(unittest.makeSuite(test_threading))
 
     return theSuite
 
