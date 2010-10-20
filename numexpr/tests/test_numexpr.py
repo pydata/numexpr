@@ -211,7 +211,9 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
-    def test_changing_nthreads_inc(self):
+    # Execution order set here so as to not use too many threads
+    # during the rest of the execution.  See #33 for details.
+    def test_changing_nthreads_00_inc(self):
         a = linspace(-1, 1, 1e6)
         b = ((.25*a + .75)*a - 1.5)*a - 2
         for nthreads in range(1,7):
@@ -219,10 +221,10 @@ class test_evaluate(TestCase):
             c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
             assert_array_almost_equal(b, c)
 
-    def test_changing_nthreads_dec(self):
+    def test_changing_nthreads_01_dec(self):
         a = linspace(-1, 1, 1e6)
         b = ((.25*a + .75)*a - 1.5)*a - 2
-        for nthreads in range(6, 0):
+        for nthreads in range(6, 1, -1):
             numexpr.set_num_threads(nthreads)
             c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
             assert_array_almost_equal(b, c)
@@ -562,6 +564,31 @@ class test_threading(TestCase):
         test = ThreadTest()
         test.start()
 
+# Case test for subprocesses (via multiprocessing module)
+class test_subprocess(TestCase):
+    def test_multiprocess(self):
+        import multiprocessing as mp
+        # Check for two threads at least
+        numexpr.set_num_threads(2)
+        def _worker(qout = None):
+            ra = numpy.arange(1e3)
+            rows = evaluate('ra > 0')
+            #print "Succeeded in evaluation!\n"
+            if qout is not None:
+                qout.put("Done")
+        #print "**** Running from main process:"
+        _worker()
+        #print "**** Running from subprocess:"
+        qout = mp.Queue()
+        ps = mp.Process(target=_worker, args=(qout,))
+        ps.daemon = True
+        ps.start()
+
+        result = qout.get()
+        #print result
+
+
+
 
 def print_versions():
     """Print the versions of software that numexpr relies on."""
@@ -617,7 +644,8 @@ def suite():
         theSuite.addTest(unittest.makeSuite(test_strings))
         theSuite.addTest(
             unittest.makeSuite(test_irregular_stride) )
-        theSuite.addTest(unittest.makeSuite(test_threading, prefix='check'))
+        theSuite.addTest(unittest.makeSuite(test_threading))
+        theSuite.addTest(unittest.makeSuite(test_subprocess))
 
     return theSuite
 

@@ -5,9 +5,12 @@
 #include "math.h"
 #include "string.h"
 #include "assert.h"
+#include "unistd.h"
 
 #if defined(_WIN32)
   #include "win32/pthread.h"
+  #include <process.h>
+  #define getpid _getpid
 #else
   #include <pthread.h>
 #endif
@@ -60,6 +63,7 @@ intp gindex;                     /* global index for all threads */
 int init_sentinels_done;         /* sentinels initialized? */
 int giveup;                      /* should parallel code giveup? */
 int force_serial;                /* force serial code instead of parallel? */
+int pid = 0;                     /* the PID for this process */
 
 /* Syncronization variables */
 pthread_mutex_t count_mutex;
@@ -1307,6 +1311,7 @@ int init_threads(void)
     }
 
     init_threads_done = 1;                 /* Initialization done! */
+    pid = (int)getpid();                   /* save the PID for this process */
 
     return(0);
 }
@@ -1328,40 +1333,44 @@ int numexpr_set_nthreads(int nthreads_new)
         fprintf(stderr, "Error.  nthreads must be a positive integer");
         return -1;
     }
-    else if (nthreads_new != nthreads) {
-        if (nthreads > 1 && init_threads_done) {
-            /* Tell all existing threads to finish */
-            end_threads = 1;
-            pthread_mutex_lock(&count_threads_mutex);
-            if (count_threads < nthreads) {
-                count_threads++;
-                pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
-            }
-            else {
-                pthread_cond_broadcast(&count_threads_cv);
-            }
-            pthread_mutex_unlock(&count_threads_mutex);
 
-            /* Join exiting threads */
-            for (t=0; t<nthreads; t++) {
-                rc = pthread_join(threads[t], &status);
-                if (rc) {
-                    fprintf(stderr,
-                            "ERROR; return code from pthread_join() is %d\n",
-                            rc);
-                    fprintf(stderr, "\tError detail: %s\n", strerror(rc));
-                    exit(-1);
-                }
+    /* Only join threads if they are not initialized or if our PID is
+       different from that in pid var (probably means that we are a
+       subprocess, and thus threads are non-existent). */
+    if (nthreads > 1 && init_threads_done && pid == getpid()) {
+        /* Tell all existing threads to finish */
+        end_threads = 1;
+        pthread_mutex_lock(&count_threads_mutex);
+        if (count_threads < nthreads) {
+            count_threads++;
+            pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
+        }
+        else {
+            pthread_cond_broadcast(&count_threads_cv);
+        }
+        pthread_mutex_unlock(&count_threads_mutex);
+
+        /* Join exiting threads */
+        for (t=0; t<nthreads; t++) {
+            rc = pthread_join(threads[t], &status);
+            if (rc) {
+                fprintf(stderr,
+                        "ERROR; return code from pthread_join() is %d\n",
+                        rc);
+                fprintf(stderr, "\tError detail: %s\n", strerror(rc));
+                exit(-1);
             }
-            init_threads_done = 0;
-            end_threads = 0;
         }
-        nthreads = nthreads_new;
-        if (nthreads > 1) {
-            /* Launch a new pool of threads */
-            init_threads();
-        }
+        init_threads_done = 0;
+        end_threads = 0;
     }
+
+    /* Launch a new pool of threads (if necessary) */
+    nthreads = nthreads_new;
+    if (nthreads > 1 && (!init_threads_done || pid != getpid())) {
+        init_threads();
+    }
+
     return nthreads_old;
 }
 
@@ -1418,6 +1427,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     intp size;
     char **inputs = NULL;
     intp strides[MAX_DIMS]; /* clean up XXX */
+
+    /* Check whether we need to restart threads */
+    if (!init_threads_done || pid != getpid()) {
+        numexpr_set_nthreads(nthreads);
+    }
 
     /* Don't force serial mode by default */
     force_serial = 0;
