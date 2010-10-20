@@ -6,9 +6,16 @@
 Changes from 1.4 series to development
 ======================================
 
+- Mingw32 can also work with pthreads compatibility code for win32.
+  Fixes #31.
+
 - Fixed a problem that used to happen when running Numexpr with
   threads in subprocesses.  It seems that threads needs to be
   initialized whenever a subprocess is created.  Fixes #33.
+
+- The GIL (Global Interpreter Lock) is released during computations.
+  This should allow for better resource usage for multithreaded apps.
+  Fixes #35.
 
 
 Changes from 1.3.1 to 1.4
