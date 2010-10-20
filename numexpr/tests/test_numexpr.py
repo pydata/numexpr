@@ -564,18 +564,21 @@ class test_threading(TestCase):
         test = ThreadTest()
         test.start()
 
+# The worker function for the subprocess (needs to be here because Windows
+# has problems pickling nested functions with the multiprocess module :-/)
+def _worker(qout = None):
+    ra = numpy.arange(1e3)
+    rows = evaluate('ra > 0')
+    #print "Succeeded in evaluation!\n"
+    if qout is not None:
+        qout.put("Done")
+
 # Case test for subprocesses (via multiprocessing module)
 class test_subprocess(TestCase):
     def test_multiprocess(self):
         import multiprocessing as mp
         # Check for two threads at least
         numexpr.set_num_threads(2)
-        def _worker(qout = None):
-            ra = numpy.arange(1e3)
-            rows = evaluate('ra > 0')
-            #print "Succeeded in evaluation!\n"
-            if qout is not None:
-                qout.put("Done")
         #print "**** Running from main process:"
         _worker()
         #print "**** Running from subprocess:"
