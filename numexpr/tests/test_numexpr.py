@@ -552,7 +552,7 @@ class test_irregular_stride(TestCase):
         assert_array_equal(f0[i0], arange(5, dtype=int32))
         assert_array_equal(f1[i1], arange(5, dtype=float64))
 
-        
+
 # Case test for threads
 class test_threading(TestCase):
     def test_thread(self):
