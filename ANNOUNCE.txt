@@ -1,5 +1,5 @@
 ==========================
- Announcing Numexpr 1.4.1
+ Announcing Numexpr 1.4.2
 ==========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -9,10 +9,7 @@ and use less memory than doing the same calculation in Python.
 What's new
 ==========
 
-This is a maintenance release.  On it, several improvements have been
-done in order to prevent deadlocks in new threaded code (fixes #33).
-Also the GIL is released now during computations, which should be
-interesting for embedding numexpr in threaded Python apps.
+#XXX version-specific blurb XXX#
 
 In case you want to know more in detail what has changed in this
 version, see:
