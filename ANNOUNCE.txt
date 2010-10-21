@@ -25,9 +25,9 @@ The project is hosted at Google code in:
 
 http://code.google.com/p/numexpr/
 
-And you can get the packages from PyPI as well:
+You can get the packages from PyPI as well:
 
-http://pypi.python.org/pypi
+http://pypi.python.org/pypi/numexpr
 
 Share your experience
 =====================

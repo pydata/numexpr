@@ -37,7 +37,7 @@ Packaging
 
   Do a quick check that the tarball is sane.
 
-- Make the binary packages for supported Python versions (2.5 and 2.6
+- Make the binary packages for supported Python versions (2.6 and 2.7
   currently).  Check that installer works correctly.
 
 Uploading
@@ -96,10 +96,10 @@ Major/Minor versions
 Patch level revisions
 ~~~~~~~~~~~~~~~~~~~~~
 
-- Create a tag ``/tags/X.Y.(Z+1)`` from ``/branches/X.Y.(Z+1)``.  Use
+- Create a tag ``/tags/X.Y.Z`` from ``/branches/X.Y.Z``.  Use
   the next message::
 
-    Created X.Y.(Z+1) tag for numexpr X.Y.(Z+1).
+    Created X.Y.Z tag for numexpr X.Y.Z.
 
 - Edit ``numexpr/version.py`` in branch X.Y to increment the version
   to the next patch-level one (i.e. X.Y.Z --> X.Y.(Z+1)).  Set the
