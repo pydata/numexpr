@@ -2,9 +2,16 @@
  Release notes for Numexpr 1.5 series
 ======================================
 
+Changes from 1.4.1 to development
+=================================
 
-Changes from 1.4 series to development
-======================================
+- Dividing int arrays by zero gives a 0 as result now (and not a
+  floating point exception anymore.  This behaviour mimics NumPy.
+  Thanks to Gaëtan de Menten for the fix.  Closes #37.
+
+
+Changes from 1.4 series to 1.4.1
+================================
 
 - Mingw32 can also work with pthreads compatibility code for win32.
   Fixes #31.

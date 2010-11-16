@@ -147,6 +147,14 @@ class test_evaluate(TestCase):
         y = evaluate("x")
         assert_array_equal(x, y)
 
+    # Test for issue #37
+    def test_zero_div(self):
+        x = arange(100, dtype='i4')
+        y = evaluate("1/x")
+        x2 = zeros(100, dtype='i4')
+        x2[1] = 1
+        assert_array_equal(x2, y)
+
     def test_rational_expr(self):
         a = arange(1e6)
         b = arange(1e6) * 0.1
