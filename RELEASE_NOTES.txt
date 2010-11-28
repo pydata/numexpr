@@ -9,6 +9,13 @@ Changes from 1.4.1 to development
   floating point exception anymore.  This behaviour mimics NumPy.
   Thanks to Gaëtan de Menten for the fix.  Closes #37.
 
+- When compiled with VML support, the number of threads is set to 1
+  for VML core, and to the number of cores for the native pthreads
+  implementation.  This leads to better performance.  Closes #39.
+
+- The ``set_num_threads`` now returns the number of previous thread
+  setting, as stated in the docstrings.
+
 
 Changes from 1.4 series to 1.4.1
 ================================
