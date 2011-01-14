@@ -1,3 +1,13 @@
+.. #####################################################
+..               WARNING!
+.. The version in this branch is only meant to run with
+.. Mark Wiebe's new interator for NumPy in:
+.. https://github.com/m-paradox/numpy
+.. As soon as this enters in NumPy, you will be able to
+.. use this branch safely.
+.. #####################################################
+
+
 What it is Numexpr?
 ===================
 
