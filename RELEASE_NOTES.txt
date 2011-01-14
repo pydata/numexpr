@@ -1,9 +1,24 @@
 ======================================
- Release notes for Numexpr 1.5 series
+ Release notes for Numexpr 2.0 series
 ======================================
 
-Changes from 1.4.1 to development
-=================================
+
+Changes from 1.x series to 2.0
+==============================
+
+- Added support for the new iterator object in NumPy:
+
+  https://github.com/m-paradox/numpy
+
+  This allows for better performance with operations that implies
+  broadcast operations, fortran-ordered or non-native byte orderings.
+  Performance for other scenarios is preserved.
+
+  Many thanks to Mark Wiebe for this excellent contribution!
+
+
+Changes from 1.4.1 to 1.4.2
+===========================
 
 - Dividing int arrays by zero gives a 0 as result now (and not a
   floating point exception anymore.  This behaviour mimics NumPy.
