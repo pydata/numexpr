@@ -612,7 +612,7 @@ def getExprNames(text, context):
 _names_cache = CacheDict(256)
 _numexpr_cache = CacheDict(256)
 
-def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
+def evaluate_orig(ex, local_dict=None, global_dict=None, **kwargs):
     """Evaluate a simple array expression element-wise.
 
     ex is a string forming an expression, like "2*a+3*b". The values for "a"
@@ -692,3 +692,52 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
         compiled_ex = _numexpr_cache[numexpr_key] = \
                       NumExpr(ex, signature, copy_args, **kwargs)
     return compiled_ex(*arguments)
+
+def evaluate(ex, local_dict=None, global_dict=None,
+                  out=None, order='K', casting='safe', **kwargs):
+    """Evaluate a simple array expression element-wise, using the new iterator.
+
+    ex is a string forming an expression, like "2*a+3*b". The values for "a"
+    and "b" will by default be taken from the calling function's frame
+    (through use of sys._getframe()). Alternatively, they can be specifed
+    using the 'local_dict' or 'global_dict' arguments.
+    """
+    if not isinstance(ex, str):
+        raise ValueError("must specify expression as a string")
+    # Get the names for this expression
+    expr_key = (ex, tuple(sorted(kwargs.items())))
+    if expr_key not in _names_cache:
+        context = getContext(kwargs)
+        _names_cache[expr_key] = getExprNames(ex, context)
+    names, ex_uses_vml = _names_cache[expr_key]
+    # Get the arguments based on the names.
+    call_frame = sys._getframe(1)
+    if local_dict is None:
+        local_dict = call_frame.f_locals
+    if global_dict is None:
+        global_dict = call_frame.f_globals
+    arguments = []
+    copy_args = []
+
+    for name in names:
+        try:
+            a = local_dict[name]
+        except KeyError:
+            a = global_dict[name]
+
+        # The iterator handles the byte order/alignment/contig properties
+        arguments.append(numpy.asarray(a))
+
+    # Create a signature
+    signature = [(name, getType(arg)) for (name, arg) in zip(names, arguments)]
+    # Look up numexpr if possible. copy_args *must* be added to the key,
+    # just in case a non-copy expression is already in cache.
+    numexpr_key = expr_key + (tuple(signature),) + tuple(copy_args)
+    try:
+        compiled_ex = _numexpr_cache[numexpr_key]
+    except KeyError:
+        compiled_ex = _numexpr_cache[numexpr_key] = \
+                      NumExpr(ex, signature, copy_args, **kwargs)
+    return compiled_ex.run_iter(*arguments,
+                    out=out, order=order, casting=casting,
+                    ex_uses_vml=ex_uses_vml)

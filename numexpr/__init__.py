@@ -26,7 +26,7 @@ else:
 
 import os.path
 from numexpr.expressions import E
-from numexpr.necompiler import NumExpr, disassemble, evaluate
+from numexpr.necompiler import NumExpr, disassemble, evaluate, evaluate_orig
 from numexpr.tests import test, print_versions
 from numexpr.utils import (
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,

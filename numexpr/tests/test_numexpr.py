@@ -19,6 +19,7 @@ TestCase = unittest.TestCase
 
 double = numpy.double
 
+
 # Recommended minimum versions
 minimum_numpy_version = "1.2"
 
@@ -75,6 +76,14 @@ class test_numexpr(TestCase):
         x = arange(10.0)
         assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
         assert_equal(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
+
+        x = arange(100.0)
+        assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
+        assert_equal(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
+        x = linspace(0.1,1.0,2000)
+        assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
+        assert_equal(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
+
         # Check that reductions along an axis work
         y = arange(9.0).reshape(3,3)
         assert_equal(evaluate("sum(y**2, axis=1)"), sum(y**2, axis=1))

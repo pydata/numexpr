@@ -13,7 +13,7 @@ shape = (1000, 10000)   # multidimensional test
 ne.print_versions()
 
 Z_fast = np.zeros(shape, dtype=[('x',np.float64),('y',np.int64)])
-Z_slow = np.zeros(shape, dtype=[('x',np.float64),('y',np.bool)])
+Z_slow = np.zeros(shape, dtype=[('y1',np.int8),('x',np.float64),('y2',np.int8,(7,))])
 
 x_fast = Z_fast['x']
 t = Timer("x_fast * x_fast", "from __main__ import x_fast")
@@ -26,5 +26,11 @@ print "NumPy unaligned:\t", round(min(t.repeat(3, niter)), 3), "s"
 t = Timer("ne.evaluate('x_fast * x_fast')", "from __main__ import ne, x_fast")
 print "Numexpr aligned:\t", round(min(t.repeat(3, niter)), 3), "s"
 
+t = Timer("ne.evaluate_iter('x_fast * x_fast')", "from __main__ import ne, x_fast")
+print "Numexpr aligned (new iter):\t", round(min(t.repeat(3, niter)), 3), "s"
+
 t = Timer("ne.evaluate('x_slow * x_slow')", "from __main__ import ne, x_slow")
 print "Numexpr unaligned:\t", round(min(t.repeat(3, niter)), 3), "s"
+
+t = Timer("ne.evaluate_iter('x_slow * x_slow')", "from __main__ import ne, x_slow")
+print "Numexpr unaligned (new iter):\t", round(min(t.repeat(3, niter)), 3), "s"

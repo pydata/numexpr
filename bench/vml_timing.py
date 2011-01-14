@@ -71,7 +71,8 @@ def compare_times(expr, nexpr):
 setupNP = """\
 from numpy import arange, linspace, arctan2, sqrt, sin, cos, exp, log
 from numpy import rec as records
-from numexpr import evaluate
+#from numexpr import evaluate
+from numexpr import %s
 
 # Initialize a recarray of 16 MB in size
 r=records.array(None, formats='a%s,i4,f4,f8', shape=%s)
@@ -85,11 +86,15 @@ f3[:] = linspace(0,1,len(i2))
 f4[:] = f3*1.23
 """
 
-setupNP_contiguous = setupNP % ((4, array_size,) + \
+#eval_method = "evaluate_orig as evaluate"
+eval_method = "evaluate"
+setupNP_contiguous = setupNP % ((eval_method, 4, array_size,) + \
                                (".copy()",)*4 + \
                                (array_size,))
-setupNP_strided = setupNP % (4, array_size, "", "", "", "", array_size)
-setupNP_unaligned = setupNP % (1, array_size, "", "", "", "", array_size)
+setupNP_strided = setupNP % (eval_method, 4, array_size,
+                             "", "", "", "", array_size)
+setupNP_unaligned = setupNP % (eval_method, 1, array_size,
+                               "", "", "", "", array_size)
 
 
 expressions = []
@@ -117,6 +122,8 @@ if __name__ == '__main__':
     import numexpr
     numexpr.print_versions()
 
+    numpy.seterr(all='ignore')
+
     numexpr.set_vml_accuracy_mode('low')
     numexpr.set_vml_num_threads(2)
 
@@ -132,6 +139,7 @@ if __name__ == '__main__':
     ntratios = numpy.array(numpy_nttime) / numpy.array(numexpr_nttime)
 
 
+    print "eval method: %s" % eval_method
     print "*************** Numexpr vs NumPy speed-ups *******************"
 #     print "numpy total:", sum(numpy_ttime)/iterations
 #     print "numpy strided total:", sum(numpy_sttime)/iterations
