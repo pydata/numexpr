@@ -1211,6 +1211,8 @@ vm_engine_block(intp start, intp vlen, intp block_size,
     /* Run the serial version when nthreads is 1 or when the total
        length to compute is small */
     int r;
+    /* From now on, we can release the GIL */
+    Py_BEGIN_ALLOW_THREADS;
     if ((nthreads == 1) || (vlen <= L1_SIZE) || force_serial) {
         if (block_size == BLOCK_SIZE1) {
             r = vm_engine_serial1(start, vlen, params, pc_error);
@@ -1220,12 +1222,10 @@ vm_engine_block(intp start, intp vlen, intp block_size,
         }
     }
     else {
-        /* From now on, we can release the GIL */
-        Py_BEGIN_ALLOW_THREADS;
         r = vm_engine_parallel(start, vlen, block_size, params, pc_error);
-        /* Get the GIL again */
-        Py_END_ALLOW_THREADS;
     }
+    /* Get the GIL again */
+    Py_END_ALLOW_THREADS;
     return r;
 }
 
