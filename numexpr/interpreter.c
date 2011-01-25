@@ -1208,11 +1208,12 @@ static inline int
 vm_engine_block(intp start, intp vlen, intp block_size,
                 struct vm_params params, int *pc_error)
 {
-    /* Run the serial version when nthreads is 1 or when the total
-       length to compute is small */
     int r;
+
     /* From now on, we can release the GIL */
     Py_BEGIN_ALLOW_THREADS;
+    /* Run the serial version when nthreads is 1 or when the total
+       length to compute is small */
     if ((nthreads == 1) || (vlen <= L1_SIZE) || force_serial) {
         if (block_size == BLOCK_SIZE1) {
             r = vm_engine_serial1(start, vlen, params, pc_error);
