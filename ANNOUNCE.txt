@@ -9,7 +9,10 @@ and use less memory than doing the same calculation in Python.
 What's new
 ==========
 
-#XXX version-specific blurb XXX#
+This is a maintenance release.  The most annying issues have been
+fixed (including the reduction mal-function introduced in 1.4 series).
+Also, several performance enhancements (specially for VML and small
+array operation) are included too.
 
 In case you want to know more in detail what has changed in this
 version, see:
