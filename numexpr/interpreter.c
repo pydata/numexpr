@@ -32,6 +32,8 @@
 #include "msvc_function_stubs.inc"
 #endif
 
+#define L1_SIZE 32*1024         /* The average L1 cache size */
+
 #ifdef USE_VML
 /* The values below have been tuned for a nowadays Core2 processor */
 /* Note: with VML functions a larger block size (e.g. 4096) allows to make use
@@ -1206,10 +1208,12 @@ static inline int
 vm_engine_block(intp start, intp vlen, intp block_size,
                 struct vm_params params, int *pc_error)
 {
-    /* Run the serial version when nthreads is 1 or when the
-       block_size is small */
+    /* Run the serial version when nthreads is 1 or when the total
+       length to compute is small */
     int r;
-    if ((nthreads == 1) || force_serial) {
+    /* From now on, we can release the GIL */
+    Py_BEGIN_ALLOW_THREADS;
+    if ((nthreads == 1) || (vlen <= L1_SIZE) || force_serial) {
         if (block_size == BLOCK_SIZE1) {
             r = vm_engine_serial1(start, vlen, params, pc_error);
         }
@@ -1220,6 +1224,8 @@ vm_engine_block(intp start, intp vlen, intp block_size,
     else {
         r = vm_engine_parallel(start, vlen, block_size, params, pc_error);
     }
+    /* Get the GIL again */
+    Py_END_ALLOW_THREADS;
     return r;
 }
 
@@ -1264,8 +1270,6 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
     params.memsizes = self->memsizes;
     params.r_end = PyString_Size(self->fullsig);
 
-    /* From now on, we can release the GIL */
-    Py_BEGIN_ALLOW_THREADS;
     blen1 = len - len % BLOCK_SIZE1;
     r = vm_engine_block(0, blen1, BLOCK_SIZE1, params, pc_error);
     if (r < 0) return r;
@@ -1279,7 +1283,6 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
             if (r < 0) return r;
         }
     }
-    Py_END_ALLOW_THREADS;
 
     return 0;
 }
@@ -1627,6 +1630,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
            so we don't need to worry about item sizes here. */
         char retsig = get_return_sig(self->program);
         int axis = get_reduction_axis(self->program);
+        /* Reduction ops only works with 1 thread */
+        force_serial = 1;
         self->memsteps[0] = 0; /*size_from_char(retsig);*/
         if (axis == 255) {
             intp dims[1];

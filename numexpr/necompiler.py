@@ -54,10 +54,9 @@ class ASTNode(object):
     def __hash__(self):
         if self.astType == 'alias':
             self = self.value
-        hashval = 0
-        for name in self.cmpnames:
-            hashval ^= hash(getattr(self, name))
-        return hashval
+        # Fast hash (see issue #43)
+        return ( hash(self.astType) ^ hash(self.astKind) ^
+                 hash(self.value) ^ hash(self.children) )
 
     def __str__(self):
         return 'AST(%s, %s, %s, %s, %s)' % (self.astType, self.astKind,
@@ -292,9 +291,8 @@ def assignBranchRegisters(inodes, registerMaker):
     for node in inodes:
         node.reg = registerMaker(node, temporary=True)
 
-
 def collapseDuplicateSubtrees(ast):
-    """common subexpression elimination.
+    """Common subexpression elimination.
     """
     seen = {}
     aliases = []
@@ -313,7 +311,6 @@ def collapseDuplicateSubtrees(ast):
         while a.value.astType == 'alias':
             a.value = a.value.value
         a.reg = a.value.reg
-
 
 def optimizeTemporariesAllocation(ast):
     """Attempt to minimize the number of temporaries needed, by
@@ -341,7 +338,6 @@ def optimizeTemporariesAllocation(ast):
             reg = unused[n.astKind].pop()
             users_of[reg] = users_of[n.reg]
             n.reg = reg
-
 
 def setOrderedRegisterNumbers(order, start):
     """Given an order of nodes, assign register numbers.

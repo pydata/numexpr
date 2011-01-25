@@ -72,9 +72,9 @@ class test_numexpr(TestCase):
                       ('add_ddd', 't3', 't3', 'c2[2.0]'),
                       ('prod_ddn', 'r0', 't3', 2)])
         # Check that full reductions work.
-        x = arange(10.0)
-        assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_equal(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
+        x = zeros(1e5)+.01   # checks issue #41
+        assert_equal(evaluate("sum(x+2,axis=0)"), sum(x+2,axis=0))
+        assert_equal(evaluate("prod(x,axis=0)"), prod(x,axis=0))
         # Check that reductions along an axis work
         y = arange(9.0).reshape(3,3)
         assert_equal(evaluate("sum(y**2, axis=1)"), sum(y**2, axis=1))
@@ -84,6 +84,7 @@ class test_numexpr(TestCase):
         assert_equal(evaluate("prod(y**2, axis=0)"), prod(y**2, axis=0))
         assert_equal(evaluate("prod(y**2, axis=None)"), prod(y**2, axis=None))
         # Check integers
+        x = arange(10.)
         x = x.astype(int)
         assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
         assert_equal(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
