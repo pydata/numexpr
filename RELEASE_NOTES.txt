@@ -2,8 +2,18 @@
  Release notes for Numexpr 1.5 series
 ======================================
 
-Changes from 1.4.1 to development
+Changes from 1.4.2 to development
 =================================
+
+- None yet.
+
+
+Changes from 1.4.1 to 1.4.2
+===========================
+
+- Multithreaded operation is disabled for small arrays (< 32 KB).
+  This allows to remove the overhead of multithreading for such a
+  small arrays.  Closes #36.
 
 - Dividing int arrays by zero gives a 0 as result now (and not a
   floating point exception anymore.  This behaviour mimics NumPy.
@@ -11,14 +21,24 @@ Changes from 1.4.1 to development
 
 - When compiled with VML support, the number of threads is set to 1
   for VML core, and to the number of cores for the native pthreads
-  implementation.  This leads to better performance.  Closes #39.
+  implementation.  This leads to much better performance.  Closes #39.
+
+- Fixed different issues with reduction operations (`sum`, `prod`).
+  The problem is that the threaded code does not work well for
+  broadcasting or reduction operations.  Now, the serial code is used
+  in those cases.  Closes #41.
+
+- Optimization of "compilation phase" through a better hash.  This can
+  lead up to a 25% of improvement when operating with variable
+  expressions over small arrays.  Thanks to Gaëtan de Menten for the
+  patch.  Closes #43.
 
 - The ``set_num_threads`` now returns the number of previous thread
   setting, as stated in the docstrings.
 
 
-Changes from 1.4 series to 1.4.1
-================================
+Changes from 1.4 to 1.4.1
+=========================
 
 - Mingw32 can also work with pthreads compatibility code for win32.
   Fixes #31.
