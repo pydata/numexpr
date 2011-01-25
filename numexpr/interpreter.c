@@ -1220,7 +1220,11 @@ vm_engine_block(intp start, intp vlen, intp block_size,
         }
     }
     else {
+        /* From now on, we can release the GIL */
+        Py_BEGIN_ALLOW_THREADS;
         r = vm_engine_parallel(start, vlen, block_size, params, pc_error);
+        /* Get the GIL again */
+        Py_END_ALLOW_THREADS;
     }
     return r;
 }
@@ -1266,8 +1270,6 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
     params.memsizes = self->memsizes;
     params.r_end = PyString_Size(self->fullsig);
 
-    /* From now on, we can release the GIL */
-    Py_BEGIN_ALLOW_THREADS;
     blen1 = len - len % BLOCK_SIZE1;
     r = vm_engine_block(0, blen1, BLOCK_SIZE1, params, pc_error);
     if (r < 0) return r;
@@ -1281,7 +1283,6 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
             if (r < 0) return r;
         }
     }
-    Py_END_ALLOW_THREADS;
 
     return 0;
 }
