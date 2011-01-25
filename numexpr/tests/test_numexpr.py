@@ -72,7 +72,7 @@ class test_numexpr(TestCase):
                       ('add_ddd', 't3', 't3', 'c2[2.0]'),
                       ('prod_ddn', 'r0', 't3', 2)])
         # Check that full reductions work.
-        x = zeros(100000)+.01
+        x = zeros(1e5)+.01   # checks issue #41
         assert_equal(evaluate("sum(x+2,axis=0)"), sum(x+2,axis=0))
         assert_equal(evaluate("prod(x,axis=0)"), prod(x,axis=0))
         # Check that reductions along an axis work

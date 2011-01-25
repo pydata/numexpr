@@ -1,19 +1,33 @@
+# Small benchmark to get the even point where the threading code
+# performs better than the serial code.  See issue #36 for details.
+
 import numpy as np
 import numexpr as ne
 from numpy.testing import assert_array_equal
 from time import time
 
-ne.set_num_threads(2)
-a = np.arange(2**10)
+def bench(N):
+    print "*** array length:", N
+    a = np.arange(N)
+    t0 = time()
+    ntimes = (1000*2**15) // N
+    for i in xrange(ntimes):
+        ne.evaluate('a>1000')
+    print "numexpr--> %.3g" % ((time()-t0)/ntimes,)
 
-t0 = time()
-for i in xrange(1000):
-    ne.evaluate('a>1000')
-print "numexpr--> %.3f" % (time()-t0,)
+    t0 = time()
+    for i in xrange(ntimes):
+        eval('a>1000')
+    print "numpy--> %.3g" % ((time()-t0)/ntimes,)
 
-t0 = time()
-for i in xrange(1000):
-    eval('a>1000')
-print "numpy--> %.3f" % (time()-t0,)
+if __name__ == "__main__":
+    print "****** Testing with 1 thread..."
+    ne.set_num_threads(1)
+    for N in range(10, 20):
+        bench(2**N)
 
+    print "****** Testing with 2 threads..."
+    ne.set_num_threads(2)
+    for N in range(10, 20):
+        bench(2**N)
 
