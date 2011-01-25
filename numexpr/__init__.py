@@ -35,6 +35,8 @@ from numexpr.utils import (
 # Initialize the number of threads to be used
 ncores = detect_number_of_cores()
 set_num_threads(ncores)
+# The default for VML is 1 thread (see #39)
+set_vml_num_threads(1)
 
 import version
 

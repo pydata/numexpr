@@ -234,7 +234,7 @@
         case OP_ADD_III: VEC_ARG2(i_dest = i1 + i2);
         case OP_SUB_III: VEC_ARG2(i_dest = i1 - i2);
         case OP_MUL_III: VEC_ARG2(i_dest = i1 * i2);
-        case OP_DIV_III: VEC_ARG2(i_dest = i1 / i2);
+        case OP_DIV_III: VEC_ARG2(i_dest = i2 ? (i1 / i2) : 0);
         case OP_POW_III: VEC_ARG2(i_dest = (i2 < 0) ? (1 / i1) : (int)pow(i1, i2));
         case OP_MOD_III: VEC_ARG2(i_dest = i1 % i2);
 
@@ -247,7 +247,7 @@
         case OP_ADD_LLL: VEC_ARG2(l_dest = l1 + l2);
         case OP_SUB_LLL: VEC_ARG2(l_dest = l1 - l2);
         case OP_MUL_LLL: VEC_ARG2(l_dest = l1 * l2);
-        case OP_DIV_LLL: VEC_ARG2(l_dest = l1 / l2);
+        case OP_DIV_LLL: VEC_ARG2(l_dest = l2 ? (l1 / l2) : 0);
         case OP_POW_LLL: VEC_ARG2(l_dest = (l2 < 0) ? (1 / l1) : (long long)pow(l1, l2));
         case OP_MOD_LLL: VEC_ARG2(l_dest = l1 % l2);
 

@@ -80,6 +80,7 @@ def set_num_threads(nthreads):
     can.
     """
     old_nthreads = _set_num_threads(nthreads)
+    return old_nthreads
 
 
 def detect_number_of_cores():
