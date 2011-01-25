@@ -32,6 +32,8 @@
 #include "msvc_function_stubs.inc"
 #endif
 
+#define L1_SIZE 32*1024         /* The average L1 cache size */
+
 #ifdef USE_VML
 /* The values below have been tuned for a nowadays Core2 processor */
 /* Note: with VML functions a larger block size (e.g. 4096) allows to make use
@@ -1206,10 +1208,10 @@ static inline int
 vm_engine_block(intp start, intp vlen, intp block_size,
                 struct vm_params params, int *pc_error)
 {
-    /* Run the serial version when nthreads is 1 or when the
-       block_size is small */
+    /* Run the serial version when nthreads is 1 or when the total
+       length to compute is small */
     int r;
-    if ((nthreads == 1) || force_serial) {
+    if ((nthreads == 1) || (vlen <= L1_SIZE) || force_serial) {
         if (block_size == BLOCK_SIZE1) {
             r = vm_engine_serial1(start, vlen, params, pc_error);
         }
