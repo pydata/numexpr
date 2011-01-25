@@ -1627,6 +1627,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
            so we don't need to worry about item sizes here. */
         char retsig = get_return_sig(self->program);
         int axis = get_reduction_axis(self->program);
+        /* Reduction ops only works with 1 thread */
+        force_serial = 1;
         self->memsteps[0] = 0; /*size_from_char(retsig);*/
         if (axis == 255) {
             intp dims[1];
