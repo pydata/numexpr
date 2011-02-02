@@ -21,7 +21,7 @@ double = numpy.double
 
 
 # Recommended minimum versions
-minimum_numpy_version = "2.0"
+minimum_numpy_version = "1.6"
 
 class test_numexpr(TestCase):
 

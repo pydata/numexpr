@@ -98,38 +98,12 @@
     unsigned int pc, j;
 
     /* set up pointers to next block of inputs and outputs */
-#ifdef ITERATOR_LOOP
+#ifdef SINGLE_ITEM_CONST_LOOP
+    mem[0] = params.output;
+#else
     /* use the iterator's inner loop data */
     memcpy(mem, iter_dataptr, (1+params.n_inputs)*sizeof(char*));
     memcpy(params.memsteps, iter_strides, (1+params.n_inputs)*sizeof(intp));
-#else
-    unsigned int k, r;
-
-    /* use numexpr's index data */
-    mem[0] = params.output + index * params.memsteps[0];
-    for (r = 0; r < params.n_inputs; r++) {
-        struct index_data id = params.index_data[r+1];
-        if (id.count) {
-            mem[1+r] = params.inputs[r];
-            for (j = 0; j < BLOCK_SIZE; j++) {
-                unsigned int flatindex = 0;
-                for (k = 0; k < id.count; k ++)
-                    flatindex += id.strides[k] * id.index[k];
-                memcpy(mem[1+r] + (j*id.size), id.buffer + flatindex, id.size);
-                k = id.count - 1;
-                id.index[k] += 1;
-                if (id.index[k] >= id.shape[k])
-                    while (id.index[k] >= id.shape[k]) {
-                        id.index[k] -= id.shape[k];
-                        if (k < 1) break;
-                        id.index[k-1] += 1;
-                        k -= 1;
-                    }
-            }
-        } else {
-            mem[1+r] = params.inputs[r] + index * params.memsteps[1+r];
-        }
-    }
 #endif
 
     /* WARNING: From now on, only do references to mem[arg[123]]
@@ -142,9 +116,8 @@
         unsigned int arg1 = params.program[pc+2];
         unsigned int arg2 = params.program[pc+3];
         #define      arg3   params.program[pc+5]
-#ifdef ITERATOR_LOOP
         /* Iterator reduce macros */
-#  ifdef REDUCTION_INNER_LOOP /* Reduce is the inner loop */
+#ifdef REDUCTION_INNER_LOOP /* Reduce is the inner loop */
         #define reduce_ptr  NULL
         #define i_reduce    *(int *)dest
         #define l_reduce    *(long long *)dest
@@ -152,7 +125,7 @@
         #define d_reduce    *(double *)dest
         #define cr_reduce   *(double *)dest
         #define ci_reduce   *((double *)dest+1)
-#  else /* Reduce is the outer loop */
+#else /* Reduce is the outer loop */
         #define reduce_ptr  NULL
         #define i_reduce    i_dest
         #define l_reduce    l_dest
@@ -160,17 +133,6 @@
         #define d_reduce    d_dest
         #define cr_reduce   cr_dest
         #define ci_reduce   ci_dest
-#  endif
-#else
-        /* Non-iterator reduce macros */
-        #define store_index params.index_data[store_in]
-        #define reduce_ptr  (dest + flat_index(&store_index, j))
-        #define i_reduce    *(int *)reduce_ptr
-        #define l_reduce    *(long long *)reduce_ptr
-        #define f_reduce    *(float *)reduce_ptr
-        #define d_reduce    *(double *)reduce_ptr
-        #define cr_reduce   *(double *)ptr
-        #define ci_reduce   *((double *)ptr+1)
 #endif
         #define b_dest ((char *)dest)[j]
         #define i_dest ((int *)dest)[j]

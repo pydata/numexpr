@@ -612,87 +612,6 @@ def getExprNames(text, context):
 _names_cache = CacheDict(256)
 _numexpr_cache = CacheDict(256)
 
-def evaluate_orig(ex, local_dict=None, global_dict=None, **kwargs):
-    """Evaluate a simple array expression element-wise.
-
-    ex is a string forming an expression, like "2*a+3*b". The values for "a"
-    and "b" will by default be taken from the calling function's frame
-    (through use of sys._getframe()). Alternatively, they can be specifed
-    using the 'local_dict' or 'global_dict' arguments.
-    """
-    if not isinstance(ex, str):
-        raise ValueError("must specify expression as a string")
-    # Get the names for this expression
-    expr_key = (ex, tuple(sorted(kwargs.items())))
-    if expr_key not in _names_cache:
-        context = getContext(kwargs)
-        _names_cache[expr_key] = getExprNames(ex, context)
-    names, ex_uses_vml = _names_cache[expr_key]
-    # Get the arguments based on the names.
-    call_frame = sys._getframe(1)
-    if local_dict is None:
-        local_dict = call_frame.f_locals
-    if global_dict is None:
-        global_dict = call_frame.f_globals
-    arguments = []
-    copy_args = []
-
-    for name in names:
-        try:
-            a = local_dict[name]
-        except KeyError:
-            a = global_dict[name]
-        b = numpy.asarray(a)
-        # Byteswapped arrays are dealt with in the extension
-        # All the opcodes can deal with strided arrays directly as
-        # long as they are undimensional (strides in other
-        # dimensions are dealt within the extension), so we don't
-        # need a copy for the strided case.
-
-        if not b.flags.aligned:
-            # Only take actions if CPU is different from AMD and Intel
-            # as they can deal with unaligned arrays very efficiently.
-            # If using VML, do the copy as the VML functions works
-            # much faster with aligned arrays.
-            if not is_cpu_amd_intel or use_vml:
-                # For the unaligned case, we have two cases:
-                if b.ndim == 1:
-                    # For unidimensional arrays we can use the copy
-                    # opcode because it can deal with unaligned arrays
-                    # as long as they are unidimensionals with a
-                    # possible stride (very common case for
-                    # recarrays).  This can be up to 2x faster than
-                    # doing a copy using NumPy.
-                    copy_args.append(name)
-                else:
-                    # For multimensional unaligned arrays do a plain
-                    # copy.  We could refine more this and do a plain
-                    # copy only in the case that strides doesn't exist
-                    # in dimensions other than the last one (whose
-                    # case is supported by the copy opcode).
-                    b = b.copy()
-        elif use_vml and ex_uses_vml: #only make a copy of strided arrays if
-                                      #vml is in use
-            if not b.flags.contiguous:
-                if b.ndim == 1:
-                    copy_args.append(name)
-                else:
-                    b = b.copy()
-
-        arguments.append(b)
-
-    # Create a signature
-    signature = [(name, getType(arg)) for (name, arg) in zip(names, arguments)]
-    # Look up numexpr if possible. copy_args *must* be added to the key,
-    # just in case a non-copy expression is already in cache.
-    numexpr_key = expr_key + (tuple(signature),) + tuple(copy_args)
-    try:
-        compiled_ex = _numexpr_cache[numexpr_key]
-    except KeyError:
-        compiled_ex = _numexpr_cache[numexpr_key] = \
-                      NumExpr(ex, signature, copy_args, **kwargs)
-    return compiled_ex(*arguments)
-
 def evaluate(ex, local_dict=None, global_dict=None,
                   out=None, order='K', casting='safe', **kwargs):
     """Evaluate a simple array expression element-wise, using the new iterator.
@@ -738,6 +657,6 @@ def evaluate(ex, local_dict=None, global_dict=None,
     except KeyError:
         compiled_ex = _numexpr_cache[numexpr_key] = \
                       NumExpr(ex, signature, copy_args, **kwargs)
-    return compiled_ex.run_iter(*arguments,
+    return compiled_ex(*arguments,
                     out=out, order=order, casting=casting,
                     ex_uses_vml=ex_uses_vml)
