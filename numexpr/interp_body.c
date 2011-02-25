@@ -9,11 +9,10 @@
         char *dest = mem[store_in];             \
         char *x1 = mem[arg1];                   \
         intp ss1 = params.memsizes[arg1];       \
-        intp sb1 = params.memsteps[arg1];       \
         /* nowarns is defined and used so as to \
         avoid compiler warnings about unused    \
         variables */                            \
-        intp nowarns = ss1+sb1+*x1;             \
+        intp nowarns = ss1+*x1;                 \
         nowarns += 1;                           \
         VEC_LOOP(expr);                         \
     } break
@@ -25,15 +24,13 @@
         char *dest = mem[store_in];             \
         char *x1 = mem[arg1];                   \
         intp ss1 = params.memsizes[arg1];       \
-        intp sb1 = params.memsteps[arg1];       \
         /* nowarns is defined and used so as to \
         avoid compiler warnings about unused    \
         variables */                            \
-        intp nowarns = ss1+sb1+*x1;             \
+        intp nowarns = ss1+*x1;                 \
         char *x2 = mem[arg2];                   \
         intp ss2 = params.memsizes[arg2];       \
-        intp sb2 = params.memsteps[arg2];       \
-        nowarns += ss2+sb2+*x2;                 \
+        nowarns += ss2+*x2;                     \
         VEC_LOOP(expr);                         \
     } break
 
@@ -46,19 +43,15 @@
         char *dest = mem[store_in];             \
         char *x1 = mem[arg1];                   \
         intp ss1 = params.memsizes[arg1];       \
-        intp sb1 = params.memsteps[arg1];       \
         /* nowarns is defined and used so as to \
         avoid compiler warnings about unused    \
         variables */                            \
-        intp nowarns = ss1+sb1+*x1;             \
+        intp nowarns = ss1+*x1;                 \
         char *x2 = mem[arg2];                   \
         intp ss2 = params.memsizes[arg2];       \
-        intp sb2 = params.memsteps[arg2];       \
         char *x3 = mem[arg3];                   \
         intp ss3 = params.memsizes[arg3];       \
-        intp sb3 = params.memsteps[arg3];       \
-        nowarns += ss2+sb2+*x2;                 \
-        nowarns += ss3+sb3+*x3;                 \
+        nowarns += ss2+*x2;                     \
         VEC_LOOP(expr);                         \
     } break
 
@@ -150,30 +143,30 @@
         #define cr_dest ((double *)dest)[2*j]
         #define ci_dest ((double *)dest)[2*j+1]
         #define s_dest ((char *)dest + j*params.memsteps[store_in])
-        #define b1    ((char   *)(x1+j*sb1))[0]
-        #define i1    ((int    *)(x1+j*sb1))[0]
-        #define l1    ((long long *)(x1+j*sb1))[0]
-        #define f1    ((float  *)(x1+j*sb1))[0]
-        #define d1    ((double *)(x1+j*sb1))[0]
-        #define c1r   ((double *)(x1+j*sb1))[0]
-        #define c1i   ((double *)(x1+j*sb1))[1]
-        #define s1    ((char   *)x1+j*sb1)
-        #define b2    ((char   *)(x2+j*sb2))[0]
-        #define i2    ((int    *)(x2+j*sb2))[0]
-        #define l2    ((long long *)(x2+j*sb2))[0]
-        #define f2    ((float  *)(x2+j*sb2))[0]
-        #define d2    ((double *)(x2+j*sb2))[0]
-        #define c2r   ((double *)(x2+j*sb2))[0]
-        #define c2i   ((double *)(x2+j*sb2))[1]
-        #define s2    ((char   *)x2+j*sb2)
-        #define b3    ((char   *)(x3+j*sb3))[0]
-        #define i3    ((int    *)(x3+j*sb3))[0]
-        #define l3    ((long long *)(x3+j*sb3))[0]
-        #define f3    ((float  *)(x3+j*sb3))[0]
-        #define d3    ((double *)(x3+j*sb3))[0]
-        #define c3r   ((double *)(x3+j*sb3))[0]
-        #define c3i   ((double *)(x3+j*sb3))[1]
-        #define s3    ((char   *)x3+j*sb3)
+        #define b1    ((char   *)(x1+j*ss1))[0]
+        #define i1    ((int    *)(x1+j*ss1))[0]
+        #define l1    ((long long *)(x1+j*ss1))[0]
+        #define f1    ((float  *)(x1+j*ss1))[0]
+        #define d1    ((double *)(x1+j*ss1))[0]
+        #define c1r   ((double *)(x1+j*ss1))[0]
+        #define c1i   ((double *)(x1+j*ss1))[1]
+        #define s1    ((char   *)x1+j*ss1)
+        #define b2    ((char   *)(x2+j*ss2))[0]
+        #define i2    ((int    *)(x2+j*ss2))[0]
+        #define l2    ((long long *)(x2+j*ss2))[0]
+        #define f2    ((float  *)(x2+j*ss2))[0]
+        #define d2    ((double *)(x2+j*ss2))[0]
+        #define c2r   ((double *)(x2+j*ss2))[0]
+        #define c2i   ((double *)(x2+j*ss2))[1]
+        #define s2    ((char   *)x2+j*ss2)
+        #define b3    ((char   *)(x3+j*ss3))[0]
+        #define i3    ((int    *)(x3+j*ss3))[0]
+        #define l3    ((long long *)(x3+j*ss3))[0]
+        #define f3    ((float  *)(x3+j*ss3))[0]
+        #define d3    ((double *)(x3+j*ss3))[0]
+        #define c3r   ((double *)(x3+j*ss3))[0]
+        #define c3i   ((double *)(x3+j*ss3))[1]
+        #define s3    ((char   *)x3+j*ss3)
         /* Some temporaries */
         double da, db;
         cdouble ca, cb;
