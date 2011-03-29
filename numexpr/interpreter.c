@@ -982,7 +982,7 @@ static int
 vm_engine_iter_task(NpyIter *iter, struct vm_params params, int *pc_error, char **errmsg)
 {
     char **mem = params.mem;
-    NpyIter_IterNext_Fn iternext;
+    NpyIter_IterNextFunc *iternext;
     intp block_size, *size_ptr;
     char **iter_dataptr;
     intp *iter_strides;
@@ -1027,7 +1027,7 @@ static int
 vm_engine_iter_outer_reduce_task(NpyIter *iter, struct vm_params params, int *pc_error, char **errmsg)
 {
     char **mem = params.mem;
-    NpyIter_IterNext_Fn iternext;
+    NpyIter_IterNextFunc *iternext;
     intp block_size, *size_ptr;
     char **iter_dataptr;
     intp *iter_strides;
@@ -1324,7 +1324,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
         else {
             if (reduction_outer_loop) {
                 char **dataptr;
-                NpyIter_IterNext_Fn iternext;
+                NpyIter_IterNextFunc *iternext;
 
                 dataptr = NpyIter_GetDataPtrArray(reduce_iter);
                 iternext = NpyIter_GetIterNext(reduce_iter, NULL);
@@ -1349,7 +1349,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
             }
             else {
                 char **dataptr;
-                NpyIter_IterNext_Fn iternext;
+                NpyIter_IterNextFunc *iternext;
 
                 dataptr = NpyIter_GetDataPtrArray(iter);
                 iternext = NpyIter_GetIterNext(iter, NULL);
@@ -1577,11 +1577,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     int ex_uses_vml = 0, is_reduction = 0, reduction_outer_loop = 0;
 
     /* To specify axes when doing a reduction */
-    intp op_axes_values[NPY_MAXARGS][NPY_MAXDIMS],
+    int op_axes_values[NPY_MAXARGS][NPY_MAXDIMS],
          op_axes_reduction_values[NPY_MAXARGS];
-    intp *op_axes_ptrs[NPY_MAXDIMS];
-    intp oa_ndim = 0;
-    intp **op_axes = NULL;
+    int *op_axes_ptrs[NPY_MAXDIMS];
+    int oa_ndim = 0;
+    int **op_axes = NULL;
 
     NpyIter *iter = NULL, *reduce_iter = NULL;
 
@@ -1832,15 +1832,15 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     /* Allocate the iterator or nested iterators */
     if (reduction_size == 1) {
-        iter = NpyIter_MultiNew(n_inputs+1, operands,
+        iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                             NPY_ITER_BUFFERED|
                             NPY_ITER_REDUCE_OK|
                             NPY_ITER_RANGED|
                             NPY_ITER_DELAY_BUFALLOC|
-                            NPY_ITER_NO_INNER_ITERATION,
+                            NPY_ITER_EXTERNAL_LOOP,
                             order, casting,
                             op_flags, dtypes,
-                            0, NULL,
+                            0, NULL, NULL,
                             BLOCK_SIZE1);
         if (iter == NULL) {
             goto fail;
@@ -1857,14 +1857,14 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         /* Arbitrary threshold for which is the inner loop...benchmark? */
         if (reduction_size < 64) {
             reduction_outer_loop = 1;
-            iter = NpyIter_MultiNew(n_inputs+1, operands,
+            iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                                 NPY_ITER_BUFFERED|
                                 NPY_ITER_RANGED|
                                 NPY_ITER_DELAY_BUFALLOC|
-                                NPY_ITER_NO_INNER_ITERATION,
+                                NPY_ITER_EXTERNAL_LOOP,
                                 order, casting,
                                 op_flags, dtypes,
-                                oa_ndim, op_axes,
+                                oa_ndim, op_axes, NULL,
                                 BLOCK_SIZE1);
             if (iter == NULL) {
                 goto fail;
@@ -1881,11 +1881,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 op_axes[i+1] = &op_axes_reduction_values[i+1];
             }
             op_flags_outer[0] &= ~NPY_ITER_NO_BROADCAST;
-            reduce_iter = NpyIter_MultiNew(n_inputs+1, operands,
+            reduce_iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                                 NPY_ITER_REDUCE_OK,
                                 order, casting,
                                 op_flags_outer, NULL,
-                                1, op_axes,
+                                1, op_axes, NULL,
                                 0);
             if (reduce_iter == NULL) {
                 goto fail;
@@ -1899,11 +1899,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             for (i = 0; i < n_inputs; ++i) {
                 dtypes_outer[i+1] = NULL;
             }
-            iter = NpyIter_MultiNew(n_inputs+1, operands,
+            iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                                 NPY_ITER_RANGED,
                                 order, casting,
                                 op_flags_outer, dtypes_outer,
-                                oa_ndim, op_axes,
+                                oa_ndim, op_axes, NULL,
                                 0);
             if (iter == NULL) {
                 goto fail;
@@ -1920,14 +1920,14 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 op_axes[i+1] = &op_axes_reduction_values[i+1];
             }
             op_flags[0] &= ~NPY_ITER_NO_BROADCAST;
-            reduce_iter = NpyIter_MultiNew(n_inputs+1, operands,
+            reduce_iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                                 NPY_ITER_BUFFERED|
                                 NPY_ITER_REDUCE_OK|
                                 NPY_ITER_DELAY_BUFALLOC|
-                                NPY_ITER_NO_INNER_ITERATION,
+                                NPY_ITER_EXTERNAL_LOOP,
                                 order, casting,
                                 op_flags, dtypes,
-                                1, op_axes,
+                                1, op_axes, NULL,
                                 BLOCK_SIZE1);
             if (reduce_iter == NULL) {
                 goto fail;
