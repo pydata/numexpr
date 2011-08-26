@@ -27,9 +27,11 @@
 #endif
 
 #ifdef _WIN32
-#define inline __inline
-#include "missing_posix_functions.inc"
-#include "msvc_function_stubs.inc"
+  #define inline __inline
+  #ifndef __MINGW32__
+    #include "missing_posix_functions.inc"
+  #endif
+  #include "msvc_function_stubs.inc"
 #endif
 
 #define L1_SIZE 32*1024         /* The average L1 cache size */
