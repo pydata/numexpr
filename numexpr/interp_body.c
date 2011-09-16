@@ -118,7 +118,6 @@
         #define      arg3   params.program[pc+5]
         /* Iterator reduce macros */
 #ifdef REDUCTION_INNER_LOOP /* Reduce is the inner loop */
-        #define reduce_ptr  NULL
         #define i_reduce    *(int *)dest
         #define l_reduce    *(long long *)dest
         #define f_reduce    *(float *)dest
@@ -126,7 +125,6 @@
         #define cr_reduce   *(double *)dest
         #define ci_reduce   *((double *)dest+1)
 #else /* Reduce is the outer loop */
-        #define reduce_ptr  NULL
         #define i_reduce    i_dest
         #define l_reduce    l_dest
         #define f_reduce    f_dest
@@ -169,7 +167,6 @@
         /* Some temporaries */
         double da, db;
         cdouble ca, cb;
-        char *ptr;
 
         switch (op) {
 
@@ -411,16 +408,14 @@
         case OP_SUM_LLN: VEC_ARG1(l_reduce += l1);
         case OP_SUM_FFN: VEC_ARG1(f_reduce += f1);
         case OP_SUM_DDN: VEC_ARG1(d_reduce += d1);
-        case OP_SUM_CCN: VEC_ARG1(ptr = reduce_ptr;
-                                  cr_reduce += c1r;
+        case OP_SUM_CCN: VEC_ARG1(cr_reduce += c1r;
                                   ci_reduce += c1i);
 
         case OP_PROD_IIN: VEC_ARG1(i_reduce *= i1);
         case OP_PROD_LLN: VEC_ARG1(l_reduce *= l1);
         case OP_PROD_FFN: VEC_ARG1(f_reduce *= f1);
         case OP_PROD_DDN: VEC_ARG1(d_reduce *= d1);
-        case OP_PROD_CCN: VEC_ARG1(ptr = reduce_ptr;
-                                   da = cr_reduce*c1r - ci_reduce*c1i;
+        case OP_PROD_CCN: VEC_ARG1(da = cr_reduce*c1r - ci_reduce*c1i;
                                    ci_reduce = cr_reduce*c1i + ci_reduce*c1r;
                                    cr_reduce = da);
 
@@ -437,7 +432,6 @@
 #undef VEC_ARG2
 #undef VEC_ARG3
 
-#undef reduce_ptr
 #undef i_reduce
 #undef l_reduce
 #undef f_reduce

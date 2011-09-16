@@ -1,0 +1,7 @@
+syntax: glob
+
+build/
+dist/
+numexpr.egg-info/
+*.pyc
+*.swp
