@@ -7,7 +7,9 @@ VML support.
 Building
 ========
 
-`Numexpr` requires Python 2.4 or greater, and NumPy 1.0 or greater.
+This version of `Numexpr` requires Python 2.4 or greater,
+and NumPy 1.6 or greater.
+
 It's built in the standard Python way:
 
 $ python setup.py build

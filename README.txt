@@ -1,3 +1,13 @@
+.. #####################################################
+..               WARNING!
+.. The version in this branch is only meant to run with
+.. Mark Wiebe's new interator for NumPy in:
+.. https://github.com/m-paradox/numpy
+.. As soon as this enters in NumPy, you will be able to
+.. use this branch safely.
+.. #####################################################
+
+
 What it is Numexpr?
 ===================
 
@@ -251,7 +261,10 @@ types by Tim Hochberg.  Francesc Alted contributed support for
 booleans and simple-precision floating point types, efficient strided
 and unaligned array operations and multi-threading code.  Ivan Vilata
 contributed support for strings.  Gregor Thalhammer implemented the
-support for Intel VML (Vector Math Library).
+support for Intel VML (Vector Math Library).  Mark Wiebe added support
+for the new iterator in NumPy, which allows for better performance in
+more scenarios (like broadcasting, fortran-ordered or non-native byte
+orderings).
 
 
 License

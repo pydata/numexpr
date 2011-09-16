@@ -2,6 +2,8 @@
 #include "structmember.h"
 #include "numpy/noprefix.h"
 #include "numpy/arrayscalars.h"
+#include "numpy/ndarrayobject.h"
+#include "numpy/npy_cpu.h"
 #include "math.h"
 #include "string.h"
 #include "assert.h"
@@ -34,7 +36,10 @@
   #include "msvc_function_stubs.inc"
 #endif
 
-#define L1_SIZE 32*1024         /* The average L1 cache size */
+/* x86 platform works with unaligned reads and writes */
+#if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
+#  define USE_UNALIGNED_ACCESS 1
+#endif
 
 #ifdef USE_VML
 /* The values below have been tuned for a nowadays Core2 processor */
@@ -52,7 +57,6 @@
 #define BLOCK_SIZE1 1024
 #define BLOCK_SIZE2 16
 #endif
-
 
 /* The maximum number of threads (for some static arrays) */
 #define MAX_THREADS 256
@@ -908,32 +912,14 @@ struct thread_data {
     struct vm_params params;
     int ret_code;
     int *pc_error;
+    char **errmsg;
+    /* One iterator per thread */
+    NpyIter *iter[MAX_THREADS];
+    /* When doing nested iteration for a reduction */
+    NpyIter *reduce_iter[MAX_THREADS];
+    /* Flag indicating reduction is the outer loop instead of the inner */
+    int reduction_outer_loop;
 } th_params;
-
-
-static inline unsigned int
-flat_index(struct index_data *id, unsigned int j) {
-    int i, k = id->count - 1;
-    unsigned int findex = id->findex;
-    if (k < 0) return 0;
-    if (findex == -1) {
-        findex = 0;
-        for (i = 0; i < id->count; i++)
-            findex += id->strides[i] * id->index[i];
-    }
-    id->index[k] += 1;
-    if (id->index[k] >= id->shape[k]) {
-        while (id->index[k] >= id->shape[k]) {
-            id->index[k] -= id->shape[k];
-            if (k < 1) break;
-            id->index[--k] += 1;
-        }
-        id->findex = -1;
-    } else {
-        id->findex = findex + id->strides[k];
-    }
-    return findex;
-}
 
 
 #define DO_BOUNDS_CHECK 1
@@ -993,52 +979,134 @@ free_temps_space(struct vm_params params, char **mem)
     }
 }
 
-/* Serial version of VM engine */
-static inline int
-vm_engine_serial(intp start, intp vlen, intp block_size,
-                 struct vm_params params, int *pc_error)
+/* Serial/parallel task iterator version of the VM engine */
+static int
+vm_engine_iter_task(NpyIter *iter, struct vm_params params, int *pc_error, char **errmsg)
 {
-    intp index;
     char **mem = params.mem;
-    get_temps_space(params, mem, block_size);
-    for (index = start; index < vlen; index += block_size) {
-#define BLOCK_SIZE block_size
-#include "interp_body.c"
-#undef BLOCK_SIZE
-    }
-    free_temps_space(params, mem);
-    return 0;
-}
+    NpyIter_IterNextFunc *iternext;
+    intp block_size, *size_ptr;
+    char **iter_dataptr;
+    intp *iter_strides;
 
-/* Serial version of VM engine (specific for BLOCK_SIZE1) */
-static inline int
-vm_engine_serial1(intp start, intp vlen,
-                  struct vm_params params, int *pc_error)
-{
-    intp index;
-    char **mem = params.mem;
-    get_temps_space(params, mem, BLOCK_SIZE1);
-    for (index = start; index < vlen; index += BLOCK_SIZE1) {
+    iternext = NpyIter_GetIterNext(iter, errmsg);
+    if (iternext == NULL) {
+        return -1;
+    }
+
+    size_ptr = NpyIter_GetInnerLoopSizePtr(iter);
+    iter_dataptr = NpyIter_GetDataPtrArray(iter);
+    iter_strides = NpyIter_GetInnerStrideArray(iter);
+
+    /*
+     * First do all the blocks with a compile-time fixed size.
+     * This makes a big difference (30-50% on some tests).
+     */
+    block_size = *size_ptr;
+    while (block_size == BLOCK_SIZE1) {
+#define REDUCTION_INNER_LOOP
 #define BLOCK_SIZE BLOCK_SIZE1
 #include "interp_body.c"
 #undef BLOCK_SIZE
+#undef REDUCTION_INNER_LOOP
+        iternext(iter);
+        block_size = *size_ptr;
     }
-    free_temps_space(params, mem);
+
+    /* Then finish off the rest */
+    if (block_size > 0) do {
+#define REDUCTION_INNER_LOOP
+#define BLOCK_SIZE block_size
+#include "interp_body.c"
+#undef BLOCK_SIZE
+#undef REDUCTION_INNER_LOOP
+    } while (iternext(iter));
+
     return 0;
 }
 
-/* Parallel version of VM engine */
-static inline int
-vm_engine_parallel(intp start, intp vlen, intp block_size,
-                   struct vm_params params, int *pc_error)
+static int
+vm_engine_iter_outer_reduce_task(NpyIter *iter, struct vm_params params, int *pc_error, char **errmsg)
 {
+    char **mem = params.mem;
+    NpyIter_IterNextFunc *iternext;
+    intp block_size, *size_ptr;
+    char **iter_dataptr;
+    intp *iter_strides;
+
+    iternext = NpyIter_GetIterNext(iter, errmsg);
+    if (iternext == NULL) {
+        return -1;
+    }
+
+    size_ptr = NpyIter_GetInnerLoopSizePtr(iter);
+    iter_dataptr = NpyIter_GetDataPtrArray(iter);
+    iter_strides = NpyIter_GetInnerStrideArray(iter);
+
+    /*
+     * First do all the blocks with a compile-time fixed size.
+     * This makes a big difference (30-50% on some tests).
+     */
+    block_size = *size_ptr;
+    while (block_size == BLOCK_SIZE1) {
+#define BLOCK_SIZE BLOCK_SIZE1
+#include "interp_body.c"
+#undef BLOCK_SIZE
+        iternext(iter);
+        block_size = *size_ptr;
+    }
+
+    /* Then finish off the rest */
+    if (block_size > 0) do {
+#define BLOCK_SIZE block_size
+#include "interp_body.c"
+#undef BLOCK_SIZE
+    } while (iternext(iter));
+
+    return 0;
+}
+
+/* Parallel iterator version of VM engine */
+static int
+vm_engine_iter_parallel(NpyIter *iter, struct vm_params params, int *pc_error,
+                        char **errmsg)
+{
+    unsigned int i;
+    npy_intp numblocks, taskfactor;
+
+    if (errmsg == NULL) {
+        return -1;
+    }
+
     /* Populate parameters for worker threads */
-    th_params.start = start;
-    th_params.vlen = vlen;
-    th_params.block_size = block_size;
+    NpyIter_GetIterIndexRange(iter, &th_params.start, &th_params.vlen);
+    /*
+     * Try to make it so each thread gets 16 tasks.  This is a compromise
+     * between 1 task per thread and one block per task.
+     */
+    taskfactor = 16*BLOCK_SIZE1*nthreads;
+    numblocks = (th_params.vlen - th_params.start + taskfactor - 1) /
+                            taskfactor;
+    th_params.block_size = numblocks * BLOCK_SIZE1;
+
     th_params.params = params;
     th_params.ret_code = 0;
     th_params.pc_error = pc_error;
+    th_params.errmsg = errmsg;
+    th_params.iter[0] = iter;
+    /* Make one copy for each additional thread */
+    for (i = 1; i < nthreads; ++i) {
+        th_params.iter[i] = NpyIter_Copy(iter);
+        if (th_params.iter[i] == NULL) {
+            --i;
+            for (; i > 0; --i) {
+                NpyIter_Deallocate(th_params.iter[i]);
+            }
+            return -1;
+        }
+    }
+
+    Py_BEGIN_ALLOW_THREADS;
 
     /* Synchronization point for all threads (wait for initialization) */
     pthread_mutex_lock(&count_threads_mutex);
@@ -1062,40 +1130,25 @@ vm_engine_parallel(intp start, intp vlen, intp block_size,
     }
     pthread_mutex_unlock(&count_threads_mutex);
 
+    Py_END_ALLOW_THREADS;
+
+    /* Deallocate all the iterator copies */
+    for (i = 1; i < nthreads; ++i) {
+        NpyIter_Deallocate(th_params.iter[i]);
+    }
+
     return th_params.ret_code;
 }
 
-/* VM engine for each thread (specific for BLOCK_SIZE1) */
-static inline int
-vm_engine_thread1(char **mem, intp index,
-                  struct vm_params params, int *pc_error)
-{
-#define BLOCK_SIZE BLOCK_SIZE1
-#include "interp_body.c"
-#undef BLOCK_SIZE
-    return 0;
-}
-
-/* VM engine for each threadi (general) */
-static inline int
-vm_engine_thread(char **mem, intp index, intp block_size,
-                  struct vm_params params, int *pc_error)
-{
-#define BLOCK_SIZE block_size
-#include "interp_body.c"
-#undef BLOCK_SIZE
-    return 0;
-}
-
 /* Do the worker job for a certain thread */
-void *th_worker(void *tids)
+void *th_worker(void *tidptr)
 {
-    /* int tid = *(int *)tids; */
-    intp index;                 /* private copy of gindex */
+    int tid = *(int *)tidptr;
     /* Parameters for threads */
     intp start;
     intp vlen;
     intp block_size;
+    NpyIter *iter;
     struct vm_params params;
     int *pc_error;
     int ret;
@@ -1140,47 +1193,72 @@ void *th_worker(void *tids)
         /* XXX malloc seems thread safe for POSIX, but for Win? */
         mem = malloc(memsize);
         memcpy(mem, params.mem, memsize);
-        /* Get temporary space for each thread */
-        ret = get_temps_space(params, mem, block_size);
-        if (ret < 0) {
-            pthread_mutex_lock(&count_mutex);
-            giveup = 1;
-            /* Propagate error to main thread */
-            th_params.ret_code = ret;
-            pthread_mutex_unlock(&count_mutex);
-        }
+
+        intp istart, iend;
+        char **errmsg = th_params.errmsg;
+
+        params.mem = mem;
 
         /* Loop over blocks */
         pthread_mutex_lock(&count_mutex);
         if (!init_sentinels_done) {
             /* Set sentinels and other global variables */
             gindex = start;
-            index = gindex;
-            init_sentinels_done = 1;    /* sentinels have been initialised */
+            istart = gindex;
+            iend = istart + block_size;
+            if (iend > vlen) {
+                iend = vlen;
+            }
+            init_sentinels_done = 1;  /* sentinels have been initialised */
             giveup = 0;            /* no giveup initially */
         } else {
             gindex += block_size;
-            index = gindex;
+            istart = gindex;
+            iend = istart + block_size;
+            if (iend > vlen) {
+                iend = vlen;
+            }
+        }
+        /* Grab one of the iterators */
+        iter = th_params.iter[tid];
+        if (iter == NULL) {
+            th_params.ret_code = -1;
+            giveup = 1;
+        }
+        /* Get temporary space for each thread */
+        ret = get_temps_space(params, mem, BLOCK_SIZE1);
+        if (ret < 0) {
+            /* Propagate error to main thread */
+            th_params.ret_code = ret;
+            giveup = 1;
         }
         pthread_mutex_unlock(&count_mutex);
-        while (index < vlen && !giveup) {
-            if (block_size == BLOCK_SIZE1) {
-                ret = vm_engine_thread1(mem, index, params, pc_error);
+
+        while (istart < vlen && !giveup) {
+            /* Reset the iterator to the range for this task */
+            ret = NpyIter_ResetToIterIndexRange(iter, istart, iend,
+                                                errmsg);
+            /* Execute the task */
+            if (ret >= 0) {
+                ret = vm_engine_iter_task(iter, params, pc_error, errmsg);
             }
-            else {
-                ret = vm_engine_thread(mem, index, block_size,
-                                       params, pc_error);
-            }
+
             if (ret < 0) {
                 pthread_mutex_lock(&count_mutex);
                 giveup = 1;
                 /* Propagate error to main thread */
                 th_params.ret_code = ret;
                 pthread_mutex_unlock(&count_mutex);
+                break;
             }
+
             pthread_mutex_lock(&count_mutex);
             gindex += block_size;
-            index = gindex;
+            istart = gindex;
+            iend = istart + block_size;
+            if (iend > vlen) {
+                iend = vlen;
+            }
             pthread_mutex_unlock(&count_mutex);
         }
 
@@ -1205,66 +1283,25 @@ void *th_worker(void *tids)
     return(0);
 }
 
-/* Compute expresion in [start:vlen], if possible with threads */
-static inline int
-vm_engine_block(intp start, intp vlen, intp block_size,
-                struct vm_params params, int *pc_error)
-{
-    int r;
-
-    /* From now on, we can release the GIL */
-    Py_BEGIN_ALLOW_THREADS;
-    /* Run the serial version when nthreads is 1 or when the total
-       length to compute is small */
-    if ((nthreads == 1) || (vlen <= L1_SIZE) || force_serial) {
-        if (block_size == BLOCK_SIZE1) {
-            r = vm_engine_serial1(start, vlen, params, pc_error);
-        }
-        else {
-            r = vm_engine_serial(start, vlen, block_size, params, pc_error);
-        }
-    }
-    else {
-        r = vm_engine_parallel(start, vlen, block_size, params, pc_error);
-    }
-    /* Get the GIL again */
-    Py_END_ALLOW_THREADS;
-    return r;
-}
-
-static inline int
-vm_engine_rest(intp start, intp blen,
-               struct vm_params params, int *pc_error)
-{
-    intp index = start;
-    intp block_size = blen - start;
-    char **mem = params.mem;
-    get_temps_space(params, mem, block_size);
-#define BLOCK_SIZE block_size
-#include "interp_body.c"
-#undef BLOCK_SIZE
-    free_temps_space(params, mem);
-    return 0;
-}
-
 static int
-run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
-                struct index_data *index_data, int *pc_error)
+run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
+                     int reduction_outer_loop, int *pc_error)
 {
     int r;
     intp plen;
-    intp blen1, blen2;
     struct vm_params params;
+    char *errmsg = NULL;
 
     *pc_error = -1;
     if (PyString_AsStringAndSize(self->program, (char **)&(params.program),
                                  &plen) < 0) {
         return -1;
     }
+
     params.prog_len = plen;
-    params.output = output;
-    params.inputs = inputs;
-    params.index_data = index_data;
+    params.output = NULL;
+    params.inputs = NULL;
+    params.index_data = NULL;
     params.n_inputs = self->n_inputs;
     params.n_constants = self->n_constants;
     params.n_temps = self->n_temps;
@@ -1273,19 +1310,125 @@ run_interpreter(NumExprObject *self, intp len, char *output, char **inputs,
     params.memsizes = self->memsizes;
     params.r_end = PyString_Size(self->fullsig);
 
-    blen1 = len - len % BLOCK_SIZE1;
-    r = vm_engine_block(0, blen1, BLOCK_SIZE1, params, pc_error);
-    if (r < 0) return r;
-    if (len != blen1) {
-        blen2 = len - len % BLOCK_SIZE2;
-        /* A block is generally too small for threading to be an advantage */
-        r = vm_engine_serial(blen1, blen2, BLOCK_SIZE2, params, pc_error);
-        if (r < 0) return r;
-        if (len != blen2) {
-            r = vm_engine_rest(blen2, len, params, pc_error);
-            if (r < 0) return r;
+    if ((nthreads == 1) || force_serial) {
+        /* Can do it as one "task" */
+        if (reduce_iter == NULL) {
+            /* Reset the iterator to allocate its buffers */
+            if(NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
+                return -1;
+            }
+            get_temps_space(params, params.mem, BLOCK_SIZE1);
+            Py_BEGIN_ALLOW_THREADS;
+            r = vm_engine_iter_task(iter, params, pc_error, &errmsg);
+            Py_END_ALLOW_THREADS;
+            free_temps_space(params, params.mem);
+        }
+        else {
+            if (reduction_outer_loop) {
+                char **dataptr;
+                NpyIter_IterNextFunc *iternext;
+
+                dataptr = NpyIter_GetDataPtrArray(reduce_iter);
+                iternext = NpyIter_GetIterNext(reduce_iter, NULL);
+                if (iternext == NULL) {
+                    return -1;
+                }
+
+                get_temps_space(params, params.mem, BLOCK_SIZE1);
+                Py_BEGIN_ALLOW_THREADS;
+                do {
+                    r = NpyIter_ResetBasePointers(iter, dataptr, &errmsg);
+                    if (r >= 0) {
+                        r = vm_engine_iter_outer_reduce_task(iter, params,
+                                                pc_error, &errmsg);
+                    }
+                    if (r < 0) {
+                        break;
+                    }
+                } while (iternext(reduce_iter));
+                Py_END_ALLOW_THREADS;
+                free_temps_space(params, params.mem);
+            }
+            else {
+                char **dataptr;
+                NpyIter_IterNextFunc *iternext;
+
+                dataptr = NpyIter_GetDataPtrArray(iter);
+                iternext = NpyIter_GetIterNext(iter, NULL);
+                if (iternext == NULL) {
+                    return -1;
+                }
+
+                get_temps_space(params, params.mem, BLOCK_SIZE1);
+                Py_BEGIN_ALLOW_THREADS;
+                do {
+                    r = NpyIter_ResetBasePointers(reduce_iter, dataptr,
+                                                                    &errmsg);
+                    if (r >= 0) {
+                        r = vm_engine_iter_task(reduce_iter, params,
+                                                pc_error, &errmsg);
+                    }
+                    if (r < 0) {
+                        break;
+                    }
+                } while (iternext(iter));
+                Py_END_ALLOW_THREADS;
+                free_temps_space(params, params.mem);
+            }
         }
     }
+    else {
+        if (reduce_iter == NULL) {
+            r = vm_engine_iter_parallel(iter, params, pc_error, &errmsg);
+        }
+        else {
+            errmsg = "Parallel engine doesn't support reduction yet";
+            r = -1;
+        }
+    }
+
+    if (r < 0 && errmsg != NULL) {
+        PyErr_SetString(PyExc_RuntimeError, errmsg);
+    }
+
+    return 0;
+}
+
+static int
+run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
+{
+    struct vm_params params;
+    intp plen;
+    char **mem;
+
+    *pc_error = -1;
+    if (PyString_AsStringAndSize(self->program, (char **)&(params.program),
+                                 &plen) < 0) {
+        return -1;
+    }
+    if (self->n_inputs != 0) {
+        return -1;
+    }
+    params.prog_len = plen;
+    params.output = output;
+    params.inputs = NULL;
+    params.index_data = NULL;
+    params.n_inputs = self->n_inputs;
+    params.n_constants = self->n_constants;
+    params.n_temps = self->n_temps;
+    params.mem = self->mem;
+    params.memsteps = self->memsteps;
+    params.memsizes = self->memsizes;
+    params.r_end = PyString_Size(self->fullsig);
+
+    mem = params.mem;
+    get_temps_space(params, mem, 1);
+#define SINGLE_ITEM_CONST_LOOP
+#define BLOCK_SIZE 1
+#include "interp_body.c"
+#undef BLOCK_SIZE
+#undef SINGLE_ITEM_CONST_LOOP
+    free_temps_space(params, mem);
 
     return 0;
 }
@@ -1421,18 +1564,28 @@ void numexpr_free_resources(void)
     }
 }
 
-/* keyword arguments are ignored! */
 static PyObject *
 NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *output = NULL, *a_inputs = NULL;
-    struct index_data *inddata = NULL;
-    unsigned int n_inputs, n_dimensions = 0;
-    intp shape[MAX_DIMS];
-    int i, j, r, pc_error;
-    intp size;
-    char **inputs = NULL;
-    intp strides[MAX_DIMS]; /* clean up XXX */
+    PyArrayObject *operands[NPY_MAXARGS];
+    PyArray_Descr *dtypes[NPY_MAXARGS], **dtypes_tmp;
+    PyObject *tmp, *ret;
+    npy_uint32 op_flags[NPY_MAXARGS];
+    NPY_CASTING casting = NPY_SAFE_CASTING;
+    NPY_ORDER order = NPY_KEEPORDER;
+    unsigned int i, n_inputs;
+    int r, pc_error = 0;
+    int reduction_axis = -1, reduction_size = 1;
+    int ex_uses_vml = 0, is_reduction = 0, reduction_outer_loop = 0;
+
+    /* To specify axes when doing a reduction */
+    int op_axes_values[NPY_MAXARGS][NPY_MAXDIMS],
+         op_axes_reduction_values[NPY_MAXARGS];
+    int *op_axes_ptrs[NPY_MAXDIMS];
+    int oa_ndim = 0;
+    int **op_axes = NULL;
+
+    NpyIter *iter = NULL, *reduce_iter = NULL;
 
     /* Check whether we need to restart threads */
     if (!init_threads_done || pid != getpid()) {
@@ -1442,292 +1595,388 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     /* Don't force serial mode by default */
     force_serial = 0;
 
+    /* Check whether there's a reduction as the final step */
+    is_reduction = last_opcode(self->program) > OP_REDUCTION;
+
     n_inputs = PyTuple_Size(args);
     if (PyString_Size(self->signature) != n_inputs) {
         return PyErr_Format(PyExc_ValueError,
                             "number of inputs doesn't match program");
     }
-    if (kwds && PyObject_Length(kwds) > 0) {
+    else if (n_inputs+1 > NPY_MAXARGS) {
         return PyErr_Format(PyExc_ValueError,
-                            "keyword arguments are not accepted");
+                            "too many inputs");
     }
 
-    /* This is overkill - we shouldn't need to allocate all of this space,
-       but this makes it easier figure out */
-    a_inputs = PyTuple_New(3*n_inputs);
-    if (!a_inputs) goto cleanup_and_exit;
+    memset(operands, 0, sizeof(operands));
+    memset(dtypes, 0, sizeof(dtypes));
 
-    inputs = PyMem_New(char *, n_inputs);
-    if (!inputs) goto cleanup_and_exit;
-
-    inddata = PyMem_New(struct index_data, n_inputs+1);
-    if (!inddata) goto cleanup_and_exit;
-    for (i = 0; i < n_inputs+1; i++)
-        inddata[i].count = 0;
-
-    /* First, make sure everything is some sort of array so that we can work
-       with their shapes. Count dimensions concurrently. */
+    if (kwds) {
+        tmp = PyDict_GetItemString(kwds, "casting"); /* borrowed ref */
+        if (tmp != NULL && !PyArray_CastingConverter(tmp, &casting)) {
+            return NULL;
+        }
+        tmp = PyDict_GetItemString(kwds, "order"); /* borrowed ref */
+        if (tmp != NULL && !PyArray_OrderConverter(tmp, &order)) {
+            return NULL;
+        }
+        tmp = PyDict_GetItemString(kwds, "ex_uses_vml"); /* borrowed ref */
+        if (tmp == NULL) {
+            return PyErr_Format(PyExc_ValueError,
+                                "ex_uses_vml parameter is required");
+        }
+        if (tmp == Py_True) {
+            ex_uses_vml = 1;
+        }
+            /* borrowed ref */
+        operands[0] = (PyArrayObject *)PyDict_GetItemString(kwds, "out");
+        if (operands[0] != NULL) {
+            if ((PyObject *)operands[0] == Py_None) {
+                operands[0] = NULL;
+            }
+            else if (!PyArray_Check(operands[0])) {
+                return PyErr_Format(PyExc_ValueError,
+                                    "out keyword parameter is not an array");
+            }
+            else {
+                Py_INCREF(operands[0]);
+            }
+        }
+    }
 
     for (i = 0; i < n_inputs; i++) {
         PyObject *o = PyTuple_GET_ITEM(args, i); /* borrowed ref */
         PyObject *a;
         char c = PyString_AS_STRING(self->signature)[i];
         int typecode = typecode_from_char(c);
-        if (typecode == -1) goto cleanup_and_exit;
-        /* Convert it just in case of a non-swapped array */
-        if (!PyArray_Check(o) || PyArray_TYPE(o) != PyArray_STRING) {
+        /* Convert it if it's not an array */
+        if (!PyArray_Check(o)) {
+            if (typecode == -1) goto fail;
             a = PyArray_FROM_OTF(o, typecode, NOTSWAPPED);
-        } else {
-            Py_INCREF(PyArray_DESCR(o));  /* typecode is not enough */
-            a = PyArray_FromAny(o, PyArray_DESCR(o), 0, 0, NOTSWAPPED, NULL);
         }
-        if (!a) goto cleanup_and_exit;
-        PyTuple_SET_ITEM(a_inputs, i, a);  /* steals reference */
-        if (PyArray_NDIM(a) > n_dimensions)
-            n_dimensions = PyArray_NDIM(a);
+        else {
+            Py_INCREF(o);
+            a = o;
+        }
+        operands[i+1] = (PyArrayObject *)a;
+        dtypes[i+1] = PyArray_DescrFromType(typecode);
+
+        if (operands[i+1] == NULL || dtypes[i+1] == NULL) {
+            goto fail;
+        }
+        op_flags[i+1] = NPY_ITER_READONLY|
+#ifdef USE_VML
+                        (ex_uses_vml ? (NPY_ITER_CONTIG|NPY_ITER_ALIGNED) : 0)|
+#endif
+#ifndef USE_UNALIGNED_ACCESS
+                        NPY_ITER_ALIGNED|
+#endif
+                        NPY_ITER_NBO
+                        ;
     }
 
-    /* Broadcast all of the inputs to determine the output shape (this will
-       require some modifications if we later allow a final reduction
-       operation). If an array has too few dimensions it's shape is padded
-       with ones fromthe left. All array dimensions must match, or be one. */
-
-    for (i = 0; i < n_dimensions; i++)
-        shape[i] = 1;
-    for (i = 0; i < n_inputs; i++) {
-        PyObject *a = PyTuple_GET_ITEM(a_inputs, i);
-        unsigned int ndims = PyArray_NDIM(a);
-        int delta = n_dimensions - ndims;
-        for (j = 0; j < ndims; j++) {
-            unsigned int n = PyArray_DIM(a, j);
-            if (n == 1 || n == shape[delta+j]) continue;
-            if (shape[delta+j] == 1)
-                shape[delta+j] = n;
-            else {
-                PyErr_SetString(PyExc_ValueError,
-                                "cannot broadcast inputs to common shape");
-                goto cleanup_and_exit;
-            }
-        }
-    }
-    size = PyArray_MultiplyList(shape, n_dimensions);
-
-    /* Broadcast indices of all of the arrays. We could improve efficiency
-       by keeping track of what needs to be broadcast above */
-
-    for (i = 0; i < n_inputs; i++) {
-        PyObject *a = PyTuple_GET_ITEM(a_inputs, i);
-        PyObject *b;
-        intp strides[MAX_DIMS];
-        int delta = n_dimensions - PyArray_NDIM(a);
-        if (PyArray_NDIM(a)) {
-            for (j = 0; j < n_dimensions; j++)
-                strides[j] = (j < delta || PyArray_DIM(a, j-delta) == 1) ?
-                                0 : PyArray_STRIDE(a, j-delta);
-            Py_INCREF(PyArray_DESCR(a));
-            b = PyArray_NewFromDescr(a->ob_type,
-                                       PyArray_DESCR(a),
-                                       n_dimensions, shape,
-                                       strides, PyArray_DATA(a), 0, a);
-            if (!b) goto cleanup_and_exit;
-        } else { /* Leave scalars alone */
-            b = a;
-            Py_INCREF(b);
-        }
-        /* Store b so that it stays alive till we're done */
-        PyTuple_SET_ITEM(a_inputs, i+n_inputs, b);
-    }
-
-
-    for (i = 0; i < n_inputs; i++) {
-        PyObject *a = PyTuple_GET_ITEM(a_inputs, i+n_inputs);
-        PyObject *b;
-        char c = PyString_AS_STRING(self->signature)[i];
-        int typecode = typecode_from_char(c);
-        if (PyArray_NDIM(a) == 0) {
-            /* Broadcast scalars */
-            intp dims[1] = {BLOCK_SIZE1};
-            Py_INCREF(PyArray_DESCR(a));
-            b = PyArray_SimpleNewFromDescr(1, dims, PyArray_DESCR(a));
-            if (!b) goto cleanup_and_exit;
-            self->memsteps[i+1] = 0;
-            self->memsizes[i+1] = PyArray_ITEMSIZE(a);
-            PyTuple_SET_ITEM(a_inputs, i+2*n_inputs, b);  /* steals reference */
-            inputs[i] = PyArray_DATA(b);
-            if (typecode == PyArray_BOOL) {
-                char value = ((char*)PyArray_DATA(a))[0];
-                for (j = 0; j < BLOCK_SIZE1; j++)
-                    ((char*)PyArray_DATA(b))[j] = value;
-            } else if (typecode == PyArray_INT) {
-                int value = ((int*)PyArray_DATA(a))[0];
-                for (j = 0; j < BLOCK_SIZE1; j++)
-                    ((int*)PyArray_DATA(b))[j] = value;
-            } else if (typecode == PyArray_LONGLONG) {
-                long long value = ((long long*)PyArray_DATA(a))[0];
-                for (j = 0; j < BLOCK_SIZE1; j++)
-                    ((long long*)PyArray_DATA(b))[j] = value;
-            } else if (typecode == PyArray_FLOAT) {
-                float value = ((float*)PyArray_DATA(a))[0];
-                for (j = 0; j < BLOCK_SIZE1; j++)
-                    ((float*)PyArray_DATA(b))[j] = value;
-            } else if (typecode == PyArray_DOUBLE) {
-                double value = ((double*)PyArray_DATA(a))[0];
-                for (j = 0; j < BLOCK_SIZE1; j++)
-                    ((double*)PyArray_DATA(b))[j] = value;
-            } else if (typecode == PyArray_CDOUBLE) {
-                double rvalue = ((double*)PyArray_DATA(a))[0];
-                double ivalue = ((double*)PyArray_DATA(a))[1];
-                for (j = 0; j < 2*BLOCK_SIZE1; j+=2) {
-                    ((double*)PyArray_DATA(b))[j] = rvalue;
-                    ((double*)PyArray_DATA(b))[j+1] = ivalue;
-                }
-            } else if (typecode == PyArray_STRING) {
-                int itemsize = PyArray_ITEMSIZE(a);
-                char *value = (char*)(PyArray_DATA(a));
-                for (j = 0; j < itemsize*BLOCK_SIZE1; j+=itemsize)
-                    memcpy((char*)(PyArray_DATA(b)) + j, value, itemsize);
-            } else {
-                PyErr_SetString(PyExc_RuntimeError, "illegal typecode value");
-                goto cleanup_and_exit;
-            }
-        } else {
-            /* Check that discontiguous strides appear only on the last
-               dimension. If not, the arrays should be copied.
-               Furthermore, such arrays can appear when doing
-               broadcasting above, so this check really needs to be
-               here, and not in Python space. */
-            intp inner_size;
-            for (j = PyArray_NDIM(a)-2; j >= 0; j--) {
-                inner_size = PyArray_STRIDE(a, j+1) * PyArray_DIM(a, j+1);
-                if (PyArray_STRIDE(a, j) != inner_size) {
-                    intp dims[1] = {BLOCK_SIZE1};
-                    inddata[i+1].count = PyArray_NDIM(a);
-                    inddata[i+1].findex = -1;
-                    inddata[i+1].size = PyArray_ITEMSIZE(a);
-                    inddata[i+1].shape = PyArray_DIMS(a);
-                    inddata[i+1].strides = PyArray_STRIDES(a);
-                    inddata[i+1].buffer = PyArray_BYTES(a);
-                    inddata[i+1].index = PyMem_New(int, inddata[i+1].count);
-                    for (j = 0; j < inddata[i+1].count; j++)
-                        inddata[i+1].index[j] = 0;
-                    Py_INCREF(PyArray_DESCR(a));
-                    a = PyArray_SimpleNewFromDescr(1, dims, PyArray_DESCR(a));
-                    /* steals reference below */
-                    PyTuple_SET_ITEM(a_inputs, i+2*n_inputs, a);
-                    /* Broadcasting code only seems to work well for
-                       serial code (don't know exactly why) */
-                    force_serial = 1;
-                    break;
-                }
-            }
-
-            self->memsteps[i+1] = PyArray_STRIDE(a, PyArray_NDIM(a)-1);
-            self->memsizes[i+1] = PyArray_ITEMSIZE(a);
-            inputs[i] = PyArray_DATA(a);
-
-        }
-    }
-
-    if (last_opcode(self->program) > OP_REDUCTION) {
+    if (is_reduction) {
         /* A reduction can not result in a string,
            so we don't need to worry about item sizes here. */
         char retsig = get_return_sig(self->program);
-        int axis = get_reduction_axis(self->program);
-        /* Reduction ops only works with 1 thread */
-        force_serial = 1;
-        self->memsteps[0] = 0; /*size_from_char(retsig);*/
-        if (axis == 255) {
-            intp dims[1];
-            for (i = 0; i < n_dimensions; i++)
-                strides[i] = 0;
-            output = PyArray_SimpleNew(0, dims, typecode_from_char(retsig));
-            if (!output) goto cleanup_and_exit;
-        } else {
-            intp dims[MAX_DIMS];
-            if (axis < 0)
-                axis = n_dimensions + axis;
-            if (axis < 0 || axis >= n_dimensions) {
-                PyErr_SetString(PyExc_ValueError, "axis out of range");
-                goto cleanup_and_exit;
-            }
-            for (i = j = 0; i < n_dimensions; i++) {
-                if (i != axis) {
-                    dims[j] = shape[i];
-                    j += 1;
+        reduction_axis = get_reduction_axis(self->program);
+ 
+        /* Need to set up op_axes for the non-reduction part */
+        if (reduction_axis != 255) {
+            /* Get the number of broadcast dimensions */
+            for (i = 0; i < n_inputs; ++i) {
+                intp ndim = PyArray_NDIM(operands[i+1]);
+                if (ndim > oa_ndim) {
+                    oa_ndim = ndim;
                 }
             }
-            output = PyArray_SimpleNew(n_dimensions-1, dims,
-                                       typecode_from_char(retsig));
-            if (!output) goto cleanup_and_exit;
-            for (i = j = 0; i < n_dimensions; i++) {
-                if (i != axis) {
-                    strides[i] = PyArray_STRIDES(output)[j];
-                    j += 1;
-                } else {
-                    strides[i] = 0;
-                }
+            if (reduction_axis < 0 || reduction_axis >= oa_ndim) {
+                PyErr_Format(PyExc_ValueError,
+                        "reduction axis is out of bounds");
+                goto fail;
             }
-
-
+            /* Fill in the op_axes */
+            op_axes_ptrs[0] = NULL;
+            op_axes_reduction_values[0] = -1;
+            for (i = 0; i < n_inputs; ++i) {
+                intp j = 0, idim, ndim = PyArray_NDIM(operands[i+1]);
+                for (idim = 0; idim < oa_ndim-ndim; ++idim) {
+                    if (idim != reduction_axis) {
+                        op_axes_values[i+1][j++] = -1;
+                    }
+                    else {
+                        op_axes_reduction_values[i+1] = -1;
+                    }
+                }
+                for (idim = oa_ndim-ndim; idim < oa_ndim; ++idim) {
+                    if (idim != reduction_axis) {
+                        op_axes_values[i+1][j++] = idim-(oa_ndim-ndim);
+                    }
+                    else {
+                        intp size = PyArray_DIM(operands[i+1],
+                                                    idim-(oa_ndim-ndim));
+                        if (size > reduction_size) {
+                            reduction_size = size;
+                        }
+                        op_axes_reduction_values[i+1] = idim-(oa_ndim-ndim);
+                    }
+                }
+                op_axes_ptrs[i+1] = op_axes_values[i+1];
+            }
+            /* op_axes has one less than the broadcast dimensions */
+            --oa_ndim;
+            if (oa_ndim > 0) {
+                op_axes = op_axes_ptrs;
+            }
+            else {
+                reduction_size = 1;
+            }
         }
-        /* TODO optimize strides -- in this and other inddata cases, strides and
-           shape can be tweaked to minimize the amount of looping */
-        inddata[0].count = n_dimensions;
-        inddata[0].findex = -1;
-        inddata[0].size = PyArray_ITEMSIZE(output);
-        inddata[0].shape = shape;
-        inddata[0].strides = strides;
-        inddata[0].buffer = PyArray_BYTES(output);
-        inddata[0].index = PyMem_New(int, n_dimensions);
-        for (j = 0; j < inddata[0].count; j++)
-            inddata[0].index[j] = 0;
-
-        if (last_opcode(self->program) >= OP_SUM &&
-            last_opcode(self->program) < OP_PROD) {
-                PyObject *zero = PyInt_FromLong(0);
-                PyArray_FillWithScalar((PyArrayObject *)output, zero);
-                Py_DECREF(zero);
-        } else {
-                PyObject *one = PyInt_FromLong(1);
-                PyArray_FillWithScalar((PyArrayObject *)output, one);
-                Py_DECREF(one);
+        /* A full reduction can be done without nested iteration */
+        if (oa_ndim == 0) {
+            if (operands[0] == NULL) {
+                intp dim = 1;
+                operands[0] = (PyArrayObject *)PyArray_SimpleNew(0, &dim,
+                                            typecode_from_char(retsig));
+                if (!operands[0])
+                    goto fail;
+            } else if (PyArray_SIZE(operands[0]) != 1) {
+                PyErr_Format(PyExc_ValueError,
+                        "out argument must have size 1 for a full reduction");
+                goto fail;
+            }
         }
+
+        dtypes[0] = PyArray_DescrFromType(typecode_from_char(retsig));
+
+        op_flags[0] = NPY_ITER_READWRITE|
+                      NPY_ITER_ALLOCATE|
+                      /* Copy, because it can't buffer the reduction */
+                      NPY_ITER_UPDATEIFCOPY|
+                      NPY_ITER_NBO|
+#ifndef USE_UNALIGNED_ACCESS
+                      NPY_ITER_ALIGNED|
+#endif
+                      (oa_ndim == 0 ? 0 : NPY_ITER_NO_BROADCAST);
     }
     else {
         char retsig = get_return_sig(self->program);
         if (retsig != 's') {
-            self->memsteps[0] = self->memsizes[0] = size_from_char(retsig);
-            output = PyArray_SimpleNew(
-                n_dimensions, shape, typecode_from_char(retsig));
+            dtypes[0] = PyArray_DescrFromType(typecode_from_char(retsig));
         } else {
             /* Since the *only* supported operation returning a string
              * is a copy, the size of returned strings
              * can be directly gotten from the first (and only)
              * input/constant/temporary. */
-            PyArray_Descr *descr;
             if (n_inputs > 0) {  /* input, like in 'a' where a -> 'foo' */
-                descr = PyArray_DESCR(PyTuple_GET_ITEM(a_inputs, 1));
-            Py_INCREF(descr);
+                dtypes[0] = PyArray_DESCR(operands[1]);
+                Py_INCREF(dtypes[0]);
             } else {  /* constant, like in '"foo"' */
-                descr = PyArray_DescrFromType(PyArray_STRING);
-                descr->elsize = self->memsizes[1];
+                dtypes[0] = PyArray_DescrNewFromType(PyArray_STRING);
+                dtypes[0]->elsize = self->memsizes[1];
             }  /* no string temporaries, so no third case  */
-            self->memsteps[0] = self->memsizes[0] = self->memsizes[1];
-            output = PyArray_SimpleNewFromDescr(n_dimensions, shape, descr);
         }
-        if (!output) goto cleanup_and_exit;
+        if (dtypes[0] == NULL) {
+            goto fail;
+        }
+        op_flags[0] = NPY_ITER_WRITEONLY|
+                      NPY_ITER_ALLOCATE|
+                      NPY_ITER_CONTIG|
+                      NPY_ITER_NBO|
+#ifndef USE_UNALIGNED_ACCESS
+                      NPY_ITER_ALIGNED|
+#endif
+                      NPY_ITER_NO_BROADCAST;
+    }
+
+    /* A case with a single constant output */
+    if (n_inputs == 0) {
+        char retsig = get_return_sig(self->program);
+
+        /* Allocate the output */
+        if (operands[0] == NULL) {
+            intp dim = 1;
+            operands[0] = (PyArrayObject *)PyArray_SimpleNew(0, &dim,
+                                        typecode_from_char(retsig));
+            if (operands[0] == NULL) {
+                goto fail;
+            }
+        }
+        else {
+            PyArrayObject *a;
+            if (PyArray_SIZE(operands[0]) != 1) {
+                PyErr_SetString(PyExc_ValueError,
+                        "output for a constant expression must have size 1");
+                goto fail;
+            }
+            else if (!PyArray_ISWRITEABLE(operands[0])) {
+                PyErr_SetString(PyExc_ValueError,
+                        "output is not writeable");
+                goto fail;
+            }
+            Py_INCREF(dtypes[0]);
+            a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
+                                        NPY_ALIGNED|NPY_UPDATEIFCOPY);
+            if (a == NULL) {
+                goto fail;
+            }
+            Py_DECREF(operands[0]);
+            operands[0] = a;
+        }
+
+        r = run_interpreter_const(self, PyArray_DATA(operands[0]), &pc_error);
+
+        ret = (PyObject *)operands[0];
+        Py_INCREF(ret);
+        goto cleanup_and_exit;
     }
 
 
-    r = run_interpreter(self, size, PyArray_DATA(output), inputs, inddata,
-                        &pc_error);
+    /* Allocate the iterator or nested iterators */
+    if (reduction_size == 1) {
+        iter = NpyIter_AdvancedNew(n_inputs+1, operands,
+                            NPY_ITER_BUFFERED|
+                            NPY_ITER_REDUCE_OK|
+                            NPY_ITER_RANGED|
+                            NPY_ITER_DELAY_BUFALLOC|
+                            NPY_ITER_EXTERNAL_LOOP,
+                            order, casting,
+                            op_flags, dtypes,
+                            0, NULL, NULL,
+                            BLOCK_SIZE1);
+        if (iter == NULL) {
+            goto fail;
+        }
+    } else {
+        npy_uint32 op_flags_outer[NPY_MAXDIMS];
+        /* The outer loop is unbuffered */
+        op_flags_outer[0] = NPY_ITER_READWRITE|
+                            NPY_ITER_ALLOCATE|
+                            NPY_ITER_NO_BROADCAST;
+        for (i = 0; i < n_inputs; ++i) {
+            op_flags_outer[i+1] = NPY_ITER_READONLY;
+        }
+        /* Arbitrary threshold for which is the inner loop...benchmark? */
+        if (reduction_size < 64) {
+            reduction_outer_loop = 1;
+            iter = NpyIter_AdvancedNew(n_inputs+1, operands,
+                                NPY_ITER_BUFFERED|
+                                NPY_ITER_RANGED|
+                                NPY_ITER_DELAY_BUFALLOC|
+                                NPY_ITER_EXTERNAL_LOOP,
+                                order, casting,
+                                op_flags, dtypes,
+                                oa_ndim, op_axes, NULL,
+                                BLOCK_SIZE1);
+            if (iter == NULL) {
+                goto fail;
+            }
+
+            /* If the output was allocated, get it for the second iterator */
+            if (operands[0] == NULL) {
+                operands[0] = NpyIter_GetOperandArray(iter)[0];
+                Py_INCREF(operands[0]);
+            }
+
+            op_axes[0] = &op_axes_reduction_values[0];
+            for (i = 0; i < n_inputs; ++i) {
+                op_axes[i+1] = &op_axes_reduction_values[i+1];
+            }
+            op_flags_outer[0] &= ~NPY_ITER_NO_BROADCAST;
+            reduce_iter = NpyIter_AdvancedNew(n_inputs+1, operands,
+                                NPY_ITER_REDUCE_OK,
+                                order, casting,
+                                op_flags_outer, NULL,
+                                1, op_axes, NULL,
+                                0);
+            if (reduce_iter == NULL) {
+                goto fail;
+            }
+        }
+        else {
+            PyArray_Descr *dtypes_outer[NPY_MAXDIMS];
+
+            /* If the output is being allocated, need to specify its dtype */
+            dtypes_outer[0] = dtypes[0];
+            for (i = 0; i < n_inputs; ++i) {
+                dtypes_outer[i+1] = NULL;
+            }
+            iter = NpyIter_AdvancedNew(n_inputs+1, operands,
+                                NPY_ITER_RANGED,
+                                order, casting,
+                                op_flags_outer, dtypes_outer,
+                                oa_ndim, op_axes, NULL,
+                                0);
+            if (iter == NULL) {
+                goto fail;
+            }
+
+            /* If the output was allocated, get it for the second iterator */
+            if (operands[0] == NULL) {
+                operands[0] = NpyIter_GetOperandArray(iter)[0];
+                Py_INCREF(operands[0]);
+            }
+
+            op_axes[0] = &op_axes_reduction_values[0];
+            for (i = 0; i < n_inputs; ++i) {
+                op_axes[i+1] = &op_axes_reduction_values[i+1];
+            }
+            op_flags[0] &= ~NPY_ITER_NO_BROADCAST;
+            reduce_iter = NpyIter_AdvancedNew(n_inputs+1, operands,
+                                NPY_ITER_BUFFERED|
+                                NPY_ITER_REDUCE_OK|
+                                NPY_ITER_DELAY_BUFALLOC|
+                                NPY_ITER_EXTERNAL_LOOP,
+                                order, casting,
+                                op_flags, dtypes,
+                                1, op_axes, NULL,
+                                BLOCK_SIZE1);
+            if (reduce_iter == NULL) {
+                goto fail;
+            }
+        }
+    }
+
+    /* Initialize the output to the reduction unit */
+    if (is_reduction) {
+        PyArrayObject *a = NpyIter_GetOperandArray(iter)[0];
+        if (last_opcode(self->program) >= OP_SUM &&
+            last_opcode(self->program) < OP_PROD) {
+                PyObject *zero = PyInt_FromLong(0);
+                PyArray_FillWithScalar(a, zero);
+                Py_DECREF(zero);
+        } else {
+                PyObject *one = PyInt_FromLong(1);
+                PyArray_FillWithScalar(a, one);
+                Py_DECREF(one);
+        }
+    }
+
+    /* Get the sizes of all the operands */
+    dtypes_tmp = NpyIter_GetDescrArray(iter);
+    for (i = 0; i < n_inputs+1; ++i) {
+        self->memsizes[i] = dtypes_tmp[i]->elsize;
+    }
+
+    /* For small calculations, just use 1 thread */
+    if (NpyIter_GetIterSize(iter) < 2*BLOCK_SIZE1) {
+        force_serial = 1;
+    }
+
+    /* Reductions do not support parallel execution yet */
+    if (is_reduction) {
+        force_serial = 1;
+    }
+
+    r = run_interpreter(self, iter, reduce_iter,
+                             reduction_outer_loop, &pc_error);
 
     if (r < 0) {
-        Py_XDECREF(output);
-        output = NULL;
         if (r == -1) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "an error occurred while running the program");
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_RuntimeError,
+                                "an error occurred while running the program");
+            }
         } else if (r == -2) {
             PyErr_Format(PyExc_RuntimeError,
                          "bad argument at pc=%d", pc_error);
@@ -1738,19 +1987,37 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             PyErr_SetString(PyExc_RuntimeError,
                             "unknown error occurred while running the program");
         }
+        goto fail;
+    }
+
+    /* Get the output from the iterator */
+    ret = (PyObject *)NpyIter_GetOperandArray(iter)[0];
+    Py_INCREF(ret);
+
+    NpyIter_Deallocate(iter);
+    if (reduce_iter != NULL) {
+        NpyIter_Deallocate(reduce_iter);
     }
 cleanup_and_exit:
-    Py_XDECREF(a_inputs);
-    PyMem_Del(inputs);
-    if (inddata) {
-        for (i = 0; i < n_inputs+1; i++) {
-            if (inddata[i].count) {
-                PyMem_Del(inddata[i].index);
-            }
-        }
+    for (i = 0; i < n_inputs+1; i++) {
+        Py_XDECREF(operands[i]);
+        Py_XDECREF(dtypes[i]);
     }
-    PyMem_Del(inddata);
-    return output;
+
+    return ret;
+fail:
+    for (i = 0; i < n_inputs+1; i++) {
+        Py_XDECREF(operands[i]);
+        Py_XDECREF(dtypes[i]);
+    }
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+    if (reduce_iter != NULL) {
+        NpyIter_Deallocate(reduce_iter);
+    }
+
+    return NULL;
 }
 
 static PyMethodDef NumExpr_methods[] = {

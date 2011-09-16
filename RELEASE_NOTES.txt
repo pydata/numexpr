@@ -1,11 +1,17 @@
 ======================================
- Release notes for Numexpr 1.5 series
+ Release notes for Numexpr 2.0 series
 ======================================
 
-Changes from 1.4.2 to development
-=================================
+Changes from 1.x series to 2.0
+==============================
 
-- None yet.
+- Added support for the new iterator object in NumPy 1.6 and later:
+
+  This allows for better performance with operations that implies
+  broadcast operations, fortran-ordered or non-native byte orderings.
+  Performance for other scenarios is preserved.
+
+  Many thanks to Mark Wiebe for this excellent contribution!
 
 
 Changes from 1.4.1 to 1.4.2

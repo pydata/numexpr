@@ -608,8 +608,9 @@ def getExprNames(text, context):
 _names_cache = CacheDict(256)
 _numexpr_cache = CacheDict(256)
 
-def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
-    """Evaluate a simple array expression element-wise.
+def evaluate(ex, local_dict=None, global_dict=None,
+                  out=None, order='K', casting='safe', **kwargs):
+    """Evaluate a simple array expression element-wise, using the new iterator.
 
     ex is a string forming an expression, like "2*a+3*b". The values for "a"
     and "b" will by default be taken from the calling function's frame
@@ -638,44 +639,9 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
             a = local_dict[name]
         except KeyError:
             a = global_dict[name]
-        b = numpy.asarray(a)
-        # Byteswapped arrays are dealt with in the extension
-        # All the opcodes can deal with strided arrays directly as
-        # long as they are undimensional (strides in other
-        # dimensions are dealt within the extension), so we don't
-        # need a copy for the strided case.
 
-        if not b.flags.aligned:
-            # Only take actions if CPU is different from AMD and Intel
-            # as they can deal with unaligned arrays very efficiently.
-            # If using VML, do the copy as the VML functions works
-            # much faster with aligned arrays.
-            if not is_cpu_amd_intel or use_vml:
-                # For the unaligned case, we have two cases:
-                if b.ndim == 1:
-                    # For unidimensional arrays we can use the copy
-                    # opcode because it can deal with unaligned arrays
-                    # as long as they are unidimensionals with a
-                    # possible stride (very common case for
-                    # recarrays).  This can be up to 2x faster than
-                    # doing a copy using NumPy.
-                    copy_args.append(name)
-                else:
-                    # For multimensional unaligned arrays do a plain
-                    # copy.  We could refine more this and do a plain
-                    # copy only in the case that strides doesn't exist
-                    # in dimensions other than the last one (whose
-                    # case is supported by the copy opcode).
-                    b = b.copy()
-        elif use_vml and ex_uses_vml: #only make a copy of strided arrays if
-                                      #vml is in use
-            if not b.flags.contiguous:
-                if b.ndim == 1:
-                    copy_args.append(name)
-                else:
-                    b = b.copy()
-
-        arguments.append(b)
+        # The iterator handles the byte order/alignment/contig properties
+        arguments.append(numpy.asarray(a))
 
     # Create a signature
     signature = [(name, getType(arg)) for (name, arg) in zip(names, arguments)]
@@ -687,4 +653,6 @@ def evaluate(ex, local_dict=None, global_dict=None, **kwargs):
     except KeyError:
         compiled_ex = _numexpr_cache[numexpr_key] = \
                       NumExpr(ex, signature, copy_args, **kwargs)
-    return compiled_ex(*arguments)
+    return compiled_ex(*arguments,
+                    out=out, order=order, casting=casting,
+                    ex_uses_vml=ex_uses_vml)
