@@ -419,11 +419,15 @@ get_return_sig(PyObject* program) {
     int sig;
     char last_opcode;
     int end = PyString_Size(program);
+    char *program_str = PyString_AS_STRING(program);
+
     do {
         end -= 4;
         if (end < 0) return 'X';
+        last_opcode = program_str[end];
     }
-    while ((last_opcode = PyString_AS_STRING(program)[end]) == OP_NOOP);
+    while (last_opcode == OP_NOOP);
+
     sig = op_signature(last_opcode, 0);
     if (sig <= 0) {
         return 'X';
