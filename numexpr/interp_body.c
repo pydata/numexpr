@@ -2,6 +2,14 @@
 #define VEC_LOOP(expr) for(j = 0; j < BLOCK_SIZE; j++) {       \
         expr;                                   \
     }
+
+#define VEC_ARG0(expr)                          \
+    BOUNDS_CHECK(store_in);                     \
+    {                                           \
+        char *dest = mem[store_in];             \
+        VEC_LOOP(expr);                         \
+    } break
+
 #define VEC_ARG1(expr)                          \
     BOUNDS_CHECK(store_in);                     \
     BOUNDS_CHECK(arg1);                         \
@@ -17,6 +25,7 @@
         nowarns += 1;                           \
         VEC_LOOP(expr);                         \
     } break
+
 #define VEC_ARG2(expr)                          \
     BOUNDS_CHECK(store_in);                     \
     BOUNDS_CHECK(arg1);                         \
@@ -183,6 +192,7 @@
         case OP_COPY_DD: VEC_ARG1(memcpy(&d_dest, s1, sizeof(double)));
         case OP_COPY_CC: VEC_ARG1(memcpy(&cr_dest, s1, sizeof(double)*2));
 
+        /* Bool */
         case OP_INVERT_BB: VEC_ARG1(b_dest = !b1);
         case OP_AND_BBB: VEC_ARG2(b_dest = (b1 && b2));
         case OP_OR_BBB: VEC_ARG2(b_dest = (b1 || b2));
@@ -191,6 +201,7 @@
         case OP_NE_BBB: VEC_ARG2(b_dest = (b1 != b2));
         case OP_WHERE_BBBB: VEC_ARG3(b_dest = b1 ? b2 : b3);
 
+        /* Comparisons */
         case OP_GT_BII: VEC_ARG2(b_dest = (i1 > i2));
         case OP_GE_BII: VEC_ARG2(b_dest = (i1 >= i2));
         case OP_EQ_BII: VEC_ARG2(b_dest = (i1 == i2));
@@ -216,8 +227,9 @@
         case OP_EQ_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) == 0));
         case OP_NE_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) != 0));
 
+        /* Int */
         case OP_CAST_IB: VEC_ARG1(i_dest = (int)(b1));
-        case OP_ONES_LIKE_I: VEC_ARG1(i_dest = 1);
+        case OP_ONES_LIKE_II: VEC_ARG0(i_dest = 1);
         case OP_NEG_II: VEC_ARG1(i_dest = -i1);
 
         case OP_ADD_III: VEC_ARG2(i_dest = i1 + i2);
@@ -229,8 +241,9 @@
 
         case OP_WHERE_IBII: VEC_ARG3(i_dest = b1 ? i2 : i3);
 
+        /* Long */
         case OP_CAST_LI: VEC_ARG1(l_dest = (long long)(i1));
-        case OP_ONES_LIKE_L: VEC_ARG1(l_dest = 1);
+        case OP_ONES_LIKE_LL: VEC_ARG0(l_dest = 1);
         case OP_NEG_LL: VEC_ARG1(l_dest = -l1);
 
         case OP_ADD_LLL: VEC_ARG2(l_dest = l1 + l2);
@@ -242,10 +255,10 @@
 
         case OP_WHERE_LBLL: VEC_ARG3(l_dest = b1 ? l2 : l3);
 
-          /* Float */
+        /* Float */
         case OP_CAST_FI: VEC_ARG1(f_dest = (float)(i1));
         case OP_CAST_FL: VEC_ARG1(f_dest = (float)(l1));
-        case OP_ONES_LIKE_F: VEC_ARG1(f_dest = 1.0);
+        case OP_ONES_LIKE_FF: VEC_ARG0(f_dest = 1.0);
         case OP_NEG_FF: VEC_ARG1(f_dest = -f1);
 
         case OP_ADD_FFF: VEC_ARG2(f_dest = f1 + f2);
@@ -292,11 +305,11 @@
             VEC_ARG2(f_dest = functions_fff[arg3](f1, f2));
 #endif
 
-          /* Double */
+        /* Double */
         case OP_CAST_DI: VEC_ARG1(d_dest = (double)(i1));
         case OP_CAST_DL: VEC_ARG1(d_dest = (double)(l1));
         case OP_CAST_DF: VEC_ARG1(d_dest = (double)(f1));
-        case OP_ONES_LIKE_D: VEC_ARG1(d_dest = 1.0);
+        case OP_ONES_LIKE_DD: VEC_ARG0(d_dest = 1.0);
         case OP_NEG_DD: VEC_ARG1(d_dest = -d1);
 
         case OP_ADD_DDD: VEC_ARG2(d_dest = d1 + d2);
@@ -343,7 +356,7 @@
             VEC_ARG2(d_dest = functions_ddd[arg3](d1, d2));
 #endif
 
-            /* Complex */
+        /* Complex */
         case OP_CAST_CI: VEC_ARG1(cr_dest = (double)(i1);
                                   ci_dest = 0);
         case OP_CAST_CL: VEC_ARG1(cr_dest = (double)(l1);
@@ -352,8 +365,8 @@
                                   ci_dest = 0);
         case OP_CAST_CD: VEC_ARG1(cr_dest = d1;
                                   ci_dest = 0);
-        case OP_ONES_LIKE_C: VEC_ARG1(cr_dest = 1;
-                                  ci_dest = 0);
+        case OP_ONES_LIKE_CC: VEC_ARG0(cr_dest = 1;
+                                       ci_dest = 0);
         case OP_NEG_CC: VEC_ARG1(cr_dest = -c1r;
                                  ci_dest = -c1i);
 
@@ -403,7 +416,8 @@
         case OP_IMAG_DC: VEC_ARG1(d_dest = c1i);
         case OP_COMPLEX_CDD: VEC_ARG2(cr_dest = d1;
                                       ci_dest = d2);
-
+                                      
+        /* Reductions */ 
         case OP_SUM_IIN: VEC_ARG1(i_reduce += i1);
         case OP_SUM_LLN: VEC_ARG1(l_reduce += l1);
         case OP_SUM_FFN: VEC_ARG1(f_reduce += f1);
