@@ -60,7 +60,7 @@ def ophelper(f):
             if isConstant(x):
                 args[i] = x = ConstantNode(x)
             if not isinstance(x, ExpressionNode):
-                raise TypeError("unsupported object type: %s" % (type(x),))
+                raise TypeError("unsupported object type: %s" % type(x))
         return f(*args)
     func.__name__ = f.__name__
     func.__doc__ = f.__doc__
@@ -92,6 +92,7 @@ def commonKind(nodes):
 
 max_int32 = 2147483647
 min_int32 = -max_int32 - 1
+
 def bestConstantType(x):
     if isinstance(x, str):  # ``numpy.string_`` is a subclass of ``str``
         return str
@@ -103,7 +104,7 @@ def bestConstantType(x):
     # ``double`` objects are kept as is to allow the user to force
     # promotion of results by using double constants, e.g. by operating
     # a float (32-bit) array with a double (64-bit) constant.
-    if isinstance(x, (double)):
+    if isinstance(x, double):
         return double
     # Numeric conversion to boolean values is not tried because
     # ``bool(1) == True`` (same for 0 and False), so 0 and 1 would be
@@ -154,6 +155,9 @@ def func(func, minkind=None, maxkind=None):
         kind = commonKind(args)
         if kind in ('int', 'long'):
             # Exception for following NumPy casting rules
+            #FIXME: this is not always desirable. The following 
+            # functions which return ints (for int inputs) on numpy
+            # but not on numexpr: copy, abs, fmod, ones_like
             kind = 'double'
         else:
             # Apply regular casting rules
@@ -167,11 +171,12 @@ def func(func, minkind=None, maxkind=None):
 @ophelper
 def where_func(a, b, c):
     if isinstance(a, ConstantNode):
+        #FIXME: This prevents where(True, a, b)
         raise ValueError("too many dimensions")
     if allConstantNodes([a,b,c]):
         return ConstantNode(numpy.where(a, b, c))
     return FuncNode('where', [a,b,c])
-
+    
 def encode_axis(axis):
     if isinstance(axis, ConstantNode):
         axis = axis.value
@@ -211,7 +216,7 @@ def div_op(a, b):
 
 @ophelper
 def pow_op(a, b):
-    if allConstantNodes([a,b]):
+    if allConstantNodes([a, b]):
         return ConstantNode(a**b)
     if isinstance(b, ConstantNode):
         x = b.value
@@ -237,7 +242,8 @@ def pow_op(a, b):
                     p = OpNode('mul', [p,p])
                 if ishalfpower:
                     kind = commonKind([a])
-                    if kind in ('int', 'long'): kind = 'double'
+                    if kind in ('int', 'long'):
+                        kind = 'double'
                     r = multiply(r, OpNode('sqrt', [a], kind))
                 if r is None:
                     r = OpNode('ones_like', [a])
@@ -248,7 +254,7 @@ def pow_op(a, b):
             if x == -1:
                 return OpNode('div', [ConstantNode(1),a])
             if x == 0:
-                return FuncNode('ones_like', [a])
+                return OpNode('ones_like', [a])
             if x == 0.5:
                 kind = a.astKind
                 if kind in ('int', 'long'): kind = 'double'
@@ -349,7 +355,7 @@ class ExpressionNode(object):
     __sub__ = binop('sub')
     __rsub__ = binop('sub', reversed=True)
     __mul__ = __rmul__ = binop('mul')
-    __div__ =  div_op
+    __div__ = div_op
     __rdiv__ = binop('div', reversed=True)
     __pow__ = pow_op
     __rpow__ = binop('pow', reversed=True)
