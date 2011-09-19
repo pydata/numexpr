@@ -9,7 +9,7 @@ from numpy import (
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
     log, log1p, log10, exp, expm1)
 from numpy.testing import *
-from numpy import shape, allclose, ravel, isnan, isinf
+from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 
 import numexpr
 from numexpr import E, NumExpr, evaluate, disassemble, use_vml
@@ -268,7 +268,7 @@ tests = [
           '1+1',
           '1',
           'cos(a2)',
-          '(a+1)**0'])]
+          ])]
 
 optests = []
 for op in list('+-*/%') + ['**']:
@@ -295,31 +295,35 @@ for func in ['copy', 'ones_like', 'sqrt',
              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
              'log', 'log1p', 'log10', 'exp', 'expm1', 'abs']:
     func1tests.append("a + %s(b+c)" % func)
-tests.append(('1-ARG FUNCS', func1tests))
+tests.append(('1_ARG_FUNCS', func1tests))
 
 func2tests = []
 for func in ['arctan2', 'fmod']:
     func2tests.append("a + %s(b+c, d+1)" % func)
     func2tests.append("a + %s(b+c, 1)" % func)
     func2tests.append("a + %s(1, d+1)" % func)
-tests.append(('2-ARG FUNCS', func2tests))
+tests.append(('2_ARG_FUNCS', func2tests))
 
 powtests = []
-for n in (-2.5, -1.5, -1.3, -.5, 0, 0.5, 1, 0.5, 1, 2.3, 2.5):
+# n = -1, 0.5, 2, 4 already handled in section "OPERATIONS"
+for n in (-7, -2.5, -1.5, -1.3, -.5, 0, 0.0, 1, 2.3, 2.5, 3):
     powtests.append("(a+1)**%s" % n)
-tests.append(('POW TESTS', powtests))
+tests.append(('POW_TESTS', powtests))
 
 def equal(a, b, exact):
+    if array_equal(a, b):
+        return True
+
     if hasattr(a, 'dtype') and a.dtype in ['f4','f8']:
         nnans = isnan(a).sum()
-        if isnan(a).sum() > 0:
+        if nnans > 0:
             # For results containing NaNs, just check that the number
             # of NaNs is the same in both arrays.  This check could be
             # made more exhaustive, but checking element by element in
             # python space is very expensive in general.
             return nnans == isnan(b).sum()
         ninfs = isinf(a).sum()
-        if isinf(a).sum() > 0:
+        if ninfs > 0:
             # Ditto for Inf's
             return ninfs == isinf(b).sum()
     if exact:
@@ -337,7 +341,7 @@ class Skip(Exception): pass
 def test_expressions():
     test_no = [0]
     def make_test_method(a, a2, b, c, d, e, x, expr,
-                         test_scalar, dtype, optimization, exact):
+                         test_scalar, dtype, optimization, exact, section):
         this_locals = locals()
         def method():
             npval = eval(expr, globals(), this_locals)
@@ -346,13 +350,15 @@ def test_expressions():
                                  optimization=optimization)
                 assert equal(npval, neval, exact), """%r
 (test_scalar=%r, dtype=%r, optimization=%r, exact=%r,
- npval=%r (%r)\n neval=%r (%r))""" % (expr, test_scalar, dtype.__name__,
+ npval=%r (%r - %r)\n neval=%r (%r - %r))""" % (expr, test_scalar, dtype.__name__,
                                      optimization, exact,
-                                     npval, type(npval), neval, type(neval))
+                                     npval, type(npval), shape(npval), 
+                                     neval, type(neval), shape(neval))
             except AssertionError:
                 raise
             except NotImplementedError:
-                print('%r not implemented for %s' % (expr,dtype.__name__))
+                print('%r not implemented for %s (scalar=%d, opt=%s)'
+                      % (expr, dtype.__name__, test_scalar, optimization))
             except:
                 print('numexpr error for expression %r' % (expr,))
                 raise
@@ -360,11 +366,15 @@ def test_expressions():
                               'dtype=%r, optimization=%r, exact=%r)') \
                     % (expr, test_scalar, dtype.__name__, optimization, exact)
         test_no[0] += 1
-        method.__name__ = 'test_%04d' % (test_no[0],)
+        method.__name__ = 'test_scalar%d_%s_%s_%s_%04d' % (test_scalar,
+                                                           dtype.__name__,
+                                                           optimization,
+                                                           section,
+                                                           test_no[0])
         return method
     x = None
-    for test_scalar in [0,1,2]:
-        for dtype in [int, long, numpy.float32, double, complex]:
+    for test_scalar in (0, 1, 2):
+        for dtype in (int, long, numpy.float32, double, complex):
             array_size = 100
             a = arange(2*array_size, dtype=dtype)[::2]
             a2 = zeros([array_size, array_size], dtype=dtype)
@@ -378,9 +388,9 @@ def test_expressions():
                     x += 1j
                     x *= 1+1j
             if test_scalar == 1:
-                a = a[array_size/2]
+                a = a[array_size / 2]
             if test_scalar == 2:
-                b = b[array_size/2]
+                b = b[array_size / 2]
             for optimization, exact in [
                 ('none', False), ('moderate', False), ('aggressive', False)]:
                 for section_name, section_tests in tests:
@@ -388,16 +398,18 @@ def test_expressions():
                         if dtype == complex and (
                                '<' in expr or '>' in expr or '%' in expr
                                or "arctan2" in expr or "fmod" in expr):
-                             # skip complex comparisons or functions not
-                             # defined in complex domain.
+                            # skip complex comparisons or functions not
+                            # defined in complex domain.
                             continue
                         if (dtype in (int, long) and test_scalar and
                             expr == '(a+1) ** -1'):
                             continue
+
                         m = make_test_method(a, a2, b, c, d, e, x,
                                              expr, test_scalar, dtype,
-                                             optimization, exact)
-                        yield m,
+                                             optimization, exact,
+                                             section_name)
+                        yield m
 
 class test_int64(TestCase):
     def test_neg(self):
@@ -653,11 +665,15 @@ def suite():
 
     class TestExpressions(TestCase):
         pass
-    for m, in test_expressions():
+
+    def add_method(func):
         def method(self):
-            return m()
-        setattr(TestExpressions, m.__name__,
+            return func()
+        setattr(TestExpressions, func.__name__,
                 new.instancemethod(method, None, TestExpressions))
+        
+    for func in test_expressions():
+        add_method(func)
 
     for n in range(niter):
         theSuite.addTest(unittest.makeSuite(test_numexpr1))
@@ -681,3 +697,5 @@ def suite():
 if __name__ == '__main__':
     print_versions()
     unittest.main(defaultTest = 'suite')
+#    suite = suite()
+#    unittest.TextTestRunner(verbosity=2).run(suite)
