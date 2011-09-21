@@ -17,6 +17,7 @@ type_to_kind = expressions.type_to_kind
 kind_to_type = expressions.kind_to_type
 default_type = kind_to_type[expressions.default_kind]
 
+
 class ASTNode(object):
     """Abstract Syntax Tree node.
 
@@ -422,6 +423,7 @@ def compileThreeAddrForm(program):
 context_info = [
     ('optimization', ('none', 'moderate', 'aggressive'), 'aggressive'),
                ]
+
 def getContext(kwargs):
     d = kwargs.copy()
     context = {}
@@ -431,12 +433,12 @@ def getContext(kwargs):
             context[name] = value
         else:
             raise ValueError("'%s' must be one of %s" % (name, allowed))
+
     if d:
         raise ValueError("Unknown keyword argument '%s'" % d.popitem()[0])
     return context
 
-
-def precompile(ex, signature=(), copy_args=(), **kwargs):
+def precompile(ex, signature=(), **kwargs):
     """Compile the expression to an intermediate form.
     """
     types = dict(signature)
@@ -450,12 +452,6 @@ def precompile(ex, signature=(), copy_args=(), **kwargs):
     # any odd interpretations
 
     ast = expressionToAST(ex)
-
-    # Add a copy for strided or unaligned unidimensional arrays
-    for a in ast.postorderWalk():
-        if a.astType == "variable" and a.value in copy_args:
-            newVar = ASTNode(*a.key())
-            a.astType, a.value, a.children = ('op', 'copy', (newVar,))
 
     if ex.astType != 'op':
         ast = ASTNode('op', value='copy', astKind=ex.astKind, children=(ast,))
@@ -499,7 +495,7 @@ def precompile(ex, signature=(), copy_args=(), **kwargs):
     return threeAddrProgram, signature, tempsig, constants, input_names
 
 
-def NumExpr(ex, signature=(), copy_args=(), **kwargs):
+def NumExpr(ex, signature=(), **kwargs):
     """
     Compile an expression built using E.<variable> variables to a function.
 
@@ -511,7 +507,7 @@ def NumExpr(ex, signature=(), copy_args=(), **kwargs):
     Returns a `NumExpr` object containing the compiled function.
     """
     threeAddrProgram, inputsig, tempsig, constants, input_names = \
-                      precompile(ex, signature, copy_args, **kwargs)
+                      precompile(ex, signature, **kwargs)
     program = compileThreeAddrForm(threeAddrProgram)
     return interpreter.NumExpr(inputsig, tempsig, program, constants,
                                input_names)
@@ -608,7 +604,7 @@ _names_cache = CacheDict(256)
 _numexpr_cache = CacheDict(256)
 
 def evaluate(ex, local_dict=None, global_dict=None,
-                  out=None, order='K', casting='safe', **kwargs):
+             out=None, order='K', casting='safe', **kwargs):
     """Evaluate a simple array expression element-wise, using the new iterator.
 
     ex is a string forming an expression, like "2*a+3*b". The values for "a"
@@ -630,28 +626,25 @@ def evaluate(ex, local_dict=None, global_dict=None,
         local_dict = call_frame.f_locals
     if global_dict is None:
         global_dict = call_frame.f_globals
-    arguments = []
-    copy_args = []
 
+    arguments = []
     for name in names:
         try:
             a = local_dict[name]
         except KeyError:
             a = global_dict[name]
-
-        # The iterator handles the byte order/alignment/contig properties
         arguments.append(numpy.asarray(a))
 
     # Create a signature
     signature = [(name, getType(arg)) for (name, arg) in zip(names, arguments)]
-    # Look up numexpr if possible. copy_args *must* be added to the key,
-    # just in case a non-copy expression is already in cache.
-    numexpr_key = expr_key + (tuple(signature),) + tuple(copy_args)
+
+    # Look up numexpr if possible.
+    numexpr_key = expr_key + (tuple(signature),)
     try:
         compiled_ex = _numexpr_cache[numexpr_key]
     except KeyError:
         compiled_ex = _numexpr_cache[numexpr_key] = \
-                      NumExpr(ex, signature, copy_args, **kwargs)
+                      NumExpr(ex, signature, **kwargs)
     return compiled_ex(*arguments,
                     out=out, order=order, casting=casting,
                     ex_uses_vml=ex_uses_vml)
