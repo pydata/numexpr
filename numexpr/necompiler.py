@@ -236,7 +236,10 @@ def getInputOrder(ast, input_order=None):
 
     if input_order:
         if variable_names != set(input_order):
-            raise ValueError("input names don't match those found in expression")
+            raise ValueError(
+                "input names (%s) don't match those found in expression (%s)"
+                % (input_order, variable_names))
+
         ordered_names = input_order
     else:
         ordered_names = list(variable_names)
