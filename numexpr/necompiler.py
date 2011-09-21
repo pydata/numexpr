@@ -54,9 +54,7 @@ class ASTNode(object):
     def __hash__(self):
         if self.astType == 'alias':
             self = self.value
-        # Fast hash (see issue #43)
-        return ( hash(self.astType) ^ hash(self.astKind) ^
-                 hash(self.value) ^ hash(self.children) )
+        return hash((self.astType, self.astKind, self.value, self.children))
 
     def __str__(self):
         return 'AST(%s, %s, %s, %s, %s)' % (self.astType, self.astKind,
