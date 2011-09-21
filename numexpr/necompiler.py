@@ -377,13 +377,8 @@ def convertASTtoThreeAddrForm(ast):
     I suppose this should be called three register form, but three
     address form is found in compiler theory.
     """
-    program = []
-    for node in ast.allOf('op'):
-        children = node.children
-        instr = (node.value, node.reg) \
-                + tuple([c.reg for c in children])
-        program.append(instr)
-    return program
+    return [(node.value, node.reg) + tuple([c.reg for c in node.children])
+            for node in ast.allOf('op')]
 
 def compileThreeAddrForm(program):
     """Given a three address form of the program, compile it a string that
@@ -393,7 +388,7 @@ def compileThreeAddrForm(program):
         if reg is None:
             return '\xff'
         elif reg.n < 0:
-            raise ValueError("negative value for register number %s" % (reg.n,))
+            raise ValueError("negative value for register number %s" % reg.n)
         else:
             return chr(reg.n)
 
@@ -404,10 +399,10 @@ def compileThreeAddrForm(program):
         ca2 = nToChr(a2)
         return cop + cs + ca1 + ca2
 
-    def toString(*args):
+    def toString(args):
         while len(args) < 4:
             args += (None,)
-        opcode, store, a1, a2 = args[0:4]
+        opcode, store, a1, a2 = args[:4]
         s = quadrupleToString(opcode, store, a1, a2)
         l = [s]
         args = args[4:]
@@ -417,7 +412,7 @@ def compileThreeAddrForm(program):
             args = args[3:]
         return ''.join(l)
 
-    prog_str = ''.join([toString(*t) for t in program])
+    prog_str = ''.join([toString(t) for t in program])
     return prog_str
 
 context_info = [
