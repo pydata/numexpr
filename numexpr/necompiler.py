@@ -86,9 +86,8 @@ def expressionToAST(ex):
     This is necessary as ExpressionNode overrides many methods to act
     like a number.
     """
-    this_ast = ASTNode(ex.astType, ex.astKind, ex.value,
-                       [expressionToAST(c) for c in ex.children])
-    return this_ast
+    return ASTNode(ex.astType, ex.astKind, ex.value,
+                   [expressionToAST(c) for c in ex.children])
 
 
 def sigPerms(s):
@@ -148,10 +147,8 @@ def typeCompileAst(ast):
     else:
         value = ast.value
         children = ast.children
-    new_ast = ASTNode(ast.astType, ast.astKind, value,
-                           [typeCompileAst(c) for c in children])
-    return new_ast
-
+    return ASTNode(ast.astType, ast.astKind, value,
+                   [typeCompileAst(c) for c in children])
 
 class Register(object):
     """Abstraction for a register in the VM.
@@ -456,7 +453,7 @@ def precompile(ex, signature=(), copy_args=(), **kwargs):
             newVar = ASTNode(*a.key())
             a.astType, a.value, a.children = ('op', 'copy', (newVar,))
 
-    if ex.astType not in ('op'):
+    if ex.astType != 'op':
         ast = ASTNode('op', value='copy', astKind=ex.astKind, children=(ast,))
 
     ast = typeCompileAst(ast)
