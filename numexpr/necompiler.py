@@ -419,16 +419,17 @@ def compileThreeAddrForm(program):
 context_info = [
     ('optimization', ('none', 'moderate', 'aggressive'), 'aggressive'),
                ]
-def getContext(map):
+def getContext(kwargs):
+    d = kwargs.copy()
     context = {}
     for name, allowed, default in context_info:
-        value = map.pop(name, default)
+        value = d.pop(name, default)
         if value in allowed:
             context[name] = value
         else:
             raise ValueError("'%s' must be one of %s" % (name, allowed))
-    if map:
-        raise ValueError("Unknown keyword argument '%s'" % map.popitem()[0])
+    if d:
+        raise ValueError("Unknown keyword argument '%s'" % d.popitem()[0])
     return context
 
 
