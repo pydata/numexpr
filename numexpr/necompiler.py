@@ -309,28 +309,34 @@ def collapseDuplicateSubtrees(ast):
     for a in aliases:
         while a.value.astType == 'alias':
             a.value = a.value.value
-        a.reg = a.value.reg
+    return aliases 
 
 def optimizeTemporariesAllocation(ast):
     """Attempt to minimize the number of temporaries needed, by
     reusing old ones.
     """
-    nodes = list(x for x in ast.postorderWalk() if x.reg.temporary)
+    nodes = [n for n in ast.postorderWalk() if n.reg.temporary]
     users_of = dict((n.reg, set()) for n in nodes)
+    
+    node_regs = dict((n, set(c.reg for c in n.children if c.reg.temporary))
+                     for n in nodes)
     if nodes and nodes[-1] is not ast:
-        for c in ast.children:
-            if c.reg.temporary:
-                users_of[c.reg].add(ast)
-    for n in reversed(nodes):
+        nodes_to_check = nodes + [ast]
+    else:
+        nodes_to_check = nodes
+    for n in nodes_to_check:
         for c in n.children:
             if c.reg.temporary:
                 users_of[c.reg].add(n)
-    unused = {'bool' : set(), 'int' : set(), 'long': set(), 'float' : set(),
-              'double': set(), 'complex' : set(), 'str': set()}
+
+    unused = {'bool': set(), 'int': set(), 'long': set(), 'float': set(),
+              'double': set(), 'complex': set(), 'str': set()}
     for n in nodes:
-        for reg, users in users_of.iteritems():
-            if n in users:
-                users.remove(n)
+        for c in n.children:
+            reg = c.reg 
+            if reg.temporary:
+                users = users_of[reg]
+                users.discard(n)
                 if not users:
                     unused[reg.node.astKind].add(reg)
         if unused[n.astKind]:
@@ -360,7 +366,7 @@ def setRegisterNumbersForTemporaries(ast, start):
             node.reg.n = node.value
             continue
         reg = node.reg
-        if reg.n < 0:
+        if reg.n is None:
             reg.n = start + seen
             seen += 1
             signature += reg.node.typecode()
@@ -453,18 +459,15 @@ def precompile(ex, signature=(), **kwargs):
 
     ast = typeCompileAst(ast)
 
-    reg_num = [-1]
-    def registerMaker(node, temporary=False):
-        reg = Register(node, temporary=temporary)
-        reg.n = reg_num[0]
-        reg_num[0] -= 1
-        return reg
+    aliases = collapseDuplicateSubtrees(ast)
 
     assignLeafRegisters(ast.allOf('raw'), Immediate)
-    assignLeafRegisters(ast.allOf('variable', 'constant'), registerMaker)
-    assignBranchRegisters(ast.allOf('op'), registerMaker)
-
-    collapseDuplicateSubtrees(ast)
+    assignLeafRegisters(ast.allOf('variable', 'constant'), Register)
+    assignBranchRegisters(ast.allOf('op'), Register)
+    
+    # assign registers for aliases
+    for a in aliases:
+        a.reg = a.value.reg
 
     input_order = getInputOrder(ast, input_order)
     constants_order, constants = getConstants(ast)
