@@ -25,7 +25,7 @@ def getoutput(cmd, successful_status=(0,), stacklevel=1):
         status, output = commands.getstatusoutput(cmd)
     except EnvironmentError, e:
         warnings.warn(str(e), UserWarning, stacklevel=stacklevel)
-        return False, output
+        return False, ''
     if os.WIFEXITED(status) and os.WEXITSTATUS(status) in successful_status:
         return True, output
     return False, output
