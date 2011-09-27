@@ -1,3 +1,4 @@
+import __future__
 import sys
 import numpy
 
@@ -198,7 +199,11 @@ def stringToExpression(s, types, context):
     try:
         expressions._context.set_new_context(context)
         # first compile to a code object to determine the names
-        c = compile(s, '<expr>', 'eval')
+        if context.get('truediv', False):
+            flags = __future__.division.compiler_flag
+        else:
+            flags = 0
+        c = compile(s, '<expr>', 'eval', flags)
         # make VariableNode's for the names
         names = {}
         for name in c.co_names:
@@ -423,9 +428,10 @@ def compileThreeAddrForm(program):
 
 context_info = [
     ('optimization', ('none', 'moderate', 'aggressive'), 'aggressive'),
+    ('truediv', (False, True, 'auto'), 'auto')
                ]
 
-def getContext(kwargs):
+def getContext(kwargs, frame_depth):
     d = kwargs.copy()
     context = {}
     for name, allowed, default in context_info:
@@ -437,14 +443,18 @@ def getContext(kwargs):
 
     if d:
         raise ValueError("Unknown keyword argument '%s'" % d.popitem()[0])
+    if context['truediv'] == 'auto':
+        caller_globals = sys._getframe(frame_depth + 1).f_globals
+        context['truediv'] = \
+            caller_globals.get('division', None) == __future__.division
+        
     return context
 
-def precompile(ex, signature=(), **kwargs):
+def precompile(ex, signature=(), context={}):
     """Compile the expression to an intermediate form.
     """
     types = dict(signature)
     input_order = [name for (name, type_) in signature]
-    context = getContext(kwargs)
 
     if isinstance(ex, str):
         ex = stringToExpression(ex, types, context)
@@ -504,8 +514,15 @@ def NumExpr(ex, signature=(), **kwargs):
 
     Returns a `NumExpr` object containing the compiled function.
     """
+    # NumExpr can be called either directly by the end-user, in which case
+    # kwargs need to be sanitized by getContext, or by evaluate,
+    # in which case kwargs are in already sanitized. 
+    # In that case frame_depth is wrong (it should be 2) but it doesn't matter
+    # since it will not be used (because truediv='auto' has already been
+    # translated to either True or False).
+    context = getContext(kwargs, frame_depth=1)
     threeAddrProgram, inputsig, tempsig, constants, input_names = \
-                      precompile(ex, signature, **kwargs)
+                      precompile(ex, signature, context)
     program = compileThreeAddrForm(threeAddrProgram)
     return interpreter.NumExpr(inputsig, tempsig, program, constants,
                                input_names)
@@ -613,9 +630,9 @@ def evaluate(ex, local_dict=None, global_dict=None,
     if not isinstance(ex, str):
         raise ValueError("must specify expression as a string")
     # Get the names for this expression
-    expr_key = (ex, tuple(sorted(kwargs.items())))
+    context = getContext(kwargs, frame_depth=1)
+    expr_key = (ex, tuple(sorted(context.items())))
     if expr_key not in _names_cache:
-        context = getContext(kwargs)
         _names_cache[expr_key] = getExprNames(ex, context)
     names, ex_uses_vml = _names_cache[expr_key]
     # Get the arguments based on the names.
@@ -642,7 +659,7 @@ def evaluate(ex, local_dict=None, global_dict=None,
         compiled_ex = _numexpr_cache[numexpr_key]
     except KeyError:
         compiled_ex = _numexpr_cache[numexpr_key] = \
-                      NumExpr(ex, signature, **kwargs)
+                      NumExpr(ex, signature, **context)
     return compiled_ex(*arguments,
                     out=out, order=order, casting=casting,
                     ex_uses_vml=ex_uses_vml)

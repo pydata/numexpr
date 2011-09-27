@@ -125,11 +125,8 @@ class test_numexpr(TestCase):
         else:
             raise ValueError("should raise exception!")
 
-
-
-
     def test_r0_reuse(self):
-        assert_equal(disassemble(NumExpr("x**2+2", [('x', double)])),
+        assert_equal(disassemble(NumExpr("x * x + 2", [('x', double)])),
                     [('mul_ddd', 'r0', 'r1[x]', 'r1[x]'),
                      ('add_ddd', 'r0', 'r0', 'c2[2.0]')])
 
@@ -168,6 +165,14 @@ class test_evaluate(TestCase):
         x2 = zeros(100, dtype='i4')
         x2[1] = 1
         assert_array_equal(x2, y)
+
+    # Test for issue #22
+    def test_true_div(self):
+        x = arange(10, dtype='i4')
+        assert_array_equal(evaluate("x/2"), x / 2)
+        assert_array_equal(evaluate("x/2", truediv=False), x / 2)
+        assert_array_equal(evaluate("x/2", truediv='auto'), x / 2)
+        assert_array_equal(evaluate("x/2", truediv=True), x / 2.0)
 
     def test_rational_expr(self):
         a = arange(1e6)

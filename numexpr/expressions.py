@@ -215,6 +215,22 @@ def div_op(a, b):
     return OpNode('div', [a,b])
 
 @ophelper
+def truediv_op(a, b):
+    if get_optimization() in ('moderate', 'aggressive'):
+        if (isinstance(b, ConstantNode) and
+            (a.astKind == b.astKind) and
+            a.astKind in ('float', 'double', 'complex')):
+            return OpNode('mul', [a, ConstantNode(1./b.value)])
+    kind = commonKind([a, b])
+    if kind in ('bool', 'int', 'long'):
+        kind = 'double'
+    return OpNode('div', [a, b], kind=kind)
+
+@ophelper
+def rtruediv_op(a, b):
+    return truediv_op(b, a)
+    
+@ophelper
 def pow_op(a, b):
     if allConstantNodes([a, b]):
         return ConstantNode(a**b)
@@ -357,6 +373,8 @@ class ExpressionNode(object):
     __mul__ = __rmul__ = binop('mul')
     __div__ = div_op
     __rdiv__ = binop('div', reversed=True)
+    __truediv__ = truediv_op
+    __rtruediv__ = rtruediv_op
     __pow__ = pow_op
     __rpow__ = binop('pow', reversed=True)
     __mod__ = binop('mod')
