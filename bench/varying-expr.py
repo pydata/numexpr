@@ -7,33 +7,37 @@ from time import time
 import numpy as np
 import numexpr as ne
 
-N = 1000*10
-M = 1000
+N = 100
+M = 10
+
+def timed_eval(eval_func, expr_func):
+    t1 = time()
+    for i in xrange(N):
+        r = eval_func(expr_func(i))
+        if i % 10 == 0:
+            sys.stdout.write('.')
+    print " done in %s seconds" % round(time() - t1, 3)
 
 print "Number of iterations %s.  Length of the array: %s " % (N, M)
 
 a = np.arange(M)
 
-print "Expressions that *cannot* be cached:"
-t1 = time()
-for i in xrange(N):
-    r = ne.evaluate("2 * a + (a + 1) ** 2 == %d" % i)
-    if i % 1000 == 0:
-        sys.stdout.write('.')
-print "\nEvaluated %s iterations in: %s seconds" % (N, round(time()-t1,3))
+# lots of duplicates to collapse
+#expr = '+'.join('(a + 1) * %d' % i for i in range(50))
+# no duplicate to collapse
+expr = '+'.join('(a + %d) * %d' % (i, i) for i in range(50))
 
-print "Expressions that *can* be cached:"
-t1 = time()
-for i in xrange(N):
-    r = ne.evaluate("2 * a + (a + 1) ** 2 == i")
-    if i % 1000 == 0:
-        sys.stdout.write('.')
-print "\nEvaluated %s iterations in: %s seconds" % (N, round(time()-t1,3))
+def non_cacheable(i):
+    return expr + '+ %d' % i
 
-print "Using python virtual machine with non-cacheable expressions:"
-t1 = time()
-for i in xrange(N):
-    r = eval("2 * a + (a + 1) ** 2 == %d" % i)
-    if i % 1000 == 0:
-        sys.stdout.write('.')
-print "\nEvaluated %s iterations in: %s seconds" % (N, round(time()-t1,3))
+def cacheable(i):
+    return expr + '+ i'
+
+print "* Numexpr with non-cacheable expressions: ",
+timed_eval(ne.evaluate, non_cacheable)
+print "* Numexpr with cacheable expressions: ",
+timed_eval(ne.evaluate, cacheable)
+print "* Numpy with non-cacheable expressions: ",
+timed_eval(eval, non_cacheable)
+print "* Numpy with cacheable expressions: ",
+timed_eval(eval, cacheable)
