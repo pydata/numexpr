@@ -174,6 +174,15 @@ class test_evaluate(TestCase):
         assert_array_equal(evaluate("x/2", truediv='auto'), x / 2)
         assert_array_equal(evaluate("x/2", truediv=True), x / 2.0)
 
+    def test_boolean_operator(self):
+        x = arange(10, dtype='i4')
+        try:
+            evaluate("(x > 1) and (x < 9)")
+        except TypeError:
+            pass
+        else:
+            raise ValueError("should raise exception!")
+        
     def test_rational_expr(self):
         a = arange(1e6)
         b = arange(1e6) * 0.1
