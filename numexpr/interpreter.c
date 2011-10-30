@@ -917,6 +917,8 @@ struct thread_data {
     int ret_code;
     int *pc_error;
     char **errmsg;
+    /* One memsteps array per thread */
+    intp *memsteps[MAX_THREADS];
     /* One iterator per thread */
     NpyIter *iter[MAX_THREADS];
     /* When doing nested iteration for a reduction */
@@ -985,7 +987,7 @@ free_temps_space(struct vm_params params, char **mem)
 
 /* Serial/parallel task iterator version of the VM engine */
 static int
-vm_engine_iter_task(NpyIter *iter, struct vm_params params, int *pc_error, char **errmsg)
+vm_engine_iter_task(NpyIter *iter, intp *memsteps, struct vm_params params, int *pc_error, char **errmsg)
 {
     char **mem = params.mem;
     NpyIter_IterNextFunc *iternext;
@@ -1030,7 +1032,7 @@ vm_engine_iter_task(NpyIter *iter, struct vm_params params, int *pc_error, char 
 }
 
 static int
-vm_engine_iter_outer_reduce_task(NpyIter *iter, struct vm_params params, int *pc_error, char **errmsg)
+vm_engine_iter_outer_reduce_task(NpyIter *iter, intp *memsteps, struct vm_params params, int *pc_error, char **errmsg)
 {
     char **mem = params.mem;
     NpyIter_IterNextFunc *iternext;
@@ -1109,6 +1111,25 @@ vm_engine_iter_parallel(NpyIter *iter, struct vm_params params, int *pc_error,
             return -1;
         }
     }
+    th_params.memsteps[0] = params.memsteps;
+    /* Make one copy of memsteps for each additional thread */
+    for (i = 1; i < nthreads; ++i) {
+        th_params.memsteps[i] = PyMem_New(intp,
+                    1 + params.n_inputs + params.n_constants + params.n_temps);
+        if (th_params.memsteps[i] == NULL) {
+            --i;
+            for (; i > 0; --i) {
+                PyMem_Del(th_params.memsteps[i]);
+            }
+            for (i = 0; i < nthreads; ++i) {
+                NpyIter_Deallocate(th_params.iter[i]);
+            }
+            return -1;
+        }
+        memcpy(th_params.memsteps[i], th_params.memsteps[0],
+                sizeof(intp) *
+                (1 + params.n_inputs + params.n_constants + params.n_temps));
+    }
 
     Py_BEGIN_ALLOW_THREADS;
 
@@ -1136,9 +1157,10 @@ vm_engine_iter_parallel(NpyIter *iter, struct vm_params params, int *pc_error,
 
     Py_END_ALLOW_THREADS;
 
-    /* Deallocate all the iterator copies */
+    /* Deallocate all the iterator and memsteps copies */
     for (i = 1; i < nthreads; ++i) {
         NpyIter_Deallocate(th_params.iter[i]);
+        PyMem_Del(th_params.memsteps[i]);
     }
 
     return th_params.ret_code;
@@ -1161,6 +1183,7 @@ void *th_worker(void *tidptr)
     int n_temps;
     size_t memsize;
     char **mem;
+    intp *memsteps;
 
     while (1) {
 
@@ -1229,6 +1252,7 @@ void *th_worker(void *tidptr)
             th_params.ret_code = -1;
             giveup = 1;
         }
+        memsteps = th_params.memsteps[tid];
         /* Get temporary space for each thread */
         ret = get_temps_space(params, mem, BLOCK_SIZE1);
         if (ret < 0) {
@@ -1244,7 +1268,7 @@ void *th_worker(void *tidptr)
                                                 errmsg);
             /* Execute the task */
             if (ret >= 0) {
-                ret = vm_engine_iter_task(iter, params, pc_error, errmsg);
+                ret = vm_engine_iter_task(iter, memsteps, params, pc_error, errmsg);
             }
 
             if (ret < 0) {
@@ -1323,7 +1347,8 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
             }
             get_temps_space(params, params.mem, BLOCK_SIZE1);
             Py_BEGIN_ALLOW_THREADS;
-            r = vm_engine_iter_task(iter, params, pc_error, &errmsg);
+            r = vm_engine_iter_task(iter, params.memsteps,
+                                        params, pc_error, &errmsg);
             Py_END_ALLOW_THREADS;
             free_temps_space(params, params.mem);
         }
@@ -1343,7 +1368,8 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                 do {
                     r = NpyIter_ResetBasePointers(iter, dataptr, &errmsg);
                     if (r >= 0) {
-                        r = vm_engine_iter_outer_reduce_task(iter, params,
+                        r = vm_engine_iter_outer_reduce_task(iter,
+                                                params.memsteps, params,
                                                 pc_error, &errmsg);
                     }
                     if (r < 0) {
@@ -1369,8 +1395,8 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                     r = NpyIter_ResetBasePointers(reduce_iter, dataptr,
                                                                     &errmsg);
                     if (r >= 0) {
-                        r = vm_engine_iter_task(reduce_iter, params,
-                                                pc_error, &errmsg);
+                        r = vm_engine_iter_task(reduce_iter, params.memsteps,
+                                                params, pc_error, &errmsg);
                     }
                     if (r < 0) {
                         break;
@@ -1404,6 +1430,7 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     struct vm_params params;
     intp plen;
     char **mem;
+    intp *memsteps;
 
     *pc_error = -1;
     if (PyString_AsStringAndSize(self->program, (char **)&(params.program),
@@ -1421,7 +1448,7 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     params.n_constants = self->n_constants;
     params.n_temps = self->n_temps;
     params.mem = self->mem;
-    params.memsteps = self->memsteps;
+    memsteps = self->memsteps;
     params.memsizes = self->memsizes;
     params.r_end = PyString_Size(self->fullsig);
 
@@ -1838,6 +1865,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     /* Allocate the iterator or nested iterators */
     if (reduction_size == 1) {
+        /* When there's no reduction, reduction_size is 1 as well */
         iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                             NPY_ITER_BUFFERED|
                             NPY_ITER_REDUCE_OK|
