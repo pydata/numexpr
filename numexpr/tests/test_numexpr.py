@@ -363,9 +363,9 @@ def test_expressions():
             # "overflows" or "divide by zero".  Feel free to expand
             # the range for this filter, if needed.
             if dtype.__name__ == "float32" or 'arctanh' in expr:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    npval = eval(expr, globals(), this_locals)
+                warnings.simplefilter("ignore")
+                npval = eval(expr, globals(), this_locals)
+                warnings.simplefilter("always")
             else:
                 npval = eval(expr, globals(), this_locals)
             try:
