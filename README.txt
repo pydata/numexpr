@@ -262,8 +262,8 @@ contributed support for strings.  Gregor Thalhammer implemented the
 support for Intel VML (Vector Math Library).  Mark Wiebe added support
 for the new iterator in NumPy, which allows for better performance in
 more scenarios (like broadcasting, fortran-ordered or non-native byte
-orderings). Gaëtan de Menten contributed important bug fixes and speed
-enhancements.
+orderings).  Gaëtan de Menten contributed important bug fixes and
+speed enhancements.
 
 
 License
