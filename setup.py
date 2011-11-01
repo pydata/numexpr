@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 import shutil
-import os
+import os, sys
 import os.path as op
 from distutils.command.clean import clean
+import numpy
 from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
+
+minimum_numpy_version = "1.6"
+
+if numpy.__version__ < minimum_numpy_version:
+    print "*Error*: NumPy version is lower than needed: %s < %s" % \
+          (numpy.__version__, minimum_numpy_version)
+    sys.exit(1)
 
 try:
     import setuptools
