@@ -15,16 +15,23 @@ What's new
 
 This version comes with support for the new iterator in NumPy
 (introduced in NumPy 1.6), allowing for improved performance in
-practically all the scenarios (and most specially for operations
-implying broadcasting, fortran-ordered or non-native byte orderings).
+practically all the scenarios (the exception being very small arrays),
+and most specially for operations implying broadcasting,
+fortran-ordered or non-native byte orderings.
+
 The carefully crafted mix of the new NumPy iterator and direct access
 to data buffers turned out to be so powerful and flexible, that the
-internal virtual machine has been completely rebuild to make use of
-this.  Many thanks to Mark Wiebe for such an important contribution!
+internal virtual machine has been completely revamped around this
+combination.
+
+The drawback is that you will need NumPy >= 1.6 to run numexpr 2.0.
+However, NumPy 1.6 has been released more than 6 months ago now, so we
+think this is a good time for taking advantage of it.  Many thanks to
+Mark Wiebe for such an important contribution!
 
 Also, Gaëtan de Menten contributed important bug fixes as well as
 speed enhancements, specially for smaller arrays.  Francesc Alted
-contributed some fixes too.
+contributed a few fixes too.
 
 In case you want to know more in detail what has changed in this
 version, see:

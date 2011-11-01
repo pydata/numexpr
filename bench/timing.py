@@ -1,7 +1,7 @@
 import timeit, numpy
 
 array_size = 1e6
-iterations = 10
+iterations = 2
 
 # Choose the type you want to benchmark
 #dtype = 'int8'

@@ -21,6 +21,11 @@ Changes from 1.x series to 2.0
 - Constants like "2." or "2.0" must be evaluated as float, not
   integer.  Fixes #59.
 
+- `evaluate()` function has received a new parameter `out` for storing
+  the result in already allocated arrays.  This is very useful when
+  dealing with large arrays, and a allocating new space for keeping
+  the result is not acceptable.  Closes #56.
+
 
 Changes from 1.4.1 to 1.4.2
 ===========================

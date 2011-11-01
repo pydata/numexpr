@@ -26,11 +26,5 @@ print "NumPy unaligned:\t", round(min(t.repeat(3, niter)), 3), "s"
 t = Timer("ne.evaluate('x_fast * x_fast')", "from __main__ import ne, x_fast")
 print "Numexpr aligned:\t", round(min(t.repeat(3, niter)), 3), "s"
 
-t = Timer("ne.evaluate_iter('x_fast * x_fast')", "from __main__ import ne, x_fast")
-print "Numexpr aligned (new iter):\t", round(min(t.repeat(3, niter)), 3), "s"
-
 t = Timer("ne.evaluate('x_slow * x_slow')", "from __main__ import ne, x_slow")
 print "Numexpr unaligned:\t", round(min(t.repeat(3, niter)), 3), "s"
-
-t = Timer("ne.evaluate_iter('x_slow * x_slow')", "from __main__ import ne, x_slow")
-print "Numexpr unaligned (new iter):\t", round(min(t.repeat(3, niter)), 3), "s"
