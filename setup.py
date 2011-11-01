@@ -142,6 +142,8 @@ class build_ext(numpy_build_ext):
                 c.compile_options.remove('/Ox')
             c.compile_options.append('/O1')
             ext.extra_compile_args = []
+            # also remove extra linker arguments msvc doesn't understand
+            ext.extra_link_args = []
         numpy_build_ext.build_extension(self, ext)
         if old_compile_options is not None:
             self.compiler.compile_options = old_compile_options
