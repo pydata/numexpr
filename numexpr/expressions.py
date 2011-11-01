@@ -112,22 +112,23 @@ def bestConstantType(x):
     # supported.
     if isinstance(x, (bool, numpy.bool_)):
         return bool
-    # ``long`` is not explicitly needed since ``int`` automatically
-    # returns longs when needed (since Python 2.3).
+    if isinstance(x, (int, numpy.integer)):
+        # Constants needing more than 32 bits are always
+        # considered ``long``, *regardless of the platform*, so we
+        # can clearly tell 32- and 64-bit constants apart.
+        if not (min_int32 <= x <= max_int32):
+            return long
+        return int
     # The duality of float and double in Python avoids that we have to list
     # ``double`` too.
-    for converter in int, float, complex:
+    for converter in float, complex:
         try:
             y = converter(x)
         except StandardError, err:
             continue
-        if x == y:
-            # Constants needing more than 32 bits are always
-            # considered ``long``, *regardless of the platform*, so we
-            # can clearly tell 32- and 64-bit constants apart.
-            if converter is int and not (min_int32 <= x <= max_int32):
-                return long
+        if y == x:
             return converter
+
 
 def getKind(x):
     converter = bestConstantType(x)
