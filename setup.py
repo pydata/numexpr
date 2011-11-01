@@ -59,6 +59,7 @@ def configuration():
         'depends': ['numexpr/interp_body.c',
                     'numexpr/complex_functions.inc',
                     'numexpr/msvc_function_stubs.inc'],
+        'libraries': ['m'],
         'extra_compile_args': ['-funroll-all-loops',],
         }
     dict_append(extension_config_data, **mkl_config_data)
