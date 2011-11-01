@@ -9,7 +9,8 @@ Changes from 1.x series to 2.0
 
   This allows for better performance with operations that implies
   broadcast operations, fortran-ordered or non-native byte orderings.
-  Performance for other scenarios is preserved.
+  Performance for other scenarios is preserved (except for very small
+  arrays).
 
 - Optimization of "compilation phase" through a better hash (#43).
   This can make the evaluation of 'non-cacheable' expressions, with
