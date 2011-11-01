@@ -1,4 +1,5 @@
 import new, sys, os
+import warnings
 
 import numpy
 from numpy import (
@@ -182,7 +183,7 @@ class test_evaluate(TestCase):
             pass
         else:
             raise ValueError("should raise exception!")
-        
+
     def test_rational_expr(self):
         a = arange(1e6)
         b = arange(1e6) * 0.1
@@ -358,7 +359,15 @@ def test_expressions():
                          test_scalar, dtype, optimization, exact, section):
         this_locals = locals()
         def method():
-            npval = eval(expr, globals(), this_locals)
+            # We don't want to listen at RuntimeWarnings like
+            # "overflows" or "divide by zero".  Feel free to expand
+            # the range for this filter, if needed.
+            if dtype.__name__ == "float32" or 'arctanh' in expr:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    npval = eval(expr, globals(), this_locals)
+            else:
+                npval = eval(expr, globals(), this_locals)
             try:
                 neval = evaluate(expr, local_dict=this_locals,
                                  optimization=optimization)
@@ -366,7 +375,7 @@ def test_expressions():
 (test_scalar=%r, dtype=%r, optimization=%r, exact=%r,
  npval=%r (%r - %r)\n neval=%r (%r - %r))""" % (expr, test_scalar, dtype.__name__,
                                      optimization, exact,
-                                     npval, type(npval), shape(npval), 
+                                     npval, type(npval), shape(npval),
                                      neval, type(neval), shape(neval))
             except AssertionError:
                 raise
@@ -685,7 +694,7 @@ def suite():
             return func()
         setattr(TestExpressions, func.__name__,
                 new.instancemethod(method, None, TestExpressions))
-        
+
     for func in test_expressions():
         add_method(func)
 
