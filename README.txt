@@ -5,6 +5,14 @@ Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
+In addition, its multi-threaded capabilities can make use of all your
+cores, which may accelerate computations, most specially if they are
+not memory-bounded (e.g. those using transcendental functions).
+
+Last but not least, numexpr can make use of Intel's VML (Vector Math
+Library, normally integrated in its Math Kernel Library, or MKL).
+This allows further acceleration of transcendent expressions.
+
 
 Examples of use
 ===============
@@ -254,7 +262,8 @@ contributed support for strings.  Gregor Thalhammer implemented the
 support for Intel VML (Vector Math Library).  Mark Wiebe added support
 for the new iterator in NumPy, which allows for better performance in
 more scenarios (like broadcasting, fortran-ordered or non-native byte
-orderings).
+orderings). Gaëtan de Menten contributed important bug fixes and speed
+enhancements.
 
 
 License

@@ -86,7 +86,6 @@ f3[:] = linspace(0,1,len(i2))
 f4[:] = f3*1.23
 """
 
-#eval_method = "evaluate_orig as evaluate"
 eval_method = "evaluate"
 setupNP_contiguous = setupNP % ((eval_method, 4, array_size,) + \
                                (".copy()",)*4 + \

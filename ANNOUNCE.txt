@@ -1,15 +1,30 @@
 ========================
- Announcing Numexpr 1.5
+ Announcing Numexpr 2.0
 ========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
+It wears multi-threaded capabilities, as well as support for Intel's
+VML library, which allows for squeezing the last drop of performance
+out of your multi-core processors.
+
 What's new
 ==========
 
-*** Add blurb here ***
+This version comes with support for the new iterator in NumPy
+(introduced in NumPy 1.6), allowing for improved performance in
+practically all the scenarios (and most specially for operations
+implying broadcasting, fortran-ordered or non-native byte orderings).
+The carefully crafted mix of the new NumPy iterator and direct access
+to data buffers turned out to be so powerful and flexible, that the
+internal virtual machine has been completely rebuild to make use of
+this.  Many thanks to Mark Wiebe for such an important contribution!
+
+Also, Gaëtan de Menten contributed important bug fixes as well as
+speed enhancements, specially for smaller arrays.  Francesc Alted
+contributed some fixes too.
 
 In case you want to know more in detail what has changed in this
 version, see:

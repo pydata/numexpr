@@ -41,14 +41,14 @@ def compare_times(expr, nexpr):
     numpy_nttime.append(numpy_ntime)
     print 'numpy unaligned:', numpy_ntime / iterations
 
-    evalexpr = 'evaluate_orig("%s", optimization="aggressive")' % expr
+    evalexpr = 'evaluate("%s", optimization="aggressive")' % expr
     numexpr_timer = timeit.Timer(evalexpr, setup_contiguous)
     numexpr_time = round(numexpr_timer.timeit(number=iterations), 4)
     numexpr_ttime.append(numexpr_time)
     print "numexpr:", numexpr_time/iterations,
     print "Speed-up of numexpr over numpy:", round(numpy_time/numexpr_time, 4)
 
-    evalexpr = 'evaluate_orig("%s", optimization="aggressive")' % expr
+    evalexpr = 'evaluate("%s", optimization="aggressive")' % expr
     numexpr_timer = timeit.Timer(evalexpr, setup_strided)
     numexpr_stime = round(numexpr_timer.timeit(number=iterations), 4)
     numexpr_sttime.append(numexpr_stime)
@@ -56,7 +56,7 @@ def compare_times(expr, nexpr):
     print "Speed-up of numexpr strided over numpy:", \
           round(numpy_stime/numexpr_stime, 4)
 
-    evalexpr = 'evaluate_orig("%s", optimization="aggressive")' % expr
+    evalexpr = 'evaluate("%s", optimization="aggressive")' % expr
     numexpr_timer = timeit.Timer(evalexpr, setup_unaligned)
     numexpr_ntime = round(numexpr_timer.timeit(number=iterations), 4)
     numexpr_nttime.append(numexpr_ntime)
@@ -69,7 +69,7 @@ def compare_times(expr, nexpr):
 setupNP = """\
 from numpy import arange, where, arctan2, sqrt
 from numpy import rec as records
-from numexpr import evaluate_orig
+from numexpr import evaluate
 
 # Initialize a recarray of 16 MB in size
 r=records.array(None, formats='a%s,i4,f8', shape=%s)

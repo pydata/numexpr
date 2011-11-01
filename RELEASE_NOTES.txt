@@ -5,13 +5,21 @@
 Changes from 1.x series to 2.0
 ==============================
 
-- Added support for the new iterator object in NumPy 1.6 and later:
+- Added support for the new iterator object in NumPy 1.6 and later.
 
   This allows for better performance with operations that implies
   broadcast operations, fortran-ordered or non-native byte orderings.
   Performance for other scenarios is preserved.
 
-  Many thanks to Mark Wiebe for this excellent contribution!
+- Optimization of "compilation phase" through a better hash (#43).
+  This can make the evaluation of 'non-cacheable' expressions, with
+  small arrays, up to a 2x faster.
+
+- Division in numexpr is consistent now with Python/NumPy.  Fixes #22
+  and #58.
+
+- Constants like "2." or "2.0" must be evaluated as float, not
+  integer.  Fixes #59.
 
 
 Changes from 1.4.1 to 1.4.2

@@ -23,10 +23,10 @@ $ python -c "import numexpr; numexpr.test()"
 Enabling Intel's VML support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Starting from release 1.2 on, numexpr includes support for Intel's VML
-library.  This allows for better performance on Intel architectures,
-mainly when evaluating transcendental functions (trigonometrical,
-exponential...).  It also enables numexpr using several CPU cores.
+numexpr includes support for Intel's VML library.  This allows for
+better performance on Intel architectures, mainly when evaluating
+transcendental functions (trigonometrical, exponential...).  It also
+enables numexpr using several CPU cores.
 
 If you have Intel's MKL (the library that embeds VML), just copy the
 `site.cfg.example` that comes in the distribution to `site.cfg` and
