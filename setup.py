@@ -129,26 +129,13 @@ def setup_package():
 class build_ext(numpy_build_ext):
     def build_extension(self, ext):
         # at this point we know what the C compiler is.
-        c = self.compiler
-        old_compile_options = None
-        # For MS Visual C, we use /O1 instead of the default /Ox,
-        # as /Ox takes a long time (~5 mins) to compile.
-        # The speed of the code isn't noticeably different.
-        if c.compiler_type == 'msvc':
-            if not c.initialized:
-                c.initialize()
-            old_compile_options = c.compile_options[:]
-            if '/Ox' in c.compile_options:
-                c.compile_options.remove('/Ox')
-            c.compile_options.append('/O1')
+        if self.compiler.compiler_type == 'msvc':
             ext.extra_compile_args = []
             # also remove extra linker arguments msvc doesn't understand
             ext.extra_link_args = []
             # also remove gcc math library
             ext.libraries.remove('m')
         numpy_build_ext.build_extension(self, ext)
-        if old_compile_options is not None:
-            self.compiler.compile_options = old_compile_options
 
 if __name__ == '__main__':
     setup_package()
