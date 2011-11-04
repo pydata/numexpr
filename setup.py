@@ -144,10 +144,11 @@ class build_ext(numpy_build_ext):
             ext.extra_compile_args = []
             # also remove extra linker arguments msvc doesn't understand
             ext.extra_link_args = []
+            # also remove gcc math library
+            ext.libraries.remove('m')
         numpy_build_ext.build_extension(self, ext)
         if old_compile_options is not None:
             self.compiler.compile_options = old_compile_options
 
 if __name__ == '__main__':
     setup_package()
-

@@ -1184,6 +1184,8 @@ void *th_worker(void *tidptr)
     size_t memsize;
     char **mem;
     intp *memsteps;
+    intp istart, iend;
+    char **errmsg;
 
     while (1) {
 
@@ -1221,8 +1223,7 @@ void *th_worker(void *tidptr)
         mem = malloc(memsize);
         memcpy(mem, params.mem, memsize);
 
-        intp istart, iend;
-        char **errmsg = th_params.errmsg;
+        errmsg = th_params.errmsg;
 
         params.mem = mem;
 
