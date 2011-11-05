@@ -1712,7 +1712,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
            so we don't need to worry about item sizes here. */
         char retsig = get_return_sig(self->program);
         reduction_axis = get_reduction_axis(self->program);
- 
+
         /* Need to set up op_axes for the non-reduction part */
         if (reduction_axis != 255) {
             /* Get the number of broadcast dimensions */
@@ -1820,6 +1820,37 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 #endif
                       NPY_ITER_NO_BROADCAST;
     }
+
+    /* Check for empty arrays in expression */
+    if (n_inputs > 0) {
+        char retsig = get_return_sig(self->program);
+
+        /* Check length for all inputs */
+        int zeroi, zerolen = 0;
+        for (i=0; i < n_inputs; i++) {
+            if (PyArray_SIZE(operands[i+1]) == 0) {
+                zerolen = 1;
+                zeroi = i+1;
+                break;
+            }
+        }
+
+        if (zerolen != 0) {
+            /* Allocate the output */
+            intp ndim = PyArray_NDIM(operands[zeroi]);
+            intp *dims = PyArray_DIMS(operands[zeroi]);
+            operands[0] = (PyArrayObject *)PyArray_SimpleNew(ndim, dims,
+                                              typecode_from_char(retsig));
+            if (operands[0] == NULL) {
+                goto fail;
+            }
+
+            ret = (PyObject *)operands[0];
+            Py_INCREF(ret);
+            goto cleanup_and_exit;
+        }
+    }
+
 
     /* A case with a single constant output */
     if (n_inputs == 0) {

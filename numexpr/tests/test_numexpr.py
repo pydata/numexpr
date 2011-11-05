@@ -609,6 +609,28 @@ class test_irregular_stride(TestCase):
         assert_array_equal(f0[i0], arange(5, dtype=int32))
         assert_array_equal(f1[i1], arange(5, dtype=float64))
 
+# Cases for testing arrays with dimensions that can be zero.
+class test_zerodim(TestCase):
+
+    def test_zerodim1d(self):
+        a0 = array([], dtype=int32)
+        a1 = array([], dtype=float64)
+
+        r0 = evaluate('a0 + a1')
+        r1 = evaluate('a0 * a1')
+
+        assert_array_equal(r0, a1)
+        assert_array_equal(r1, a1)
+
+    def test_zerodim3d(self):
+        a0 = array([], dtype=int32).reshape(0,2,4)
+        a1 = array([], dtype=float64).reshape(0,2,4)
+
+        r0 = evaluate('a0 + a1')
+        r1 = evaluate('a0 * a1')
+
+        assert_array_equal(r0, a1)
+        assert_array_equal(r1, a1)
 
 # Case test for threads
 class test_threading(TestCase):
@@ -708,6 +730,7 @@ def suite():
         theSuite.addTest(unittest.makeSuite(test_strings))
         theSuite.addTest(
             unittest.makeSuite(test_irregular_stride) )
+        theSuite.addTest(unittest.makeSuite(test_zerodim))
         theSuite.addTest(unittest.makeSuite(test_subprocess))
         # I need to put this test after test_subprocess because
         # if not, the test suite locks immediately before test_subproces.
