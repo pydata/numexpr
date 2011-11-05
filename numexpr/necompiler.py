@@ -431,7 +431,7 @@ context_info = [
     ('truediv', (False, True, 'auto'), 'auto')
                ]
 
-def getContext(kwargs, frame_depth):
+def getContext(kwargs, frame_depth=1):
     d = kwargs.copy()
     context = {}
     for name, allowed, default in context_info:
@@ -503,7 +503,7 @@ def precompile(ex, signature=(), context={}):
     return threeAddrProgram, signature, tempsig, constants, input_names
 
 
-def NumExpr(ex, signature=(), **kwargs):
+def NumExpr(ex, signature=(), copy_args=(), **kwargs):
     """
     Compile an expression built using E.<variable> variables to a function.
 
@@ -516,10 +516,16 @@ def NumExpr(ex, signature=(), **kwargs):
     """
     # NumExpr can be called either directly by the end-user, in which case
     # kwargs need to be sanitized by getContext, or by evaluate,
-    # in which case kwargs are in already sanitized. 
+    # in which case kwargs are in already sanitized.
     # In that case frame_depth is wrong (it should be 2) but it doesn't matter
     # since it will not be used (because truediv='auto' has already been
     # translated to either True or False).
+
+    # NOTE: `copy_args` is not necessary from 2.0 on.  It remains here
+    # basically because PyTables trusted on it for certain operations.
+    # I have filed a ticket for PyTables asking for its removal:
+    # https://github.com/PyTables/PyTables/issues/117
+
     context = getContext(kwargs, frame_depth=1)
     threeAddrProgram, inputsig, tempsig, constants, input_names = \
                       precompile(ex, signature, context)
