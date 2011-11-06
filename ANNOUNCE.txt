@@ -29,9 +29,14 @@ However, NumPy 1.6 has been released more than 6 months ago now, so we
 think this is a good time for taking advantage of it.  Many thanks to
 Mark Wiebe for such an important contribution!
 
-Also, Gaëtan de Menten contributed important bug fixes as well as
-speed enhancements, specially for smaller arrays.  Francesc Alted
-contributed a few fixes too.
+For some benchmarks on the new virtual machine, see:
+
+http://code.google.com/p/numexpr/wiki/NewVM
+
+Also, Gaëtan de Menten contributed important bug fixes, code cleanup
+as well as speed enhancements.  Francesc Alted contributed some fixes,
+and added compatibility code with existing applications (PyTables)
+too.
 
 In case you want to know more in detail what has changed in this
 version, see:

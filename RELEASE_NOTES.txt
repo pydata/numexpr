@@ -12,10 +12,6 @@ Changes from 1.x series to 2.0
   Performance for other scenarios is preserved (except for very small
   arrays).
 
-- Optimization of "compilation phase" through a better hash (#43).
-  This can make the evaluation of 'non-cacheable' expressions, with
-  small arrays, up to a 2x faster.
-
 - Division in numexpr is consistent now with Python/NumPy.  Fixes #22
   and #58.
 
