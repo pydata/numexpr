@@ -175,7 +175,9 @@ class test_evaluate(TestCase):
         assert_array_equal(evaluate("x/2", truediv='auto'), x / 2)
         assert_array_equal(evaluate("x/2", truediv=True), x / 2.0)
 
-    def test_boolean_operator(self):
+    # PyTables uses __nonzero__ among ExpressionNode objects internally
+    # so this should be commented out for the moment.  See #24.
+    def _test_boolean_operator(self):
         x = arange(10, dtype='i4')
         try:
             evaluate("(x > 1) and (x < 9)")
