@@ -23,6 +23,10 @@ Changes from 1.x series to 2.0
   dealing with large arrays, and a allocating new space for keeping
   the result is not acceptable.  Closes #56.
 
+- Maximum number of threads raised from 256 to 4096.  Machines with a
+  higher number of cores will still be able to import numexpr, but
+  limited to 4096 (which is an absurdly high number already).
+
 
 Changes from 1.4.1 to 1.4.2
 ===========================
