@@ -58,8 +58,10 @@
 #define BLOCK_SIZE2 16
 #endif
 
-/* The maximum number of threads (for some static arrays) */
-#define MAX_THREADS 256
+/* The maximum number of threads (for some static arrays).
+ * Choose this large enough for most monsters out there.
+   Keep in sync this with the number in __init__.py. */
+#define MAX_THREADS 4096
 
 /* Global variables for threads */
 int nthreads = 1;                /* number of desired threads in pool */
