@@ -4,8 +4,7 @@
       License: MIT
       Author:  See AUTHORS.txt
 
-  See LICENSE.txt and LICENSES/*.txt for details about copyright and
-  rights to use.
+  See LICENSE.txt for details about copyright and rights to use.
 **********************************************************************/
 
 /*
