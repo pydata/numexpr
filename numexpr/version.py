@@ -8,7 +8,7 @@
 #  rights to use.
 ####################################################################
 
-version='2.0rc2'
+version='2.0'
 release=True
 
 if not release:
