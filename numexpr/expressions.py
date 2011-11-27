@@ -166,7 +166,7 @@ def func(func, minkind=None, maxkind=None):
         kind = commonKind(args)
         if kind in ('int', 'long'):
             # Exception for following NumPy casting rules
-            #FIXME: this is not always desirable. The following 
+            #FIXME: this is not always desirable. The following
             # functions which return ints (for int inputs) on numpy
             # but not on numexpr: copy, abs, fmod, ones_like
             kind = 'double'
@@ -187,7 +187,7 @@ def where_func(a, b, c):
     if allConstantNodes([a,b,c]):
         return ConstantNode(numpy.where(a, b, c))
     return FuncNode('where', [a,b,c])
-    
+
 def encode_axis(axis):
     if isinstance(axis, ConstantNode):
         axis = axis.value
@@ -240,7 +240,7 @@ def truediv_op(a, b):
 @ophelper
 def rtruediv_op(a, b):
     return truediv_op(b, a)
-    
+
 @ophelper
 def pow_op(a, b):
     if allConstantNodes([a, b]):

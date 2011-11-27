@@ -427,8 +427,8 @@
         case OP_IMAG_DC: VEC_ARG1(d_dest = c1i);
         case OP_COMPLEX_CDD: VEC_ARG2(cr_dest = d1;
                                       ci_dest = d2);
-                                      
-        /* Reductions */ 
+
+        /* Reductions */
         case OP_SUM_IIN: VEC_ARG1(i_reduce += i1);
         case OP_SUM_LLN: VEC_ARG1(l_reduce += l1);
         case OP_SUM_FFN: VEC_ARG1(f_reduce += f1);

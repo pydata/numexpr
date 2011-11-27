@@ -324,7 +324,7 @@ def collapseDuplicateSubtrees(ast):
     for a in aliases:
         while a.value.astType == 'alias':
             a.value = a.value.value
-    return aliases 
+    return aliases
 
 def optimizeTemporariesAllocation(ast):
     """Attempt to minimize the number of temporaries needed, by
@@ -332,7 +332,7 @@ def optimizeTemporariesAllocation(ast):
     """
     nodes = [n for n in ast.postorderWalk() if n.reg.temporary]
     users_of = dict((n.reg, set()) for n in nodes)
-    
+
     node_regs = dict((n, set(c.reg for c in n.children if c.reg.temporary))
                      for n in nodes)
     if nodes and nodes[-1] is not ast:
@@ -348,7 +348,7 @@ def optimizeTemporariesAllocation(ast):
               'double': set(), 'complex': set(), 'str': set()}
     for n in nodes:
         for c in n.children:
-            reg = c.reg 
+            reg = c.reg
             if reg.temporary:
                 users = users_of[reg]
                 users.discard(n)
@@ -457,7 +457,7 @@ def getContext(kwargs, frame_depth=1):
         caller_globals = sys._getframe(frame_depth + 1).f_globals
         context['truediv'] = \
             caller_globals.get('division', None) == __future__.division
-        
+
     return context
 
 def precompile(ex, signature=(), context={}):
@@ -484,7 +484,7 @@ def precompile(ex, signature=(), context={}):
     assignLeafRegisters(ast.allOf('raw'), Immediate)
     assignLeafRegisters(ast.allOf('variable', 'constant'), Register)
     assignBranchRegisters(ast.allOf('op'), Register)
-    
+
     # assign registers for aliases
     for a in aliases:
         a.reg = a.value.reg
