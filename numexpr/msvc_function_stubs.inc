@@ -1,3 +1,13 @@
+/*********************************************************************
+  Numexpr - Fast numerical array expression evaluator for NumPy.
+
+      License: MIT
+      Author:  See AUTHORS.txt
+
+  See LICENSE.txt and LICENSES/*.txt for details about copyright and
+  rights to use.
+**********************************************************************/
+
 /* Declare stub functions for MSVC.  It turns out that single precision
    definitions in <math.h> are actually #define'd and are not usable
    as function pointers :-/ */

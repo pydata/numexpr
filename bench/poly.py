@@ -1,3 +1,13 @@
+###################################################################
+#  Numexpr - Fast numerical array expression evaluator for NumPy.
+#
+#      License: MIT
+#      Author:  See AUTHORS.txt
+#
+#  See LICENSE.txt and LICENSES/*.txt for details about copyright and
+#  rights to use.
+####################################################################
+
 #######################################################################
 # This script compares the speed of the computation of a polynomial
 # for different (numpy and numexpr) in-memory paradigms.

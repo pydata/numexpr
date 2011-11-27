@@ -1,3 +1,13 @@
+###################################################################
+#  Numexpr - Fast numerical array expression evaluator for NumPy.
+#
+#      License: MIT
+#      Author:  See AUTHORS.txt
+#
+#  See LICENSE.txt and LICENSES/*.txt for details about copyright and
+#  rights to use.
+####################################################################
+
 """
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated

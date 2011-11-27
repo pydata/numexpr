@@ -1,3 +1,13 @@
+/*********************************************************************
+  Numexpr - Fast numerical array expression evaluator for NumPy.
+
+      License: MIT
+      Author:  See AUTHORS.txt
+
+  See LICENSE.txt and LICENSES/*.txt for details about copyright and
+  rights to use.
+**********************************************************************/
+
 /*
 OPCODE(n, enum_name, exported, return_type, arg1_type, arg2_type, arg3_type)
 

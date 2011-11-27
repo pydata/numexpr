@@ -1,3 +1,13 @@
+###################################################################
+#  Numexpr - Fast numerical array expression evaluator for NumPy.
+#
+#      License: MIT
+#      Author:  See AUTHORS.txt
+#
+#  See LICENSE.txt and LICENSES/*.txt for details about copyright and
+#  rights to use.
+####################################################################
+
 # Benchmark for checking if numexpr leaks memory when evaluating
 # expressions that changes continously.  It also serves for computing
 # the latency of numexpr when working with small arrays.
