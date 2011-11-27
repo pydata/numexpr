@@ -8,8 +8,8 @@
 #  rights to use.
 ####################################################################
 
-version='2.0'
-release=True
+version='2.1'
+release=False
 
 if not release:
     version += '.dev'
