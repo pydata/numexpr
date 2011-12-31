@@ -5,7 +5,8 @@
 Changes from 2.0 series to 2.1
 ==============================
 
-[Add new features here]
+* Added compatibility with Python 2.5 (2.4 is definitely not supported
+  anymore).
 
 
 Changes from 1.x series to 2.0

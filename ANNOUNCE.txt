@@ -13,7 +13,9 @@ out of your multi-core processors.
 What's new
 ==========
 
-[Add blurb here]
+* Added compatibility with Python 2.5 (2.4 is definitely not supported
+  anymore).
+
 
 In case you want to know more in detail what has changed in this
 version, see:
