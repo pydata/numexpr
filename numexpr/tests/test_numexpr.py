@@ -667,7 +667,10 @@ def _worker(qout = None):
 # Case test for subprocesses (via multiprocessing module)
 class test_subprocess(TestCase):
     def test_multiprocess(self):
-        import multiprocessing as mp
+        try:
+            import multiprocessing as mp
+        except ImportError:
+	    return
         # Check for two threads at least
         numexpr.set_num_threads(2)
         #print "**** Running from main process:"
