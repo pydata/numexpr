@@ -2,8 +2,14 @@
  Release notes for Numexpr 2.0 series
 ======================================
 
-Changes from 2.0 series to 2.0.1
-================================
+Changes from 2.0.1 to 2.0.2
+===========================
+
+[Add changes heres]
+
+
+Changes from 2.0 to 2.0.1
+=========================
 
 * Added compatibility with Python 2.5 (2.4 is definitely not supported
   anymore).
