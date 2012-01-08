@@ -1,6 +1,6 @@
-========================
- Announcing Numexpr 2.0
-========================
+==========================
+ Announcing Numexpr 2.0.1
+==========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
@@ -13,9 +13,9 @@ out of your multi-core processors.
 What's new
 ==========
 
-* Added compatibility with Python 2.5 (2.4 is definitely not supported
-  anymore).
-
+In this release, better docstrings for `evaluate` and reduction
+methods (`sum`, `prod`) is in place.  Also, compatibility with Python
+2.5 has been restored (2.4 is definitely not supported anymore).
 
 In case you want to know more in detail what has changed in this
 version, see:

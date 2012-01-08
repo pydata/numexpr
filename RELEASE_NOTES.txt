@@ -2,19 +2,11 @@
  Release notes for Numexpr 2.1 series
 ======================================
 
-Changes from 2.0 series to 2.1
-==============================
+Changes from 2.0 series to 2.0.1
+================================
 
 * Added compatibility with Python 2.5 (2.4 is definitely not supported
   anymore).
-
-* `numexpr.evaluate` is fully documented now, in particular the new
-  `out`, `order` and `casting` parameters.
-
-* Reduction operations are fully documented now.
-
-* Negative axis in reductions are not supported (they have never been
-  actually), and a `ValueError` will be raised if they are used.
 
 
 Changes from 1.x series to 2.0
