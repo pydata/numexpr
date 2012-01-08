@@ -1,5 +1,5 @@
 ======================================
- Release notes for Numexpr 2.1 series
+ Release notes for Numexpr 2.0 series
 ======================================
 
 Changes from 2.0 series to 2.0.1
