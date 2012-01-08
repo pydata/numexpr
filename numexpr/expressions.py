@@ -195,12 +195,12 @@ def encode_axis(axis):
         axis = interpreter.allaxes
     else:
         if axis < 0:
-            axis = interpreter.maxdims - axis
+            raise ValueError("negative axis are not supported")
         if axis > 254:
             raise ValueError("cannot encode axis")
     return RawNode(axis)
 
-def sum_func(a, axis=-1):
+def sum_func(a, axis=None):
     axis = encode_axis(axis)
     if isinstance(a, ConstantNode):
         return a
@@ -208,7 +208,7 @@ def sum_func(a, axis=-1):
         a = ConstantNode(a)
     return FuncNode('sum', [a, axis], kind=a.astKind)
 
-def prod_func(a, axis=-1):
+def prod_func(a, axis=None):
     axis = encode_axis(axis)
     if isinstance(a, (bool, int, long, float, double, complex)):
         a = ConstantNode(a)

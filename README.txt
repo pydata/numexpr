@@ -109,49 +109,63 @@ Supported functions
 
 The next are the current supported set:
 
-    * where(bool, number1, number2): number
-        Number1 if the bool condition is true, number2 otherwise.
-    * {sin,cos,tan}(float|complex): float|complex
-        Trigonometric sine, cosine or tangent.
-    * {arcsin,arccos,arctan}(float|complex): float|complex
-        Trigonometric inverse sine, cosine or tangent.
-    * arctan2(float1, float2): float
-        Trigonometric inverse tangent of float1/float2.
-    * {sinh,cosh,tanh}(float|complex): float|complex
-        Hyperbolic sine, cosine or tangent.
-    * {arcsinh,arccosh,arctanh}(float|complex): float|complex
-        Hyperbolic inverse sine, cosine or tangent.
-    * {log,log10,log1p}(float|complex): float|complex
-        Natural, base-10 and log(1+x) logarithms.
-    * {exp,expm1}(float|complex): float|complex
-        Exponential and exponential minus one.
-    * sqrt(float|complex): float|complex
-        Square root.
-    * abs(float|complex): float|complex
-        Absolute value.
-    * {real,imag}(complex): float
-        Real or imaginary part of complex.
-    * complex(float, float): complex
-        Complex from real and imaginary parts.
+  * where(bool, number1, number2): number
+      Number1 if the bool condition is true, number2 otherwise.
+  * {sin,cos,tan}(float|complex): float|complex
+      Trigonometric sine, cosine or tangent.
+  * {arcsin,arccos,arctan}(float|complex): float|complex
+      Trigonometric inverse sine, cosine or tangent.
+  * arctan2(float1, float2): float
+      Trigonometric inverse tangent of float1/float2.
+  * {sinh,cosh,tanh}(float|complex): float|complex
+      Hyperbolic sine, cosine or tangent.
+  * {arcsinh,arccosh,arctanh}(float|complex): float|complex
+      Hyperbolic inverse sine, cosine or tangent.
+  * {log,log10,log1p}(float|complex): float|complex
+      Natural, base-10 and log(1+x) logarithms.
+  * {exp,expm1}(float|complex): float|complex
+      Exponential and exponential minus one.
+  * sqrt(float|complex): float|complex
+      Square root.
+  * abs(float|complex): float|complex
+      Absolute value.
+  * {real,imag}(complex): float
+      Real or imaginary part of complex.
+  * complex(float, float): complex
+      Complex from real and imaginary parts.
 
 .. Notes:
 
-   + `abs()` for complex inputs returns a ``complex`` output too.
-   This is a departure from NumPy where a ``float`` is returned
-   instead.  However, Numexpr is not flexible enough yet so as to
-   allow this to happen.  Meanwhile, if you want to mimic NumPy
-   behaviour, you may want to select the real part via the ``real``
-   function (e.g. "real(abs(cplx))") or via the ``real`` selector
-   (e.g. "abs(cplx).real").
+  + `abs()` for complex inputs returns a ``complex`` output too.  This
+  is a departure from NumPy where a ``float`` is returned instead.
+  However, Numexpr is not flexible enough yet so as to allow this to
+  happen.  Meanwhile, if you want to mimic NumPy behaviour, you may
+  want to select the real part via the ``real`` function
+  (e.g. "real(abs(cplx))") or via the ``real`` selector
+  (e.g. "abs(cplx).real").
 
 More functions can be added if you need them.
+
+
+Supported reduction operations
+==============================
+
+The next are the current supported set:
+
+  * sum(number, axis=None): Sum of array elements over a given axis.
+    Negative axis are not supported.
+
+  * prod(number, axis=None): Product of array elements over a given
+    axis.  Negative axis are not supported.
 
 
 General routines
 ================
 
-  * evaluate(expression, local_dict=None, global_dict=None, **kwargs):
-  Evaluate a simple array expression element-wise.  See examples above.
+  * evaluate(expression, local_dict=None, global_dict=None,
+             out=None, order='K', casting='safe', **kwargs):
+    Evaluate a simple array expression element-wise.  See docstrings
+    for more info on parameters.  Also, see examples above.
 
   * test():  Run all the tests in the test suite.
 

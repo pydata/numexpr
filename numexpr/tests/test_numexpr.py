@@ -85,41 +85,42 @@ class test_numexpr(TestCase):
                       ('prod_ddn', 'r0', 't3', 2)])
         # Check that full reductions work.
         x = zeros(1e5)+.01   # checks issue #41
-        assert_equal(evaluate("sum(x+2,axis=0)"), sum(x+2,axis=0))
-        assert_equal(evaluate("prod(x,axis=0)"), prod(x,axis=0))
+        assert_allclose(evaluate("sum(x+2,axis=None)"), sum(x+2,axis=None))
+        assert_allclose(evaluate("sum(x+2,axis=0)"), sum(x+2,axis=0))
+        assert_allclose(evaluate("prod(x,axis=0)"), prod(x,axis=0))
 
         x = arange(10.0)
-        assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_equal(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
+        assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
 
         x = arange(100.0)
-        assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_equal(evaluate("prod(x-1,axis=0)"), prod(x-1,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
+        assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x-1,axis=0))
         x = linspace(0.1,1.0,2000)
-        assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_equal(evaluate("prod(x-1,axis=0)"), prod(x-1,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
+        assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x-1,axis=0))
 
         # Check that reductions along an axis work
         y = arange(9.0).reshape(3,3)
-        assert_equal(evaluate("sum(y**2, axis=1)"), sum(y**2, axis=1))
-        assert_equal(evaluate("sum(y**2, axis=0)"), sum(y**2, axis=0))
-        assert_equal(evaluate("sum(y**2, axis=None)"), sum(y**2, axis=None))
-        assert_equal(evaluate("prod(y**2, axis=1)"), prod(y**2, axis=1))
-        assert_equal(evaluate("prod(y**2, axis=0)"), prod(y**2, axis=0))
-        assert_equal(evaluate("prod(y**2, axis=None)"), prod(y**2, axis=None))
+        assert_allclose(evaluate("sum(y**2, axis=1)"), sum(y**2, axis=1))
+        assert_allclose(evaluate("sum(y**2, axis=0)"), sum(y**2, axis=0))
+        assert_allclose(evaluate("sum(y**2, axis=None)"), sum(y**2, axis=None))
+        assert_allclose(evaluate("prod(y**2, axis=1)"), prod(y**2, axis=1))
+        assert_allclose(evaluate("prod(y**2, axis=0)"), prod(y**2, axis=0))
+        assert_allclose(evaluate("prod(y**2, axis=None)"), prod(y**2, axis=None))
         # Check integers
         x = arange(10.)
         x = x.astype(int)
-        assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_equal(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
+        assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
         # Check longs
         x = x.astype(long)
-        assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_equal(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
+        assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
         # Check complex
         x = x + .1j
-        assert_equal(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_equal(evaluate("prod(x-1,axis=0)"), prod(x-1,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
+        assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x-1,axis=0))
 
     def test_axis(self):
         y = arange(9.0).reshape(3,3)
@@ -131,6 +132,13 @@ class test_numexpr(TestCase):
             raise ValueError("should raise exception!")
         try:
             evaluate("sum(y, axis=-3)")
+        except ValueError:
+            pass
+        else:
+            raise ValueError("should raise exception!")
+        try:
+            # Negative axis are not supported
+            evaluate("sum(y, axis=-1)")
         except ValueError:
             pass
         else:
@@ -241,7 +249,7 @@ class test_evaluate(TestCase):
     def test_all_scalar(self):
         a = 3.
         b = 4.
-        assert_equal(evaluate("a+b"), a+b)
+        assert_allclose(evaluate("a+b"), a+b)
         expr = NumExpr("2*a+3*b",[('a', double),('b', double)])
         assert_equal(expr(a,b), 2*a+3*b)
 
