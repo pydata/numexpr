@@ -430,7 +430,7 @@ static char
 get_return_sig(PyObject* program) {
     int sig;
     char last_opcode;
-    int end = PyString_Size(program);
+    Py_ssize_t end = PyString_Size(program);
     char *program_str = PyString_AS_STRING(program);
 
     do {
@@ -492,7 +492,7 @@ last_opcode(PyObject *program_object) {
 
 static int
 get_reduction_axis(PyObject* program) {
-    int end = PyString_Size(program);
+    Py_ssize_t end = PyString_Size(program);
     int axis = ((unsigned char *)PyString_AS_STRING(program))[end-1];
     if (axis != 255 && axis >= MAX_DIMS)
         axis = MAX_DIMS - axis;
@@ -644,15 +644,15 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    n_inputs = PyString_Size(signature);
-    n_temps = PyString_Size(tempsig);
+    n_inputs = (int)PyString_Size(signature);
+    n_temps = (int)PyString_Size(tempsig);
 
     if (o_constants) {
         if (!PySequence_Check(o_constants) ) {
                 PyErr_SetString(PyExc_TypeError, "constants must be a sequence");
                 return -1;
         }
-        n_constants = PySequence_Length(o_constants);
+        n_constants = (int)PySequence_Length(o_constants);
         if (!(constants = PyTuple_New(n_constants)))
             return -1;
         if (!(constsig = PyString_FromStringAndSize(NULL, n_constants))) {
@@ -706,7 +706,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
             if (PyString_Check(o)) {
                 PyString_AS_STRING(constsig)[i] = 's';
-                itemsizes[i] = PyString_GET_SIZE(o);
+                itemsizes[i] = (int)PyString_GET_SIZE(o);
                 continue;
             }
             PyErr_SetString(PyExc_TypeError, "constants must be of type bool/int/long/float/double/complex/str");
@@ -978,7 +978,7 @@ get_temps_space(struct vm_params params, char **mem, size_t block_size)
     int r, k = 1 + params.n_inputs + params.n_constants;
 
     for (r = k; r < k + params.n_temps; r++) {
-        mem[r] = malloc(block_size * params.memsizes[r]);
+        mem[r] = (char *)malloc(block_size * params.memsizes[r]);
         if (mem[r] == NULL) {
             return -1;
         }
@@ -1024,7 +1024,7 @@ vm_engine_iter_task(NpyIter *iter, intp *memsteps, struct vm_params params, int 
     while (block_size == BLOCK_SIZE1) {
 #define REDUCTION_INNER_LOOP
 #define BLOCK_SIZE BLOCK_SIZE1
-#include "interp_body.c"
+#include "interp_body.cpp"
 #undef BLOCK_SIZE
 #undef REDUCTION_INNER_LOOP
         iternext(iter);
@@ -1035,7 +1035,7 @@ vm_engine_iter_task(NpyIter *iter, intp *memsteps, struct vm_params params, int 
     if (block_size > 0) do {
 #define REDUCTION_INNER_LOOP
 #define BLOCK_SIZE block_size
-#include "interp_body.c"
+#include "interp_body.cpp"
 #undef BLOCK_SIZE
 #undef REDUCTION_INNER_LOOP
     } while (iternext(iter));
@@ -1068,7 +1068,7 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter, intp *memsteps, struct vm_params
     block_size = *size_ptr;
     while (block_size == BLOCK_SIZE1) {
 #define BLOCK_SIZE BLOCK_SIZE1
-#include "interp_body.c"
+#include "interp_body.cpp"
 #undef BLOCK_SIZE
         iternext(iter);
         block_size = *size_ptr;
@@ -1077,7 +1077,7 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter, intp *memsteps, struct vm_params
     /* Then finish off the rest */
     if (block_size > 0) do {
 #define BLOCK_SIZE block_size
-#include "interp_body.c"
+#include "interp_body.cpp"
 #undef BLOCK_SIZE
     } while (iternext(iter));
 
@@ -1089,7 +1089,7 @@ static int
 vm_engine_iter_parallel(NpyIter *iter, struct vm_params params, int *pc_error,
                         char **errmsg)
 {
-    unsigned int i;
+    int i;
     npy_intp numblocks, taskfactor;
 
     if (errmsg == NULL) {
@@ -1232,7 +1232,7 @@ void *th_worker(void *tidptr)
         n_temps = params.n_temps;
         memsize = (1+n_inputs+n_constants+n_temps) * sizeof(char *);
         /* XXX malloc seems thread safe for POSIX, but for Win? */
-        mem = malloc(memsize);
+        mem = (char **)malloc(memsize);
         memcpy(mem, params.mem, memsize);
 
         errmsg = th_params.errmsg;
@@ -1329,7 +1329,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                      int reduction_outer_loop, int *pc_error)
 {
     int r;
-    intp plen;
+    Py_ssize_t plen;
     struct vm_params params;
     char *errmsg = NULL;
 
@@ -1339,7 +1339,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
         return -1;
     }
 
-    params.prog_len = plen;
+    params.prog_len = (int)plen;
     params.output = NULL;
     params.inputs = NULL;
     params.index_data = NULL;
@@ -1349,7 +1349,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     params.mem = self->mem;
     params.memsteps = self->memsteps;
     params.memsizes = self->memsizes;
-    params.r_end = PyString_Size(self->fullsig);
+    params.r_end = (int)PyString_Size(self->fullsig);
 
     if ((nthreads == 1) || force_serial) {
         /* Can do it as one "task" */
@@ -1441,7 +1441,7 @@ static int
 run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
 {
     struct vm_params params;
-    intp plen;
+    Py_ssize_t plen;
     char **mem;
     intp *memsteps;
 
@@ -1453,7 +1453,7 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     if (self->n_inputs != 0) {
         return -1;
     }
-    params.prog_len = plen;
+    params.prog_len = (int)plen;
     params.output = output;
     params.inputs = NULL;
     params.index_data = NULL;
@@ -1463,13 +1463,13 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     params.mem = self->mem;
     memsteps = self->memsteps;
     params.memsizes = self->memsizes;
-    params.r_end = PyString_Size(self->fullsig);
+    params.r_end = (int)PyString_Size(self->fullsig);
 
     mem = params.mem;
     get_temps_space(params, mem, 1);
 #define SINGLE_ITEM_CONST_LOOP
 #define BLOCK_SIZE 1
-#include "interp_body.c"
+#include "interp_body.cpp"
 #undef BLOCK_SIZE
 #undef SINGLE_ITEM_CONST_LOOP
     free_temps_space(params, mem);
@@ -1619,7 +1619,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     NPY_ORDER order = NPY_KEEPORDER;
     unsigned int i, n_inputs;
     int r, pc_error = 0;
-    int reduction_axis = -1, reduction_size = 1;
+    int reduction_axis = -1;
+    npy_intp reduction_size = 1;
     int ex_uses_vml = 0, is_reduction = 0, reduction_outer_loop = 0;
 
     /* To specify axes when doing a reduction */
@@ -1642,7 +1643,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     /* Check whether there's a reduction as the final step */
     is_reduction = last_opcode(self->program) > OP_REDUCTION;
 
-    n_inputs = PyTuple_Size(args);
+    n_inputs = (int)PyTuple_Size(args);
     if (PyString_Size(self->signature) != n_inputs) {
         return PyErr_Format(PyExc_ValueError,
                             "number of inputs doesn't match program");
@@ -1729,7 +1730,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         if (reduction_axis != 255) {
             /* Get the number of broadcast dimensions */
             for (i = 0; i < n_inputs; ++i) {
-                intp ndim = PyArray_NDIM(operands[i+1]);
+                int ndim = PyArray_NDIM(operands[i+1]);
                 if (ndim > oa_ndim) {
                     oa_ndim = ndim;
                 }
@@ -1743,7 +1744,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             op_axes_ptrs[0] = NULL;
             op_axes_reduction_values[0] = -1;
             for (i = 0; i < n_inputs; ++i) {
-                intp j = 0, idim, ndim = PyArray_NDIM(operands[i+1]);
+                int j = 0, idim, ndim = PyArray_NDIM(operands[i+1]);
                 for (idim = 0; idim < oa_ndim-ndim; ++idim) {
                     if (idim != reduction_axis) {
                         op_axes_values[i+1][j++] = -1;
@@ -1817,7 +1818,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 Py_INCREF(dtypes[0]);
             } else {  /* constant, like in '"foo"' */
                 dtypes[0] = PyArray_DescrNewFromType(PyArray_STRING);
-                dtypes[0]->elsize = self->memsizes[1];
+                dtypes[0]->elsize = (int)self->memsizes[1];
             }  /* no string temporaries, so no third case  */
         }
         if (dtypes[0] == NULL) {
@@ -1849,7 +1850,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
         if (zerolen != 0) {
             /* Allocate the output */
-            intp ndim = PyArray_NDIM(operands[zeroi]);
+            int ndim = PyArray_NDIM(operands[zeroi]);
             intp *dims = PyArray_DIMS(operands[zeroi]);
             operands[0] = (PyArrayObject *)PyArray_SimpleNew(ndim, dims,
                                               typecode_from_char(retsig));
@@ -1899,7 +1900,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             operands[0] = a;
         }
 
-        r = run_interpreter_const(self, PyArray_DATA(operands[0]), &pc_error);
+        r = run_interpreter_const(self, PyArray_BYTES(operands[0]), &pc_error);
 
         ret = (PyObject *)operands[0];
         Py_INCREF(ret);

@@ -36,7 +36,7 @@
 #define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
 
-/* The next are directly called from interp_body.c */
+/* The next are directly called from interp_body.cpp */
 #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
 #define floorf(x)    ((float)floor((double)(x)))
 

@@ -44,7 +44,7 @@ from numexpr.utils import (
 
 # Initialize the number of threads to be used
 ncores = detect_number_of_cores()
-# Check that we don't surpass the MAX_THREADS in interpreter.c
+# Check that we don't surpass the MAX_THREADS in interpreter.cpp
 if ncores > 4096:
     ncores = 4096
 set_num_threads(ncores)

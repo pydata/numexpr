@@ -69,8 +69,8 @@ def configuration():
     else:
         pthread_win = []
     extension_config_data = {
-        'sources': ['numexpr/interpreter.c'] + pthread_win,
-        'depends': ['numexpr/interp_body.c',
+        'sources': ['numexpr/interpreter.cpp'] + pthread_win,
+        'depends': ['numexpr/interp_body.cpp',
                     'numexpr/complex_functions.inc',
                     'numexpr/msvc_function_stubs.inc'],
         'libraries': ['m'],

@@ -13,6 +13,10 @@
 
 #include <windows.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Defines that adapt Windows API threads to pthreads API
  */
@@ -64,5 +68,9 @@ extern int pthread_create(pthread_t *thread, const void *unused,
 #define pthread_join(a, b) win32_pthread_join(&(a), (b))
 
 extern int win32_pthread_join(pthread_t *thread, void **value_ptr);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* PTHREAD_H */
