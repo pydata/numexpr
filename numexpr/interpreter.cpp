@@ -2224,8 +2224,8 @@ add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
     return r;
 }
 
-extern "C" void
-initinterpreter(void)
+PyMODINIT_FUNC
+initinterpreter()
 {
     PyObject *m, *d;
 
