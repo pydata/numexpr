@@ -71,8 +71,9 @@ def configuration():
     extension_config_data = {
         'sources': ['numexpr/interpreter.cpp'] + pthread_win,
         'depends': ['numexpr/interp_body.cpp',
-                    'numexpr/complex_functions.inc',
-                    'numexpr/msvc_function_stubs.inc'],
+                    'numexpr/complex_functions.hpp',
+                    'numexpr/msvc_function_stubs.hpp',
+                    'numexpr/numexpr_config.hpp'],
         'libraries': ['m'],
         'extra_compile_args': ['-funroll-all-loops',],
         }

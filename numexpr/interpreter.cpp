@@ -18,16 +18,9 @@
 #include "string.h"
 #include "assert.h"
 
-#if defined(_WIN32)
-  #include "win32/pthread.h"
-  #include <process.h>
-  #define getpid _getpid
-#else
-  #include <pthread.h>
-  #include "unistd.h"
-#endif
+#include "numexpr_config.hpp"
 
-#include "complex_functions.inc"
+#include "complex_functions.hpp"
 
 #ifdef SCIPY_MKL_H
 #define USE_VML
@@ -41,9 +34,9 @@
 #ifdef _WIN32
   #define inline __inline
   #ifndef __MINGW32__
-    #include "missing_posix_functions.inc"
+    #include "missing_posix_functions.hpp"
   #endif
-  #include "msvc_function_stubs.inc"
+  #include "msvc_function_stubs.hpp"
 #endif
 
 /* x86 platform works with unaligned reads and writes */
@@ -99,7 +92,7 @@ pthread_cond_t count_threads_cv;
 
 enum OpCodes {
 #define OPCODE(n, e, ...) e = n,
-#include "opcodes.inc"
+#include "opcodes.hpp"
 #undef OPCODE
 };
 
@@ -117,7 +110,7 @@ static char op_signature_table[][max_args] = {
 #define Tn 'n'
 #define T0 0
 #define OPCODE(n, e, ex, rt, a1, a2, a3) {rt, a1, a2, a3},
-#include "opcodes.inc"
+#include "opcodes.hpp"
 #undef OPCODE
 #undef Tb
 #undef Ti
@@ -160,7 +153,7 @@ op_signature(int op, unsigned int n) {
 
 enum FuncFFCodes {
 #define FUNC_FF(fop, ...) fop,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_FF
 };
 
@@ -169,13 +162,13 @@ typedef float (*FuncFFPtr)(float);
 #ifdef _WIN32
 FuncFFPtr functions_ff[] = {
 #define FUNC_FF(fop, s, f, f_win32, ...) f_win32,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_FF
 };
 #else
 FuncFFPtr functions_ff[] = {
 #define FUNC_FF(fop, s, f, ...) f,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_FF
 };
 #endif
@@ -184,14 +177,14 @@ FuncFFPtr functions_ff[] = {
 typedef void (*FuncFFPtr_vml)(int, const float*, float*);
 FuncFFPtr_vml functions_ff_vml[] = {
 #define FUNC_FF(fop, s, f, f_win32, f_vml) f_vml,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_FF
 };
 #endif
 
 enum FuncFFFCodes {
 #define FUNC_FFF(fop, ...) fop,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_FFF
 };
 
@@ -200,13 +193,13 @@ typedef float (*FuncFFFPtr)(float, float);
 #ifdef _WIN32
 FuncFFFPtr functions_fff[] = {
 #define FUNC_FFF(fop, s, f, f_win32, ...) f_win32,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_FFF
 };
 #else
 FuncFFFPtr functions_fff[] = {
 #define FUNC_FFF(fop, s, f, ...) f,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_FFF
 };
 #endif
@@ -224,7 +217,7 @@ static void vsfmod(int n, const float* x1, const float* x2, float* dest)
 typedef void (*FuncFFFPtr_vml)(int, const float*, const float*, float*);
 FuncFFFPtr_vml functions_fff_vml[] = {
 #define FUNC_FFF(fop, s, f, f_win32, f_vml) f_vml,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_FFF
 };
 #endif
@@ -232,7 +225,7 @@ FuncFFFPtr_vml functions_fff_vml[] = {
 
 enum FuncDDCodes {
 #define FUNC_DD(fop, ...) fop,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_DD
 };
 
@@ -240,7 +233,7 @@ typedef double (*FuncDDPtr)(double);
 
 FuncDDPtr functions_dd[] = {
 #define FUNC_DD(fop, s, f, ...) f,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_DD
 };
 
@@ -248,14 +241,14 @@ FuncDDPtr functions_dd[] = {
 typedef void (*FuncDDPtr_vml)(int, const double*, double*);
 FuncDDPtr_vml functions_dd_vml[] = {
 #define FUNC_DD(fop, s, f, f_vml) f_vml,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_DD
 };
 #endif
 
 enum FuncDDDCodes {
 #define FUNC_DDD(fop, ...) fop,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_DDD
 };
 
@@ -263,7 +256,7 @@ typedef double (*FuncDDDPtr)(double, double);
 
 FuncDDDPtr functions_ddd[] = {
 #define FUNC_DDD(fop, s, f, ...) f,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_DDD
 };
 
@@ -280,7 +273,7 @@ static void vdfmod(int n, const double* x1, const double* x2, double* dest)
 typedef void (*FuncDDDPtr_vml)(int, const double*, const double*, double*);
 FuncDDDPtr_vml functions_ddd_vml[] = {
 #define FUNC_DDD(fop, s, f, f_vml) f_vml,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_DDD
 };
 #endif
@@ -288,7 +281,7 @@ FuncDDDPtr_vml functions_ddd_vml[] = {
 
 enum FuncCCCodes {
 #define FUNC_CC(fop, ...) fop,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_CC
 };
 
@@ -297,7 +290,7 @@ typedef void (*FuncCCPtr)(cdouble*, cdouble*);
 
 FuncCCPtr functions_cc[] = {
 #define FUNC_CC(fop, s, f, ...) f,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_CC
 };
 
@@ -336,7 +329,7 @@ typedef void (*FuncCCPtr_vml)(int, const MKL_Complex16[], MKL_Complex16[]);
 
 FuncCCPtr_vml functions_cc_vml[] = {
 #define FUNC_CC(fop, s, f, f_vml) f_vml,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_CC
 };
 #endif
@@ -344,7 +337,7 @@ FuncCCPtr_vml functions_cc_vml[] = {
 
 enum FuncCCCCodes {
 #define FUNC_CCC(fop, ...) fop,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_CCC
 };
 
@@ -352,7 +345,7 @@ typedef void (*FuncCCCPtr)(cdouble*, cdouble*, cdouble*);
 
 FuncCCCPtr functions_ccc[] = {
 #define FUNC_CCC(fop, s, f) f,
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_CCC
 };
 
@@ -2246,7 +2239,7 @@ initinterpreter()
 
 #define OPCODE(n, name, sname, ...)                              \
     if (add_symbol(d, sname, name, "add_op") < 0) { return; }
-#include "opcodes.inc"
+#include "opcodes.hpp"
 #undef OPCODE
 
     if (PyModule_AddObject(m, "opcodes", d) < 0) return;
@@ -2262,7 +2255,7 @@ initinterpreter()
 #define FUNC_DDD(name, sname, ...) add_func(name, sname);
 #define FUNC_CC(name, sname, ...)  add_func(name, sname);
 #define FUNC_CCC(name, sname, ...) add_func(name, sname);
-#include "functions.inc"
+#include "functions.hpp"
 #undef FUNC_CCC
 #undef FUNC_CC
 #undef FUNC_DDD

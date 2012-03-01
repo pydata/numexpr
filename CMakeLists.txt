@@ -63,6 +63,12 @@ include_directories(
 
 set(numexpr_SRC
     numexpr/interpreter.cpp
+    numexpr/complex_functions.hpp
+    numexpr/functions.hpp
+    numexpr/opcodes.hpp
+    numexpr/missing_posix_functions.hpp
+    numexpr/msvc_function_stubs.hpp
+    numexpr/numexpr_config.hpp
     )
 if(CMAKE_HOST_WIN32)
     set(numexpr_SRC
