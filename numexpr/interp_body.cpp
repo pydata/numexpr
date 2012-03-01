@@ -124,10 +124,10 @@
     // use the iterator's inner loop data
     memcpy(mem, iter_dataptr, (1+params.n_inputs)*sizeof(char*));
 #  ifndef NO_OUTPUT_BUFFERING
-	// if output buffering is necessary, first write to the buffer
-	if(params.out_buffer != NULL) {
-		mem[0] = params.out_buffer;
-	}
+    // if output buffering is necessary, first write to the buffer
+    if(params.out_buffer != NULL) {
+        mem[0] = params.out_buffer;
+    }
 #  endif // NO_OUTPUT_BUFFERING
     memcpy(memsteps, iter_strides, (1+params.n_inputs)*sizeof(npy_intp));
 #endif // SINGLE_ITEM_CONST_LOOP
@@ -458,10 +458,10 @@
     }
 
 #ifndef NO_OUTPUT_BUFFERING
-	// If output buffering was necessary, copy the buffer to the output
-	if(params.out_buffer != NULL) {
-		memcpy(iter_dataptr[0], params.out_buffer, params.memsizes[0] * BLOCK_SIZE);
-	}
+    // If output buffering was necessary, copy the buffer to the output
+    if(params.out_buffer != NULL) {
+        memcpy(iter_dataptr[0], params.out_buffer, params.memsizes[0] * BLOCK_SIZE);
+    }
 #endif // NO_OUTPUT_BUFFERING
 
 #undef VEC_LOOP

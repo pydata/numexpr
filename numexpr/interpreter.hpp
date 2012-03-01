@@ -61,9 +61,9 @@ struct vm_params {
     npy_intp *memsteps;
     npy_intp *memsizes;
     struct index_data *index_data;
-	// Memory for output buffering. If output buffering is unneeded,
-	// it contains NULL.
-	char *out_buffer;
+    // Memory for output buffering. If output buffering is unneeded,
+    // it contains NULL.
+    char *out_buffer;
 };
 
 // Structure for parameters in worker threads
@@ -83,8 +83,8 @@ struct thread_data {
     NpyIter *reduce_iter[MAX_THREADS];
     // Flag indicating reduction is the outer loop instead of the inner
     bool reduction_outer_loop;
-	// Flag indicating whether output buffering is needed
-	bool need_output_buffering;
+    // Flag indicating whether output buffering is needed
+    bool need_output_buffering;
 };
 
 // Global state which holds thread parameters
@@ -97,6 +97,6 @@ int check_program(NumExprObject *self);
 int get_temps_space(const vm_params& params, char **mem, size_t block_size);
 void free_temps_space(const vm_params& params, char **mem);
 int vm_engine_iter_task(NpyIter *iter, npy_intp *memsteps,
-					const vm_params& params, int *pc_error, char **errmsg);
+                    const vm_params& params, int *pc_error, char **errmsg);
 
 #endif // NUMEXPR_INTERPRETER_HPP

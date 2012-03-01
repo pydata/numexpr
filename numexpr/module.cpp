@@ -43,8 +43,8 @@ void *th_worker(void *tidptr)
     npy_intp *memsteps;
     npy_intp istart, iend;
     char **errmsg;
-	// For output buffering if needed
-	vector<char> out_buffer;
+    // For output buffering if needed
+    vector<char> out_buffer;
 
     while (1) {
 
@@ -73,13 +73,13 @@ void *th_worker(void *tidptr)
         params = th_params.params;
         pc_error = th_params.pc_error;
 
-		// If output buffering is needed, allocate it
-		if (th_params.need_output_buffering) {
-			out_buffer.resize(params.memsizes[0] * BLOCK_SIZE1);
-			params.out_buffer = &out_buffer[0];
-		} else {
-			params.out_buffer = NULL;
-		}
+        // If output buffering is needed, allocate it
+        if (th_params.need_output_buffering) {
+            out_buffer.resize(params.memsizes[0] * BLOCK_SIZE1);
+            params.out_buffer = &out_buffer[0];
+        } else {
+            params.out_buffer = NULL;
+        }
 
         /* Populate private data for each thread */
         n_inputs = params.n_inputs;
@@ -286,7 +286,7 @@ _set_vml_accuracy_mode(PyObject *self, PyObject *args)
 {
     int mode_in, mode_old;
     if (!PyArg_ParseTuple(args, "i", &mode_in))
-	return NULL;
+    return NULL;
     mode_old = vmlGetMode() & VML_ACCURACY_MASK;
     vmlSetMode((mode_in & VML_ACCURACY_MASK) | VML_ERRMODE_IGNORE );
     return Py_BuildValue("i", mode_old);
@@ -297,7 +297,7 @@ _set_vml_num_threads(PyObject *self, PyObject *args)
 {
     int max_num_threads;
     if (!PyArg_ParseTuple(args, "i", &max_num_threads))
-	return NULL;
+    return NULL;
     mkl_domain_set_num_threads(max_num_threads, MKL_VML);
     Py_RETURN_NONE;
 }
@@ -309,7 +309,7 @@ _set_num_threads(PyObject *self, PyObject *args)
 {
     int num_threads, nthreads_old;
     if (!PyArg_ParseTuple(args, "i", &num_threads))
-	return NULL;
+    return NULL;
     nthreads_old = numexpr_set_nthreads(num_threads);
     return Py_BuildValue("i", nthreads_old);
 }

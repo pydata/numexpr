@@ -131,7 +131,7 @@ static void vsfmod(int n, const float* x1, const float* x2, float* dest)
 {
     int j;
     for(j=0; j < n; j++) {
-	dest[j] = fmod(x1[j], x2[j]);
+    dest[j] = fmod(x1[j], x2[j]);
     };
 };
 
@@ -174,7 +174,7 @@ static void vdfmod(int n, const double* x1, const double* x2, double* dest)
 {
     int j;
     for(j=0; j < n; j++) {
-	dest[j] = fmod(x1[j], x2[j]);
+    dest[j] = fmod(x1[j], x2[j]);
     };
 };
 
@@ -203,7 +203,7 @@ static void vzExpm1(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
     int j;
     vzExp(n, x1, dest);
     for (j=0; j<n; j++) {
-	dest[j].real -= 1.0;
+    dest[j].real -= 1.0;
     };
 };
 
@@ -211,8 +211,8 @@ static void vzLog1p(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
     int j;
     for (j=0; j<n; j++) {
-	dest[j].real = x1[j].real + 1;
-	dest[j].imag = x1[j].imag;
+    dest[j].real = x1[j].real + 1;
+    dest[j].imag = x1[j].imag;
     };
     vzLn(n, dest, dest);
 };
@@ -223,7 +223,7 @@ static void vzAbs_(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
     int j;
     for (j=0; j<n; j++) {
         dest[j].real = sqrt(x1[j].real*x1[j].real + x1[j].imag*x1[j].imag);
-	dest[j].imag = 0;
+    dest[j].imag = 0;
     };
 };
 
@@ -492,8 +492,8 @@ void free_temps_space(const vm_params& params, char **mem)
 
 /* Serial/parallel task iterator version of the VM engine */
 int vm_engine_iter_task(NpyIter *iter, npy_intp *memsteps,
-					const vm_params& params,
-					int *pc_error, char **errmsg)
+                    const vm_params& params,
+                    int *pc_error, char **errmsg)
 {
     char **mem = params.mem;
     NpyIter_IterNextFunc *iternext;
@@ -539,7 +539,7 @@ int vm_engine_iter_task(NpyIter *iter, npy_intp *memsteps,
 
 static int
 vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps,
-				const vm_params& params, int *pc_error, char **errmsg)
+                const vm_params& params, int *pc_error, char **errmsg)
 {
     char **mem = params.mem;
     NpyIter_IterNextFunc *iternext;
@@ -586,7 +586,7 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps,
 /* Parallel iterator version of VM engine */
 static int
 vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
-						bool need_output_buffering, int *pc_error,
+                        bool need_output_buffering, int *pc_error,
                         char **errmsg)
 {
     int i;
@@ -608,7 +608,7 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
     th_params.block_size = numblocks * BLOCK_SIZE1;
 
     th_params.params = params;
-	th_params.need_output_buffering = need_output_buffering;
+    th_params.need_output_buffering = need_output_buffering;
     th_params.ret_code = 0;
     th_params.pc_error = pc_error;
     th_params.errmsg = errmsg;
@@ -682,7 +682,7 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
 static int
 run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                      bool reduction_outer_loop, bool need_output_buffering,
-					 int *pc_error)
+                     int *pc_error)
 {
     int r;
     Py_ssize_t plen;
@@ -706,15 +706,15 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     params.memsteps = self->memsteps;
     params.memsizes = self->memsizes;
     params.r_end = (int)PyString_Size(self->fullsig);
-	params.out_buffer = NULL;
+    params.out_buffer = NULL;
 
     if ((gs.nthreads == 1) || gs.force_serial) {
         /* Can do it as one "task" */
         if (reduce_iter == NULL) {
-			// Allocate memory for output buffering if needed
-			vector<char> out_buffer(need_output_buffering ?
-								(self->memsizes[0] * BLOCK_SIZE1) : 0);
-			params.out_buffer = need_output_buffering ? &out_buffer[0] : NULL;
+            // Allocate memory for output buffering if needed
+            vector<char> out_buffer(need_output_buffering ?
+                                (self->memsizes[0] * BLOCK_SIZE1) : 0);
+            params.out_buffer = need_output_buffering ? &out_buffer[0] : NULL;
             /* Reset the iterator to allocate its buffers */
             if(NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
                 return -1;
@@ -784,7 +784,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     else {
         if (reduce_iter == NULL) {
             r = vm_engine_iter_parallel(iter, params, need_output_buffering,
-						pc_error, &errmsg);
+                        pc_error, &errmsg);
         }
         else {
             errmsg = "Parallel engine doesn't support reduction yet";
@@ -855,7 +855,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     int reduction_axis = -1;
     npy_intp reduction_size = 1;
     int ex_uses_vml = 0, is_reduction = 0;
-	bool reduction_outer_loop = false, need_output_buffering = false;
+    bool reduction_outer_loop = false, need_output_buffering = false;
 
     /* To specify axes when doing a reduction */
     int op_axes_values[NPY_MAXARGS][NPY_MAXDIMS],
@@ -940,14 +940,14 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         operands[i+1] = (PyArrayObject *)a;
         dtypes[i+1] = PyArray_DescrFromType(typecode);
 
-		if (operands[0] != NULL) {
-			// Check for the case where "out" is one of the inputs
-			// TODO: Probably should deal with the general overlap case,
-			//       but NumPy ufuncs don't do that yet either.
-			if (PyArray_DATA(operands[0]) == PyArray_DATA(operands[i+1])) {
-				need_output_buffering = true;
-			}
-		}
+        if (operands[0] != NULL) {
+            // Check for the case where "out" is one of the inputs
+            // TODO: Probably should deal with the general overlap case,
+            //       but NumPy ufuncs don't do that yet either.
+            if (PyArray_DATA(operands[0]) == PyArray_DATA(operands[i+1])) {
+                need_output_buffering = true;
+            }
+        }
 
         if (operands[i+1] == NULL || dtypes[i+1] == NULL) {
             goto fail;
@@ -1290,7 +1290,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     r = run_interpreter(self, iter, reduce_iter,
                              reduction_outer_loop, need_output_buffering,
-							 &pc_error);
+                             &pc_error);
 
     if (r < 0) {
         if (r == -1) {
