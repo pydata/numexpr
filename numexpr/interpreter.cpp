@@ -13,11 +13,14 @@
 #include <math.h>
 #include <string.h>
 #include <assert.h>
+#include <vector>
 
 #include "numexpr_config.hpp"
 #include "complex_functions.hpp"
 #include "interpreter.hpp"
 #include "numexpr_object.hpp"
+
+using namespace std;
 
 // Global state
 thread_data th_params;
@@ -489,7 +492,8 @@ void free_temps_space(const vm_params& params, char **mem)
 
 /* Serial/parallel task iterator version of the VM engine */
 int vm_engine_iter_task(NpyIter *iter, npy_intp *memsteps,
-					const vm_params& params, int *pc_error, char **errmsg)
+					const vm_params& params,
+					int *pc_error, char **errmsg)
 {
     char **mem = params.mem;
     NpyIter_IterNextFunc *iternext;
@@ -534,7 +538,8 @@ int vm_engine_iter_task(NpyIter *iter, npy_intp *memsteps,
 }
 
 static int
-vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps, struct vm_params params, int *pc_error, char **errmsg)
+vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps,
+				const vm_params& params, int *pc_error, char **errmsg)
 {
     char **mem = params.mem;
     NpyIter_IterNextFunc *iternext;
@@ -558,7 +563,9 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps, struct vm_pa
     block_size = *size_ptr;
     while (block_size == BLOCK_SIZE1) {
 #define BLOCK_SIZE BLOCK_SIZE1
+#define NO_OUTPUT_BUFFERING // Because it's a reduction
 #include "interp_body.cpp"
+#undef NO_OUTPUT_BUFFERING
 #undef BLOCK_SIZE
         iternext(iter);
         block_size = *size_ptr;
@@ -567,7 +574,9 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps, struct vm_pa
     /* Then finish off the rest */
     if (block_size > 0) do {
 #define BLOCK_SIZE block_size
+#define NO_OUTPUT_BUFFERING // Because it's a reduction
 #include "interp_body.cpp"
+#undef NO_OUTPUT_BUFFERING
 #undef BLOCK_SIZE
     } while (iternext(iter));
 
@@ -576,7 +585,8 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps, struct vm_pa
 
 /* Parallel iterator version of VM engine */
 static int
-vm_engine_iter_parallel(NpyIter *iter, struct vm_params params, int *pc_error,
+vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
+						bool need_output_buffering, int *pc_error,
                         char **errmsg)
 {
     int i;
@@ -598,6 +608,7 @@ vm_engine_iter_parallel(NpyIter *iter, struct vm_params params, int *pc_error,
     th_params.block_size = numblocks * BLOCK_SIZE1;
 
     th_params.params = params;
+	th_params.need_output_buffering = need_output_buffering;
     th_params.ret_code = 0;
     th_params.pc_error = pc_error;
     th_params.errmsg = errmsg;
@@ -670,11 +681,12 @@ vm_engine_iter_parallel(NpyIter *iter, struct vm_params params, int *pc_error,
 
 static int
 run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
-                     int reduction_outer_loop, int *pc_error)
+                     bool reduction_outer_loop, bool need_output_buffering,
+					 int *pc_error)
 {
     int r;
     Py_ssize_t plen;
-    struct vm_params params;
+    vm_params params;
     char *errmsg = NULL;
 
     *pc_error = -1;
@@ -694,10 +706,15 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     params.memsteps = self->memsteps;
     params.memsizes = self->memsizes;
     params.r_end = (int)PyString_Size(self->fullsig);
+	params.out_buffer = NULL;
 
     if ((gs.nthreads == 1) || gs.force_serial) {
         /* Can do it as one "task" */
         if (reduce_iter == NULL) {
+			// Allocate memory for output buffering if needed
+			vector<char> out_buffer(need_output_buffering ?
+								(self->memsizes[0] * BLOCK_SIZE1) : 0);
+			params.out_buffer = need_output_buffering ? &out_buffer[0] : NULL;
             /* Reset the iterator to allocate its buffers */
             if(NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
                 return -1;
@@ -766,7 +783,8 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     }
     else {
         if (reduce_iter == NULL) {
-            r = vm_engine_iter_parallel(iter, params, pc_error, &errmsg);
+            r = vm_engine_iter_parallel(iter, params, need_output_buffering,
+						pc_error, &errmsg);
         }
         else {
             errmsg = "Parallel engine doesn't support reduction yet";
@@ -784,7 +802,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
 static int
 run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
 {
-    struct vm_params params;
+    vm_params params;
     Py_ssize_t plen;
     char **mem;
     npy_intp *memsteps;
@@ -813,7 +831,9 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     get_temps_space(params, mem, 1);
 #define SINGLE_ITEM_CONST_LOOP
 #define BLOCK_SIZE 1
+#define NO_OUTPUT_BUFFERING // Because it's constant
 #include "interp_body.cpp"
+#undef NO_OUTPUT_BUFFERING
 #undef BLOCK_SIZE
 #undef SINGLE_ITEM_CONST_LOOP
     free_temps_space(params, mem);
@@ -834,7 +854,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     int r, pc_error = 0;
     int reduction_axis = -1;
     npy_intp reduction_size = 1;
-    int ex_uses_vml = 0, is_reduction = 0, reduction_outer_loop = 0;
+    int ex_uses_vml = 0, is_reduction = 0;
+	bool reduction_outer_loop = false, need_output_buffering = false;
 
     /* To specify axes when doing a reduction */
     int op_axes_values[NPY_MAXARGS][NPY_MAXDIMS],
@@ -918,6 +939,15 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
         operands[i+1] = (PyArrayObject *)a;
         dtypes[i+1] = PyArray_DescrFromType(typecode);
+
+		if (operands[0] != NULL) {
+			// Check for the case where "out" is one of the inputs
+			// TODO: Probably should deal with the general overlap case,
+			//       but NumPy ufuncs don't do that yet either.
+			if (PyArray_DATA(operands[0]) == PyArray_DATA(operands[i+1])) {
+				need_output_buffering = true;
+			}
+		}
 
         if (operands[i+1] == NULL || dtypes[i+1] == NULL) {
             goto fail;
@@ -1148,7 +1178,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
         /* Arbitrary threshold for which is the inner loop...benchmark? */
         if (reduction_size < 64) {
-            reduction_outer_loop = 1;
+            reduction_outer_loop = true;
             iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                                 NPY_ITER_BUFFERED|
                                 NPY_ITER_RANGED|
@@ -1259,7 +1289,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     }
 
     r = run_interpreter(self, iter, reduce_iter,
-                             reduction_outer_loop, &pc_error);
+                             reduction_outer_loop, need_output_buffering,
+							 &pc_error);
 
     if (r < 0) {
         if (r == -1) {

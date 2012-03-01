@@ -122,6 +122,14 @@ class test_numexpr(TestCase):
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
         assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x-1,axis=0))
 
+    def test_in_place(self):
+        x = arange(10000.).reshape(1000,10)
+        evaluate("x + 3", out=x)
+        assert_equal(x, arange(10000.).reshape(1000,10) + 3)
+        y = arange(10)
+        evaluate("(x - 3) * y + (x - 3)", out=x)
+        assert_equal(x, arange(10000.).reshape(1000,10) * (arange(10) + 1))
+
     def test_axis(self):
         y = arange(9.0).reshape(3,3)
         try:

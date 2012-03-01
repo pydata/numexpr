@@ -61,9 +61,12 @@ struct vm_params {
     npy_intp *memsteps;
     npy_intp *memsizes;
     struct index_data *index_data;
+	// Memory for output buffering. If output buffering is unneeded,
+	// it contains NULL.
+	char *out_buffer;
 };
 
-/* Structure for parameters in worker threads */
+// Structure for parameters in worker threads
 struct thread_data {
     npy_intp start;
     npy_intp vlen;
@@ -72,14 +75,16 @@ struct thread_data {
     int ret_code;
     int *pc_error;
     char **errmsg;
-    /* One memsteps array per thread */
+    // One memsteps array per thread
     npy_intp *memsteps[MAX_THREADS];
-    /* One iterator per thread */
+    // One iterator per thread */
     NpyIter *iter[MAX_THREADS];
-    /* When doing nested iteration for a reduction */
+    // When doing nested iteration for a reduction
     NpyIter *reduce_iter[MAX_THREADS];
-    /* Flag indicating reduction is the outer loop instead of the inner */
-    int reduction_outer_loop;
+    // Flag indicating reduction is the outer loop instead of the inner
+    bool reduction_outer_loop;
+	// Flag indicating whether output buffering is needed
+	bool need_output_buffering;
 };
 
 // Global state which holds thread parameters

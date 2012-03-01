@@ -26,12 +26,12 @@
     {                                           \
         char *dest = mem[store_in];             \
         char *x1 = mem[arg1];                   \
-        intp ss1 = params.memsizes[arg1];       \
-        intp sb1 = memsteps[arg1];              \
+        npy_intp ss1 = params.memsizes[arg1];       \
+        npy_intp sb1 = memsteps[arg1];              \
         /* nowarns is defined and used so as to \
         avoid compiler warnings about unused    \
         variables */                            \
-        intp nowarns = ss1+sb1+*x1;             \
+        npy_intp nowarns = ss1+sb1+*x1;             \
         nowarns += 1;                           \
         VEC_LOOP(expr);                         \
     } break
@@ -43,15 +43,15 @@
     {                                           \
         char *dest = mem[store_in];             \
         char *x1 = mem[arg1];                   \
-        intp ss1 = params.memsizes[arg1];       \
-        intp sb1 = memsteps[arg1];              \
+        npy_intp ss1 = params.memsizes[arg1];       \
+        npy_intp sb1 = memsteps[arg1];              \
         /* nowarns is defined and used so as to \
         avoid compiler warnings about unused    \
         variables */                            \
-        intp nowarns = ss1+sb1+*x1;             \
+        npy_intp nowarns = ss1+sb1+*x1;             \
         char *x2 = mem[arg2];                   \
-        intp ss2 = params.memsizes[arg2];       \
-        intp sb2 = memsteps[arg2];              \
+        npy_intp ss2 = params.memsizes[arg2];       \
+        npy_intp sb2 = memsteps[arg2];              \
         nowarns += ss2+sb2+*x2;                 \
         VEC_LOOP(expr);                         \
     } break
@@ -64,18 +64,18 @@
     {                                           \
         char *dest = mem[store_in];             \
         char *x1 = mem[arg1];                   \
-        intp ss1 = params.memsizes[arg1];       \
-        intp sb1 = memsteps[arg1];              \
+        npy_intp ss1 = params.memsizes[arg1];       \
+        npy_intp sb1 = memsteps[arg1];              \
         /* nowarns is defined and used so as to \
         avoid compiler warnings about unused    \
         variables */                            \
-        intp nowarns = ss1+sb1+*x1;             \
+        npy_intp nowarns = ss1+sb1+*x1;             \
         char *x2 = mem[arg2];                   \
-        intp ss2 = params.memsizes[arg2];       \
-        intp sb2 = memsteps[arg2];              \
+        npy_intp ss2 = params.memsizes[arg2];       \
+        npy_intp sb2 = memsteps[arg2];              \
         char *x3 = mem[arg3];                   \
-        intp ss3 = params.memsizes[arg3];       \
-        intp sb3 = memsteps[arg3];              \
+        npy_intp ss3 = params.memsizes[arg3];       \
+        npy_intp sb3 = memsteps[arg3];              \
         nowarns += ss2+sb2+*x2;                 \
         nowarns += ss3+sb3+*x3;                 \
         VEC_LOOP(expr);                         \
@@ -117,18 +117,24 @@
     int pc;
     unsigned int j;
 
-    /* set up pointers to next block of inputs and outputs */
+    // set up pointers to next block of inputs and outputs
 #ifdef SINGLE_ITEM_CONST_LOOP
     mem[0] = params.output;
-#else
-    /* use the iterator's inner loop data */
+#else // SINGLE_ITEM_CONST_LOOP
+    // use the iterator's inner loop data
     memcpy(mem, iter_dataptr, (1+params.n_inputs)*sizeof(char*));
-    memcpy(memsteps, iter_strides, (1+params.n_inputs)*sizeof(intp));
-#endif
+#  ifndef NO_OUTPUT_BUFFERING
+	// if output buffering is necessary, first write to the buffer
+	if(params.out_buffer != NULL) {
+		mem[0] = params.out_buffer;
+	}
+#  endif // NO_OUTPUT_BUFFERING
+    memcpy(memsteps, iter_strides, (1+params.n_inputs)*sizeof(npy_intp));
+#endif // SINGLE_ITEM_CONST_LOOP
 
-    /* WARNING: From now on, only do references to mem[arg[123]]
-       & memsteps[arg[123]] inside the VEC_ARG[123] macros,
-       or you will risk accessing invalid addresses.  */
+    // WARNING: From now on, only do references to mem[arg[123]]
+    // & memsteps[arg[123]] inside the VEC_ARG[123] macros,
+    // or you will risk accessing invalid addresses.
 
     for (pc = 0; pc < params.prog_len; pc += 4) {
         unsigned char op = params.program[pc];
@@ -136,8 +142,8 @@
         unsigned int arg1 = params.program[pc+2];
         unsigned int arg2 = params.program[pc+3];
         #define      arg3   params.program[pc+5]
-        /* Iterator reduce macros */
-#ifdef REDUCTION_INNER_LOOP /* Reduce is the inner loop */
+        // Iterator reduce macros
+#ifdef REDUCTION_INNER_LOOP // Reduce is the inner loop
         #define i_reduce    *(int *)dest
         #define l_reduce    *(long long *)dest
         #define f_reduce    *(float *)dest
@@ -451,6 +457,12 @@
         }
     }
 
+#ifndef NO_OUTPUT_BUFFERING
+	// If output buffering was necessary, copy the buffer to the output
+	if(params.out_buffer != NULL) {
+		memcpy(iter_dataptr[0], params.out_buffer, params.memsizes[0] * BLOCK_SIZE);
+	}
+#endif // NO_OUTPUT_BUFFERING
 
 #undef VEC_LOOP
 #undef VEC_ARG1

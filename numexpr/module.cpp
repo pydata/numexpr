@@ -11,9 +11,12 @@
 
 #include "module.hpp"
 #include <structmember.h>
+#include <vector>
 
 #include "interpreter.hpp"
 #include "numexpr_object.hpp"
+
+using namespace std;
 
 // Global state. The file interpreter.hpp also has some global state
 // in its 'th_params' variable
@@ -29,7 +32,7 @@ void *th_worker(void *tidptr)
     npy_intp vlen;
     npy_intp block_size;
     NpyIter *iter;
-    struct vm_params params;
+    vm_params params;
     int *pc_error;
     int ret;
     int n_inputs;
@@ -40,6 +43,8 @@ void *th_worker(void *tidptr)
     npy_intp *memsteps;
     npy_intp istart, iend;
     char **errmsg;
+	// For output buffering if needed
+	vector<char> out_buffer;
 
     while (1) {
 
@@ -67,6 +72,14 @@ void *th_worker(void *tidptr)
         block_size = th_params.block_size;
         params = th_params.params;
         pc_error = th_params.pc_error;
+
+		// If output buffering is needed, allocate it
+		if (th_params.need_output_buffering) {
+			out_buffer.resize(params.memsizes[0] * BLOCK_SIZE1);
+			params.out_buffer = &out_buffer[0];
+		} else {
+			params.out_buffer = NULL;
+		}
 
         /* Populate private data for each thread */
         n_inputs = params.n_inputs;
