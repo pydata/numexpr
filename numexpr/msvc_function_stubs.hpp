@@ -1,3 +1,6 @@
+#ifndef NUMEXPR_MSVC_FUNCTION_STUBS_HPP
+#define NUMEXPR_MSVC_FUNCTION_STUBS_HPP
+
 /*********************************************************************
   Numexpr - Fast numerical array expression evaluator for NumPy.
 
@@ -128,3 +131,5 @@ inline float fmodf2(float x, float y) {
 inline float atan2f2(float x, float y) {
     return atan2f(x, y);
 }
+
+#endif // NUMEXPR_MSVC_FUNCTION_STUBS_HPP

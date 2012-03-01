@@ -1,3 +1,6 @@
+#ifndef NUMEXPR_COMPLEX_FUNCTIONS_HPP
+#define NUMEXPR_COMPLEX_FUNCTIONS_HPP
+
 /*********************************************************************
   Numexpr - Fast numerical array expression evaluator for NumPy.
 
@@ -7,6 +10,7 @@
   See LICENSE.txt for details about copyright and rights to use.
 **********************************************************************/
 
+// TODO: Could just use std::complex<float> and std::complex<double>
 
 /* constants */
 static cdouble nc_1 = {1., 0.};
@@ -395,3 +399,5 @@ nc_abs(cdouble *x, cdouble *r)
     r->real = sqrt(x->real*x->real + x->imag*x->imag);
     r->imag = 0;
 }
+
+#endif // NUMEXPR_COMPLEX_FUNCTIONS_HPP

@@ -22,22 +22,6 @@
 
 #include "complex_functions.hpp"
 
-#ifdef SCIPY_MKL_H
-#define USE_VML
-#endif
-
-#ifdef USE_VML
-#include "mkl_vml.h"
-#include "mkl_service.h"
-#endif
-
-#ifdef _WIN32
-  #define inline __inline
-  #ifndef __MINGW32__
-    #include "missing_posix_functions.hpp"
-  #endif
-  #include "msvc_function_stubs.hpp"
-#endif
 
 /* x86 platform works with unaligned reads and writes */
 #if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))

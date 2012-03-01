@@ -1,3 +1,6 @@
+#ifndef NUMEXPR_MISSING_POSIX_FUNCTIONS_HPP
+#define NUMEXPR_MISSING_POSIX_FUNCTIONS_HPP
+
 /*********************************************************************
   Numexpr - Fast numerical array expression evaluator for NumPy.
 
@@ -13,7 +16,7 @@
 
 /* Double precision versions */
 
-inline static double log1p(double x)
+inline double log1p(double x)
 {
     double u = 1.0 + x;
     if (u == 1.0) {
@@ -23,7 +26,7 @@ inline static double log1p(double x)
     }
 }
 
-inline static double expm1(double x)
+inline double expm1(double x)
 {
     double u = exp(x);
     if (u == 1.0) {
@@ -35,7 +38,7 @@ inline static double expm1(double x)
     }
 }
 
-inline static double asinh(double xx)
+inline double asinh(double xx)
 {
     double x, d;
     int sign;
@@ -55,12 +58,12 @@ inline static double asinh(double xx)
     return sign*log1p(x*(1.0 + x/(d+1.0)));
 }
 
-inline static double acosh(double x)
+inline double acosh(double x)
 {
     return 2*log(sqrt((x+1.0)/2)+sqrt((x-1.0)/2));
 }
 
-inline static double atanh(double x)
+inline double atanh(double x)
 {
     /* This definition is different from that in NumPy 1.3 and follows
     the convention of MatLab.  This will allow for double checking both
@@ -71,27 +74,29 @@ inline static double atanh(double x)
 
 /* Single precision versions */
 
-inline static float log1pf(float x)
+inline float log1pf(float x)
 {
     return (float) log1p((double)x);
 }
 
-inline static float expm1f(float x)
+inline float expm1f(float x)
 {
     return (float) expm1((double)x);
 }
 
-inline static float asinhf(float x)
+inline float asinhf(float x)
 {
     return (float) asinh((double)x);
 }
 
-inline static float acoshf(float x)
+inline float acoshf(float x)
 {
     return (float) acosh((double)x);
 }
 
-inline static float atanhf(float x)
+inline float atanhf(float x)
 {
     return (float) atanh((double)x);
 }
+
+#endif // NUMEXPR_MISSING_POSIX_FUNCTIONS_HPP

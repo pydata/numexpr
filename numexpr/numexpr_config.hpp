@@ -32,4 +32,20 @@
   #include "unistd.h"
 #endif
 
+#ifdef SCIPY_MKL_H
+#define USE_VML
+#endif
+
+#ifdef USE_VML
+#include "mkl_vml.h"
+#include "mkl_service.h"
+#endif
+
+#ifdef _WIN32
+  #ifndef __MINGW32__
+    #include "missing_posix_functions.hpp"
+  #endif
+  #include "msvc_function_stubs.hpp"
+#endif
+
 #endif // NUMEXPR_CONFIG_HPP
