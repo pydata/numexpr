@@ -7,78 +7,24 @@
   See LICENSE.txt for details about copyright and rights to use.
 **********************************************************************/
 
-
-#include "Python.h"
-#include "structmember.h"
-#include "numpy/noprefix.h"
-#include "numpy/arrayscalars.h"
-#include "numpy/ndarrayobject.h"
-#include "numpy/npy_cpu.h"
-#include "math.h"
-#include "string.h"
-#include "assert.h"
+#include "module.hpp"
+#include <numpy/noprefix.h>
+#include <numpy/npy_cpu.h>
+#include <math.h>
+#include <string.h>
+#include <assert.h>
 
 #include "numexpr_config.hpp"
-
 #include "complex_functions.hpp"
+#include "interpreter.hpp"
+#include "numexpr_object.hpp"
 
-
-/* x86 platform works with unaligned reads and writes */
-#if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
-#  define USE_UNALIGNED_ACCESS 1
-#endif
-
-#ifdef USE_VML
-/* The values below have been tuned for a nowadays Core2 processor */
-/* Note: with VML functions a larger block size (e.g. 4096) allows to make use
- * of the automatic multithreading capabilities of the VML library */
-#define BLOCK_SIZE1 4096
-#define BLOCK_SIZE2 32
-#else
-/* The values below have been tuned for a nowadays Core2 processor */
-/* Note: without VML available a smaller block size is best, specially
- * for the strided and unaligned cases.  Recent implementation of
- * multithreading make it clear that larger block sizes benefit
- * performance (although it seems like we don't need very large sizes
- * like VML yet). */
-#define BLOCK_SIZE1 1024
-#define BLOCK_SIZE2 16
-#endif
-
-/* The maximum number of threads (for some static arrays).
- * Choose this large enough for most monsters out there.
-   Keep in sync this with the number in __init__.py. */
-#define MAX_THREADS 4096
-
-/* Global variables for threads */
-int nthreads = 1;                /* number of desired threads in pool */
-int init_threads_done = 0;       /* pool of threads initialized? */
-int end_threads = 0;             /* should exisiting threads end? */
-pthread_t threads[MAX_THREADS];  /* opaque structure for threads */
-int tids[MAX_THREADS];           /* ID per each thread */
-intp gindex;                     /* global index for all threads */
-int init_sentinels_done;         /* sentinels initialized? */
-int giveup;                      /* should parallel code giveup? */
-int force_serial;                /* force serial code instead of parallel? */
-int pid = 0;                     /* the PID for this process */
-
-/* Syncronization variables */
-pthread_mutex_t count_mutex;
-int count_threads;
-pthread_mutex_t count_threads_mutex;
-pthread_cond_t count_threads_cv;
-
-
+// Global state
+thread_data th_params;
 
 /* This file and interp_body should really be generated from a description of
    the opcodes -- there's too much repetition here for manually editing */
 
-
-enum OpCodes {
-#define OPCODE(n, e, ...) e = n,
-#include "opcodes.hpp"
-#undef OPCODE
-};
 
 /* bit of a misnomer; includes the return value. */
 #define max_args 4
@@ -135,12 +81,6 @@ op_signature(int op, unsigned int n) {
    opcode vs. function speeds.
 */
 
-enum FuncFFCodes {
-#define FUNC_FF(fop, ...) fop,
-#include "functions.hpp"
-#undef FUNC_FF
-};
-
 typedef float (*FuncFFPtr)(float);
 
 #ifdef _WIN32
@@ -165,12 +105,6 @@ FuncFFPtr_vml functions_ff_vml[] = {
 #undef FUNC_FF
 };
 #endif
-
-enum FuncFFFCodes {
-#define FUNC_FFF(fop, ...) fop,
-#include "functions.hpp"
-#undef FUNC_FFF
-};
 
 typedef float (*FuncFFFPtr)(float, float);
 
@@ -206,13 +140,6 @@ FuncFFFPtr_vml functions_fff_vml[] = {
 };
 #endif
 
-
-enum FuncDDCodes {
-#define FUNC_DD(fop, ...) fop,
-#include "functions.hpp"
-#undef FUNC_DD
-};
-
 typedef double (*FuncDDPtr)(double);
 
 FuncDDPtr functions_dd[] = {
@@ -229,12 +156,6 @@ FuncDDPtr_vml functions_dd_vml[] = {
 #undef FUNC_DD
 };
 #endif
-
-enum FuncDDDCodes {
-#define FUNC_DDD(fop, ...) fop,
-#include "functions.hpp"
-#undef FUNC_DDD
-};
 
 typedef double (*FuncDDDPtr)(double, double);
 
@@ -262,12 +183,6 @@ FuncDDDPtr_vml functions_ddd_vml[] = {
 };
 #endif
 
-
-enum FuncCCCodes {
-#define FUNC_CC(fop, ...) fop,
-#include "functions.hpp"
-#undef FUNC_CC
-};
 
 
 typedef void (*FuncCCPtr)(cdouble*, cdouble*);
@@ -319,12 +234,6 @@ FuncCCPtr_vml functions_cc_vml[] = {
 #endif
 
 
-enum FuncCCCCodes {
-#define FUNC_CCC(fop, ...) fop,
-#include "functions.hpp"
-#undef FUNC_CCC
-};
-
 typedef void (*FuncCCCPtr)(cdouble*, cdouble*, cdouble*);
 
 FuncCCCPtr functions_ccc[] = {
@@ -333,78 +242,10 @@ FuncCCCPtr functions_ccc[] = {
 #undef FUNC_CCC
 };
 
-typedef struct
+
+char
+get_return_sig(PyObject* program)
 {
-    PyObject_HEAD
-    PyObject *signature;    /* a python string */
-    PyObject *tempsig;
-    PyObject *constsig;
-    PyObject *fullsig;
-    PyObject *program;      /* a python string */
-    PyObject *constants;    /* a tuple of int/float/complex */
-    PyObject *input_names;  /* tuple of strings */
-    char **mem;             /* pointers to registers */
-    char *rawmem;           /* a chunks of raw memory for storing registers */
-    intp *memsteps;
-    intp *memsizes;
-    int  rawmemsize;
-    int  n_inputs;
-    int  n_constants;
-    int  n_temps;
-} NumExprObject;
-
-static void
-NumExpr_dealloc(NumExprObject *self)
-{
-    Py_XDECREF(self->signature);
-    Py_XDECREF(self->tempsig);
-    Py_XDECREF(self->constsig);
-    Py_XDECREF(self->fullsig);
-    Py_XDECREF(self->program);
-    Py_XDECREF(self->constants);
-    Py_XDECREF(self->input_names);
-    PyMem_Del(self->mem);
-    PyMem_Del(self->rawmem);
-    PyMem_Del(self->memsteps);
-    PyMem_Del(self->memsizes);
-    self->ob_type->tp_free((PyObject*)self);
-}
-
-static PyObject *
-NumExpr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{
-    NumExprObject *self = (NumExprObject *)type->tp_alloc(type, 0);
-    if (self != NULL) {
-#define INIT_WITH(name, object) \
-        self->name = object; \
-        if (!self->name) { \
-            Py_DECREF(self); \
-            return NULL; \
-        }
-
-        INIT_WITH(signature, PyString_FromString(""));
-        INIT_WITH(tempsig, PyString_FromString(""));
-        INIT_WITH(constsig, PyString_FromString(""));
-        INIT_WITH(fullsig, PyString_FromString(""));
-        INIT_WITH(program, PyString_FromString(""));
-        INIT_WITH(constants, PyTuple_New(0));
-        Py_INCREF(Py_None);
-        self->input_names = Py_None;
-        self->mem = NULL;
-        self->rawmem = NULL;
-        self->memsteps = NULL;
-        self->memsizes = NULL;
-        self->rawmemsize = 0;
-        self->n_inputs = 0;
-        self->n_constants = 0;
-        self->n_temps = 0;
-#undef INIT_WITH
-    }
-    return (PyObject *)self;
-}
-
-static char
-get_return_sig(PyObject* program) {
     int sig;
     char last_opcode;
     Py_ssize_t end = PyString_Size(program);
@@ -422,23 +263,6 @@ get_return_sig(PyObject* program) {
         return 'X';
     } else {
         return (char)sig;
-    }
-}
-
-static int
-size_from_char(char c)
-{
-    switch (c) {
-        case 'b': return sizeof(char);
-        case 'i': return sizeof(int);
-        case 'l': return sizeof(long long);
-        case 'f': return sizeof(float);
-        case 'd': return sizeof(double);
-        case 'c': return 2*sizeof(double);
-        case 's': return 0;  /* strings are ok but size must be computed */
-        default:
-            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcs'");
-            return -1;
     }
 }
 
@@ -461,7 +285,7 @@ typecode_from_char(char c)
 
 static int
 last_opcode(PyObject *program_object) {
-    intp n;
+    npy_intp n;
     unsigned char *program;
     PyString_AsStringAndSize(program_object, (char **)&program, &n);
     return program[n-4];
@@ -478,11 +302,11 @@ get_reduction_axis(PyObject* program) {
 
 
 
-static int
+int
 check_program(NumExprObject *self)
 {
     unsigned char *program;
-    intp prog_len, n_buffers, n_inputs;
+    npy_intp prog_len, n_buffers, n_inputs;
     int pc, arg, argloc, argno, sig;
     char *fullsig, *signature;
 
@@ -596,325 +420,16 @@ check_program(NumExprObject *self)
 
 
 
-static int
-NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
-{
-    int i, j, mem_offset;
-    int n_inputs, n_constants, n_temps;
-    PyObject *signature = NULL, *tempsig = NULL, *constsig = NULL;
-    PyObject *fullsig = NULL, *program = NULL, *constants = NULL;
-    PyObject *input_names = NULL, *o_constants = NULL;
-    int *itemsizes = NULL;
-    char **mem = NULL, *rawmem = NULL;
-    intp *memsteps;
-    intp *memsizes;
-    int rawmemsize;
-    static char *kwlist[] = {"signature", "tempsig",
-                             "program",  "constants",
-                             "input_names", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "SSS|OO", kwlist,
-                                     &signature,
-                                     &tempsig,
-                                     &program, &o_constants,
-                                     &input_names)) {
-        return -1;
-    }
-
-    n_inputs = (int)PyString_Size(signature);
-    n_temps = (int)PyString_Size(tempsig);
-
-    if (o_constants) {
-        if (!PySequence_Check(o_constants) ) {
-                PyErr_SetString(PyExc_TypeError, "constants must be a sequence");
-                return -1;
-        }
-        n_constants = (int)PySequence_Length(o_constants);
-        if (!(constants = PyTuple_New(n_constants)))
-            return -1;
-        if (!(constsig = PyString_FromStringAndSize(NULL, n_constants))) {
-            Py_DECREF(constants);
-            return -1;
-        }
-        if (!(itemsizes = PyMem_New(int, n_constants))) {
-            Py_DECREF(constants);
-            return -1;
-        }
-        for (i = 0; i < n_constants; i++) {
-            PyObject *o;
-            if (!(o = PySequence_GetItem(o_constants, i))) { /* new reference */
-                Py_DECREF(constants);
-                Py_DECREF(constsig);
-                PyMem_Del(itemsizes);
-                return -1;
-            }
-            PyTuple_SET_ITEM(constants, i, o); /* steals reference */
-            if (PyBool_Check(o)) {
-                PyString_AS_STRING(constsig)[i] = 'b';
-                itemsizes[i] = size_from_char('b');
-                continue;
-            }
-            if (PyInt_Check(o)) {
-                PyString_AS_STRING(constsig)[i] = 'i';
-                itemsizes[i] = size_from_char('i');
-                continue;
-            }
-            if (PyLong_Check(o)) {
-                PyString_AS_STRING(constsig)[i] = 'l';
-                itemsizes[i] = size_from_char('l');
-                continue;
-            }
-            /* The Float32 scalars are the only ones that should reach here */
-            if (PyArray_IsScalar(o, Float32)) {
-                PyString_AS_STRING(constsig)[i] = 'f';
-                itemsizes[i] = size_from_char('f');
-                continue;
-            }
-            if (PyFloat_Check(o)) {
-                /* Python float constants are double precision by default */
-                PyString_AS_STRING(constsig)[i] = 'd';
-                itemsizes[i] = size_from_char('d');
-                continue;
-            }
-            if (PyComplex_Check(o)) {
-                PyString_AS_STRING(constsig)[i] = 'c';
-                itemsizes[i] = size_from_char('c');
-                continue;
-            }
-            if (PyString_Check(o)) {
-                PyString_AS_STRING(constsig)[i] = 's';
-                itemsizes[i] = (int)PyString_GET_SIZE(o);
-                continue;
-            }
-            PyErr_SetString(PyExc_TypeError, "constants must be of type bool/int/long/float/double/complex/str");
-            Py_DECREF(constsig);
-            Py_DECREF(constants);
-            PyMem_Del(itemsizes);
-            return -1;
-        }
-    } else {
-        n_constants = 0;
-        if (!(constants = PyTuple_New(0)))
-            return -1;
-        if (!(constsig = PyString_FromString(""))) {
-            Py_DECREF(constants);
-            return -1;
-        }
-    }
-
-    fullsig = PyString_FromFormat("%c%s%s%s", get_return_sig(program),
-        PyString_AS_STRING(signature), PyString_AS_STRING(constsig),
-        PyString_AS_STRING(tempsig));
-    if (!fullsig) {
-        Py_DECREF(constants);
-        Py_DECREF(constsig);
-        PyMem_Del(itemsizes);
-        return -1;
-    }
-
-    if (!input_names) {
-        input_names = Py_None;
-    }
-
-    /* Compute the size of registers. We leave temps out (will be
-       malloc'ed later on). */
-    rawmemsize = 0;
-    for (i = 0; i < n_constants; i++)
-        rawmemsize += itemsizes[i];
-    rawmemsize *= BLOCK_SIZE1;
-
-    mem = PyMem_New(char *, 1 + n_inputs + n_constants + n_temps);
-    rawmem = PyMem_New(char, rawmemsize);
-    memsteps = PyMem_New(intp, 1 + n_inputs + n_constants + n_temps);
-    memsizes = PyMem_New(intp, 1 + n_inputs + n_constants + n_temps);
-    if (!mem || !rawmem || !memsteps || !memsizes) {
-        Py_DECREF(constants);
-        Py_DECREF(constsig);
-        Py_DECREF(fullsig);
-        PyMem_Del(itemsizes);
-        PyMem_Del(mem);
-        PyMem_Del(rawmem);
-        PyMem_Del(memsteps);
-        PyMem_Del(memsizes);
-        return -1;
-    }
-    /*
-       0                                                  -> output
-       [1, n_inputs+1)                                    -> inputs
-       [n_inputs+1, n_inputs+n_consts+1)                  -> constants
-       [n_inputs+n_consts+1, n_inputs+n_consts+n_temps+1) -> temps
-    */
-    /* Fill in 'mem' and 'rawmem' for constants */
-    mem_offset = 0;
-    for (i = 0; i < n_constants; i++) {
-        char c = PyString_AS_STRING(constsig)[i];
-        int size = itemsizes[i];
-        mem[i+n_inputs+1] = rawmem + mem_offset;
-        mem_offset += BLOCK_SIZE1 * size;
-        memsteps[i+n_inputs+1] = memsizes[i+n_inputs+1] = size;
-        /* fill in the constants */
-        if (c == 'b') {
-            char *bmem = (char*)mem[i+n_inputs+1];
-            char value = (char)PyInt_AS_LONG(PyTuple_GET_ITEM(constants, i));
-            for (j = 0; j < BLOCK_SIZE1; j++) {
-                bmem[j] = value;
-            }
-        } else if (c == 'i') {
-            int *imem = (int*)mem[i+n_inputs+1];
-            int value = (int)PyInt_AS_LONG(PyTuple_GET_ITEM(constants, i));
-            for (j = 0; j < BLOCK_SIZE1; j++) {
-                imem[j] = value;
-            }
-        } else if (c == 'l') {
-            long long *lmem = (long long*)mem[i+n_inputs+1];
-            long long value = PyLong_AsLongLong(PyTuple_GET_ITEM(constants, i));
-            for (j = 0; j < BLOCK_SIZE1; j++) {
-                lmem[j] = value;
-            }
-        } else if (c == 'f') {
-            /* In this particular case the constant is in a NumPy scalar
-             and in a regular Python object */
-            float *fmem = (float*)mem[i+n_inputs+1];
-            float value = PyArrayScalar_VAL(PyTuple_GET_ITEM(constants, i),
-                                            Float);
-            for (j = 0; j < BLOCK_SIZE1; j++) {
-                fmem[j] = value;
-            }
-        } else if (c == 'd') {
-            double *dmem = (double*)mem[i+n_inputs+1];
-            double value = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(constants, i));
-            for (j = 0; j < BLOCK_SIZE1; j++) {
-                dmem[j] = value;
-            }
-        } else if (c == 'c') {
-            double *cmem = (double*)mem[i+n_inputs+1];
-            Py_complex value = PyComplex_AsCComplex(PyTuple_GET_ITEM(constants, i));
-            for (j = 0; j < 2*BLOCK_SIZE1; j+=2) {
-                cmem[j] = value.real;
-                cmem[j+1] = value.imag;
-            }
-        } else if (c == 's') {
-            char *smem = (char*)mem[i+n_inputs+1];
-            char *value = PyString_AS_STRING(PyTuple_GET_ITEM(constants, i));
-            for (j = 0; j < size*BLOCK_SIZE1; j+=size) {
-                memcpy(smem + j, value, size);
-            }
-        }
-    }
-    /* This is no longer needed since no unusual item sizes appear
-       in temporaries (there are no string temporaries). */
-    PyMem_Del(itemsizes);
-
-    /* Fill in 'memsteps' and 'memsizes' for temps */
-    for (i = 0; i < n_temps; i++) {
-        char c = PyString_AS_STRING(tempsig)[i];
-        int size = size_from_char(c);
-        memsteps[i+n_inputs+n_constants+1] = size;
-        memsizes[i+n_inputs+n_constants+1] = size;
-    }
-    /* See if any errors occured (e.g., in size_from_char) or if mem_offset is wrong */
-    if (PyErr_Occurred() || mem_offset != rawmemsize) {
-        if (mem_offset != rawmemsize) {
-            PyErr_Format(PyExc_RuntimeError, "mem_offset does not match rawmemsize");
-        }
-        Py_DECREF(constants);
-        Py_DECREF(constsig);
-        Py_DECREF(fullsig);
-        PyMem_Del(mem);
-        PyMem_Del(rawmem);
-        PyMem_Del(memsteps);
-        PyMem_Del(memsizes);
-        return -1;
-    }
-
-
-    #define REPLACE_OBJ(arg) \
-    {PyObject *tmp = self->arg; \
-     self->arg = arg; \
-     Py_XDECREF(tmp);}
-    #define INCREF_REPLACE_OBJ(arg) {Py_INCREF(arg); REPLACE_OBJ(arg);}
-    #define REPLACE_MEM(arg) {PyMem_Del(self->arg); self->arg=arg;}
-
-    INCREF_REPLACE_OBJ(signature);
-    INCREF_REPLACE_OBJ(tempsig);
-    REPLACE_OBJ(constsig);
-    REPLACE_OBJ(fullsig);
-    INCREF_REPLACE_OBJ(program);
-    REPLACE_OBJ(constants);
-    INCREF_REPLACE_OBJ(input_names);
-    REPLACE_MEM(mem);
-    REPLACE_MEM(rawmem);
-    REPLACE_MEM(memsteps);
-    REPLACE_MEM(memsizes);
-    self->rawmemsize = rawmemsize;
-    self->n_inputs = n_inputs;
-    self->n_constants = n_constants;
-    self->n_temps = n_temps;
-
-    #undef REPLACE_OBJ
-    #undef INCREF_REPLACE_OBJ
-    #undef REPLACE_MEM
-
-    return check_program(self);
-}
-
-static PyMemberDef NumExpr_members[] = {
-    {"signature", T_OBJECT_EX, offsetof(NumExprObject, signature), READONLY, NULL},
-    {"constsig", T_OBJECT_EX, offsetof(NumExprObject, constsig), READONLY, NULL},
-    {"tempsig", T_OBJECT_EX, offsetof(NumExprObject, tempsig), READONLY, NULL},
-    {"fullsig", T_OBJECT_EX, offsetof(NumExprObject, fullsig), READONLY, NULL},
-
-    {"program", T_OBJECT_EX, offsetof(NumExprObject, program), READONLY, NULL},
-    {"constants", T_OBJECT_EX, offsetof(NumExprObject, constants),
-     READONLY, NULL},
-    {"input_names", T_OBJECT, offsetof(NumExprObject, input_names), 0, NULL},
-    {NULL},
-};
-
 
 struct index_data {
     int count;
     int size;
     int findex;
-    intp *shape;
-    intp *strides;
+    npy_intp *shape;
+    npy_intp *strides;
     int *index;
     char *buffer;
 };
-
-struct vm_params {
-    int prog_len;
-    unsigned char *program;
-    int n_inputs;
-    int n_constants;
-    int n_temps;
-    unsigned int r_end;
-    char *output;
-    char **inputs;
-    char **mem;
-    intp *memsteps;
-    intp *memsizes;
-    struct index_data *index_data;
-};
-
-/* Structure for parameters in worker threads */
-struct thread_data {
-    intp start;
-    intp vlen;
-    intp block_size;
-    struct vm_params params;
-    int ret_code;
-    int *pc_error;
-    char **errmsg;
-    /* One memsteps array per thread */
-    intp *memsteps[MAX_THREADS];
-    /* One iterator per thread */
-    NpyIter *iter[MAX_THREADS];
-    /* When doing nested iteration for a reduction */
-    NpyIter *reduce_iter[MAX_THREADS];
-    /* Flag indicating reduction is the outer loop instead of the inner */
-    int reduction_outer_loop;
-} th_params;
 
 
 #define DO_BOUNDS_CHECK 1
@@ -929,9 +444,9 @@ struct thread_data {
 #endif
 
 int
-stringcmp(const char *s1, const char *s2, intp maxlen1, intp maxlen2)
+stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
 {
-    intp maxlen, nextpos;
+    npy_intp maxlen, nextpos;
     /* Point to this when the end of a string is found,
        to simulate infinte trailing NUL characters. */
     const char null = 0;
@@ -949,8 +464,7 @@ stringcmp(const char *s1, const char *s2, intp maxlen1, intp maxlen2)
 }
 
 /* Get space for VM temporary registers */
-int
-get_temps_space(struct vm_params params, char **mem, size_t block_size)
+int get_temps_space(const vm_params& params, char **mem, size_t block_size)
 {
     int r, k = 1 + params.n_inputs + params.n_constants;
 
@@ -964,8 +478,7 @@ get_temps_space(struct vm_params params, char **mem, size_t block_size)
 }
 
 /* Free space for VM temporary registers */
-void
-free_temps_space(struct vm_params params, char **mem)
+void free_temps_space(const vm_params& params, char **mem)
 {
     int r, k = 1 + params.n_inputs + params.n_constants;
 
@@ -975,14 +488,14 @@ free_temps_space(struct vm_params params, char **mem)
 }
 
 /* Serial/parallel task iterator version of the VM engine */
-static int
-vm_engine_iter_task(NpyIter *iter, intp *memsteps, struct vm_params params, int *pc_error, char **errmsg)
+int vm_engine_iter_task(NpyIter *iter, npy_intp *memsteps,
+					const vm_params& params, int *pc_error, char **errmsg)
 {
     char **mem = params.mem;
     NpyIter_IterNextFunc *iternext;
-    intp block_size, *size_ptr;
+    npy_intp block_size, *size_ptr;
     char **iter_dataptr;
-    intp *iter_strides;
+    npy_intp *iter_strides;
 
     iternext = NpyIter_GetIterNext(iter, errmsg);
     if (iternext == NULL) {
@@ -1021,13 +534,13 @@ vm_engine_iter_task(NpyIter *iter, intp *memsteps, struct vm_params params, int 
 }
 
 static int
-vm_engine_iter_outer_reduce_task(NpyIter *iter, intp *memsteps, struct vm_params params, int *pc_error, char **errmsg)
+vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps, struct vm_params params, int *pc_error, char **errmsg)
 {
     char **mem = params.mem;
     NpyIter_IterNextFunc *iternext;
-    intp block_size, *size_ptr;
+    npy_intp block_size, *size_ptr;
     char **iter_dataptr;
-    intp *iter_strides;
+    npy_intp *iter_strides;
 
     iternext = NpyIter_GetIterNext(iter, errmsg);
     if (iternext == NULL) {
@@ -1079,7 +592,7 @@ vm_engine_iter_parallel(NpyIter *iter, struct vm_params params, int *pc_error,
      * Try to make it so each thread gets 16 tasks.  This is a compromise
      * between 1 task per thread and one block per task.
      */
-    taskfactor = 16*BLOCK_SIZE1*nthreads;
+    taskfactor = 16*BLOCK_SIZE1*gs.nthreads;
     numblocks = (th_params.vlen - th_params.start + taskfactor - 1) /
                             taskfactor;
     th_params.block_size = numblocks * BLOCK_SIZE1;
@@ -1090,7 +603,7 @@ vm_engine_iter_parallel(NpyIter *iter, struct vm_params params, int *pc_error,
     th_params.errmsg = errmsg;
     th_params.iter[0] = iter;
     /* Make one copy for each additional thread */
-    for (i = 1; i < nthreads; ++i) {
+    for (i = 1; i < gs.nthreads; ++i) {
         th_params.iter[i] = NpyIter_Copy(iter);
         if (th_params.iter[i] == NULL) {
             --i;
@@ -1102,203 +615,57 @@ vm_engine_iter_parallel(NpyIter *iter, struct vm_params params, int *pc_error,
     }
     th_params.memsteps[0] = params.memsteps;
     /* Make one copy of memsteps for each additional thread */
-    for (i = 1; i < nthreads; ++i) {
-        th_params.memsteps[i] = PyMem_New(intp,
+    for (i = 1; i < gs.nthreads; ++i) {
+        th_params.memsteps[i] = PyMem_New(npy_intp,
                     1 + params.n_inputs + params.n_constants + params.n_temps);
         if (th_params.memsteps[i] == NULL) {
             --i;
             for (; i > 0; --i) {
                 PyMem_Del(th_params.memsteps[i]);
             }
-            for (i = 0; i < nthreads; ++i) {
+            for (i = 0; i < gs.nthreads; ++i) {
                 NpyIter_Deallocate(th_params.iter[i]);
             }
             return -1;
         }
         memcpy(th_params.memsteps[i], th_params.memsteps[0],
-                sizeof(intp) *
+                sizeof(npy_intp) *
                 (1 + params.n_inputs + params.n_constants + params.n_temps));
     }
 
     Py_BEGIN_ALLOW_THREADS;
 
     /* Synchronization point for all threads (wait for initialization) */
-    pthread_mutex_lock(&count_threads_mutex);
-    if (count_threads < nthreads) {
-        count_threads++;
-        pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
+    pthread_mutex_lock(&gs.count_threads_mutex);
+    if (gs.count_threads < gs.nthreads) {
+        gs.count_threads++;
+        pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
     }
     else {
-        pthread_cond_broadcast(&count_threads_cv);
+        pthread_cond_broadcast(&gs.count_threads_cv);
     }
-    pthread_mutex_unlock(&count_threads_mutex);
+    pthread_mutex_unlock(&gs.count_threads_mutex);
 
     /* Synchronization point for all threads (wait for finalization) */
-    pthread_mutex_lock(&count_threads_mutex);
-    if (count_threads > 0) {
-        count_threads--;
-        pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
+    pthread_mutex_lock(&gs.count_threads_mutex);
+    if (gs.count_threads > 0) {
+        gs.count_threads--;
+        pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
     }
     else {
-        pthread_cond_broadcast(&count_threads_cv);
+        pthread_cond_broadcast(&gs.count_threads_cv);
     }
-    pthread_mutex_unlock(&count_threads_mutex);
+    pthread_mutex_unlock(&gs.count_threads_mutex);
 
     Py_END_ALLOW_THREADS;
 
     /* Deallocate all the iterator and memsteps copies */
-    for (i = 1; i < nthreads; ++i) {
+    for (i = 1; i < gs.nthreads; ++i) {
         NpyIter_Deallocate(th_params.iter[i]);
         PyMem_Del(th_params.memsteps[i]);
     }
 
     return th_params.ret_code;
-}
-
-/* Do the worker job for a certain thread */
-void *th_worker(void *tidptr)
-{
-    int tid = *(int *)tidptr;
-    /* Parameters for threads */
-    intp start;
-    intp vlen;
-    intp block_size;
-    NpyIter *iter;
-    struct vm_params params;
-    int *pc_error;
-    int ret;
-    int n_inputs;
-    int n_constants;
-    int n_temps;
-    size_t memsize;
-    char **mem;
-    intp *memsteps;
-    intp istart, iend;
-    char **errmsg;
-
-    while (1) {
-
-        init_sentinels_done = 0;     /* sentinels have to be initialised yet */
-
-        /* Meeting point for all threads (wait for initialization) */
-        pthread_mutex_lock(&count_threads_mutex);
-        if (count_threads < nthreads) {
-            count_threads++;
-            pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
-        }
-        else {
-            pthread_cond_broadcast(&count_threads_cv);
-        }
-        pthread_mutex_unlock(&count_threads_mutex);
-
-        /* Check if thread has been asked to return */
-        if (end_threads) {
-            return(0);
-        }
-
-        /* Get parameters for this thread before entering the main loop */
-        start = th_params.start;
-        vlen = th_params.vlen;
-        block_size = th_params.block_size;
-        params = th_params.params;
-        pc_error = th_params.pc_error;
-
-        /* Populate private data for each thread */
-        n_inputs = params.n_inputs;
-        n_constants = params.n_constants;
-        n_temps = params.n_temps;
-        memsize = (1+n_inputs+n_constants+n_temps) * sizeof(char *);
-        /* XXX malloc seems thread safe for POSIX, but for Win? */
-        mem = (char **)malloc(memsize);
-        memcpy(mem, params.mem, memsize);
-
-        errmsg = th_params.errmsg;
-
-        params.mem = mem;
-
-        /* Loop over blocks */
-        pthread_mutex_lock(&count_mutex);
-        if (!init_sentinels_done) {
-            /* Set sentinels and other global variables */
-            gindex = start;
-            istart = gindex;
-            iend = istart + block_size;
-            if (iend > vlen) {
-                iend = vlen;
-            }
-            init_sentinels_done = 1;  /* sentinels have been initialised */
-            giveup = 0;            /* no giveup initially */
-        } else {
-            gindex += block_size;
-            istart = gindex;
-            iend = istart + block_size;
-            if (iend > vlen) {
-                iend = vlen;
-            }
-        }
-        /* Grab one of the iterators */
-        iter = th_params.iter[tid];
-        if (iter == NULL) {
-            th_params.ret_code = -1;
-            giveup = 1;
-        }
-        memsteps = th_params.memsteps[tid];
-        /* Get temporary space for each thread */
-        ret = get_temps_space(params, mem, BLOCK_SIZE1);
-        if (ret < 0) {
-            /* Propagate error to main thread */
-            th_params.ret_code = ret;
-            giveup = 1;
-        }
-        pthread_mutex_unlock(&count_mutex);
-
-        while (istart < vlen && !giveup) {
-            /* Reset the iterator to the range for this task */
-            ret = NpyIter_ResetToIterIndexRange(iter, istart, iend,
-                                                errmsg);
-            /* Execute the task */
-            if (ret >= 0) {
-                ret = vm_engine_iter_task(iter, memsteps, params, pc_error, errmsg);
-            }
-
-            if (ret < 0) {
-                pthread_mutex_lock(&count_mutex);
-                giveup = 1;
-                /* Propagate error to main thread */
-                th_params.ret_code = ret;
-                pthread_mutex_unlock(&count_mutex);
-                break;
-            }
-
-            pthread_mutex_lock(&count_mutex);
-            gindex += block_size;
-            istart = gindex;
-            iend = istart + block_size;
-            if (iend > vlen) {
-                iend = vlen;
-            }
-            pthread_mutex_unlock(&count_mutex);
-        }
-
-        /* Meeting point for all threads (wait for finalization) */
-        pthread_mutex_lock(&count_threads_mutex);
-        if (count_threads > 0) {
-            count_threads--;
-            pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
-        }
-        else {
-            pthread_cond_broadcast(&count_threads_cv);
-        }
-        pthread_mutex_unlock(&count_threads_mutex);
-
-        /* Release resources */
-        free_temps_space(params, mem);
-        free(mem);
-
-    }  /* closes while(1) */
-
-    /* This should never be reached, but anyway */
-    return(0);
 }
 
 static int
@@ -1328,7 +695,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     params.memsizes = self->memsizes;
     params.r_end = (int)PyString_Size(self->fullsig);
 
-    if ((nthreads == 1) || force_serial) {
+    if ((gs.nthreads == 1) || gs.force_serial) {
         /* Can do it as one "task" */
         if (reduce_iter == NULL) {
             /* Reset the iterator to allocate its buffers */
@@ -1420,7 +787,7 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     struct vm_params params;
     Py_ssize_t plen;
     char **mem;
-    intp *memsteps;
+    npy_intp *memsteps;
 
     *pc_error = -1;
     if (PyString_AsStringAndSize(self->program, (char **)&(params.program),
@@ -1454,138 +821,7 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     return 0;
 }
 
-/* Initialize threads */
-int init_threads(void)
-{
-    int tid, rc;
-
-    /* Initialize mutex and condition variable objects */
-    pthread_mutex_init(&count_mutex, NULL);
-
-    /* Barrier initialization */
-    pthread_mutex_init(&count_threads_mutex, NULL);
-    pthread_cond_init(&count_threads_cv, NULL);
-    count_threads = 0;      /* Reset threads counter */
-
-    /* Finally, create the threads */
-    for (tid = 0; tid < nthreads; tid++) {
-        tids[tid] = tid;
-        rc = pthread_create(&threads[tid], NULL, th_worker,
-                            (void *)&tids[tid]);
-        if (rc) {
-            fprintf(stderr,
-                    "ERROR; return code from pthread_create() is %d\n", rc);
-            fprintf(stderr, "\tError detail: %s\n", strerror(rc));
-            exit(-1);
-        }
-    }
-
-    init_threads_done = 1;                 /* Initialization done! */
-    pid = (int)getpid();                   /* save the PID for this process */
-
-    return(0);
-}
-
-/* Set the number of threads in numexpr's VM */
-int numexpr_set_nthreads(int nthreads_new)
-{
-    int nthreads_old = nthreads;
-    int t, rc;
-    void *status;
-
-    if (nthreads_new > MAX_THREADS) {
-        fprintf(stderr,
-                "Error.  nthreads cannot be larger than MAX_THREADS (%d)",
-                MAX_THREADS);
-        return -1;
-    }
-    else if (nthreads_new <= 0) {
-        fprintf(stderr, "Error.  nthreads must be a positive integer");
-        return -1;
-    }
-
-    /* Only join threads if they are not initialized or if our PID is
-       different from that in pid var (probably means that we are a
-       subprocess, and thus threads are non-existent). */
-    if (nthreads > 1 && init_threads_done && pid == getpid()) {
-        /* Tell all existing threads to finish */
-        end_threads = 1;
-        pthread_mutex_lock(&count_threads_mutex);
-        if (count_threads < nthreads) {
-            count_threads++;
-            pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
-        }
-        else {
-            pthread_cond_broadcast(&count_threads_cv);
-        }
-        pthread_mutex_unlock(&count_threads_mutex);
-
-        /* Join exiting threads */
-        for (t=0; t<nthreads; t++) {
-            rc = pthread_join(threads[t], &status);
-            if (rc) {
-                fprintf(stderr,
-                        "ERROR; return code from pthread_join() is %d\n",
-                        rc);
-                fprintf(stderr, "\tError detail: %s\n", strerror(rc));
-                exit(-1);
-            }
-        }
-        init_threads_done = 0;
-        end_threads = 0;
-    }
-
-    /* Launch a new pool of threads (if necessary) */
-    nthreads = nthreads_new;
-    if (nthreads > 1 && (!init_threads_done || pid != getpid())) {
-        init_threads();
-    }
-
-    return nthreads_old;
-}
-
-/* Free possible memory temporaries and thread resources */
-void numexpr_free_resources(void)
-{
-    int t, rc;
-    void *status;
-
-    /* Finish the possible thread pool */
-    if (nthreads > 1 && init_threads_done) {
-        /* Tell all existing threads to finish */
-        end_threads = 1;
-        pthread_mutex_lock(&count_threads_mutex);
-        if (count_threads < nthreads) {
-            count_threads++;
-            pthread_cond_wait(&count_threads_cv, &count_threads_mutex);
-        }
-        else {
-            pthread_cond_broadcast(&count_threads_cv);
-        }
-        pthread_mutex_unlock(&count_threads_mutex);
-
-        /* Join exiting threads */
-        for (t=0; t<nthreads; t++) {
-            rc = pthread_join(threads[t], &status);
-            if (rc) {
-                fprintf(stderr,
-                        "ERROR; return code from pthread_join() is %d\n", rc);
-                fprintf(stderr, "\tError detail: %s\n", strerror(rc));
-                exit(-1);
-            }
-        }
-
-        /* Release mutex and condition variable objects */
-        pthread_mutex_destroy(&count_mutex);
-        pthread_mutex_destroy(&count_threads_mutex);
-        pthread_cond_destroy(&count_threads_cv);
-
-        init_threads_done = 0;
-        end_threads = 0;
-    }
-}
-
-static PyObject *
+PyObject *
 NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 {
     PyArrayObject *operands[NPY_MAXARGS];
@@ -1610,12 +846,12 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     NpyIter *iter = NULL, *reduce_iter = NULL;
 
     /* Check whether we need to restart threads */
-    if (!init_threads_done || pid != getpid()) {
-        numexpr_set_nthreads(nthreads);
+    if (!gs.init_threads_done || gs.pid != getpid()) {
+        numexpr_set_nthreads(gs.nthreads);
     }
 
     /* Don't force serial mode by default */
-    force_serial = 0;
+    gs.force_serial = 0;
 
     /* Check whether there's a reduction as the final step */
     is_reduction = last_opcode(self->program) > OP_REDUCTION;
@@ -1735,7 +971,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                         op_axes_values[i+1][j++] = idim-(oa_ndim-ndim);
                     }
                     else {
-                        intp size = PyArray_DIM(operands[i+1],
+                        npy_intp size = PyArray_DIM(operands[i+1],
                                                     idim-(oa_ndim-ndim));
                         if (size > reduction_size) {
                             reduction_size = size;
@@ -1757,7 +993,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         /* A full reduction can be done without nested iteration */
         if (oa_ndim == 0) {
             if (operands[0] == NULL) {
-                intp dim = 1;
+                npy_intp dim = 1;
                 operands[0] = (PyArrayObject *)PyArray_SimpleNew(0, &dim,
                                             typecode_from_char(retsig));
                 if (!operands[0])
@@ -1828,7 +1064,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         if (zerolen != 0) {
             /* Allocate the output */
             int ndim = PyArray_NDIM(operands[zeroi]);
-            intp *dims = PyArray_DIMS(operands[zeroi]);
+            npy_intp *dims = PyArray_DIMS(operands[zeroi]);
             operands[0] = (PyArrayObject *)PyArray_SimpleNew(ndim, dims,
                                               typecode_from_char(retsig));
             if (operands[0] == NULL) {
@@ -1848,7 +1084,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
         /* Allocate the output */
         if (operands[0] == NULL) {
-            intp dim = 1;
+            npy_intp dim = 1;
             operands[0] = (PyArrayObject *)PyArray_SimpleNew(0, &dim,
                                         typecode_from_char(retsig));
             if (operands[0] == NULL) {
@@ -2014,12 +1250,12 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     /* For small calculations, just use 1 thread */
     if (NpyIter_GetIterSize(iter) < 2*BLOCK_SIZE1) {
-        force_serial = 1;
+        gs.force_serial = 1;
     }
 
     /* Reductions do not support parallel execution yet */
     if (is_reduction) {
-        force_serial = 1;
+        gs.force_serial = 1;
     }
 
     r = run_interpreter(self, iter, reduce_iter,
@@ -2073,189 +1309,6 @@ fail:
 
     return NULL;
 }
-
-static PyMethodDef NumExpr_methods[] = {
-    {"run", (PyCFunction) NumExpr_run, METH_VARARGS|METH_KEYWORDS, NULL},
-    {NULL, NULL}
-};
-
-static PyTypeObject NumExprType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
-    "numexpr.NumExpr",         /*tp_name*/
-    sizeof(NumExprObject),     /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    (destructor)NumExpr_dealloc, /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    0,                         /*tp_compare*/
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    (ternaryfunc)NumExpr_run,  /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-    "NumExpr objects",         /* tp_doc */
-    0,		               /* tp_traverse */
-    0,		               /* tp_clear */
-    0,		               /* tp_richcompare */
-    0,		               /* tp_weaklistoffset */
-    0,		               /* tp_iter */
-    0,		               /* tp_iternext */
-    NumExpr_methods,           /* tp_methods */
-    NumExpr_members,           /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)NumExpr_init,    /* tp_init */
-    0,                         /* tp_alloc */
-    NumExpr_new,               /* tp_new */
-};
-
-
-#ifdef USE_VML
-
-static PyObject *
-_get_vml_version(PyObject *self, PyObject *args)
-{
-    int len=198;
-    char buf[198];
-    MKLGetVersionString(buf, len);
-    return Py_BuildValue("s", buf);
-}
-
-static PyObject *
-_set_vml_accuracy_mode(PyObject *self, PyObject *args)
-{
-    int mode_in, mode_old;
-    if (!PyArg_ParseTuple(args, "i", &mode_in))
-	return NULL;
-    mode_old = vmlGetMode() & VML_ACCURACY_MASK;
-    vmlSetMode((mode_in & VML_ACCURACY_MASK) | VML_ERRMODE_IGNORE );
-    return Py_BuildValue("i", mode_old);
-}
-
-static PyObject *
-_set_vml_num_threads(PyObject *self, PyObject *args)
-{
-    int max_num_threads;
-    if (!PyArg_ParseTuple(args, "i", &max_num_threads))
-	return NULL;
-    mkl_domain_set_num_threads(max_num_threads, MKL_VML);
-    Py_RETURN_NONE;
-}
-
-#endif
-
-static PyObject *
-_set_num_threads(PyObject *self, PyObject *args)
-{
-    int num_threads, nthreads_old;
-    if (!PyArg_ParseTuple(args, "i", &num_threads))
-	return NULL;
-    nthreads_old = numexpr_set_nthreads(num_threads);
-    return Py_BuildValue("i", nthreads_old);
-}
-
-static PyMethodDef module_methods[] = {
-#ifdef USE_VML
-    {"_get_vml_version", _get_vml_version, METH_VARARGS,
-     "Get the VML/MKL library version."},
-    {"_set_vml_accuracy_mode", _set_vml_accuracy_mode, METH_VARARGS,
-     "Set accuracy mode for VML functions."},
-    {"_set_vml_num_threads", _set_vml_num_threads, METH_VARARGS,
-     "Suggests a maximum number of threads to be used in VML operations."},
-#endif
-    {"_set_num_threads", _set_num_threads, METH_VARARGS,
-     "Suggests a maximum number of threads to be used in operations."},
-    {NULL}
-};
-
-static int
-add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
-{
-    PyObject *o, *s;
-    int r;
-
-    if (!sname) {
-        return 0;
-    }
-
-    o = PyInt_FromLong(name);
-    s = PyString_FromString(sname);
-    if (!s) {
-        PyErr_SetString(PyExc_RuntimeError, routine_name);
-        return -1;
-    }
-    r = PyDict_SetItem(d, s, o);
-    Py_XDECREF(o);
-    return r;
-}
-
-PyMODINIT_FUNC
-initinterpreter()
-{
-    PyObject *m, *d;
-
-    if (PyType_Ready(&NumExprType) < 0)
-        return;
-
-    m = Py_InitModule3("interpreter", module_methods, NULL);
-    if (m == NULL)
-        return;
-
-    Py_INCREF(&NumExprType);
-    PyModule_AddObject(m, "NumExpr", (PyObject *)&NumExprType);
-
-    import_array();
-
-    d = PyDict_New();
-    if (!d) return;
-
-#define OPCODE(n, name, sname, ...)                              \
-    if (add_symbol(d, sname, name, "add_op") < 0) { return; }
-#include "opcodes.hpp"
-#undef OPCODE
-
-    if (PyModule_AddObject(m, "opcodes", d) < 0) return;
-
-    d = PyDict_New();
-    if (!d) return;
-
-#define add_func(name, sname)                           \
-    if (add_symbol(d, sname, name, "add_func") < 0) { return; }
-#define FUNC_FF(name, sname, ...)  add_func(name, sname);
-#define FUNC_FFF(name, sname, ...) add_func(name, sname);
-#define FUNC_DD(name, sname, ...)  add_func(name, sname);
-#define FUNC_DDD(name, sname, ...) add_func(name, sname);
-#define FUNC_CC(name, sname, ...)  add_func(name, sname);
-#define FUNC_CCC(name, sname, ...) add_func(name, sname);
-#include "functions.hpp"
-#undef FUNC_CCC
-#undef FUNC_CC
-#undef FUNC_DDD
-#undef FUNC_DD
-#undef FUNC_DD
-#undef FUNC_FFF
-#undef FUNC_FF
-#undef add_func
-
-    if (PyModule_AddObject(m, "funccodes", d) < 0) return;
-
-    if (PyModule_AddObject(m, "allaxes", PyInt_FromLong(255)) < 0) return;
-    if (PyModule_AddObject(m, "maxdims", PyInt_FromLong(MAX_DIMS)) < 0) return;
-
-}
-
 
 /*
 Local Variables:

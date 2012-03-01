@@ -1,6 +1,12 @@
 #ifndef NUMEXPR_CONFIG_HPP
 #define NUMEXPR_CONFIG_HPP
 
+// x86 platform works with unaligned reads and writes
+// MW: I have seen exceptions to this when the compiler chooses to use aligned SSE
+#if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
+#  define USE_UNALIGNED_ACCESS 1
+#endif
+
 #ifdef USE_VML
 /* The values below have been tuned for a nowadays Core2 processor */
 /* Note: with VML functions a larger block size (e.g. 4096) allows to make use

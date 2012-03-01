@@ -69,11 +69,16 @@ def configuration():
     else:
         pthread_win = []
     extension_config_data = {
-        'sources': ['numexpr/interpreter.cpp'] + pthread_win,
+        'sources': ['numexpr/interpreter.cpp',
+                    'numexpr/module.cpp',
+                    'numexpr/numexpr_object.cpp'] + pthread_win,
         'depends': ['numexpr/interp_body.cpp',
                     'numexpr/complex_functions.hpp',
+                    'numexpr/interpreter.hpp',
+                    'numexpr/module.hpp',
                     'numexpr/msvc_function_stubs.hpp',
-                    'numexpr/numexpr_config.hpp'],
+                    'numexpr/numexpr_config.hpp',
+                    'numexpr/numexpr_object.hpp'],
         'libraries': ['m'],
         'extra_compile_args': ['-funroll-all-loops',],
         }
