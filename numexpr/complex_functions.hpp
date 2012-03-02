@@ -13,13 +13,13 @@
 // TODO: Could just use std::complex<float> and std::complex<double>
 
 /* constants */
-static cdouble nc_1 = {1., 0.};
-static cdouble nc_half = {0.5, 0.};
-static cdouble nc_i = {0., 1.};
-static cdouble nc_i2 = {0., 0.5};
+static npy_cdouble nc_1 = {1., 0.};
+static npy_cdouble nc_half = {0.5, 0.};
+static npy_cdouble nc_i = {0., 1.};
+static npy_cdouble nc_i2 = {0., 0.5};
 /*
-static cdouble nc_mi = {0., -1.};
-static cdouble nc_pi2 = {M_PI/2., 0.};
+static npy_cdouble nc_mi = {0., -1.};
+static npy_cdouble nc_pi2 = {M_PI/2., 0.};
 */
 
 /* *************************** WARNING *****************************
@@ -31,7 +31,7 @@ after the first *r has been overwritten.
 */
 
 static void
-nc_assign(cdouble *x, cdouble *r)
+nc_assign(npy_cdouble *x, npy_cdouble *r)
 {
   r->real = x->real;
   r->imag = x->imag;
@@ -39,7 +39,7 @@ nc_assign(cdouble *x, cdouble *r)
 }
 
 static void
-nc_sum(cdouble *a, cdouble *b, cdouble *r)
+nc_sum(npy_cdouble *a, npy_cdouble *b, npy_cdouble *r)
 {
     r->real = a->real + b->real;
     r->imag = a->imag + b->imag;
@@ -47,7 +47,7 @@ nc_sum(cdouble *a, cdouble *b, cdouble *r)
 }
 
 static void
-nc_diff(cdouble *a, cdouble *b, cdouble *r)
+nc_diff(npy_cdouble *a, npy_cdouble *b, npy_cdouble *r)
 {
     r->real = a->real - b->real;
     r->imag = a->imag - b->imag;
@@ -55,7 +55,7 @@ nc_diff(cdouble *a, cdouble *b, cdouble *r)
 }
 
 static void
-nc_neg(cdouble *a, cdouble *r)
+nc_neg(npy_cdouble *a, npy_cdouble *r)
 {
     r->real = -a->real;
     r->imag = -a->imag;
@@ -63,7 +63,7 @@ nc_neg(cdouble *a, cdouble *r)
 }
 
 static void
-nc_prod(cdouble *a, cdouble *b, cdouble *r)
+nc_prod(npy_cdouble *a, npy_cdouble *b, npy_cdouble *r)
 {
     double ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
     r->real = ar*br - ai*bi;
@@ -72,7 +72,7 @@ nc_prod(cdouble *a, cdouble *b, cdouble *r)
 }
 
 static void
-nc_quot(cdouble *a, cdouble *b, cdouble *r)
+nc_quot(npy_cdouble *a, npy_cdouble *b, npy_cdouble *r)
 {
     double ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
     double d = br*br + bi*bi;
@@ -82,7 +82,7 @@ nc_quot(cdouble *a, cdouble *b, cdouble *r)
 }
 
 static void
-nc_sqrt(cdouble *x, cdouble *r)
+nc_sqrt(npy_cdouble *x, npy_cdouble *r)
 {
     double s,d;
     if (x->real == 0. && x->imag == 0.)
@@ -107,7 +107,7 @@ nc_sqrt(cdouble *x, cdouble *r)
 }
 
 static void
-nc_log(cdouble *x, cdouble *r)
+nc_log(npy_cdouble *x, npy_cdouble *r)
 {
     double l = hypot(x->real,x->imag);
     r->imag = atan2(x->imag, x->real);
@@ -116,7 +116,7 @@ nc_log(cdouble *x, cdouble *r)
 }
 
 static void
-nc_log1p(cdouble *x, cdouble *r)
+nc_log1p(npy_cdouble *x, npy_cdouble *r)
 {
     double l = hypot(x->real + 1.0,x->imag);
     r->imag = atan2(x->imag, x->real + 1.0);
@@ -125,7 +125,7 @@ nc_log1p(cdouble *x, cdouble *r)
 }
 
 static void
-nc_exp(cdouble *x, cdouble *r)
+nc_exp(npy_cdouble *x, npy_cdouble *r)
 {
     double a = exp(x->real);
     r->real = a*cos(x->imag);
@@ -134,7 +134,7 @@ nc_exp(cdouble *x, cdouble *r)
 }
 
 static void
-nc_expm1(cdouble *x, cdouble *r)
+nc_expm1(npy_cdouble *x, npy_cdouble *r)
 {
     double a = exp(x->real);
     r->real = a*cos(x->imag) - 1.0;
@@ -143,9 +143,9 @@ nc_expm1(cdouble *x, cdouble *r)
 }
 
 static void
-nc_pow(cdouble *a, cdouble *b, cdouble *r)
+nc_pow(npy_cdouble *a, npy_cdouble *b, npy_cdouble *r)
 {
-    intp n;
+    npy_intp n;
     double ar=a->real, br=b->real, ai=a->imag, bi=b->imag;
 
     if (br == 0. && bi == 0.) {
@@ -158,10 +158,10 @@ nc_pow(cdouble *a, cdouble *b, cdouble *r)
         r->imag = 0.;
         return;
     }
-    if (bi == 0 && (n=(intp)br) == br) {
+    if (bi == 0 && (n=(npy_intp)br) == br) {
         if (n > -100 && n < 100) {
-        cdouble p, aa;
-        intp mask = 1;
+        npy_cdouble p, aa;
+        npy_intp mask = 1;
         if (n < 0) n = -n;
         aa = nc_1;
         p.real = ar; p.imag = ai;
@@ -187,7 +187,7 @@ nc_pow(cdouble *a, cdouble *b, cdouble *r)
 
 
 static void
-nc_prodi(cdouble *x, cdouble *r)
+nc_prodi(npy_cdouble *x, npy_cdouble *r)
 {
     double xr = x->real;
     r->real = -x->imag;
@@ -197,9 +197,9 @@ nc_prodi(cdouble *x, cdouble *r)
 
 
 static void
-nc_acos(cdouble *x, cdouble *r)
+nc_acos(npy_cdouble *x, npy_cdouble *r)
 {
-    cdouble a, *pa=&a;
+    npy_cdouble a, *pa=&a;
 
     nc_assign(x, pa);
     nc_prod(x,x,r);
@@ -217,9 +217,9 @@ nc_acos(cdouble *x, cdouble *r)
 }
 
 static void
-nc_acosh(cdouble *x, cdouble *r)
+nc_acosh(npy_cdouble *x, npy_cdouble *r)
 {
-    cdouble t, a, *pa=&a;
+    npy_cdouble t, a, *pa=&a;
 
     nc_assign(x, pa);
     nc_sum(x, &nc_1, &t);
@@ -237,9 +237,9 @@ nc_acosh(cdouble *x, cdouble *r)
 }
 
 static void
-nc_asin(cdouble *x, cdouble *r)
+nc_asin(npy_cdouble *x, npy_cdouble *r)
 {
-    cdouble a, *pa=&a;
+    npy_cdouble a, *pa=&a;
     nc_prodi(x, pa);
     nc_prod(x, x, r);
     nc_diff(&nc_1, r, r);
@@ -257,9 +257,9 @@ nc_asin(cdouble *x, cdouble *r)
 
 
 static void
-nc_asinh(cdouble *x, cdouble *r)
+nc_asinh(npy_cdouble *x, npy_cdouble *r)
 {
-    cdouble a, *pa=&a;
+    npy_cdouble a, *pa=&a;
     nc_assign(x, pa);
     nc_prod(x, x, r);
     nc_sum(&nc_1, r, r);
@@ -273,9 +273,9 @@ nc_asinh(cdouble *x, cdouble *r)
 }
 
 static void
-nc_atan(cdouble *x, cdouble *r)
+nc_atan(npy_cdouble *x, npy_cdouble *r)
 {
-    cdouble a, *pa=&a;
+    npy_cdouble a, *pa=&a;
     nc_diff(&nc_i, x, pa);
     nc_sum(&nc_i, x, r);
     nc_quot(r, pa, r);
@@ -288,9 +288,9 @@ nc_atan(cdouble *x, cdouble *r)
 }
 
 static void
-nc_atanh(cdouble *x, cdouble *r)
+nc_atanh(npy_cdouble *x, npy_cdouble *r)
 {
-    cdouble a, b, *pa=&a, *pb=&b;
+    npy_cdouble a, b, *pa=&a, *pb=&b;
     nc_assign(x, pa);
     nc_diff(&nc_1, pa, r);
     nc_sum(&nc_1, pa, pb);
@@ -304,7 +304,7 @@ nc_atanh(cdouble *x, cdouble *r)
 }
 
 static void
-nc_cos(cdouble *x, cdouble *r)
+nc_cos(npy_cdouble *x, npy_cdouble *r)
 {
     double xr=x->real, xi=x->imag;
     r->real = cos(xr)*cosh(xi);
@@ -313,7 +313,7 @@ nc_cos(cdouble *x, cdouble *r)
 }
 
 static void
-nc_cosh(cdouble *x, cdouble *r)
+nc_cosh(npy_cdouble *x, npy_cdouble *r)
 {
     double xr=x->real, xi=x->imag;
     r->real = cos(xi)*cosh(xr);
@@ -325,7 +325,7 @@ nc_cosh(cdouble *x, cdouble *r)
 #define M_LOG10_E 0.434294481903251827651128918916605082294397
 
 static void
-nc_log10(cdouble *x, cdouble *r)
+nc_log10(npy_cdouble *x, npy_cdouble *r)
 {
     nc_log(x, r);
     r->real *= M_LOG10_E;
@@ -334,7 +334,7 @@ nc_log10(cdouble *x, cdouble *r)
 }
 
 static void
-nc_sin(cdouble *x, cdouble *r)
+nc_sin(npy_cdouble *x, npy_cdouble *r)
 {
     double xr=x->real, xi=x->imag;
     r->real = sin(xr)*cosh(xi);
@@ -343,7 +343,7 @@ nc_sin(cdouble *x, cdouble *r)
 }
 
 static void
-nc_sinh(cdouble *x, cdouble *r)
+nc_sinh(npy_cdouble *x, npy_cdouble *r)
 {
     double xr=x->real, xi=x->imag;
     r->real = cos(xi)*sinh(xr);
@@ -352,7 +352,7 @@ nc_sinh(cdouble *x, cdouble *r)
 }
 
 static void
-nc_tan(cdouble *x, cdouble *r)
+nc_tan(npy_cdouble *x, npy_cdouble *r)
 {
     double sr,cr,shi,chi;
     double rs,is,rc,ic;
@@ -373,7 +373,7 @@ nc_tan(cdouble *x, cdouble *r)
 }
 
 static void
-nc_tanh(cdouble *x, cdouble *r)
+nc_tanh(npy_cdouble *x, npy_cdouble *r)
 {
     double si,ci,shr,chr;
     double rs,is,rc,ic;
@@ -394,7 +394,7 @@ nc_tanh(cdouble *x, cdouble *r)
 }
 
 static void
-nc_abs(cdouble *x, cdouble *r)
+nc_abs(npy_cdouble *x, npy_cdouble *r)
 {
     r->real = sqrt(x->real*x->real + x->imag*x->imag);
     r->imag = 0;

@@ -8,7 +8,6 @@
 **********************************************************************/
 
 #include "module.hpp"
-#include <numpy/noprefix.h>
 #include <numpy/npy_cpu.h>
 #include <math.h>
 #include <string.h>
@@ -30,9 +29,9 @@ thread_data th_params;
 
 
 /* bit of a misnomer; includes the return value. */
-#define max_args 4
+#define NUMEXPR_MAX_ARGS 4
 
-static char op_signature_table[][max_args] = {
+static char op_signature_table[][NUMEXPR_MAX_ARGS] = {
 #define Tb 'b'
 #define Ti 'i'
 #define Tl 'l'
@@ -59,7 +58,7 @@ static char op_signature_table[][max_args] = {
 /* returns the sig of the nth op, '\0' if no more ops -1 on failure */
 static int
 op_signature(int op, unsigned int n) {
-    if (n >= max_args) {
+    if (n >= NUMEXPR_MAX_ARGS) {
         return 0;
     }
     if (op < 0 || op > OP_END) {
@@ -188,7 +187,7 @@ FuncDDDPtr_vml functions_ddd_vml[] = {
 
 
 
-typedef void (*FuncCCPtr)(cdouble*, cdouble*);
+typedef void (*FuncCCPtr)(npy_cdouble*, npy_cdouble*);
 
 FuncCCPtr functions_cc[] = {
 #define FUNC_CC(fop, s, f, ...) f,
@@ -237,7 +236,7 @@ FuncCCPtr_vml functions_cc_vml[] = {
 #endif
 
 
-typedef void (*FuncCCCPtr)(cdouble*, cdouble*, cdouble*);
+typedef void (*FuncCCCPtr)(npy_cdouble*, npy_cdouble*, npy_cdouble*);
 
 FuncCCCPtr functions_ccc[] = {
 #define FUNC_CCC(fop, s, f) f,
@@ -273,13 +272,13 @@ static int
 typecode_from_char(char c)
 {
     switch (c) {
-        case 'b': return PyArray_BOOL;
-        case 'i': return PyArray_INT;
-        case 'l': return PyArray_LONGLONG;
-        case 'f': return PyArray_FLOAT;
-        case 'd': return PyArray_DOUBLE;
-        case 'c': return PyArray_CDOUBLE;
-        case 's': return PyArray_STRING;
+        case 'b': return NPY_BOOL;
+        case 'i': return NPY_INT;
+        case 'l': return NPY_LONGLONG;
+        case 'f': return NPY_FLOAT;
+        case 'd': return NPY_DOUBLE;
+        case 'c': return NPY_CDOUBLE;
+        case 's': return NPY_STRING;
         default:
             PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcs'");
             return -1;
@@ -298,8 +297,8 @@ static int
 get_reduction_axis(PyObject* program) {
     Py_ssize_t end = PyString_Size(program);
     int axis = ((unsigned char *)PyString_AS_STRING(program))[end-1];
-    if (axis != 255 && axis >= MAX_DIMS)
-        axis = MAX_DIMS - axis;
+    if (axis != 255 && axis >= NPY_MAXDIMS)
+        axis = NPY_MAXDIMS - axis;
     return axis;
 }
 
@@ -434,7 +433,7 @@ struct index_data {
     char *buffer;
 };
 
-
+// BOUNDS_CHECK is used in interp_body.cpp
 #define DO_BOUNDS_CHECK 1
 
 #if DO_BOUNDS_CHECK
@@ -709,13 +708,13 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     params.out_buffer = NULL;
 
     if ((gs.nthreads == 1) || gs.force_serial) {
-        /* Can do it as one "task" */
+        // Can do it as one "task"
         if (reduce_iter == NULL) {
             // Allocate memory for output buffering if needed
             vector<char> out_buffer(need_output_buffering ?
                                 (self->memsizes[0] * BLOCK_SIZE1) : 0);
             params.out_buffer = need_output_buffering ? &out_buffer[0] : NULL;
-            /* Reset the iterator to allocate its buffers */
+            // Reset the iterator to allocate its buffers
             if(NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
                 return -1;
             }
@@ -857,7 +856,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     int ex_uses_vml = 0, is_reduction = 0;
     bool reduction_outer_loop = false, need_output_buffering = false;
 
-    /* To specify axes when doing a reduction */
+    // To specify axes when doing a reduction
     int op_axes_values[NPY_MAXARGS][NPY_MAXDIMS],
          op_axes_reduction_values[NPY_MAXARGS];
     int *op_axes_ptrs[NPY_MAXDIMS];
@@ -866,15 +865,15 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     NpyIter *iter = NULL, *reduce_iter = NULL;
 
-    /* Check whether we need to restart threads */
+    // Check whether we need to restart threads
     if (!gs.init_threads_done || gs.pid != getpid()) {
         numexpr_set_nthreads(gs.nthreads);
     }
 
-    /* Don't force serial mode by default */
+    // Don't force serial mode by default
     gs.force_serial = 0;
 
-    /* Check whether there's a reduction as the final step */
+    // Check whether there's a reduction as the final step
     is_reduction = last_opcode(self->program) > OP_REDUCTION;
 
     n_inputs = (int)PyTuple_Size(args);
@@ -891,15 +890,15 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     memset(dtypes, 0, sizeof(dtypes));
 
     if (kwds) {
-        tmp = PyDict_GetItemString(kwds, "casting"); /* borrowed ref */
+        tmp = PyDict_GetItemString(kwds, "casting"); // borrowed ref
         if (tmp != NULL && !PyArray_CastingConverter(tmp, &casting)) {
             return NULL;
         }
-        tmp = PyDict_GetItemString(kwds, "order"); /* borrowed ref */
+        tmp = PyDict_GetItemString(kwds, "order"); // borrowed ref
         if (tmp != NULL && !PyArray_OrderConverter(tmp, &order)) {
             return NULL;
         }
-        tmp = PyDict_GetItemString(kwds, "ex_uses_vml"); /* borrowed ref */
+        tmp = PyDict_GetItemString(kwds, "ex_uses_vml"); // borrowed ref
         if (tmp == NULL) {
             return PyErr_Format(PyExc_ValueError,
                                 "ex_uses_vml parameter is required");
@@ -907,7 +906,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         if (tmp == Py_True) {
             ex_uses_vml = 1;
         }
-            /* borrowed ref */
+            // borrowed ref
         operands[0] = (PyArrayObject *)PyDict_GetItemString(kwds, "out");
         if (operands[0] != NULL) {
             if ((PyObject *)operands[0] == Py_None) {
@@ -924,14 +923,14 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     }
 
     for (i = 0; i < n_inputs; i++) {
-        PyObject *o = PyTuple_GET_ITEM(args, i); /* borrowed ref */
+        PyObject *o = PyTuple_GET_ITEM(args, i); // borrowed ref
         PyObject *a;
         char c = PyString_AS_STRING(self->signature)[i];
         int typecode = typecode_from_char(c);
-        /* Convert it if it's not an array */
+        // Convert it if it's not an array
         if (!PyArray_Check(o)) {
             if (typecode == -1) goto fail;
-            a = PyArray_FROM_OTF(o, typecode, NOTSWAPPED);
+            a = PyArray_FROM_OTF(o, typecode, NPY_NOTSWAPPED);
         }
         else {
             Py_INCREF(o);
@@ -964,14 +963,14 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (is_reduction) {
-        /* A reduction can not result in a string,
-           so we don't need to worry about item sizes here. */
+        // A reduction can not result in a string,
+        // so we don't need to worry about item sizes here.
         char retsig = get_return_sig(self->program);
         reduction_axis = get_reduction_axis(self->program);
 
-        /* Need to set up op_axes for the non-reduction part */
+        // Need to set up op_axes for the non-reduction part
         if (reduction_axis != 255) {
-            /* Get the number of broadcast dimensions */
+            // Get the number of broadcast dimensions
             for (i = 0; i < n_inputs; ++i) {
                 int ndim = PyArray_NDIM(operands[i+1]);
                 if (ndim > oa_ndim) {
@@ -983,7 +982,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                         "reduction axis is out of bounds");
                 goto fail;
             }
-            /* Fill in the op_axes */
+            // Fill in the op_axes
             op_axes_ptrs[0] = NULL;
             op_axes_reduction_values[0] = -1;
             for (i = 0; i < n_inputs; ++i) {
@@ -1011,7 +1010,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 }
                 op_axes_ptrs[i+1] = op_axes_values[i+1];
             }
-            /* op_axes has one less than the broadcast dimensions */
+            // op_axes has one less than the broadcast dimensions
             --oa_ndim;
             if (oa_ndim > 0) {
                 op_axes = op_axes_ptrs;
@@ -1020,7 +1019,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 reduction_size = 1;
             }
         }
-        /* A full reduction can be done without nested iteration */
+        // A full reduction can be done without nested iteration
         if (oa_ndim == 0) {
             if (operands[0] == NULL) {
                 npy_intp dim = 1;
@@ -1039,7 +1038,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
         op_flags[0] = NPY_ITER_READWRITE|
                       NPY_ITER_ALLOCATE|
-                      /* Copy, because it can't buffer the reduction */
+                      // Copy, because it can't buffer the reduction
                       NPY_ITER_UPDATEIFCOPY|
                       NPY_ITER_NBO|
 #ifndef USE_UNALIGNED_ACCESS
@@ -1056,13 +1055,13 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
              * is a copy, the size of returned strings
              * can be directly gotten from the first (and only)
              * input/constant/temporary. */
-            if (n_inputs > 0) {  /* input, like in 'a' where a -> 'foo' */
+            if (n_inputs > 0) {  // input, like in 'a' where a -> 'foo'
                 dtypes[0] = PyArray_DESCR(operands[1]);
                 Py_INCREF(dtypes[0]);
-            } else {  /* constant, like in '"foo"' */
+            } else {  // constant, like in '"foo"'
                 dtypes[0] = PyArray_DescrNewFromType(PyArray_STRING);
                 dtypes[0]->elsize = (int)self->memsizes[1];
-            }  /* no string temporaries, so no third case  */
+            }  // no string temporaries, so no third case
         }
         if (dtypes[0] == NULL) {
             goto fail;
@@ -1077,11 +1076,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                       NPY_ITER_NO_BROADCAST;
     }
 
-    /* Check for empty arrays in expression */
+    // Check for empty arrays in expression
     if (n_inputs > 0) {
         char retsig = get_return_sig(self->program);
 
-        /* Check length for all inputs */
+        // Check length for all inputs
         int zeroi, zerolen = 0;
         for (i=0; i < n_inputs; i++) {
             if (PyArray_SIZE(operands[i+1]) == 0) {
@@ -1092,7 +1091,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
 
         if (zerolen != 0) {
-            /* Allocate the output */
+            // Allocate the output
             int ndim = PyArray_NDIM(operands[zeroi]);
             npy_intp *dims = PyArray_DIMS(operands[zeroi]);
             operands[0] = (PyArrayObject *)PyArray_SimpleNew(ndim, dims,

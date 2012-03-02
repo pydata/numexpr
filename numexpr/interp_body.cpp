@@ -192,7 +192,7 @@
         #define s3    ((char   *)x3+j*sb3)
         /* Some temporaries */
         double da, db;
-        cdouble ca, cb;
+        npy_cdouble ca, cb;
 
         switch (op) {
 
