@@ -339,7 +339,7 @@ add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
     }
 
     o = PyInt_FromLong(name);
-    s = PyString_FromString(sname);
+    s = PyBytes_FromString(sname);
     if (!s) {
         PyErr_SetString(PyExc_RuntimeError, routine_name);
         return -1;

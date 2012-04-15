@@ -60,11 +60,11 @@ NumExpr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             return NULL; \
         }
 
-        INIT_WITH(signature, PyString_FromString(""));
-        INIT_WITH(tempsig, PyString_FromString(""));
-        INIT_WITH(constsig, PyString_FromString(""));
-        INIT_WITH(fullsig, PyString_FromString(""));
-        INIT_WITH(program, PyString_FromString(""));
+        INIT_WITH(signature, PyBytes_FromString(""));
+        INIT_WITH(tempsig, PyBytes_FromString(""));
+        INIT_WITH(constsig, PyBytes_FromString(""));
+        INIT_WITH(fullsig, PyBytes_FromString(""));
+        INIT_WITH(program, PyBytes_FromString(""));
         INIT_WITH(constants, PyTuple_New(0));
         Py_INCREF(Py_None);
         self->input_names = Py_None;
@@ -106,8 +106,8 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    n_inputs = (int)PyString_Size(signature);
-    n_temps = (int)PyString_Size(tempsig);
+    n_inputs = (int)PyBytes_Size(signature);
+    n_temps = (int)PyBytes_Size(tempsig);
 
     if (o_constants) {
         if (!PySequence_Check(o_constants) ) {
@@ -117,7 +117,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
         n_constants = (int)PySequence_Length(o_constants);
         if (!(constants = PyTuple_New(n_constants)))
             return -1;
-        if (!(constsig = PyString_FromStringAndSize(NULL, n_constants))) {
+        if (!(constsig = PyBytes_FromStringAndSize(NULL, n_constants))) {
             Py_DECREF(constants);
             return -1;
         }
@@ -135,40 +135,40 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
             PyTuple_SET_ITEM(constants, i, o); /* steals reference */
             if (PyBool_Check(o)) {
-                PyString_AS_STRING(constsig)[i] = 'b';
+                PyBytes_AS_STRING(constsig)[i] = 'b';
                 itemsizes[i] = size_from_char('b');
                 continue;
             }
             if (PyInt_Check(o)) {
-                PyString_AS_STRING(constsig)[i] = 'i';
+                PyBytes_AS_STRING(constsig)[i] = 'i';
                 itemsizes[i] = size_from_char('i');
                 continue;
             }
             if (PyLong_Check(o)) {
-                PyString_AS_STRING(constsig)[i] = 'l';
+                PyBytes_AS_STRING(constsig)[i] = 'l';
                 itemsizes[i] = size_from_char('l');
                 continue;
             }
             /* The Float32 scalars are the only ones that should reach here */
             if (PyArray_IsScalar(o, Float32)) {
-                PyString_AS_STRING(constsig)[i] = 'f';
+                PyBytes_AS_STRING(constsig)[i] = 'f';
                 itemsizes[i] = size_from_char('f');
                 continue;
             }
             if (PyFloat_Check(o)) {
                 /* Python float constants are double precision by default */
-                PyString_AS_STRING(constsig)[i] = 'd';
+                PyBytes_AS_STRING(constsig)[i] = 'd';
                 itemsizes[i] = size_from_char('d');
                 continue;
             }
             if (PyComplex_Check(o)) {
-                PyString_AS_STRING(constsig)[i] = 'c';
+                PyBytes_AS_STRING(constsig)[i] = 'c';
                 itemsizes[i] = size_from_char('c');
                 continue;
             }
-            if (PyString_Check(o)) {
-                PyString_AS_STRING(constsig)[i] = 's';
-                itemsizes[i] = (int)PyString_GET_SIZE(o);
+            if (PyBytes_Check(o)) {
+                PyBytes_AS_STRING(constsig)[i] = 's';
+                itemsizes[i] = (int)PyBytes_GET_SIZE(o);
                 continue;
             }
             PyErr_SetString(PyExc_TypeError, "constants must be of type bool/int/long/float/double/complex/str");
@@ -181,15 +181,15 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
         n_constants = 0;
         if (!(constants = PyTuple_New(0)))
             return -1;
-        if (!(constsig = PyString_FromString(""))) {
+        if (!(constsig = PyBytes_FromString(""))) {
             Py_DECREF(constants);
             return -1;
         }
     }
 
-    fullsig = PyString_FromFormat("%c%s%s%s", get_return_sig(program),
-        PyString_AS_STRING(signature), PyString_AS_STRING(constsig),
-        PyString_AS_STRING(tempsig));
+    fullsig = PyBytes_FromFormat("%c%s%s%s", get_return_sig(program),
+        PyBytes_AS_STRING(signature), PyBytes_AS_STRING(constsig),
+        PyBytes_AS_STRING(tempsig));
     if (!fullsig) {
         Py_DECREF(constants);
         Py_DECREF(constsig);
@@ -232,7 +232,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
     /* Fill in 'mem' and 'rawmem' for constants */
     mem_offset = 0;
     for (i = 0; i < n_constants; i++) {
-        char c = PyString_AS_STRING(constsig)[i];
+        char c = PyBytes_AS_STRING(constsig)[i];
         int size = itemsizes[i];
         mem[i+n_inputs+1] = rawmem + mem_offset;
         mem_offset += BLOCK_SIZE1 * size;
@@ -280,7 +280,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
         } else if (c == 's') {
             char *smem = (char*)mem[i+n_inputs+1];
-            char *value = PyString_AS_STRING(PyTuple_GET_ITEM(constants, i));
+            char *value = PyBytes_AS_STRING(PyTuple_GET_ITEM(constants, i));
             for (j = 0; j < size*BLOCK_SIZE1; j+=size) {
                 memcpy(smem + j, value, size);
             }
@@ -292,7 +292,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     /* Fill in 'memsteps' and 'memsizes' for temps */
     for (i = 0; i < n_temps; i++) {
-        char c = PyString_AS_STRING(tempsig)[i];
+        char c = PyBytes_AS_STRING(tempsig)[i];
         int size = size_from_char(c);
         memsteps[i+n_inputs+n_constants+1] = size;
         memsizes[i+n_inputs+n_constants+1] = size;

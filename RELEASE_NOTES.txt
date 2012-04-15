@@ -5,7 +5,11 @@
 Changes from 2.0.1 to 2.0.2
 ===========================
 
-[Add changes heres]
+* Dropped compatibility with Python < 2.6.
+
+* Switch from PyString to PyBytes API in order to improve compatibility with
+  Python 3 (requires Python >= 2.6).
+
 
 
 Changes from 2.0 to 2.0.1

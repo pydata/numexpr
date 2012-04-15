@@ -99,9 +99,9 @@ def detect_number_of_cores():
     """
     # Linux, Unix and MacOS:
     if hasattr(os, "sysconf"):
-        if os.sysconf_names.has_key("SC_NPROCESSORS_ONLN"):
+        if os.sysconf_names.has_key(b"SC_NPROCESSORS_ONLN"):
             # Linux & Unix:
-            ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
+            ncpus = os.sysconf(b"SC_NPROCESSORS_ONLN")
             if isinstance(ncpus, int) and ncpus > 0:
                 return ncpus
         else: # OSX:

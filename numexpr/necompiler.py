@@ -407,7 +407,7 @@ def compileThreeAddrForm(program):
     """
     def nToChr(reg):
         if reg is None:
-            return '\xff'
+            return b'\xff'
         elif reg.n < 0:
             raise ValueError("negative value for register number %s" % reg.n)
         else:
@@ -428,12 +428,12 @@ def compileThreeAddrForm(program):
         l = [s]
         args = args[4:]
         while args:
-            s = quadrupleToString('noop', *args[:3])
+            s = quadrupleToString(b'noop', *args[:3])
             l.append(s)
             args = args[3:]
-        return ''.join(l)
+        return b''.join(l)
 
-    prog_str = ''.join([toString(t) for t in program])
+    prog_str = b''.join([toString(t) for t in program])
     return prog_str
 
 context_info = [
@@ -466,7 +466,7 @@ def precompile(ex, signature=(), context={}):
     types = dict(signature)
     input_order = [name for (name, type_) in signature]
 
-    if isinstance(ex, str):
+    if isinstance(ex, (str, unicode)):
         ex = stringToExpression(ex, types, context)
 
     # the AST is like the expression, but the node objects don't have
@@ -540,8 +540,8 @@ def NumExpr(ex, signature=(), copy_args=(), **kwargs):
     threeAddrProgram, inputsig, tempsig, constants, input_names = \
                       precompile(ex, signature, context)
     program = compileThreeAddrForm(threeAddrProgram)
-    return interpreter.NumExpr(inputsig, tempsig, program, constants,
-                               input_names)
+    return interpreter.NumExpr(inputsig.encode(), tempsig.encode(),
+                               program, constants, input_names)
 
 
 def disassemble(nex):
@@ -678,7 +678,7 @@ def evaluate(ex, local_dict=None, global_dict=None,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
     """
-    if not isinstance(ex, str):
+    if not isinstance(ex, (str, unicode)):
         raise ValueError("must specify expression as a string")
     # Get the names for this expression
     context = getContext(kwargs, frame_depth=1)

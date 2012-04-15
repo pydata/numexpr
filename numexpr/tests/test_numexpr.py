@@ -237,7 +237,7 @@ class test_evaluate(TestCase):
         a = arange(100).reshape(10,10)[::2]
         b = arange(50).reshape(5,10)
         assert_array_equal(evaluate("a+b"), a+b)
-        c = empty([10], dtype=[('c1', int32), ('c2', uint16)])
+        c = empty([10], dtype=[(b'c1', int32), (b'c2', uint16)])
         c['c1'] = arange(10)
         c['c2'].fill(0xaaaa)
         c1 = c['c1']
@@ -417,11 +417,11 @@ def test_expressions():
                               'dtype=%r, optimization=%r, exact=%r)') \
                     % (expr, test_scalar, dtype.__name__, optimization, exact)
         test_no[0] += 1
-        method.__name__ = 'test_scalar%d_%s_%s_%s_%04d' % (test_scalar,
-                                                           dtype.__name__,
-                                                           optimization,
-                                                           section,
-                                                           test_no[0])
+        method.__name__ = b'test_scalar%d_%s_%s_%s_%04d' % (test_scalar,
+                                                            dtype.__name__,
+                                                            optimization.encode(),
+                                                            section.encode(),
+                                                            test_no[0])
         return method
     x = None
     for test_scalar in (0, 1, 2):
@@ -533,17 +533,17 @@ class test_uint32_int64(TestCase):
 class test_strings(TestCase):
     BLOCK_SIZE1 = 128
     BLOCK_SIZE2 = 8
-    str_list1 = ['foo', 'bar', '', '  ']
-    str_list2 = ['foo', '', 'x', ' ']
+    str_list1 = [b'foo', b'bar', b'', b'  ']
+    str_list2 = [b'foo', b'', b'x', b' ']
     str_nloops = len(str_list1) * (BLOCK_SIZE1 + BLOCK_SIZE2 + 1)
     str_array1 = array(str_list1 * str_nloops)
     str_array2 = array(str_list2 * str_nloops)
-    str_constant = 'doodoo'
+    str_constant = b'doodoo'
 
     def test_null_chars(self):
         str_list = [
-            '\0\0\0', '\0\0foo\0', '\0\0foo\0b', '\0\0foo\0b\0',
-            'foo\0', 'foo\0b', 'foo\0b\0', 'foo\0bar\0baz\0\0' ]
+            b'\0\0\0', b'\0\0foo\0', b'\0\0foo\0b', b'\0\0foo\0b\0',
+            b'foo\0', b'foo\0b', b'foo\0b\0', b'foo\0bar\0baz\0\0' ]
         for s in str_list:
             r = evaluate('s')
             self.assertEqual(s, r.tostring())  # check *all* stored data
@@ -573,7 +573,7 @@ class test_strings(TestCase):
 
     def test_compare_constant(self):
         sarr = self.str_array1
-        expr = 'sarr >= %r' % self.str_constant
+        expr = 'sarr >= b%r' % self.str_constant
         res1 = eval(expr)
         res2 = evaluate(expr)
         assert_array_equal(res1, res2)
@@ -603,8 +603,8 @@ class test_strings(TestCase):
     def test_compare_prefix(self):
         # Check comparing two strings where one is a prefix of the
         # other.
-        for s1, s2 in [ ('foo', 'foobar'), ('foo', 'foo\0bar'),
-                        ('foo\0a', 'foo\0bar') ]:
+        for s1, s2 in [ (b'foo', b'foobar'), (b'foo', b'foo\0bar'),
+                        (b'foo\0a', b'foo\0bar') ]:
             self.assert_(evaluate('s1 < s2'))
             self.assert_(evaluate('s1 <= s2'))
             self.assert_(evaluate('~(s1 == s2)'))
@@ -612,7 +612,7 @@ class test_strings(TestCase):
             self.assert_(evaluate('~(s1 > s2)'))
 
         # Check for NumPy array-style semantics in string equality.
-        s1, s2 = 'foo', 'foo\0\0'
+        s1, s2 = b'foo', b'foo\0\0'
         self.assert_(evaluate('s1 == s2'))
 
 # Case for testing selections in fields which are aligned but whose

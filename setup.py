@@ -19,8 +19,8 @@ from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
 
 minimum_numpy_version = "1.6"
 
-if sys.version_info < (2, 4):
-    raise "must use python 2.5 or greater"
+if sys.version_info < (2, 6):
+    raise "must use python 2.6 or greater"
 
 if numpy.__version__ < minimum_numpy_version:
     print "*Error*: NumPy version is lower than needed: %s < %s" % \
