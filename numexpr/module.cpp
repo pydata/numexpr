@@ -338,7 +338,7 @@ add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
         return 0;
     }
 
-    o = PyInt_FromLong(name);
+    o = PyLong_FromLong(name);
     s = PyBytes_FromString(sname);
     if (!s) {
         PyErr_SetString(PyExc_RuntimeError, routine_name);
@@ -399,6 +399,6 @@ initinterpreter()
 
     if (PyModule_AddObject(m, "funccodes", d) < 0) return;
 
-    if (PyModule_AddObject(m, "allaxes", PyInt_FromLong(255)) < 0) return;
-    if (PyModule_AddObject(m, "maxdims", PyInt_FromLong(NPY_MAXDIMS)) < 0) return;
+    if (PyModule_AddObject(m, "allaxes", PyLong_FromLong(255)) < 0) return;
+    if (PyModule_AddObject(m, "maxdims", PyLong_FromLong(NPY_MAXDIMS)) < 0) return;
 }

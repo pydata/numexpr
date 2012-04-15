@@ -139,11 +139,13 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
                 itemsizes[i] = size_from_char('b');
                 continue;
             }
+#if PY_MAJOR_VERSION < 3
             if (PyInt_Check(o)) {
                 PyBytes_AS_STRING(constsig)[i] = 'i';
                 itemsizes[i] = size_from_char('i');
                 continue;
             }
+#endif
             if (PyLong_Check(o)) {
                 PyBytes_AS_STRING(constsig)[i] = 'l';
                 itemsizes[i] = size_from_char('l');
@@ -240,13 +242,13 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
         /* fill in the constants */
         if (c == 'b') {
             char *bmem = (char*)mem[i+n_inputs+1];
-            char value = (char)PyInt_AS_LONG(PyTuple_GET_ITEM(constants, i));
+            char value = (char)PyLong_AsLong(PyTuple_GET_ITEM(constants, i));
             for (j = 0; j < BLOCK_SIZE1; j++) {
                 bmem[j] = value;
             }
         } else if (c == 'i') {
             int *imem = (int*)mem[i+n_inputs+1];
-            int value = (int)PyInt_AS_LONG(PyTuple_GET_ITEM(constants, i));
+            int value = (int)PyLong_AsLong(PyTuple_GET_ITEM(constants, i));
             for (j = 0; j < BLOCK_SIZE1; j++) {
                 imem[j] = value;
             }

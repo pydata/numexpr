@@ -1262,11 +1262,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         PyArrayObject *a = NpyIter_GetOperandArray(iter)[0];
         if (last_opcode(self->program) >= OP_SUM &&
             last_opcode(self->program) < OP_PROD) {
-                PyObject *zero = PyInt_FromLong(0);
+                PyObject *zero = PyLong_FromLong(0);
                 PyArray_FillWithScalar(a, zero);
                 Py_DECREF(zero);
         } else {
-                PyObject *one = PyInt_FromLong(1);
+                PyObject *one = PyLong_FromLong(1);
                 PyArray_FillWithScalar(a, one);
                 Py_DECREF(one);
         }
