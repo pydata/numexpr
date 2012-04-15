@@ -45,7 +45,7 @@ NumExpr_dealloc(NumExprObject *self)
     PyMem_Del(self->rawmem);
     PyMem_Del(self->memsteps);
     PyMem_Del(self->memsizes);
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject *

@@ -11,6 +11,7 @@ Changes from 2.0.1 to 2.0.2
 
   - switch from PyString to PyBytes API (requires Python >= 2.6).
   - fixed incompatibilities regarding the int/long API
+  - use the Py_TYPE macro
 
 
 Changes from 2.0 to 2.0.1
