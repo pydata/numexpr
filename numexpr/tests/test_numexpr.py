@@ -686,7 +686,7 @@ class test_subprocess(TestCase):
         try:
             import multiprocessing as mp
         except ImportError:
-	    return
+            return
         # Check for two threads at least
         numexpr.set_num_threads(2)
         #print "**** Running from main process:"
