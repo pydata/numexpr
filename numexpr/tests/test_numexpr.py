@@ -8,7 +8,8 @@
 #  rights to use.
 ####################################################################
 
-import new, sys, os
+import os
+import sys
 import warnings
 
 import numpy
@@ -417,11 +418,11 @@ def test_expressions():
                               'dtype=%r, optimization=%r, exact=%r)') \
                     % (expr, test_scalar, dtype.__name__, optimization, exact)
         test_no[0] += 1
-        method.__name__ = b'test_scalar%d_%s_%s_%s_%04d' % (test_scalar,
-                                                            dtype.__name__,
-                                                            optimization.encode(),
-                                                            section.encode(),
-                                                            test_no[0])
+        method.__name__ = 'test_scalar%d_%s_%s_%s_%04d' % (test_scalar,
+                                                           dtype.__name__,
+                                                           optimization.encode(),
+                                                           section.encode(),
+                                                           test_no[0])
         return method
     x = None
     for test_scalar in (0, 1, 2):
@@ -439,9 +440,9 @@ def test_expressions():
                     x += 1j
                     x *= 1+1j
             if test_scalar == 1:
-                a = a[array_size / 2]
+                a = a[array_size // 2]
             if test_scalar == 2:
-                b = b[array_size / 2]
+                b = b[array_size // 2]
             for optimization, exact in [
                 ('none', False), ('moderate', False), ('aggressive', False)]:
                 for section_name, section_tests in tests:
@@ -746,7 +747,7 @@ def suite():
         def method(self):
             return func()
         setattr(TestExpressions, func.__name__,
-                new.instancemethod(method, None, TestExpressions))
+                method.__get__(None, TestExpressions))
 
     for func in test_expressions():
         add_method(func)
