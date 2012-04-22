@@ -606,15 +606,15 @@ class test_strings(TestCase):
         # other.
         for s1, s2 in [ (b'foo', b'foobar'), (b'foo', b'foo\0bar'),
                         (b'foo\0a', b'foo\0bar') ]:
-            self.assert_(evaluate('s1 < s2'))
-            self.assert_(evaluate('s1 <= s2'))
-            self.assert_(evaluate('~(s1 == s2)'))
-            self.assert_(evaluate('~(s1 >= s2)'))
-            self.assert_(evaluate('~(s1 > s2)'))
+            self.assertTrue(evaluate('s1 < s2'))
+            self.assertTrue(evaluate('s1 <= s2'))
+            self.assertTrue(evaluate('~(s1 == s2)'))
+            self.assertTrue(evaluate('~(s1 >= s2)'))
+            self.assertTrue(evaluate('~(s1 > s2)'))
 
         # Check for NumPy array-style semantics in string equality.
         s1, s2 = b'foo', b'foo\0\0'
-        self.assert_(evaluate('s1 == s2'))
+        self.assertTrue(evaluate('s1 == s2'))
 
 # Case for testing selections in fields which are aligned but whose
 # data length is not an exact multiple of the length of the record.
