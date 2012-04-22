@@ -390,8 +390,9 @@ class ExpressionNode(object):
     __sub__ = binop('sub')
     __rsub__ = binop('sub', reversed=True)
     __mul__ = __rmul__ = binop('mul')
-    __div__ = div_op
-    __rdiv__ = binop('div', reversed=True)
+    if sys.version_info < (3, 0):
+        __div__ = div_op
+        __rdiv__ = binop('div', reversed=True)
     __truediv__ = truediv_op
     __rtruediv__ = rtruediv_op
     __pow__ = pow_op
