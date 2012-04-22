@@ -71,7 +71,7 @@ try:  # Python 3
         # and item[2] is source file.
 
 except ImportError:  # Python 2
-    from distutils.command.build_py import build_py
+    from numpy.distutils.command.build_py import build_py
 
 DEBUG = False
 
