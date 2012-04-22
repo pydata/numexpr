@@ -71,19 +71,19 @@ class test_numexpr(TestCase):
         # Check that they compile OK.
         assert_equal(disassemble(
             NumExpr("sum(x**2+2, axis=None)", [('x', double)])),
-                     [('mul_ddd', 't3', 'r1[x]', 'r1[x]'),
-                      ('add_ddd', 't3', 't3', 'c2[2.0]'),
-                      ('sum_ddn', 'r0', 't3', None)])
+                     [(b'mul_ddd', 't3', 'r1[x]', 'r1[x]'),
+                      (b'add_ddd', 't3', 't3', 'c2[2.0]'),
+                      (b'sum_ddn', 'r0', 't3', None)])
         assert_equal(disassemble(
             NumExpr("sum(x**2+2, axis=1)", [('x', double)])),
-                     [('mul_ddd', 't3', 'r1[x]', 'r1[x]'),
-                      ('add_ddd', 't3', 't3', 'c2[2.0]'),
-                      ('sum_ddn', 'r0', 't3', 1)])
+                     [(b'mul_ddd', 't3', 'r1[x]', 'r1[x]'),
+                      (b'add_ddd', 't3', 't3', 'c2[2.0]'),
+                      (b'sum_ddn', 'r0', 't3', 1)])
         assert_equal(disassemble(
             NumExpr("prod(x**2+2, axis=2)", [('x', double)])),
-                     [('mul_ddd', 't3', 'r1[x]', 'r1[x]'),
-                      ('add_ddd', 't3', 't3', 'c2[2.0]'),
-                      ('prod_ddn', 'r0', 't3', 2)])
+                     [(b'mul_ddd', 't3', 'r1[x]', 'r1[x]'),
+                      (b'add_ddd', 't3', 't3', 'c2[2.0]'),
+                      (b'prod_ddn', 'r0', 't3', 2)])
         # Check that full reductions work.
         x = zeros(1e5)+.01   # checks issue #41
         assert_allclose(evaluate("sum(x+2,axis=None)"), sum(x+2,axis=None))
@@ -155,8 +155,8 @@ class test_numexpr(TestCase):
 
     def test_r0_reuse(self):
         assert_equal(disassemble(NumExpr("x * x + 2", [('x', double)])),
-                    [('mul_ddd', 'r0', 'r1[x]', 'r1[x]'),
-                     ('add_ddd', 'r0', 'r0', 'c2[2.0]')])
+                    [(b'mul_ddd', 'r0', 'r1[x]', 'r1[x]'),
+                     (b'add_ddd', 'r0', 'r0', 'c2[2.0]')])
 
 
 class test_numexpr1(test_numexpr):
@@ -238,7 +238,7 @@ class test_evaluate(TestCase):
         a = arange(100).reshape(10,10)[::2]
         b = arange(50).reshape(5,10)
         assert_array_equal(evaluate("a+b"), a+b)
-        c = empty([10], dtype=[(b'c1', int32), (b'c2', uint16)])
+        c = empty([10], dtype=[('c1', int32), ('c2', uint16)])
         c['c1'] = arange(10)
         c['c2'].fill(0xaaaa)
         c1 = c['c1']
@@ -420,8 +420,8 @@ def test_expressions():
         test_no[0] += 1
         method.__name__ = 'test_scalar%d_%s_%s_%s_%04d' % (test_scalar,
                                                            dtype.__name__,
-                                                           optimization.encode(),
-                                                           section.encode(),
+                                                           optimization.encode('ascii'),
+                                                           section.encode('ascii'),
                                                            test_no[0])
         return method
     x = None
@@ -574,7 +574,7 @@ class test_strings(TestCase):
 
     def test_compare_constant(self):
         sarr = self.str_array1
-        expr = 'sarr >= b%r' % self.str_constant
+        expr = 'sarr >= %r' % self.str_constant
         res1 = eval(expr)
         res2 = evaluate(expr)
         assert_array_equal(res1, res2)

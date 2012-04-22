@@ -132,14 +132,14 @@ def typeCompileAst(ast):
         basesig = ''.join(x.typecode() for x in list(ast.children))
         # Find some operation that will work on an acceptable casting of args.
         for sig in sigPerms(basesig):
-            value = ast.value + '_' + retsig + sig
+            value = (ast.value + '_' + retsig + sig).encode('ascii')
             if value in interpreter.opcodes:
                 break
         else:
             for sig in sigPerms(basesig):
-                funcname = ast.value + '_' + retsig + sig
+                funcname = (ast.value + '_' + retsig + sig).encode('ascii')
                 if funcname in interpreter.funccodes:
-                    value = 'func_%sn' % (retsig+sig)
+                    value = ('func_%sn' % (retsig+sig)).encode('ascii')
                     children += [ASTNode('raw', 'none',
                                          interpreter.funccodes[funcname])]
                     break
@@ -239,7 +239,7 @@ def stringToExpression(s, types, context):
 
 
 def isReduction(ast):
-    return ast.value.startswith('sum_') or ast.value.startswith('prod_')
+    return ast.value.startswith(b'sum_') or ast.value.startswith(b'prod_')
 
 
 def getInputOrder(ast, input_order=None):
@@ -411,10 +411,13 @@ def compileThreeAddrForm(program):
         elif reg.n < 0:
             raise ValueError("negative value for register number %s" % reg.n)
         else:
-            return chr(reg.n)
+            if sys.version_info < (3, 0):
+                return chr(reg.n)
+            else:
+                return bytes([reg.n])
 
     def quadrupleToString(opcode, store, a1=None, a2=None):
-        cop = chr(interpreter.opcodes[opcode])
+        cop = chr(interpreter.opcodes[opcode]).encode('ascii')
         cs = nToChr(store)
         ca1 = nToChr(a1)
         ca2 = nToChr(a2)
@@ -540,7 +543,8 @@ def NumExpr(ex, signature=(), copy_args=(), **kwargs):
     threeAddrProgram, inputsig, tempsig, constants, input_names = \
                       precompile(ex, signature, context)
     program = compileThreeAddrForm(threeAddrProgram)
-    return interpreter.NumExpr(inputsig.encode(), tempsig.encode(),
+    return interpreter.NumExpr(inputsig.encode('ascii'),
+                               tempsig.encode('ascii'),
                                program, constants, input_names)
 
 
@@ -554,10 +558,14 @@ def disassemble(nex):
     r_constants = 1 + len(nex.signature)
     r_temps = r_constants + len(nex.constants)
     def getArg(pc, offset):
-        arg = ord(nex.program[pc+offset])
-        op = rev_opcodes.get(ord(nex.program[pc]))
+        if sys.version_info < (3, 0):
+            arg = ord(nex.program[pc+offset])
+            op = rev_opcodes.get(ord(nex.program[pc]))
+        else:
+            arg = nex.program[pc+offset]
+            op = rev_opcodes.get(nex.program[pc])
         try:
-            code = op.split('_')[1][offset-1]
+            code = op.split(b'_')[1][offset-1]
         except IndexError:
             return None
         if arg == 255:
@@ -575,7 +583,10 @@ def disassemble(nex):
             return arg
     source = []
     for pc in range(0, len(nex.program), 4):
-        op = rev_opcodes.get(ord(nex.program[pc]))
+        if sys.version_info < (3, 0):
+            op = rev_opcodes.get(ord(nex.program[pc]))
+        else:
+            op = rev_opcodes.get(nex.program[pc])
         dest = getArg(pc, 1)
         arg1 = getArg(pc, 2)
         arg2 = getArg(pc, 3)
