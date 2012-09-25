@@ -57,6 +57,10 @@ def command_by_line(cmd, successful_status=(0,), stacklevel=1):
                            stacklevel=stacklevel+1)
     if not ok:
         return
+
+    # XXX: check
+    output = output.decode('ascii')
+
     for line in output.splitlines():
         yield line.strip()
 
