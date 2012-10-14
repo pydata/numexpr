@@ -173,7 +173,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
                 itemsizes[i] = (int)PyBytes_GET_SIZE(o);
                 continue;
             }
-            PyErr_SetString(PyExc_TypeError, "constants must be of type bool/int/long/float/double/complex/str");
+            PyErr_SetString(PyExc_TypeError, "constants must be of type bool/int/long/float/double/complex/bytes");
             Py_DECREF(constsig);
             Py_DECREF(constants);
             PyMem_Del(itemsizes);
