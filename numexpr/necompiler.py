@@ -19,11 +19,11 @@ from numexpr.utils import CacheDict
 double = numpy.double
 
 typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float',
-                    'd': 'double', 'c': 'complex', 's': 'str', 'n' : 'none'}
+                    'd': 'double', 'c': 'complex', 's': 'bytes', 'n' : 'none'}
 kind_to_typecode = {'bool': 'b', 'int': 'i', 'long': 'l', 'float': 'f',
-                    'double': 'd', 'complex': 'c', 'str': 's', 'none' : 'n'}
+                    'double': 'd', 'complex': 'c', 'bytes': 's', 'none' : 'n'}
 type_to_typecode = {bool: 'b', int: 'i', long:'l', float:'f',
-                    double: 'd', complex: 'c', str: 's'}
+                    double: 'd', complex: 'c', bytes: 's'}
 type_to_kind = expressions.type_to_kind
 kind_to_type = expressions.kind_to_type
 default_type = kind_to_type[expressions.default_kind]
@@ -345,7 +345,7 @@ def optimizeTemporariesAllocation(ast):
                 users_of[c.reg].add(n)
 
     unused = {'bool': set(), 'int': set(), 'long': set(), 'float': set(),
-              'double': set(), 'complex': set(), 'str': set()}
+              'double': set(), 'complex': set(), 'bytes': set()}
     for n in nodes:
         for c in n.children:
             reg = c.reg
@@ -414,7 +414,7 @@ def compileThreeAddrForm(program):
             if sys.version_info < (3, 0):
                 return chr(reg.n)
             else:
-                return bytes([reg.n])
+                return reg.n.to_bytes(1, sys.byteorder)
 
     def quadrupleToString(opcode, store, a1=None, a2=None):
         cop = chr(interpreter.opcodes[opcode]).encode('ascii')
@@ -611,7 +611,7 @@ def getType(a):
     if kind == 'c':
         return complex
     if kind == 'S':
-        return str
+        return bytes
     raise ValueError("unkown type %s" % a.dtype.name)
 
 

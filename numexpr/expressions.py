@@ -23,9 +23,9 @@ double = numpy.double
 default_kind = 'double'
 
 type_to_kind = {bool: 'bool', int: 'int', long: 'long', float: 'float',
-                double: 'double', complex: 'complex', str: 'str'}
+                double: 'double', complex: 'complex', bytes: 'bytes'}
 kind_to_type = {'bool': bool, 'int': int, 'long': long, 'float': float,
-                'double': double, 'complex': complex, 'str': str}
+                'double': double, 'complex': complex, 'bytes': bytes}
 kind_rank = ['bool', 'int', 'long', 'float', 'double', 'complex', 'none']
 
 from numexpr import interpreter
@@ -86,15 +86,15 @@ def allConstantNodes(args):
 
 def isConstant(ex):
     "Returns True if ex is a constant scalar of an allowed type."
-    return isinstance(ex, (bool, int, long, float, double, complex, str))
+    return isinstance(ex, (bool, int, long, float, double, complex, bytes))
 
 def commonKind(nodes):
     node_kinds = [node.astKind for node in nodes]
-    str_count = node_kinds.count('str')
+    str_count = node_kinds.count('bytes')
     if 0 < str_count < len(node_kinds):  # some args are strings, but not all
         raise TypeError("strings can only be operated with strings")
     if str_count > 0:  # if there are some, all of them must be
-        return 'str'
+        return 'bytes'
     n = -1
     for x in nodes:
         n = max(n, kind_rank.index(x.astKind))
@@ -104,8 +104,8 @@ max_int32 = 2147483647
 min_int32 = -max_int32 - 1
 
 def bestConstantType(x):
-    if isinstance(x, str):  # ``numpy.string_`` is a subclass of ``str``
-        return str
+    if isinstance(x, bytes):  # ``numpy.string_`` is a subclass of ``bytes``
+        return bytes
     # ``long`` objects are kept as is to allow the user to force
     # promotion of results by using long constants, e.g. by operating
     # a 32-bit array with a long (64-bit) constant.
