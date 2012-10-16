@@ -411,7 +411,7 @@ def compileThreeAddrForm(program):
         elif reg.n < 0:
             raise ValueError("negative value for register number %s" % reg.n)
         else:
-            if sys.version_info < (3, 0):
+            if sys.version_info[0] < 3:
                 return chr(reg.n)
             else:
                 return reg.n.to_bytes(1, sys.byteorder)
@@ -558,7 +558,7 @@ def disassemble(nex):
     r_constants = 1 + len(nex.signature)
     r_temps = r_constants + len(nex.constants)
     def getArg(pc, offset):
-        if sys.version_info < (3, 0):
+        if sys.version_info[0] < 3:
             arg = ord(nex.program[pc+offset])
             op = rev_opcodes.get(ord(nex.program[pc]))
         else:
@@ -583,7 +583,7 @@ def disassemble(nex):
             return arg
     source = []
     for pc in range(0, len(nex.program), 4):
-        if sys.version_info < (3, 0):
+        if sys.version_info[0] < 3:
             op = rev_opcodes.get(ord(nex.program[pc]))
         else:
             op = rev_opcodes.get(nex.program[pc])
