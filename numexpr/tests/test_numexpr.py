@@ -71,19 +71,19 @@ class test_numexpr(TestCase):
         # Check that they compile OK.
         assert_equal(disassemble(
             NumExpr("sum(x**2+2, axis=None)", [('x', double)])),
-                     [(b'mul_ddd', 't3', 'r1[x]', 'r1[x]'),
-                      (b'add_ddd', 't3', 't3', 'c2[2.0]'),
-                      (b'sum_ddn', 'r0', 't3', None)])
+                     [(b'mul_ddd', b't3', b'r1[x]', b'r1[x]'),
+                      (b'add_ddd', b't3', b't3', b'c2[2.0]'),
+                      (b'sum_ddn', b'r0', b't3', None)])
         assert_equal(disassemble(
             NumExpr("sum(x**2+2, axis=1)", [('x', double)])),
-                     [(b'mul_ddd', 't3', 'r1[x]', 'r1[x]'),
-                      (b'add_ddd', 't3', 't3', 'c2[2.0]'),
-                      (b'sum_ddn', 'r0', 't3', 1)])
+                     [(b'mul_ddd', b't3', b'r1[x]', b'r1[x]'),
+                      (b'add_ddd', b't3', b't3', b'c2[2.0]'),
+                      (b'sum_ddn', b'r0', b't3', 1)])
         assert_equal(disassemble(
             NumExpr("prod(x**2+2, axis=2)", [('x', double)])),
-                     [(b'mul_ddd', 't3', 'r1[x]', 'r1[x]'),
-                      (b'add_ddd', 't3', 't3', 'c2[2.0]'),
-                      (b'prod_ddn', 'r0', 't3', 2)])
+                     [(b'mul_ddd', b't3', b'r1[x]', b'r1[x]'),
+                      (b'add_ddd', b't3', b't3', b'c2[2.0]'),
+                      (b'prod_ddn', b'r0', b't3', 2)])
         # Check that full reductions work.
         x = zeros(1e5)+.01   # checks issue #41
         assert_allclose(evaluate("sum(x+2,axis=None)"), sum(x+2,axis=None))
@@ -155,8 +155,8 @@ class test_numexpr(TestCase):
 
     def test_r0_reuse(self):
         assert_equal(disassemble(NumExpr("x * x + 2", [('x', double)])),
-                    [(b'mul_ddd', 'r0', 'r1[x]', 'r1[x]'),
-                     (b'add_ddd', 'r0', 'r0', 'c2[2.0]')])
+                    [(b'mul_ddd', b'r0', b'r1[x]', b'r1[x]'),
+                     (b'add_ddd', b'r0', b'r0', b'c2[2.0]')])
 
 
 class test_numexpr1(test_numexpr):

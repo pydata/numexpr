@@ -572,17 +572,19 @@ def disassemble(nex):
             code = op.split(b'_')[1][offset-1]
         except IndexError:
             return None
+        if sys.version_info[0] > 2:
+            code = code.to_bytes(1, sys.byteorder)
         if arg == 255:
             return None
-        if code != 'n':
+        if code != b'n':
             if arg == 0:
-                return 'r0'
+                return b'r0'
             elif arg < r_constants:
-                return 'r%d[%s]' % (arg, nex.input_names[arg-1])
+                return ('r%d[%s]' % (arg, nex.input_names[arg-1])).encode('ascii')
             elif arg < r_temps:
-                return 'c%d[%s]' % (arg, nex.constants[arg - r_constants])
+                return ('c%d[%s]' % (arg, nex.constants[arg - r_constants])).encode('ascii')
             else:
-                return 't%d' % (arg,)
+                return ('t%d' % (arg,)).encode('ascii')
         else:
             return arg
     source = []
