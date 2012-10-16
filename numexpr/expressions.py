@@ -21,10 +21,14 @@ double = numpy.double
 
 # The default kind for undeclared variables
 default_kind = 'double'
+if sys.version_info[0] < 3:
+    int_ = int
+else:
+    int_ = numpy.int32
 
-type_to_kind = {bool: 'bool', int: 'int', long: 'long', float: 'float',
+type_to_kind = {bool: 'bool', int_: 'int', long: 'long', float: 'float',
                 double: 'double', complex: 'complex', bytes: 'bytes'}
-kind_to_type = {'bool': bool, 'int': int, 'long': long, 'float': float,
+kind_to_type = {'bool': bool, 'int': int_, 'long': long, 'float': float,
                 'double': double, 'complex': complex, 'bytes': bytes}
 kind_rank = ['bool', 'int', 'long', 'float', 'double', 'complex', 'none']
 
@@ -86,7 +90,7 @@ def allConstantNodes(args):
 
 def isConstant(ex):
     "Returns True if ex is a constant scalar of an allowed type."
-    return isinstance(ex, (bool, int, long, float, double, complex, bytes))
+    return isinstance(ex, (bool, int_, long, float, double, complex, bytes))
 
 def commonKind(nodes):
     node_kinds = [node.astKind for node in nodes]
@@ -128,7 +132,7 @@ def bestConstantType(x):
         # can clearly tell 32- and 64-bit constants apart.
         if not (min_int32 <= x <= max_int32):
             return long
-        return int
+        return int_
     # The duality of float and double in Python avoids that we have to list
     # ``double`` too.
     for converter in float, complex:
@@ -204,13 +208,13 @@ def sum_func(a, axis=None):
     axis = encode_axis(axis)
     if isinstance(a, ConstantNode):
         return a
-    if isinstance(a, (bool, int, long, float, double, complex)):
+    if isinstance(a, (bool, int_, long, float, double, complex)):
         a = ConstantNode(a)
     return FuncNode('sum', [a, axis], kind=a.astKind)
 
 def prod_func(a, axis=None):
     axis = encode_axis(axis)
-    if isinstance(a, (bool, int, long, float, double, complex)):
+    if isinstance(a, (bool, int_, long, float, double, complex)):
         a = ConstantNode(a)
     if isinstance(a, ConstantNode):
         return a
@@ -252,8 +256,8 @@ def pow_op(a, b):
             # Optimize all integral and half integral powers in [-RANGE, RANGE]
             # Note: for complex numbers RANGE could be larger.
             if (int(2*x) == 2*x) and (-RANGE <= abs(x) <= RANGE):
-                n = int(abs(x))
-                ishalfpower = int(abs(2*x)) % 2
+                n = int_(abs(x))
+                ishalfpower = int_(abs(2*x)) % 2
                 def multiply(x, y):
                     if x is None: return y
                     return OpNode('mul', [x, y])

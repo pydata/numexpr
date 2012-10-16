@@ -471,11 +471,13 @@ class test_int64(TestCase):
         self.assertEqual(res.dtype.name, 'int64')
 
 class test_int32_int64(TestCase):
-    def test_small_long(self):
-        # Small longs should not be downgraded to ints.
-        res = evaluate('42L')
-        assert_array_equal(res, 42)
-        self.assertEqual(res.dtype.name, 'int64')
+    if sys.version_info[0] < 2:
+        # no lung literals in python 3
+        def test_small_long(self):
+            # Small longs should not be downgraded to ints.
+            res = evaluate('42L')
+            assert_array_equal(res, 42)
+            self.assertEqual(res.dtype.name, 'int64')
 
     def test_big_int(self):
         # Big ints should be promoted to longs.
@@ -486,9 +488,11 @@ class test_int32_int64(TestCase):
 
     def test_long_constant_promotion(self):
         int32array = arange(100, dtype='int32')
+        itwo = numpy.int32(2)
+        ltwo = numpy.int64(2)
         res = int32array * 2
-        res32 = evaluate('int32array * 2')
-        res64 = evaluate('int32array * 2L')
+        res32 = evaluate('int32array * itwo')
+        res64 = evaluate('int32array * ltwo')
         assert_array_equal(res, res32)
         assert_array_equal(res, res64)
         self.assertEqual(res32.dtype.name, 'int32')
@@ -513,10 +517,11 @@ class test_uint32_int64(TestCase):
 
     def test_uint32_constant_promotion(self):
         int32array = arange(100, dtype='int32')
-        a = numpy.uint32(2)
-        res = int32array * a
-        res32 = evaluate('int32array * 2')
-        res64 = evaluate('int32array * a')
+        stwo = numpy.int32(2)
+        utwo = numpy.uint32(2)
+        res = int32array * utwo
+        res32 = evaluate('int32array * stwo')
+        res64 = evaluate('int32array * utwo')
         assert_array_equal(res, res32)
         assert_array_equal(res, res64)
         self.assertEqual(res32.dtype.name, 'int32')
