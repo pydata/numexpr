@@ -187,12 +187,15 @@ class test_evaluate(TestCase):
         assert_array_equal(x, y)
 
     # Test for issue #37
-    def test_zero_div(self):
-        x = arange(100, dtype='i4')
-        y = evaluate("1/x")
-        x2 = zeros(100, dtype='i4')
-        x2[1] = 1
-        assert_array_equal(x2, y)
+    if sys.version_info[0] < 3:
+        # In python 3 '/' perforns true division, not integer division.
+        # Integer division '//' is still not suppoerted by numexpr
+        def test_zero_div(self):
+            x = arange(100, dtype='i4')
+            y = evaluate("1/x")
+            x2 = zeros(100, dtype='i4')
+            x2[1] = 1
+            assert_array_equal(x2, y)
 
     # Test for issue #22
     def test_true_div(self):
