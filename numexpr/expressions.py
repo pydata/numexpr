@@ -110,6 +110,12 @@ min_int32 = -max_int32 - 1
 def bestConstantType(x):
     if isinstance(x, bytes):  # ``numpy.string_`` is a subclass of ``bytes``
         return bytes
+    # Numeric conversion to boolean values is not tried because
+    # ``bool(1) == True`` (same for 0 and False), so 0 and 1 would be
+    # interpreted as booleans when ``False`` and ``True`` are already
+    # supported.
+    if isinstance(x, (bool, numpy.bool_)):
+        return bool
     # ``long`` objects are kept as is to allow the user to force
     # promotion of results by using long constants, e.g. by operating
     # a 32-bit array with a long (64-bit) constant.
@@ -120,12 +126,6 @@ def bestConstantType(x):
     # a float (32-bit) array with a double (64-bit) constant.
     if isinstance(x, double):
         return double
-    # Numeric conversion to boolean values is not tried because
-    # ``bool(1) == True`` (same for 0 and False), so 0 and 1 would be
-    # interpreted as booleans when ``False`` and ``True`` are already
-    # supported.
-    if isinstance(x, (bool, numpy.bool_)):
-        return bool
     if isinstance(x, (int, numpy.integer)):
         # Constants needing more than 32 bits are always
         # considered ``long``, *regardless of the platform*, so we
