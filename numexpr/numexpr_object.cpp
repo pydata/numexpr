@@ -141,11 +141,13 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
 #if PY_MAJOR_VERSION < 3
             if (PyInt_Check(o)) {
+#else
+            if (PyArray_IsScalar(o, Int)) {
+#endif
                 PyBytes_AS_STRING(constsig)[i] = 'i';
                 itemsizes[i] = size_from_char('i');
                 continue;
             }
-#endif
             if (PyLong_Check(o)) {
                 PyBytes_AS_STRING(constsig)[i] = 'l';
                 itemsizes[i] = size_from_char('l');
