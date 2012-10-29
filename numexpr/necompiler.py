@@ -418,7 +418,9 @@ def compileThreeAddrForm(program):
             if sys.version_info[0] < 3:
                 return chr(reg.n)
             else:
-                return reg.n.to_bytes(1, sys.byteorder)
+                # int.to_bytes is not available in Python < 3.2
+                #return reg.n.to_bytes(1, sys.byteorder)
+                return bytes([reg.n])
 
     def quadrupleToString(opcode, store, a1=None, a2=None):
         cop = chr(interpreter.opcodes[opcode]).encode('ascii')
@@ -573,7 +575,9 @@ def disassemble(nex):
         except IndexError:
             return None
         if sys.version_info[0] > 2:
-            code = code.to_bytes(1, sys.byteorder)
+            # int.to_bytes is not available in Python < 3.2
+            #code = code.to_bytes(1, sys.byteorder)
+            code = bytes([code])
         if arg == 255:
             return None
         if code != b'n':
