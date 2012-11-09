@@ -66,7 +66,7 @@ if(PYTHONINTERP_FOUND)
         string(REGEX REPLACE "\\\\" "/" NUMPY_INCLUDE_DIRS ${NUMPY_INCLUDE_DIRS})
 
         # Get the major and minor version numbers
-        string(REGEX REPLACE "\\." ";" _NUMPY_VERSION_LIST ${NUMPY_VERSION})
+        string(REGEX REPLACE "\\.|rc|dev" ";" _NUMPY_VERSION_LIST ${NUMPY_VERSION})
         list(GET _NUMPY_VERSION_LIST 0 NUMPY_VERSION_MAJOR)
         list(GET _NUMPY_VERSION_LIST 1 NUMPY_VERSION_MINOR)
         list(GET _NUMPY_VERSION_LIST 2 NUMPY_VERSION_PATCH)
