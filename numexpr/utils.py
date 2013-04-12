@@ -9,6 +9,7 @@
 ####################################################################
 
 import os
+import subprocess
 
 from numexpr.interpreter import _set_num_threads
 from numexpr import use_vml
@@ -99,13 +100,13 @@ def detect_number_of_cores():
     """
     # Linux, Unix and MacOS:
     if hasattr(os, "sysconf"):
-        if os.sysconf_names.has_key("SC_NPROCESSORS_ONLN"):
+        if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
             # Linux & Unix:
             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
             if isinstance(ncpus, int) and ncpus > 0:
                 return ncpus
         else: # OSX:
-            return int(os.popen2("sysctl -n hw.ncpu")[1].read())
+            return int(subprocess.check_output(["sysctl", "-n", "hw.ncpu"]))
     # Windows:
     if os.environ.has_key("NUMBER_OF_PROCESSORS"):
         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
@@ -127,7 +128,7 @@ class CacheDict(dict):
         # Protection against growing the cache too much
         if len(self) > self.maxentries:
             # Remove a 10% of (arbitrary) elements from the cache
-            entries_to_remove = self.maxentries / 10
+            entries_to_remove = self.maxentries // 10
             for k in self.keys()[:entries_to_remove]:
                 super(CacheDict, self).__delitem__(k)
         super(CacheDict, self).__setitem__(key, value)

@@ -338,8 +338,8 @@ add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
         return 0;
     }
 
-    o = PyInt_FromLong(name);
-    s = PyString_FromString(sname);
+    o = PyLong_FromLong(name);
+    s = PyBytes_FromString(sname);
     if (!s) {
         PyErr_SetString(PyExc_RuntimeError, routine_name);
         return -1;
@@ -349,17 +349,50 @@ add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
     return r;
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+
+/* XXX: handle the "global_state" state via moduedef */
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "interpreter",
+        NULL,
+        -1,                 /* sizeof(struct global_state), */
+        module_methods,
+        NULL,
+        NULL,               /* module_traverse, */
+        NULL,               /* module_clear, */
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit_interpreter(void)
+
+#else
+#define INITERROR return
+
 PyMODINIT_FUNC
 initinterpreter()
+#endif
 {
     PyObject *m, *d;
 
     if (PyType_Ready(&NumExprType) < 0)
-        return;
+        INITERROR;
 
+#if PY_MAJOR_VERSION >= 3
+    m = PyModule_Create(&moduledef);
+#else
     m = Py_InitModule3("interpreter", module_methods, NULL);
+#endif
+
     if (m == NULL)
-        return;
+        INITERROR;
 
     Py_INCREF(&NumExprType);
     PyModule_AddObject(m, "NumExpr", (PyObject *)&NumExprType);
@@ -367,20 +400,20 @@ initinterpreter()
     import_array();
 
     d = PyDict_New();
-    if (!d) return;
+    if (!d) INITERROR;
 
 #define OPCODE(n, name, sname, ...)                              \
-    if (add_symbol(d, sname, name, "add_op") < 0) { return; }
+    if (add_symbol(d, sname, name, "add_op") < 0) { INITERROR; }
 #include "opcodes.hpp"
 #undef OPCODE
 
-    if (PyModule_AddObject(m, "opcodes", d) < 0) return;
+    if (PyModule_AddObject(m, "opcodes", d) < 0) INITERROR;
 
     d = PyDict_New();
-    if (!d) return;
+    if (!d) INITERROR;
 
 #define add_func(name, sname)                           \
-    if (add_symbol(d, sname, name, "add_func") < 0) { return; }
+    if (add_symbol(d, sname, name, "add_func") < 0) { INITERROR; }
 #define FUNC_FF(name, sname, ...)  add_func(name, sname);
 #define FUNC_FFF(name, sname, ...) add_func(name, sname);
 #define FUNC_DD(name, sname, ...)  add_func(name, sname);
@@ -397,8 +430,16 @@ initinterpreter()
 #undef FUNC_FF
 #undef add_func
 
-    if (PyModule_AddObject(m, "funccodes", d) < 0) return;
+    if (PyModule_AddObject(m, "funccodes", d) < 0) INITERROR;
 
-    if (PyModule_AddObject(m, "allaxes", PyInt_FromLong(255)) < 0) return;
-    if (PyModule_AddObject(m, "maxdims", PyInt_FromLong(NPY_MAXDIMS)) < 0) return;
+    if (PyModule_AddObject(m, "allaxes", PyLong_FromLong(255)) < 0) INITERROR;
+    if (PyModule_AddObject(m, "maxdims", PyLong_FromLong(NPY_MAXDIMS)) < 0) INITERROR;
+
+#if PY_MAJOR_VERSION >= 3
+    return m;
+#endif
 }
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

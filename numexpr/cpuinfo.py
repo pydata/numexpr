@@ -27,13 +27,15 @@ __all__ = ['cpu']
 
 import sys, re, types
 import os
-import commands
+import subprocess
 import warnings
 import platform
 
 def getoutput(cmd, successful_status=(0,), stacklevel=1):
     try:
-        status, output = commands.getstatusoutput(cmd)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        output, _ = p.communicate()
+        status = p.returncode
     except EnvironmentError, e:
         warnings.warn(str(e), UserWarning, stacklevel=stacklevel)
         return False, ''
@@ -55,6 +57,10 @@ def command_by_line(cmd, successful_status=(0,), stacklevel=1):
                            stacklevel=stacklevel+1)
     if not ok:
         return
+
+    # XXX: check
+    output = output.decode('ascii')
+
     for line in output.splitlines():
         yield line.strip()
 
@@ -111,7 +117,7 @@ class LinuxCPUInfo(CPUInfoBase):
         if self.info is not None:
             return
         info = [ {} ]
-        ok, output = getoutput('uname -m')
+        ok, output = getoutput(['uname', '-m'])
         if ok:
             info[0]['uname_m'] = output.strip()
         try:
@@ -364,7 +370,7 @@ class DarwinCPUInfo(CPUInfoBase):
             return
         info = command_info(arch='arch',
                             machine='machine')
-        info['sysctl_hw'] = key_value_from_command('sysctl hw', sep='=')
+        info['sysctl_hw'] = key_value_from_command(['sysctl', 'hw'], sep='=')
         self.__class__.info = info
 
     def _not_impl(self): pass
@@ -412,11 +418,11 @@ class SunOSCPUInfo(CPUInfoBase):
         info = command_info(arch='arch',
                             mach='mach',
                             uname_i='uname_i',
-                            isainfo_b='isainfo -b',
-                            isainfo_n='isainfo -n',
+                            isainfo_b=['isainfo', '-b'],
+                            isainfo_n=['isainfo' ,'-n'],
                             )
         info['uname_X'] = key_value_from_command('uname -X', sep='=')
-        for line in command_by_line('psrinfo -v 0'):
+        for line in command_by_line(['psrinfo', '-v', '0']):
             m = re.match(r'\s*The (?P<p>[\w\d]+) processor operates at', line)
             if m:
                 info['processor'] = m.group('p')

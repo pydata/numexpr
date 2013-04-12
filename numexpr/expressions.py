@@ -21,11 +21,15 @@ double = numpy.double
 
 # The default kind for undeclared variables
 default_kind = 'double'
+if sys.version_info[0] < 3:
+    int_ = int
+else:
+    int_ = numpy.int32
 
-type_to_kind = {bool: 'bool', int: 'int', long: 'long', float: 'float',
-                double: 'double', complex: 'complex', str: 'str'}
-kind_to_type = {'bool': bool, 'int': int, 'long': long, 'float': float,
-                'double': double, 'complex': complex, 'str': str}
+type_to_kind = {bool: 'bool', int_: 'int', long: 'long', float: 'float',
+                double: 'double', complex: 'complex', bytes: 'bytes'}
+kind_to_type = {'bool': bool, 'int': int_, 'long': long, 'float': float,
+                'double': double, 'complex': complex, 'bytes': bytes}
 kind_rank = ['bool', 'int', 'long', 'float', 'double', 'complex', 'none']
 
 from numexpr import interpreter
@@ -86,15 +90,15 @@ def allConstantNodes(args):
 
 def isConstant(ex):
     "Returns True if ex is a constant scalar of an allowed type."
-    return isinstance(ex, (bool, int, long, float, double, complex, str))
+    return isinstance(ex, (bool, int_, long, float, double, complex, bytes))
 
 def commonKind(nodes):
     node_kinds = [node.astKind for node in nodes]
-    str_count = node_kinds.count('str')
+    str_count = node_kinds.count('bytes')
     if 0 < str_count < len(node_kinds):  # some args are strings, but not all
         raise TypeError("strings can only be operated with strings")
     if str_count > 0:  # if there are some, all of them must be
-        return 'str'
+        return 'bytes'
     n = -1
     for x in nodes:
         n = max(n, kind_rank.index(x.astKind))
@@ -104,8 +108,14 @@ max_int32 = 2147483647
 min_int32 = -max_int32 - 1
 
 def bestConstantType(x):
-    if isinstance(x, str):  # ``numpy.string_`` is a subclass of ``str``
-        return str
+    if isinstance(x, bytes):  # ``numpy.string_`` is a subclass of ``bytes``
+        return bytes
+    # Numeric conversion to boolean values is not tried because
+    # ``bool(1) == True`` (same for 0 and False), so 0 and 1 would be
+    # interpreted as booleans when ``False`` and ``True`` are already
+    # supported.
+    if isinstance(x, (bool, numpy.bool_)):
+        return bool
     # ``long`` objects are kept as is to allow the user to force
     # promotion of results by using long constants, e.g. by operating
     # a 32-bit array with a long (64-bit) constant.
@@ -116,19 +126,13 @@ def bestConstantType(x):
     # a float (32-bit) array with a double (64-bit) constant.
     if isinstance(x, double):
         return double
-    # Numeric conversion to boolean values is not tried because
-    # ``bool(1) == True`` (same for 0 and False), so 0 and 1 would be
-    # interpreted as booleans when ``False`` and ``True`` are already
-    # supported.
-    if isinstance(x, (bool, numpy.bool_)):
-        return bool
     if isinstance(x, (int, numpy.integer)):
         # Constants needing more than 32 bits are always
         # considered ``long``, *regardless of the platform*, so we
         # can clearly tell 32- and 64-bit constants apart.
         if not (min_int32 <= x <= max_int32):
             return long
-        return int
+        return int_
     # The duality of float and double in Python avoids that we have to list
     # ``double`` too.
     for converter in float, complex:
@@ -204,13 +208,13 @@ def sum_func(a, axis=None):
     axis = encode_axis(axis)
     if isinstance(a, ConstantNode):
         return a
-    if isinstance(a, (bool, int, long, float, double, complex)):
+    if isinstance(a, (bool, int_, long, float, double, complex)):
         a = ConstantNode(a)
     return FuncNode('sum', [a, axis], kind=a.astKind)
 
 def prod_func(a, axis=None):
     axis = encode_axis(axis)
-    if isinstance(a, (bool, int, long, float, double, complex)):
+    if isinstance(a, (bool, int_, long, float, double, complex)):
         a = ConstantNode(a)
     if isinstance(a, ConstantNode):
         return a
@@ -252,8 +256,8 @@ def pow_op(a, b):
             # Optimize all integral and half integral powers in [-RANGE, RANGE]
             # Note: for complex numbers RANGE could be larger.
             if (int(2*x) == 2*x) and (-RANGE <= abs(x) <= RANGE):
-                n = int(abs(x))
-                ishalfpower = int(abs(2*x)) % 2
+                n = int_(abs(x))
+                ishalfpower = int_(abs(2*x)) % 2
                 def multiply(x, y):
                     if x is None: return y
                     return OpNode('mul', [x, y])
@@ -390,8 +394,9 @@ class ExpressionNode(object):
     __sub__ = binop('sub')
     __rsub__ = binop('sub', reversed=True)
     __mul__ = __rmul__ = binop('mul')
-    __div__ = div_op
-    __rdiv__ = binop('div', reversed=True)
+    if sys.version_info[0] < 3:
+        __div__ = div_op
+        __rdiv__ = binop('div', reversed=True)
     __truediv__ = truediv_op
     __rtruediv__ = rtruediv_op
     __pow__ = pow_op

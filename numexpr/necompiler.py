@@ -17,13 +17,17 @@ from numexpr.utils import CacheDict
 
 # Declare a double type that does not exist in Python space
 double = numpy.double
+if sys.version_info[0] < 3:
+    int_ = int
+else:
+    int_ = numpy.int32
 
 typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float',
-                    'd': 'double', 'c': 'complex', 's': 'str', 'n' : 'none'}
+                    'd': 'double', 'c': 'complex', 's': 'bytes', 'n' : 'none'}
 kind_to_typecode = {'bool': 'b', 'int': 'i', 'long': 'l', 'float': 'f',
-                    'double': 'd', 'complex': 'c', 'str': 's', 'none' : 'n'}
-type_to_typecode = {bool: 'b', int: 'i', long:'l', float:'f',
-                    double: 'd', complex: 'c', str: 's'}
+                    'double': 'd', 'complex': 'c', 'bytes': 's', 'none' : 'n'}
+type_to_typecode = {bool: 'b', int_: 'i', long:'l', float:'f',
+                    double: 'd', complex: 'c', bytes: 's'}
 type_to_kind = expressions.type_to_kind
 kind_to_type = expressions.kind_to_type
 default_type = kind_to_type[expressions.default_kind]
@@ -132,14 +136,14 @@ def typeCompileAst(ast):
         basesig = ''.join(x.typecode() for x in list(ast.children))
         # Find some operation that will work on an acceptable casting of args.
         for sig in sigPerms(basesig):
-            value = ast.value + '_' + retsig + sig
+            value = (ast.value + '_' + retsig + sig).encode('ascii')
             if value in interpreter.opcodes:
                 break
         else:
             for sig in sigPerms(basesig):
-                funcname = ast.value + '_' + retsig + sig
+                funcname = (ast.value + '_' + retsig + sig).encode('ascii')
                 if funcname in interpreter.funccodes:
-                    value = 'func_%sn' % (retsig+sig)
+                    value = ('func_%sn' % (retsig+sig)).encode('ascii')
                     children += [ASTNode('raw', 'none',
                                          interpreter.funccodes[funcname])]
                     break
@@ -239,7 +243,7 @@ def stringToExpression(s, types, context):
 
 
 def isReduction(ast):
-    return ast.value.startswith('sum_') or ast.value.startswith('prod_')
+    return ast.value.startswith(b'sum_') or ast.value.startswith(b'prod_')
 
 
 def getInputOrder(ast, input_order=None):
@@ -345,7 +349,7 @@ def optimizeTemporariesAllocation(ast):
                 users_of[c.reg].add(n)
 
     unused = {'bool': set(), 'int': set(), 'long': set(), 'float': set(),
-              'double': set(), 'complex': set(), 'str': set()}
+              'double': set(), 'complex': set(), 'bytes': set()}
     for n in nodes:
         for c in n.children:
             reg = c.reg
@@ -407,14 +411,19 @@ def compileThreeAddrForm(program):
     """
     def nToChr(reg):
         if reg is None:
-            return '\xff'
+            return b'\xff'
         elif reg.n < 0:
             raise ValueError("negative value for register number %s" % reg.n)
         else:
-            return chr(reg.n)
+            if sys.version_info[0] < 3:
+                return chr(reg.n)
+            else:
+                # int.to_bytes is not available in Python < 3.2
+                #return reg.n.to_bytes(1, sys.byteorder)
+                return bytes([reg.n])
 
     def quadrupleToString(opcode, store, a1=None, a2=None):
-        cop = chr(interpreter.opcodes[opcode])
+        cop = chr(interpreter.opcodes[opcode]).encode('ascii')
         cs = nToChr(store)
         ca1 = nToChr(a1)
         ca2 = nToChr(a2)
@@ -428,12 +437,12 @@ def compileThreeAddrForm(program):
         l = [s]
         args = args[4:]
         while args:
-            s = quadrupleToString('noop', *args[:3])
+            s = quadrupleToString(b'noop', *args[:3])
             l.append(s)
             args = args[3:]
-        return ''.join(l)
+        return b''.join(l)
 
-    prog_str = ''.join([toString(t) for t in program])
+    prog_str = b''.join([toString(t) for t in program])
     return prog_str
 
 context_info = [
@@ -466,7 +475,7 @@ def precompile(ex, signature=(), context={}):
     types = dict(signature)
     input_order = [name for (name, type_) in signature]
 
-    if isinstance(ex, str):
+    if isinstance(ex, (str, unicode)):
         ex = stringToExpression(ex, types, context)
 
     # the AST is like the expression, but the node objects don't have
@@ -540,8 +549,9 @@ def NumExpr(ex, signature=(), copy_args=(), **kwargs):
     threeAddrProgram, inputsig, tempsig, constants, input_names = \
                       precompile(ex, signature, context)
     program = compileThreeAddrForm(threeAddrProgram)
-    return interpreter.NumExpr(inputsig, tempsig, program, constants,
-                               input_names)
+    return interpreter.NumExpr(inputsig.encode('ascii'),
+                               tempsig.encode('ascii'),
+                               program, constants, input_names)
 
 
 def disassemble(nex):
@@ -554,28 +564,39 @@ def disassemble(nex):
     r_constants = 1 + len(nex.signature)
     r_temps = r_constants + len(nex.constants)
     def getArg(pc, offset):
-        arg = ord(nex.program[pc+offset])
-        op = rev_opcodes.get(ord(nex.program[pc]))
+        if sys.version_info[0] < 3:
+            arg = ord(nex.program[pc+offset])
+            op = rev_opcodes.get(ord(nex.program[pc]))
+        else:
+            arg = nex.program[pc+offset]
+            op = rev_opcodes.get(nex.program[pc])
         try:
-            code = op.split('_')[1][offset-1]
+            code = op.split(b'_')[1][offset-1]
         except IndexError:
             return None
+        if sys.version_info[0] > 2:
+            # int.to_bytes is not available in Python < 3.2
+            #code = code.to_bytes(1, sys.byteorder)
+            code = bytes([code])
         if arg == 255:
             return None
-        if code != 'n':
+        if code != b'n':
             if arg == 0:
-                return 'r0'
+                return b'r0'
             elif arg < r_constants:
-                return 'r%d[%s]' % (arg, nex.input_names[arg-1])
+                return ('r%d[%s]' % (arg, nex.input_names[arg-1])).encode('ascii')
             elif arg < r_temps:
-                return 'c%d[%s]' % (arg, nex.constants[arg - r_constants])
+                return ('c%d[%s]' % (arg, nex.constants[arg - r_constants])).encode('ascii')
             else:
-                return 't%d' % (arg,)
+                return ('t%d' % (arg,)).encode('ascii')
         else:
             return arg
     source = []
     for pc in range(0, len(nex.program), 4):
-        op = rev_opcodes.get(ord(nex.program[pc]))
+        if sys.version_info[0] < 3:
+            op = rev_opcodes.get(ord(nex.program[pc]))
+        else:
+            op = rev_opcodes.get(nex.program[pc])
         dest = getArg(pc, 1)
         arg1 = getArg(pc, 2)
         arg2 = getArg(pc, 3)
@@ -592,7 +613,7 @@ def getType(a):
             return long  # ``long`` is for integers of more than 32 bits
         if kind == 'u' and a.dtype.itemsize == 4:
             return long  # use ``long`` here as an ``int`` is not enough
-        return int
+        return int_
     if kind == 'f':
         if a.dtype.itemsize > 4:
             return double  # ``double`` is for floats of more than 32 bits
@@ -600,7 +621,7 @@ def getType(a):
     if kind == 'c':
         return complex
     if kind == 'S':
-        return str
+        return bytes
     raise ValueError("unkown type %s" % a.dtype.name)
 
 
@@ -678,7 +699,7 @@ def evaluate(ex, local_dict=None, global_dict=None,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
     """
-    if not isinstance(ex, str):
+    if not isinstance(ex, (str, unicode)):
         raise ValueError("must specify expression as a string")
     # Get the names for this expression
     context = getContext(kwargs, frame_depth=1)

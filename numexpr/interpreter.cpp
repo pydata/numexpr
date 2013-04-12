@@ -250,8 +250,8 @@ get_return_sig(PyObject* program)
 {
     int sig;
     char last_opcode;
-    Py_ssize_t end = PyString_Size(program);
-    char *program_str = PyString_AS_STRING(program);
+    Py_ssize_t end = PyBytes_Size(program);
+    char *program_str = PyBytes_AS_STRING(program);
 
     do {
         end -= 4;
@@ -289,14 +289,14 @@ static int
 last_opcode(PyObject *program_object) {
     npy_intp n;
     unsigned char *program;
-    PyString_AsStringAndSize(program_object, (char **)&program, &n);
+    PyBytes_AsStringAndSize(program_object, (char **)&program, &n);
     return program[n-4];
 }
 
 static int
 get_reduction_axis(PyObject* program) {
-    Py_ssize_t end = PyString_Size(program);
-    int axis = ((unsigned char *)PyString_AS_STRING(program))[end-1];
+    Py_ssize_t end = PyBytes_Size(program);
+    int axis = ((unsigned char *)PyBytes_AS_STRING(program))[end-1];
     if (axis != 255 && axis >= NPY_MAXDIMS)
         axis = NPY_MAXDIMS - axis;
     return axis;
@@ -312,8 +312,8 @@ check_program(NumExprObject *self)
     int pc, arg, argloc, argno, sig;
     char *fullsig, *signature;
 
-    if (PyString_AsStringAndSize(self->program, (char **)&program,
-                                 &prog_len) < 0) {
+    if (PyBytes_AsStringAndSize(self->program, (char **)&program,
+                                &prog_len) < 0) {
         PyErr_Format(PyExc_RuntimeError, "invalid program: can't read program");
         return -1;
     }
@@ -321,13 +321,13 @@ check_program(NumExprObject *self)
         PyErr_Format(PyExc_RuntimeError, "invalid program: prog_len mod 4 != 0");
         return -1;
     }
-    if (PyString_AsStringAndSize(self->fullsig, (char **)&fullsig,
-                                 &n_buffers) < 0) {
+    if (PyBytes_AsStringAndSize(self->fullsig, (char **)&fullsig,
+                                &n_buffers) < 0) {
         PyErr_Format(PyExc_RuntimeError, "invalid program: can't read fullsig");
         return -1;
     }
-    if (PyString_AsStringAndSize(self->signature, (char **)&signature,
-                                 &n_inputs) < 0) {
+    if (PyBytes_AsStringAndSize(self->signature, (char **)&signature,
+                                &n_inputs) < 0) {
         PyErr_Format(PyExc_RuntimeError, "invalid program: can't read signature");
         return -1;
     }
@@ -689,8 +689,8 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     char *errmsg = NULL;
 
     *pc_error = -1;
-    if (PyString_AsStringAndSize(self->program, (char **)&(params.program),
-                                 &plen) < 0) {
+    if (PyBytes_AsStringAndSize(self->program, (char **)&(params.program),
+                                &plen) < 0) {
         return -1;
     }
 
@@ -704,7 +704,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     params.mem = self->mem;
     params.memsteps = self->memsteps;
     params.memsizes = self->memsizes;
-    params.r_end = (int)PyString_Size(self->fullsig);
+    params.r_end = (int)PyBytes_Size(self->fullsig);
     params.out_buffer = NULL;
 
     if ((gs.nthreads == 1) || gs.force_serial) {
@@ -807,8 +807,8 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     npy_intp *memsteps;
 
     *pc_error = -1;
-    if (PyString_AsStringAndSize(self->program, (char **)&(params.program),
-                                 &plen) < 0) {
+    if (PyBytes_AsStringAndSize(self->program, (char **)&(params.program),
+                                &plen) < 0) {
         return -1;
     }
     if (self->n_inputs != 0) {
@@ -824,7 +824,7 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     params.mem = self->mem;
     memsteps = self->memsteps;
     params.memsizes = self->memsizes;
-    params.r_end = (int)PyString_Size(self->fullsig);
+    params.r_end = (int)PyBytes_Size(self->fullsig);
 
     mem = params.mem;
     get_temps_space(params, mem, 1);
@@ -877,7 +877,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     is_reduction = last_opcode(self->program) > OP_REDUCTION;
 
     n_inputs = (int)PyTuple_Size(args);
-    if (PyString_Size(self->signature) != n_inputs) {
+    if (PyBytes_Size(self->signature) != n_inputs) {
         return PyErr_Format(PyExc_ValueError,
                             "number of inputs doesn't match program");
     }
@@ -925,7 +925,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     for (i = 0; i < n_inputs; i++) {
         PyObject *o = PyTuple_GET_ITEM(args, i); // borrowed ref
         PyObject *a;
-        char c = PyString_AS_STRING(self->signature)[i];
+        char c = PyBytes_AS_STRING(self->signature)[i];
         int typecode = typecode_from_char(c);
         // Convert it if it's not an array
         if (!PyArray_Check(o)) {
@@ -1261,11 +1261,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         PyArrayObject *a = NpyIter_GetOperandArray(iter)[0];
         if (last_opcode(self->program) >= OP_SUM &&
             last_opcode(self->program) < OP_PROD) {
-                PyObject *zero = PyInt_FromLong(0);
+                PyObject *zero = PyLong_FromLong(0);
                 PyArray_FillWithScalar(a, zero);
                 Py_DECREF(zero);
         } else {
-                PyObject *one = PyInt_FromLong(1);
+                PyObject *one = PyLong_FromLong(1);
                 PyArray_FillWithScalar(a, one);
                 Py_DECREF(one);
         }

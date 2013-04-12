@@ -5,7 +5,14 @@
 Changes from 2.0.1 to 2.0.2
 ===========================
 
-[Add changes heres]
+* Dropped compatibility with Python < 2.6.
+
+* Improve compatibiity with Python 3:
+
+  - switch from PyString to PyBytes API (requires Python >= 2.6).
+  - fixed incompatibilities regarding the int/long API
+  - use the Py_TYPE macro
+  - use the PyVarObject_HEAD_INIT macro instead of PyObject_HEAD_INIT
 
 
 Changes from 2.0 to 2.0.1

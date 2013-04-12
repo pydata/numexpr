@@ -8,7 +8,8 @@
 #  rights to use.
 ####################################################################
 
-import new, sys, os
+import os
+import sys
 import warnings
 
 import numpy
@@ -70,19 +71,19 @@ class test_numexpr(TestCase):
         # Check that they compile OK.
         assert_equal(disassemble(
             NumExpr("sum(x**2+2, axis=None)", [('x', double)])),
-                     [('mul_ddd', 't3', 'r1[x]', 'r1[x]'),
-                      ('add_ddd', 't3', 't3', 'c2[2.0]'),
-                      ('sum_ddn', 'r0', 't3', None)])
+                     [(b'mul_ddd', b't3', b'r1[x]', b'r1[x]'),
+                      (b'add_ddd', b't3', b't3', b'c2[2.0]'),
+                      (b'sum_ddn', b'r0', b't3', None)])
         assert_equal(disassemble(
             NumExpr("sum(x**2+2, axis=1)", [('x', double)])),
-                     [('mul_ddd', 't3', 'r1[x]', 'r1[x]'),
-                      ('add_ddd', 't3', 't3', 'c2[2.0]'),
-                      ('sum_ddn', 'r0', 't3', 1)])
+                     [(b'mul_ddd', b't3', b'r1[x]', b'r1[x]'),
+                      (b'add_ddd', b't3', b't3', b'c2[2.0]'),
+                      (b'sum_ddn', b'r0', b't3', 1)])
         assert_equal(disassemble(
             NumExpr("prod(x**2+2, axis=2)", [('x', double)])),
-                     [('mul_ddd', 't3', 'r1[x]', 'r1[x]'),
-                      ('add_ddd', 't3', 't3', 'c2[2.0]'),
-                      ('prod_ddn', 'r0', 't3', 2)])
+                     [(b'mul_ddd', b't3', b'r1[x]', b'r1[x]'),
+                      (b'add_ddd', b't3', b't3', b'c2[2.0]'),
+                      (b'prod_ddn', b'r0', b't3', 2)])
         # Check that full reductions work.
         x = zeros(1e5)+.01   # checks issue #41
         assert_allclose(evaluate("sum(x+2,axis=None)"), sum(x+2,axis=None))
@@ -154,8 +155,8 @@ class test_numexpr(TestCase):
 
     def test_r0_reuse(self):
         assert_equal(disassemble(NumExpr("x * x + 2", [('x', double)])),
-                    [('mul_ddd', 'r0', 'r1[x]', 'r1[x]'),
-                     ('add_ddd', 'r0', 'r0', 'c2[2.0]')])
+                    [(b'mul_ddd', b'r0', b'r1[x]', b'r1[x]'),
+                     (b'add_ddd', b'r0', b'r0', b'c2[2.0]')])
 
 
 class test_numexpr1(test_numexpr):
@@ -186,12 +187,15 @@ class test_evaluate(TestCase):
         assert_array_equal(x, y)
 
     # Test for issue #37
-    def test_zero_div(self):
-        x = arange(100, dtype='i4')
-        y = evaluate("1/x")
-        x2 = zeros(100, dtype='i4')
-        x2[1] = 1
-        assert_array_equal(x2, y)
+    if sys.version_info[0] < 3:
+        # In python 3 '/' perforns true division, not integer division.
+        # Integer division '//' is still not suppoerted by numexpr
+        def test_zero_div(self):
+            x = arange(100, dtype='i4')
+            y = evaluate("1/x")
+            x2 = zeros(100, dtype='i4')
+            x2[1] = 1
+            assert_array_equal(x2, y)
 
     # Test for issue #22
     def test_true_div(self):
@@ -419,8 +423,8 @@ def test_expressions():
         test_no[0] += 1
         method.__name__ = 'test_scalar%d_%s_%s_%s_%04d' % (test_scalar,
                                                            dtype.__name__,
-                                                           optimization,
-                                                           section,
+                                                           optimization.encode('ascii'),
+                                                           section.encode('ascii'),
                                                            test_no[0])
         return method
     x = None
@@ -439,9 +443,9 @@ def test_expressions():
                     x += 1j
                     x *= 1+1j
             if test_scalar == 1:
-                a = a[array_size / 2]
+                a = a[array_size // 2]
             if test_scalar == 2:
-                b = b[array_size / 2]
+                b = b[array_size // 2]
             for optimization, exact in [
                 ('none', False), ('moderate', False), ('aggressive', False)]:
                 for section_name, section_tests in tests:
@@ -470,11 +474,13 @@ class test_int64(TestCase):
         self.assertEqual(res.dtype.name, 'int64')
 
 class test_int32_int64(TestCase):
-    def test_small_long(self):
-        # Small longs should not be downgraded to ints.
-        res = evaluate('42L')
-        assert_array_equal(res, 42)
-        self.assertEqual(res.dtype.name, 'int64')
+    if sys.version_info[0] < 2:
+        # no lung literals in python 3
+        def test_small_long(self):
+            # Small longs should not be downgraded to ints.
+            res = evaluate('42L')
+            assert_array_equal(res, 42)
+            self.assertEqual(res.dtype.name, 'int64')
 
     def test_big_int(self):
         # Big ints should be promoted to longs.
@@ -485,9 +491,11 @@ class test_int32_int64(TestCase):
 
     def test_long_constant_promotion(self):
         int32array = arange(100, dtype='int32')
+        itwo = numpy.int32(2)
+        ltwo = numpy.int64(2)
         res = int32array * 2
-        res32 = evaluate('int32array * 2')
-        res64 = evaluate('int32array * 2L')
+        res32 = evaluate('int32array * itwo')
+        res64 = evaluate('int32array * ltwo')
         assert_array_equal(res, res32)
         assert_array_equal(res, res64)
         self.assertEqual(res32.dtype.name, 'int32')
@@ -512,10 +520,11 @@ class test_uint32_int64(TestCase):
 
     def test_uint32_constant_promotion(self):
         int32array = arange(100, dtype='int32')
-        a = numpy.uint32(2)
-        res = int32array * a
-        res32 = evaluate('int32array * 2')
-        res64 = evaluate('int32array * a')
+        stwo = numpy.int32(2)
+        utwo = numpy.uint32(2)
+        res = int32array * utwo
+        res32 = evaluate('int32array * stwo')
+        res64 = evaluate('int32array * utwo')
         assert_array_equal(res, res32)
         assert_array_equal(res, res64)
         self.assertEqual(res32.dtype.name, 'int32')
@@ -533,17 +542,17 @@ class test_uint32_int64(TestCase):
 class test_strings(TestCase):
     BLOCK_SIZE1 = 128
     BLOCK_SIZE2 = 8
-    str_list1 = ['foo', 'bar', '', '  ']
-    str_list2 = ['foo', '', 'x', ' ']
+    str_list1 = [b'foo', b'bar', b'', b'  ']
+    str_list2 = [b'foo', b'', b'x', b' ']
     str_nloops = len(str_list1) * (BLOCK_SIZE1 + BLOCK_SIZE2 + 1)
     str_array1 = array(str_list1 * str_nloops)
     str_array2 = array(str_list2 * str_nloops)
-    str_constant = 'doodoo'
+    str_constant = b'doodoo'
 
     def test_null_chars(self):
         str_list = [
-            '\0\0\0', '\0\0foo\0', '\0\0foo\0b', '\0\0foo\0b\0',
-            'foo\0', 'foo\0b', 'foo\0b\0', 'foo\0bar\0baz\0\0' ]
+            b'\0\0\0', b'\0\0foo\0', b'\0\0foo\0b', b'\0\0foo\0b\0',
+            b'foo\0', b'foo\0b', b'foo\0b\0', b'foo\0bar\0baz\0\0' ]
         for s in str_list:
             r = evaluate('s')
             self.assertEqual(s, r.tostring())  # check *all* stored data
@@ -603,17 +612,17 @@ class test_strings(TestCase):
     def test_compare_prefix(self):
         # Check comparing two strings where one is a prefix of the
         # other.
-        for s1, s2 in [ ('foo', 'foobar'), ('foo', 'foo\0bar'),
-                        ('foo\0a', 'foo\0bar') ]:
-            self.assert_(evaluate('s1 < s2'))
-            self.assert_(evaluate('s1 <= s2'))
-            self.assert_(evaluate('~(s1 == s2)'))
-            self.assert_(evaluate('~(s1 >= s2)'))
-            self.assert_(evaluate('~(s1 > s2)'))
+        for s1, s2 in [ (b'foo', b'foobar'), (b'foo', b'foo\0bar'),
+                        (b'foo\0a', b'foo\0bar') ]:
+            self.assertTrue(evaluate('s1 < s2'))
+            self.assertTrue(evaluate('s1 <= s2'))
+            self.assertTrue(evaluate('~(s1 == s2)'))
+            self.assertTrue(evaluate('~(s1 >= s2)'))
+            self.assertTrue(evaluate('~(s1 > s2)'))
 
         # Check for NumPy array-style semantics in string equality.
-        s1, s2 = 'foo', 'foo\0\0'
-        self.assert_(evaluate('s1 == s2'))
+        s1, s2 = b'foo', b'foo\0\0'
+        self.assertTrue(evaluate('s1 == s2'))
 
 # Case for testing selections in fields which are aligned but whose
 # data length is not an exact multiple of the length of the record.
@@ -686,7 +695,7 @@ class test_subprocess(TestCase):
         try:
             import multiprocessing as mp
         except ImportError:
-	    return
+            return
         # Check for two threads at least
         numexpr.set_num_threads(2)
         #print "**** Running from main process:"
@@ -746,7 +755,7 @@ def suite():
         def method(self):
             return func()
         setattr(TestExpressions, func.__name__,
-                new.instancemethod(method, None, TestExpressions))
+                method.__get__(None, TestExpressions))
 
     for func in test_expressions():
         add_method(func)

@@ -19,12 +19,12 @@ from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
 
 minimum_numpy_version = "1.6"
 
-if sys.version_info < (2, 4):
-    raise "must use python 2.5 or greater"
+if sys.version_info < (2, 6):
+    raise RuntimeError("must use python 2.6 or greater")
 
 if numpy.__version__ < minimum_numpy_version:
-    print "*Error*: NumPy version is lower than needed: %s < %s" % \
-          (numpy.__version__, minimum_numpy_version)
+    print("*Error*: NumPy version is lower than needed: %s < %s" %
+          (numpy.__version__, minimum_numpy_version))
     sys.exit(1)
 
 try:
@@ -35,14 +35,52 @@ extra_setup_opts = {}
 if setuptools:
     extra_setup_opts['zip_safe'] = False
 
+try:  # Python 3
+    # Code taken form numpy/distutils/command/build_py.py
+    # XXX: update LICENSES
+    from distutils.command.build_py import build_py_2to3 as old_build_py
+    from numpy.distutils.misc_util import is_string
+
+    class build_py(old_build_py):
+
+        def run(self):
+            build_src = self.get_finalized_command('build_src')
+            if build_src.py_modules_dict and self.packages is None:
+                self.packages = list(build_src.py_modules_dict.keys ())
+            old_build_py.run(self)
+
+        def find_package_modules(self, package, package_dir):
+            modules = old_build_py.find_package_modules(self, package, package_dir)
+
+            # Find build_src generated *.py files.
+            build_src = self.get_finalized_command('build_src')
+            modules += build_src.py_modules_dict.get(package,[])
+
+            return modules
+
+        def find_modules(self):
+            old_py_modules = self.py_modules[:]
+            new_py_modules = list(filter(is_string, self.py_modules))
+            self.py_modules[:] = new_py_modules
+            modules = old_build_py.find_modules(self)
+            self.py_modules[:] = old_py_modules
+
+            return modules
+
+        # XXX: Fix find_source_files for item in py_modules such that item is 3-tuple
+        # and item[2] is source file.
+
+except ImportError:  # Python 2
+    from numpy.distutils.command.build_py import build_py
+
 DEBUG = False
 
 def localpath(*args):
-    return op.abspath(reduce(op.join, (op.dirname(__file__),)+args))
+    return op.abspath(op.join(*((op.dirname(__file__),)+args)))
 
 def debug(instring):
     if DEBUG:
-        print " DEBUG: "+instring
+        print(" DEBUG: "+instring)
 
 
 def configuration():
@@ -111,10 +149,19 @@ class cleaner(clean):
             debug("Cleaned up %s" % path)
 
         # Now, the extension and other files
-        if os.name == 'posix':
-            paths = [localpath("numexpr/interpreter.so")]
+        try:
+            import imp
+        except ImportError:
+            if os.name == 'posix':
+                paths = [localpath("numexpr/interpreter.so")]
+            else:
+                paths = [localpath("numexpr/interpreter.pyd")]
         else:
-            paths = [localpath("numexpr/interpreter.pyd")]
+            paths = []
+            for suffix, _, _ in imp.get_suffixes():
+                if suffix == '.py':
+                    continue
+                paths.append(localpath("numexpr", "interpreter" + suffix))
         paths.append(localpath("numexpr/__config__.py"))
         paths.append(localpath("numexpr/__config__.pyc"))
         for path in paths:
@@ -134,6 +181,7 @@ def setup_package():
 
     extra_setup_opts['cmdclass'] = {'build_ext': build_ext,
                                     'clean': cleaner,
+                                    'build_py': build_py,
                                     }
     setup(#name='numexpr',  # name already set in numpy.distutils
           description='Fast numerical expression evaluator for NumPy',
