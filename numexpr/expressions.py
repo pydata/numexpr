@@ -23,12 +23,14 @@ double = numpy.double
 default_kind = 'double'
 if sys.version_info[0] < 3:
     int_ = int
+    long_ = long
 else:
     int_ = numpy.int32
+    long_ = numpy.int64
 
-type_to_kind = {bool: 'bool', int_: 'int', long: 'long', float: 'float',
+type_to_kind = {bool: 'bool', int_: 'int', long_: 'long', float: 'float',
                 double: 'double', complex: 'complex', bytes: 'bytes'}
-kind_to_type = {'bool': bool, 'int': int_, 'long': long, 'float': float,
+kind_to_type = {'bool': bool, 'int': int_, 'long': long_, 'float': float,
                 'double': double, 'complex': complex, 'bytes': bytes}
 kind_rank = ['bool', 'int', 'long', 'float', 'double', 'complex', 'none']
 
@@ -119,8 +121,8 @@ def bestConstantType(x):
     # ``long`` objects are kept as is to allow the user to force
     # promotion of results by using long constants, e.g. by operating
     # a 32-bit array with a long (64-bit) constant.
-    if isinstance(x, (long, numpy.int64)):
-        return long
+    if isinstance(x, (long_, numpy.int64)):
+        return long_
     # ``double`` objects are kept as is to allow the user to force
     # promotion of results by using double constants, e.g. by operating
     # a float (32-bit) array with a double (64-bit) constant.
@@ -131,7 +133,7 @@ def bestConstantType(x):
         # considered ``long``, *regardless of the platform*, so we
         # can clearly tell 32- and 64-bit constants apart.
         if not (min_int32 <= x <= max_int32):
-            return long
+            return long_
         return int_
     # The duality of float and double in Python avoids that we have to list
     # ``double`` too.
@@ -208,13 +210,13 @@ def sum_func(a, axis=None):
     axis = encode_axis(axis)
     if isinstance(a, ConstantNode):
         return a
-    if isinstance(a, (bool, int_, long, float, double, complex)):
+    if isinstance(a, (bool, int_, long_, float, double, complex)):
         a = ConstantNode(a)
     return FuncNode('sum', [a, axis], kind=a.astKind)
 
 def prod_func(a, axis=None):
     axis = encode_axis(axis)
-    if isinstance(a, (bool, int_, long, float, double, complex)):
+    if isinstance(a, (bool, int_, long_, float, double, complex)):
         a = ConstantNode(a)
     if isinstance(a, ConstantNode):
         return a

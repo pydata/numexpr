@@ -475,16 +475,21 @@ class test_int64(TestCase):
 
 class test_int32_int64(TestCase):
     if sys.version_info[0] < 2:
-        # no lung literals in python 3
+        # no long literals in python 3
         def test_small_long(self):
             # Small longs should not be downgraded to ints.
             res = evaluate('42L')
             assert_array_equal(res, 42)
             self.assertEqual(res.dtype.name, 'int64')
 
+    def test_small_int(self):
+        # Small ints (32-bit ones) should not be promoted to longs.
+        res = evaluate('2')
+        assert_array_equal(res, 2)
+        self.assertEqual(res.dtype.name, 'int32')
+
     def test_big_int(self):
         # Big ints should be promoted to longs.
-        # This test may only fail under 64-bit platforms.
         res = evaluate('2**40')
         assert_array_equal(res, 2**40)
         self.assertEqual(res.dtype.name, 'int64')

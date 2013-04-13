@@ -19,14 +19,16 @@ from numexpr.utils import CacheDict
 double = numpy.double
 if sys.version_info[0] < 3:
     int_ = int
+    long_ = long
 else:
     int_ = numpy.int32
+    long_ = numpy.int64
 
 typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float',
                     'd': 'double', 'c': 'complex', 's': 'bytes', 'n' : 'none'}
 kind_to_typecode = {'bool': 'b', 'int': 'i', 'long': 'l', 'float': 'f',
                     'double': 'd', 'complex': 'c', 'bytes': 's', 'none' : 'n'}
-type_to_typecode = {bool: 'b', int_: 'i', long:'l', float:'f',
+type_to_typecode = {bool: 'b', int_: 'i', long_:'l', float:'f',
                     double: 'd', complex: 'c', bytes: 's'}
 type_to_kind = expressions.type_to_kind
 kind_to_type = expressions.kind_to_type
@@ -610,9 +612,9 @@ def getType(a):
         return bool
     if kind in 'iu':
         if a.dtype.itemsize > 4:
-            return long  # ``long`` is for integers of more than 32 bits
+            return long_  # ``long`` is for integers of more than 32 bits
         if kind == 'u' and a.dtype.itemsize == 4:
-            return long  # use ``long`` here as an ``int`` is not enough
+            return long_  # use ``long`` here as an ``int`` is not enough
         return int_
     if kind == 'f':
         if a.dtype.itemsize > 4:
