@@ -34,7 +34,8 @@ type_to_kind = expressions.type_to_kind
 kind_to_type = expressions.kind_to_type
 default_type = kind_to_type[expressions.default_kind]
 
-if sys.version_info[0] < 3:
+# Final addtions for Python 3 (mainly for PyTables needs)
+if sys.version_info[0] > 2:
     typecode_to_kind['s'] = 'str'
     kind_to_typecode['str'] = 's'
     type_to_typecode[str] = 's'

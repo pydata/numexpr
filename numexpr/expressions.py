@@ -35,8 +35,8 @@ kind_to_type = {'bool': bool, 'int': int_, 'long': long_, 'float': float,
 kind_rank = ['bool', 'int', 'long', 'float', 'double', 'complex', 'none']
 scalar_constant_types = [bool, int_, long, float, double, complex, bytes]
 
-# Final corrections for Python 2
-if sys.version_info[0] < 3:
+# Final corrections for Python 3 (mainly for PyTables needs)
+if sys.version_info[0] > 2:
     type_to_kind[str] = 'str'
     kind_to_type['str'] = str
     scalar_constant_types.append(str)
