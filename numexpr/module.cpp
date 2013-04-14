@@ -277,7 +277,7 @@ _get_vml_version(PyObject *self, PyObject *args)
 {
     int len=198;
     char buf[198];
-    MKLGetVersionString(buf, len);
+    MKL_Get_Version_String(buf, len);
     return Py_BuildValue("s", buf);
 }
 
