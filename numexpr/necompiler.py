@@ -34,6 +34,13 @@ type_to_kind = expressions.type_to_kind
 kind_to_type = expressions.kind_to_type
 default_type = kind_to_type[expressions.default_kind]
 
+if sys.version_info[0] < 3:
+    typecode_to_kind['s'] = 'str'
+    kind_to_typecode['str'] = 's'
+    type_to_typecode[str] = 's'
+
+scalar_constant_kinds = kind_to_typecode.keys()
+
 
 class ASTNode(object):
     """Abstract Syntax Tree node.
@@ -350,8 +357,7 @@ def optimizeTemporariesAllocation(ast):
             if c.reg.temporary:
                 users_of[c.reg].add(n)
 
-    unused = {'bool': set(), 'int': set(), 'long': set(), 'float': set(),
-              'double': set(), 'complex': set(), 'bytes': set()}
+    unused = dict([(tc, set()) for tc in scalar_constant_kinds])
     for n in nodes:
         for c in n.children:
             reg = c.reg

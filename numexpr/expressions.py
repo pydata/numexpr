@@ -33,6 +33,15 @@ type_to_kind = {bool: 'bool', int_: 'int', long_: 'long', float: 'float',
 kind_to_type = {'bool': bool, 'int': int_, 'long': long_, 'float': float,
                 'double': double, 'complex': complex, 'bytes': bytes}
 kind_rank = ['bool', 'int', 'long', 'float', 'double', 'complex', 'none']
+scalar_constant_types = [bool, int_, long, float, double, complex, bytes]
+
+# Final corrections for Python 2
+if sys.version_info[0] < 3:
+    type_to_kind[str] = 'str'
+    kind_to_type['str'] = str
+    scalar_constant_types.append(str)
+scalar_constant_types = tuple(scalar_constant_types)
+
 
 from numexpr import interpreter
 
@@ -92,11 +101,11 @@ def allConstantNodes(args):
 
 def isConstant(ex):
     "Returns True if ex is a constant scalar of an allowed type."
-    return isinstance(ex, (bool, int_, long, float, double, complex, bytes))
+    return isinstance(ex, scalar_constant_types)
 
 def commonKind(nodes):
     node_kinds = [node.astKind for node in nodes]
-    str_count = node_kinds.count('bytes')
+    str_count = node_kinds.count('bytes') + node_kinds.count('str')
     if 0 < str_count < len(node_kinds):  # some args are strings, but not all
         raise TypeError("strings can only be operated with strings")
     if str_count > 0:  # if there are some, all of them must be
@@ -110,7 +119,8 @@ max_int32 = 2147483647
 min_int32 = -max_int32 - 1
 
 def bestConstantType(x):
-    if isinstance(x, bytes):  # ``numpy.string_`` is a subclass of ``bytes``
+    # ``numpy.string_`` is a subclass of ``bytes``
+    if isinstance(x, (bytes, str)):
         return bytes
     # Numeric conversion to boolean values is not tried because
     # ``bool(1) == True`` (same for 0 and False), so 0 and 1 would be
