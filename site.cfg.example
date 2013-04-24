@@ -15,20 +15,21 @@
 
 [mkl]
 
-# Example for using MKL 10.0
-#library_dirs = /opt/intel/mkl/10.0.2.018/lib/em64t
-#include_dirs =  /opt/intel/mkl/10.0.2.018/include
-
 # Example for the MKL included in Intel C 11.0 compiler
 # (you may need a recent NumPy version for being able to search libraries
 # in different directories at a time)
 #library_dirs = /opt/intel/Compiler/11.0/074/mkl/lib/em64t/:/opt/intel/Compiler/11.0/074/lib/intel64
 #include_dirs =  /opt/intel/Compiler/11.0/074/mkl/include/
-
-##the following set of libraries is suited for compilation with the GNU C
-##compiler (gcc). Refer to the MKL documentation if you use other compilers
-##(e.g., Intel C compiler)
 #mkl_libs = mkl_solver_ilp64, mkl_intel_ilp64,  mkl_intel_thread, mkl_core, iomp5
+
+# This seems to work for MKL 11 with processors with AVX (Sandy Bridge and above) for Linux
+#library_dirs = /opt/intel/composerxe/mkl/lib/intel64:/opt/intel/composer_xe_2013.3.163/compiler/lib/intel64
+#include_dirs = /opt/intel/composerxe/mkl/include/
+#mkl_libs = mkl_intel_lp64, mkl_gf_lp64, mkl_intel_thread, mkl_core, mkl_blas95_lp64, mkl_lapack95_lp64, mkl_avx, mkl_vml_avx, mkl_rt, iomp5
+
+## Example for using MKL 10.0
+#library_dirs = /opt/intel/mkl/10.0.2.018/lib/em64t
+#include_dirs =  /opt/intel/mkl/10.0.2.018/include
 
 # Example for using MKL 10.2 for Windows 64-bit
 #include_dirs = \Program Files\Intel\MKL\10.2.5.035\include
@@ -36,3 +37,5 @@
 #mkl_libs = mkl_solver_ilp64, mkl_core, mkl_intel_thread, mkl_intel_ilp64, libiomp5md
 # The next works too, but for LP64 arithmetic
 #mkl_libs = mkl_core, mkl_intel_thread, mkl_intel_lp64, libiomp5md
+
+
