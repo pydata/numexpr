@@ -35,6 +35,7 @@ else:
     is_cpu_amd_intel = False
 
 import os.path
+import platform
 from numexpr.expressions import E
 from numexpr.necompiler import NumExpr, disassemble, evaluate
 from numexpr.tests import test, print_versions
@@ -47,7 +48,16 @@ ncores = detect_number_of_cores()
 # Check that we don't surpass the MAX_THREADS in interpreter.cpp
 if ncores > 4096:
     ncores = 4096
-set_num_threads(ncores)
+if 'sparc' in platform.machine():
+    import warnings
+    warnings.warn('The number of threads have been set to 1 because problems related '
+                  'to threading have been reported on some sparc machine. '
+                  'The number of threads can be changes using the "set_num_threads" '
+                  'function.')
+    set_num_threads(1)
+else:
+    set_num_threads(ncores)
+
 # The default for VML is 1 thread (see #39)
 set_vml_num_threads(1)
 
