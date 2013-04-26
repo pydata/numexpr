@@ -14,6 +14,9 @@ Changes from 2.0.1 to 2.1
   - use the Py_TYPE macro
   - use the PyVarObject_HEAD_INIT macro instead of PyObject_HEAD_INIT
 
+* Fixed several issues with different platforms not supporting
+  multithreading or subprocess properly (see tickets #75 and #77).
+
 
 Changes from 2.0 to 2.0.1
 =========================
