@@ -207,7 +207,7 @@ class test_evaluate(TestCase):
 
     # PyTables uses __nonzero__ among ExpressionNode objects internally
     # so this should be commented out for the moment.  See #24.
-    def _test_boolean_operator(self):
+    def test_boolean_operator(self):
         x = arange(10, dtype='i4')
         try:
             evaluate("(x > 1) and (x < 9)")
