@@ -749,6 +749,7 @@ test.__test__ = False
 
 def suite():
     import unittest
+    import platform as pl
 
     theSuite = unittest.TestSuite()
     niter = 1
@@ -776,7 +777,11 @@ def suite():
         theSuite.addTest(
             unittest.makeSuite(test_irregular_stride) )
         theSuite.addTest(unittest.makeSuite(test_zerodim))
-        theSuite.addTest(unittest.makeSuite(test_subprocess))
+
+        # multiprocessing module is not supported on Hurd/kFreeBSD
+        if (pl.system().lower() not in ('gnu', 'gnu/kfreebsd')):
+            theSuite.addTest(unittest.makeSuite(test_subprocess))
+
         # I need to put this test after test_subprocess because
         # if not, the test suite locks immediately before test_subproces.
         # This only happens with Windows, so I suspect of a subtle bad
