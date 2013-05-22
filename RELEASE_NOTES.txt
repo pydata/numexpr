@@ -17,6 +17,9 @@ Changes from 2.0.1 to 2.1
 * Fixed several issues with different platforms not supporting
   multithreading or subprocess properly (see tickets #75 and #77).
 
+* Now, when trying to use pure Python boolean operators, 'and',
+  'or' and 'not', an error is issued suggesting that '&', '|' and
+  '~' should be used instead (fixes #24).
 
 Changes from 2.0 to 2.0.1
 =========================

@@ -7,13 +7,21 @@ expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
 It wears multi-threaded capabilities, as well as support for Intel's
-VML library, which allows for squeezing the last drop of performance
-out of your multi-core processors.
+VML library (included in Intel MKL), which allows an extremely fast
+evaluation of transcendental functions (sin, cos, tan, exp, log...)
+while squeezing the last drop of performance out of your multi-core
+processors.
+
+Its only dependency is NumPy (MKL is optional), so it works well as an
+easy-to-deploy, easy-to-use, computational kernel for projects that
+don't want to adopt other solutions that require more heavy
+dependencies.
 
 What's new
 ==========
 
-This version adds compatibility for Python 3.  Many thanks to Antonio Valentino for his fine work on this.
+This version adds compatibility for Python 3.  Many thanks to Antonio Valentino
+for his fine work on this.
 
 In case you want to know more in detail what has changed in this
 version, see:
@@ -40,4 +48,11 @@ Let us know of any bugs, suggestions, gripes, kudos, etc. you may
 have.
 
 
-Enjoy!
+Enjoy data!
+
+
+.. Local Variables:
+.. mode: rst
+.. coding: utf-8
+.. fill-column: 70
+.. End:
