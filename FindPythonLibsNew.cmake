@@ -12,7 +12,11 @@
 #
 #  PYTHON_INCLUDE_PATH        - path to where Python.h is found (deprecated)
 #
-# A function PYTHON_ADD_MODULE(<name> src1 src2 ... srcN) is defined to build modules for python.
+# A function PYTHON_ADD_MODULE(<name> src1 src2 ... srcN) is defined
+# to build modules for python.
+#
+# Thanks to talljimbo for the patch adding the 'LDVERSION' config
+# variable usage.
 
 #=============================================================================
 # Copyright 2001-2009 Kitware, Inc.
@@ -66,15 +70,19 @@ endif()
 # According to http://stackoverflow.com/questions/646518/python-how-to-detect-debug-interpreter
 # testing whether sys has the gettotalrefcount function is a reliable, cross-platform
 # way to detect a CPython debug interpreter.
+#
+# The library suffix is from the config var LDVERSION sometimes, otherwise
+# VERSION. VERSION will typically be like "2.7" on unix, and "27" on windows.
 execute_process(COMMAND "${PYTHON_EXECUTABLE}" "-c"
     "from distutils import sysconfig as s;import sys;import struct;
 print('.'.join(str(v) for v in sys.version_info));
-print(s.PREFIX);
+print(sys.prefix);
 print(s.get_python_inc(plat_specific=True));
 print(s.get_python_lib(plat_specific=True));
 print(s.get_config_var('SO'));
 print(hasattr(sys, 'gettotalrefcount')+0);
 print(struct.calcsize('@P'));
+print(s.get_config_var('LDVERSION') or s.get_config_var('VERSION'));
 "
     RESULT_VARIABLE _PYTHON_SUCCESS
     OUTPUT_VARIABLE _PYTHON_VALUES
@@ -100,9 +108,11 @@ list(GET _PYTHON_VALUES 3 PYTHON_SITE_PACKAGES)
 list(GET _PYTHON_VALUES 4 PYTHON_MODULE_EXTENSION)
 list(GET _PYTHON_VALUES 5 PYTHON_IS_DEBUG)
 list(GET _PYTHON_VALUES 6 PYTHON_SIZEOF_VOID_P)
+list(GET _PYTHON_VALUES 7 PYTHON_LIBRARY_SUFFIX)
 
 # Make sure the Python has the same pointer-size as the chosen compiler
-if(NOT ${PYTHON_SIZEOF_VOID_P} MATCHES ${CMAKE_SIZEOF_VOID_P})
+# Skip the check on OS X, it doesn't consistently have CMAKE_SIZEOF_VOID_P defined
+if((NOT APPLE) AND (NOT "${PYTHON_SIZEOF_VOID_P}" STREQUAL "${CMAKE_SIZEOF_VOID_P}"))
     if(PythonLibsNew_FIND_REQUIRED)
         math(EXPR _PYTHON_BITS "${PYTHON_SIZEOF_VOID_P} * 8")
         math(EXPR _CMAKE_BITS "${CMAKE_SIZEOF_VOID_P} * 8")
@@ -132,22 +142,28 @@ endif()
 
 if(CMAKE_HOST_WIN32)
     set(PYTHON_LIBRARY
-        "${PYTHON_PREFIX}/libs/Python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}.lib")
+        "${PYTHON_PREFIX}/libs/Python${PYTHON_LIBRARY_SUFFIX}.lib")
 elseif(APPLE)
-    set(PYTHON_LIBRARY
-        "${PYTHON_PREFIX}/lib/libpython${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.dylib")
+     # Seems to require "-undefined dynamic_lookup" instead of linking
+     # against the .dylib, otherwise it crashes. This flag is added
+     # below
+    set(PYTHON_LIBRARY "")
+    #set(PYTHON_LIBRARY
+    #    "${PYTHON_PREFIX}/lib/libpython${PYTHON_LIBRARY_SUFFIX}.dylib")
 else()
     if(${PYTHON_SIZEOF_VOID_P} MATCHES 8)
         set(_PYTHON_LIBS_SEARCH "${PYTHON_PREFIX}/lib64" "${PYTHON_PREFIX}/lib")
     else()
         set(_PYTHON_LIBS_SEARCH "${PYTHON_PREFIX}/lib")
     endif()
+    message(STATUS "Searching for Python libs in ${_PYTHON_LIBS_SEARCH}")
     # Probably this needs to be more involved. It would be nice if the config
     # information the python interpreter itself gave us were more complete.
     find_library(PYTHON_LIBRARY
-        NAMES "python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}"
+        NAMES "python${PYTHON_LIBRARY_SUFFIX}"
         PATHS ${_PYTHON_LIBS_SEARCH}
-        NO_SYSTEM_ENVIRONMENT_PATH)
+        NO_DEFAULT_PATH)
+    message(STATUS "Found Python lib ${PYTHON_LIBRARY}")
 endif()
 
 # For backward compatibility, set PYTHON_INCLUDE_PATH, but make it internal.
@@ -198,8 +214,14 @@ FUNCTION(PYTHON_ADD_MODULE _NAME )
 
     SET_PROPERTY(GLOBAL  APPEND  PROPERTY  PY_MODULES_LIST ${_NAME})
     ADD_LIBRARY(${_NAME} ${PY_MODULE_TYPE} ${ARGN})
-    TARGET_LINK_LIBRARIES(${_NAME} ${PYTHON_LIBRARIES})
-
+    IF(APPLE)
+      # On OS X, linking against the Python libraries causes
+      # segfaults, so do this dynamic lookup instead.
+      SET_TARGET_PROPERTIES(${_NAME} PROPERTIES LINK_FLAGS
+                          "-undefined dynamic_lookup")
+    ELSE()
+      TARGET_LINK_LIBRARIES(${_NAME} ${PYTHON_LIBRARIES})
+    ENDIF()
     IF(PYTHON_MODULE_${_NAME}_BUILD_SHARED)
       SET_TARGET_PROPERTIES(${_NAME} PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}")
       SET_TARGET_PROPERTIES(${_NAME} PROPERTIES SUFFIX "${PYTHON_MODULE_EXTENSION}")
