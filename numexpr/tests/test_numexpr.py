@@ -337,11 +337,8 @@ tests.append(('COMPARISONS', cmptests))
 func1tests = []
 for func in ['copy', 'ones_like', 'sqrt',
              'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
-             #'sin', 'cos', 'tan', 'arctan',
-             #'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-             'sinh', 'cosh', 'tanh', 'arcsinh', 'arctanh',
-             #'log', 'log1p', 'log10', 'exp', 'expm1', 'abs']:
-             'log1p', 'exp', 'expm1', 'abs']:
+             'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
+             'log', 'log1p', 'log10', 'exp', 'expm1', 'abs']:
     func1tests.append("a + %s(b+c)" % func)
 tests.append(('1_ARG_FUNCS', func1tests))
 
