@@ -36,6 +36,8 @@ double = numpy.double
 minimum_numpy_version = "1.6"
 
 class test_numexpr(TestCase):
+    """Testing with 1 thread"""
+    nthreads = 1
 
     def setUp(self):
         numexpr.set_num_threads(self.nthreads)
@@ -158,10 +160,6 @@ class test_numexpr(TestCase):
                     [(b'mul_ddd', b'r0', b'r1[x]', b'r1[x]'),
                      (b'add_ddd', b'r0', b'r0', b'c2[2.0]')])
 
-
-class test_numexpr1(test_numexpr):
-    """Testing with 1 thread"""
-    nthreads = 1
 
 class test_numexpr2(test_numexpr):
     """Testing with 2 threads"""
@@ -339,8 +337,11 @@ tests.append(('COMPARISONS', cmptests))
 func1tests = []
 for func in ['copy', 'ones_like', 'sqrt',
              'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
-             'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-             'log', 'log1p', 'log10', 'exp', 'expm1', 'abs']:
+             #'sin', 'cos', 'tan', 'arctan',
+             #'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
+             'sinh', 'cosh', 'tanh', 'arcsinh', 'arctanh',
+             #'log', 'log1p', 'log10', 'exp', 'expm1', 'abs']:
+             'log1p', 'exp', 'expm1', 'abs']:
     func1tests.append("a + %s(b+c)" % func)
 tests.append(('1_ARG_FUNCS', func1tests))
 
@@ -392,14 +393,11 @@ def test_expressions():
         this_locals = locals()
         def method():
             # We don't want to listen at RuntimeWarnings like
-            # "overflows" or "divide by zero".  Feel free to expand
-            # the range for this filter, if needed.
-            if dtype.__name__ == "float32" or 'arctanh' in expr:
-                warnings.simplefilter("ignore")
-                npval = eval(expr, globals(), this_locals)
-                warnings.simplefilter("always")
-            else:
-                npval = eval(expr, globals(), this_locals)
+            # "overflows" or "divide by zero" in plain eval().
+            warnings.simplefilter("ignore")
+            npval = eval(expr, globals(), this_locals)
+            warnings.simplefilter("always")
+            npval = eval(expr, globals(), this_locals)
             try:
                 neval = evaluate(expr, local_dict=this_locals,
                                  optimization=optimization)
@@ -767,7 +765,7 @@ def suite():
         add_method(func)
 
     for n in range(niter):
-        theSuite.addTest(unittest.makeSuite(test_numexpr1))
+        theSuite.addTest(unittest.makeSuite(test_numexpr))
         theSuite.addTest(unittest.makeSuite(test_numexpr2))
         theSuite.addTest(unittest.makeSuite(test_evaluate))
         theSuite.addTest(unittest.makeSuite(TestExpressions))
