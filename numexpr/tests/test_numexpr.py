@@ -324,6 +324,8 @@ for op in list('+-*/%') + ['**']:
     optests.append("(a+1) %s 2" % op)
     optests.append("(a+1) %s -1" % op)
     optests.append("(a+1) %s 0.5" % op)
+    # Check divisions and modulus by zero (see ticket #107)
+    optests.append("(a+1) %s 0" % op)
 tests.append(('OPERATIONS', optests))
 
 cmptests = []
