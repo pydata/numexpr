@@ -730,7 +730,8 @@ def print_versions():
     print "VML available?     %s" % use_vml
     if use_vml:
         print "VML/MKL version:   %s" % numexpr.get_vml_version()
-    print 'Detected cores:    %s' % numexpr.ncores
+    print ("Number of threads used by default: %d "
+           "(out of %d detected cores)" % (numexpr.nthreads, numexpr.ncores))
     print '-=' * 38
 
 

@@ -34,7 +34,7 @@ if cpu.is_AMD() or cpu.is_Intel():
 else:
     is_cpu_amd_intel = False
 
-import os.path
+import os, os.path
 import platform
 from numexpr.expressions import E
 from numexpr.necompiler import NumExpr, disassemble, evaluate
@@ -43,11 +43,23 @@ from numexpr.utils import (
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
     set_num_threads, detect_number_of_cores)
 
-# Initialize the number of threads to be used
+# Detect the number of cores
 ncores = detect_number_of_cores()
+
+# Initialize the number of threads to be used
+# If this is modified, please update the note in:
+# https://code.google.com/p/numexpr/wiki/UsersGuide?ts=1377763727&updated=UsersGuide#General_routines
+try:
+    nthreads = int(os.environ['NUMEXPR_NUM_THREADS'])
+except KeyError:
+    nthreads = ncores
+    # Check that we don't activate too many threads at the same time.
+    # 8 seems a sensible value.
+    if nthreads > 8:
+        nthreads = 8
 # Check that we don't surpass the MAX_THREADS in interpreter.cpp
-if ncores > 4096:
-    ncores = 4096
+if nthreads > 4096:
+    nthreads = 4096
 if 'sparc' in platform.machine():
     import warnings
     warnings.warn('The number of threads have been set to 1 because problems related '
@@ -56,7 +68,7 @@ if 'sparc' in platform.machine():
                   'function.')
     set_num_threads(1)
 else:
-    set_num_threads(ncores)
+    set_num_threads(nthreads)
 
 # The default for VML is 1 thread (see #39)
 set_vml_num_threads(1)
