@@ -22,7 +22,7 @@ import numpy as np
 import numexpr as ne
 
 
-expr = ".25*x**3 + .75*x**2 - 1.5*x - 2"  # the polynomial to compute
+#expr = ".25*x**3 + .75*x**2 - 1.5*x - 2"  # the polynomial to compute
 expr = "((.25*x + .75)*x - 1.5)*x - 2"  # a computer-friendly polynomial
 N = 10*1000*1000               # the number of points to compute expression
 x = np.linspace(-1, 1, N)   # the x in range [-1, 1]
