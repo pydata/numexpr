@@ -69,8 +69,9 @@ endif()
 # Convert the process output into a list
 string(REGEX REPLACE ";" "\\\\;" _NUMPY_VALUES ${_NUMPY_VALUES_OUTPUT})
 string(REGEX REPLACE "\n" ";" _NUMPY_VALUES ${_NUMPY_VALUES})
-list(GET _NUMPY_VALUES 0 NUMPY_VERSION)
-list(GET _NUMPY_VALUES 1 NUMPY_INCLUDE_DIRS)
+# Just in case there is unexpected output from the Python command.
+list(GET _NUMPY_VALUES -2 NUMPY_VERSION)
+list(GET _NUMPY_VALUES -1 NUMPY_INCLUDE_DIRS)
 
 string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" _VER_CHECK "${NUMPY_VERSION}")
 if("${_VER_CHECK}" STREQUAL "")
