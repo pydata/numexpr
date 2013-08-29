@@ -740,7 +740,7 @@ def test():
     """
 
     print_versions()
-    unittest.TextTestRunner().run(suite())
+    return unittest.TextTestRunner().run(suite())
 test.__test__ = False
 
 
