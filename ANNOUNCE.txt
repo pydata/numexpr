@@ -20,24 +20,9 @@ dependencies.
 What's new
 ==========
 
-This release is mainly meant to fix a problem with the license the
-numexpr/win32/pthread.{c,h} files emulating pthreads on Windows. After
-persmission from the original authors is granted, these files adopt
-the MIT license and can be redistributed without problems.  See issue
-#109 for details
-(https://code.google.com/p/numexpr/issues/detail?id=110).
-
-Another important improvement is the algorithm to decide the initial
-number of threads to be used.  This was necessary because by default,
-numexpr was using a number of threads equal to the detected number of
-cores, and this can be just too much for moder systems where this
-number can be too high (and counterporductive for performance in many
-cases).  Now, the 'NUMEXPR_NUM_THREADS' environment variable is
-honored, and in case this is not present, a maximum number of *8*
-threads are setup initially.  The new algorithm is fully described in
-the Users Guide now in the note of 'General routines' section:
-https://code.google.com/p/numexpr/wiki/UsersGuide#General_routines.
-Closes #110.
+This fixes a secondary effect of "from numpy.testing import *", where
+division is imported now too, so only then necessary functions from
+there are imported now.  Thanks to Christoph Gohlke for the patch.
 
 In case you want to know more in detail what has changed in this
 version, see:

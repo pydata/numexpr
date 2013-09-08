@@ -2,6 +2,14 @@
  Release notes for Numexpr 2.2 series
 ======================================
 
+
+Changes from 2.2 to 2.2.1
+=========================
+
+* Fixes a secondary effect of "from numpy.testing import *", where
+  division is imported now too, so only then necessary functions from
+  there are imported now.  Thanks to Christoph Gohlke for the patch.
+
 Changes from 2.1 to 2.2
 =======================
 
