@@ -20,7 +20,8 @@ from numpy import (
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
     log, log1p, log10, exp, expm1)
-from numpy.testing import *
+from numpy.testing import (assert_equal, assert_array_equal,
+    assert_array_almost_equal, assert_allclose)
 from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 
 import numexpr
