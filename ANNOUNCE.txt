@@ -1,6 +1,27 @@
 ==========================
- Announcing Numexpr 2.2
+ Announcing Numexpr 2.2.2
 ==========================
+
+What's new
+==========
+
+This is mainly a release for compatibility with PyTables < 3.0,
+which I decided to continue to support.  For details, see:
+
+https://code.google.com/p/numexpr/issues/detail?id=115
+
+Also, added a fix so that s390 architecture compiles.  Fixes #116.
+Thanks to Antonio Valentino for reporting and for the patch.
+
+In case you want to know more in detail what has changed in this
+version, see:
+
+http://code.google.com/p/numexpr/wiki/ReleaseNotes
+
+or have a look at RELEASE_NOTES.txt in the tarball.
+
+What it is?
+===========
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
@@ -16,35 +37,6 @@ Its only dependency is NumPy (MKL is optional), so it works well as an
 easy-to-deploy, easy-to-use, computational kernel for projects that
 don't want to adopt other solutions that require more heavy
 dependencies.
-
-What's new
-==========
-
-This release is mainly meant to fix a problem with the license the
-numexpr/win32/pthread.{c,h} files emulating pthreads on Windows. After
-persmission from the original authors is granted, these files adopt
-the MIT license and can be redistributed without problems.  See issue
-#109 for details
-(https://code.google.com/p/numexpr/issues/detail?id=110).
-
-Another important improvement is the algorithm to decide the initial
-number of threads to be used.  This was necessary because by default,
-numexpr was using a number of threads equal to the detected number of
-cores, and this can be just too much for moder systems where this
-number can be too high (and counterporductive for performance in many
-cases).  Now, the 'NUMEXPR_NUM_THREADS' environment variable is
-honored, and in case this is not present, a maximum number of *8*
-threads are setup initially.  The new algorithm is fully described in
-the Users Guide now in the note of 'General routines' section:
-https://code.google.com/p/numexpr/wiki/UsersGuide#General_routines.
-Closes #110.
-
-In case you want to know more in detail what has changed in this
-version, see:
-
-http://code.google.com/p/numexpr/wiki/ReleaseNotes
-
-or have a look at RELEASE_NOTES.txt in the tarball.
 
 Where I can find Numexpr?
 =========================

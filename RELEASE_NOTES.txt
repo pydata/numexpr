@@ -2,6 +2,30 @@
  Release notes for Numexpr 2.2 series
 ======================================
 
+
+Changes from 2.2.1 to 2.2.2
+===========================
+
+* The `copy_args` argument of `NumExpr` function has been brought
+  back.  This has been mainly necessary for compatibility with
+  PyTables < 3.0, which I decided to continue to support.  Fixed #115.
+
+* The `__nonzero__` method in `ExpressionNode` class has been
+  commented out.  This is also for compatibility with PyTables < 3.0.
+  See #24 for details.
+
+* Fixed the type of some parameters in the C extension so that s390
+  architecture compiles.  Fixes #116.  Thank to Antonio Valentino for
+  reporting and the patch.
+
+
+Changes from 2.2 to 2.2.1
+=========================
+
+* Fixes a secondary effect of "from numpy.testing import `*`", where
+  division is imported now too, so only then necessary functions from
+  there are imported now.  Thanks to Christoph Gohlke for the patch.
+
 Changes from 2.1 to 2.2
 =======================
 
