@@ -20,7 +20,8 @@ from numpy import (
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
     log, log1p, log10, exp, expm1)
-from numpy.testing import *
+from numpy.testing import (assert_equal, assert_array_equal,
+    assert_array_almost_equal, assert_allclose)
 from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 
 import numexpr
@@ -205,14 +206,14 @@ class test_evaluate(TestCase):
 
     # PyTables uses __nonzero__ among ExpressionNode objects internally
     # so this should be commented out for the moment.  See #24.
-    def test_boolean_operator(self):
-        x = arange(10, dtype='i4')
-        try:
-            evaluate("(x > 1) and (x < 9)")
-        except TypeError:
-            pass
-        else:
-            raise ValueError("should raise exception!")
+    # def test_boolean_operator(self):
+    #     x = arange(10, dtype='i4')
+    #     try:
+    #         evaluate("(x > 1) and (x < 9)")
+    #     except TypeError:
+    #         pass
+    #     else:
+    #         raise ValueError("should raise exception!")
 
     def test_rational_expr(self):
         a = arange(1e6)

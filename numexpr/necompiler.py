@@ -530,8 +530,9 @@ def precompile(ex, signature=(), context={}):
                         for x in input_names)
     return threeAddrProgram, signature, tempsig, constants, input_names
 
-
-def NumExpr(ex, signature=(), **kwargs):
+# Note that the copy_args() is just to guarantee compatibility
+# with PyTables < 3.0.  See #115 for details.
+def NumExpr(ex, signature=(), copy_args=(), **kwargs):
     """
     Compile an expression built using E.<variable> variables to a function.
 

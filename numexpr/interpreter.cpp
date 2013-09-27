@@ -287,7 +287,7 @@ typecode_from_char(char c)
 
 static int
 last_opcode(PyObject *program_object) {
-    npy_intp n;
+    Py_ssize_t n;
     unsigned char *program;
     PyBytes_AsStringAndSize(program_object, (char **)&program, &n);
     return program[n-4];
@@ -308,7 +308,7 @@ int
 check_program(NumExprObject *self)
 {
     unsigned char *program;
-    npy_intp prog_len, n_buffers, n_inputs;
+    Py_ssize_t prog_len, n_buffers, n_inputs;
     int pc, arg, argloc, argno, sig;
     char *fullsig, *signature;
 

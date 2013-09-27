@@ -394,13 +394,15 @@ class ExpressionNode(object):
     def __pos__(self):
         return self
 
-    # The next check is commented out. See #24 for more info.
+    # The next check is commented out. This can be uncommented when
+    # numexpr would drop compatibility with Python < 3.
+    # See #24 for more info.
 
-    def __nonzero__(self):
-         raise TypeError("You can't use Python's standard boolean operators in "
-                         "NumExpr expressions. You should use their bitwise "
-                         "counterparts instead: '&' instead of 'and', "
-                         "'|' instead of 'or', and '~' instead of 'not'.")
+    # def __nonzero__(self):
+    #      raise TypeError("You can't use Python's standard boolean operators in "
+    #                      "NumExpr expressions. You should use their bitwise "
+    #                      "counterparts instead: '&' instead of 'and', "
+    #                      "'|' instead of 'or', and '~' instead of 'not'.")
 
     __add__ = __radd__ = binop('add')
     __sub__ = binop('sub')
