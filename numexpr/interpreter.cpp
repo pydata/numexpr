@@ -100,7 +100,7 @@ FuncFFPtr functions_ff[] = {
 #endif
 
 #ifdef USE_VML
-typedef void (*FuncFFPtr_vml)(int, const float*, float*);
+typedef void (*FuncFFPtr_vml)(MKL_INT, const float*, float*);
 FuncFFPtr_vml functions_ff_vml[] = {
 #define FUNC_FF(fop, s, f, f_win32, f_vml) f_vml,
 #include "functions.hpp"
@@ -126,7 +126,7 @@ FuncFFFPtr functions_fff[] = {
 
 #ifdef USE_VML
 /* fmod not available in VML */
-static void vsfmod(int n, const float* x1, const float* x2, float* dest)
+static void vsfmod(MKL_INT n, const float* x1, const float* x2, float* dest)
 {
     int j;
     for(j=0; j < n; j++) {
@@ -134,7 +134,7 @@ static void vsfmod(int n, const float* x1, const float* x2, float* dest)
     };
 };
 
-typedef void (*FuncFFFPtr_vml)(int, const float*, const float*, float*);
+typedef void (*FuncFFFPtr_vml)(MKL_INT, const float*, const float*, float*);
 FuncFFFPtr_vml functions_fff_vml[] = {
 #define FUNC_FFF(fop, s, f, f_win32, f_vml) f_vml,
 #include "functions.hpp"
@@ -151,7 +151,7 @@ FuncDDPtr functions_dd[] = {
 };
 
 #ifdef USE_VML
-typedef void (*FuncDDPtr_vml)(int, const double*, double*);
+typedef void (*FuncDDPtr_vml)(MKL_INT, const double*, double*);
 FuncDDPtr_vml functions_dd_vml[] = {
 #define FUNC_DD(fop, s, f, f_vml) f_vml,
 #include "functions.hpp"
@@ -169,7 +169,7 @@ FuncDDDPtr functions_ddd[] = {
 
 #ifdef USE_VML
 /* fmod not available in VML */
-static void vdfmod(int n, const double* x1, const double* x2, double* dest)
+static void vdfmod(MKL_INT n, const double* x1, const double* x2, double* dest)
 {
     int j;
     for(j=0; j < n; j++) {
@@ -177,7 +177,7 @@ static void vdfmod(int n, const double* x1, const double* x2, double* dest)
     };
 };
 
-typedef void (*FuncDDDPtr_vml)(int, const double*, const double*, double*);
+typedef void (*FuncDDDPtr_vml)(MKL_INT, const double*, const double*, double*);
 FuncDDDPtr_vml functions_ddd_vml[] = {
 #define FUNC_DDD(fop, s, f, f_vml) f_vml,
 #include "functions.hpp"
@@ -197,7 +197,7 @@ FuncCCPtr functions_cc[] = {
 
 #ifdef USE_VML
 /* complex expm1 not available in VML */
-static void vzExpm1(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
+static void vzExpm1(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
     int j;
     vzExp(n, x1, dest);
@@ -206,7 +206,7 @@ static void vzExpm1(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
     };
 };
 
-static void vzLog1p(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
+static void vzLog1p(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
     int j;
     for (j=0; j<n; j++) {
@@ -217,7 +217,7 @@ static void vzLog1p(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
 };
 
 /* Use this instead of native vzAbs in VML as it seems to work badly */
-static void vzAbs_(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
+static void vzAbs_(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
     int j;
     for (j=0; j<n; j++) {
@@ -226,7 +226,7 @@ static void vzAbs_(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
     };
 };
 
-typedef void (*FuncCCPtr_vml)(int, const MKL_Complex16[], MKL_Complex16[]);
+typedef void (*FuncCCPtr_vml)(MKL_INT, const MKL_Complex16[], MKL_Complex16[]);
 
 FuncCCPtr_vml functions_cc_vml[] = {
 #define FUNC_CC(fop, s, f, f_vml) f_vml,
