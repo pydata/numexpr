@@ -63,6 +63,14 @@ nc_neg(npy_cdouble *a, npy_cdouble *r)
 }
 
 static void
+nc_conj()
+{
+    r->real = a->real;
+    r->imag = -a->imag;
+    return;
+}
+
+static void
 nc_prod(npy_cdouble *a, npy_cdouble *b, npy_cdouble *r)
 {
     double ar=a->real, br=b->real, ai=a->imag, bi=b->imag;

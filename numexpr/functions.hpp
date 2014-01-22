@@ -115,6 +115,7 @@ FUNC_CC(FUNC_LOG10_CC,   "log10_cc",    nc_log10, vzLog10)
 FUNC_CC(FUNC_EXP_CC,     "exp_cc",      nc_exp,   vzExp)
 FUNC_CC(FUNC_EXPM1_CC,   "expm1_cc",    nc_expm1, vzExpm1)
 FUNC_CC(FUNC_ABS_CC,     "absolute_cc", nc_abs,   vzAbs_)
+FUNC_FF(FUNC_CONJ_CC,    "conj_cc",     nc_conj,  vzConj)
 FUNC_CC(FUNC_CC_LAST,    NULL,          NULL,     NULL)
 #ifdef ELIDE_FUNC_CC
 #undef ELIDE_FUNC_CC

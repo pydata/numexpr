@@ -20,7 +20,7 @@ from numpy import (
     sum, prod, sqrt, fmod,
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
-    log, log1p, log10, exp, expm1)
+    log, log1p, log10, exp, expm1, conj)
 from numpy.testing import (assert_equal, assert_array_equal,
     assert_array_almost_equal, assert_allclose)
 from numpy import shape, allclose, array_equal, ravel, isnan, isinf
@@ -343,7 +343,7 @@ func1tests = []
 for func in ['copy', 'ones_like', 'sqrt',
              'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-             'log', 'log1p', 'log10', 'exp', 'expm1', 'abs']:
+             'log', 'log1p', 'log10', 'exp', 'expm1', 'abs', 'conj']:
     func1tests.append("a + %s(b+c)" % func)
 tests.append(('1_ARG_FUNCS', func1tests))
 
