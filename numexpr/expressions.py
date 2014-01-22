@@ -344,7 +344,7 @@ functions = {
     'real' : func(numpy.real, 'double', 'double'),
     'imag' : func(numpy.imag, 'double', 'double'),
     'complex' : func(complex, 'complex'),
-    'conj' : func(numpy.conj, 'complex')
+    'conj' : func(numpy.conj, 'complex'),
 
     'sum' : sum_func,
     'prod' : prod_func,
