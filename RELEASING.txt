@@ -3,7 +3,7 @@ Releasing Numexpr
 ==================
 
 :Author: Francesc Alted
-:Contact: faltet@pytables.org
+:Contact: faltet@gmail.com
 :Date: 2009-06-02
 
 
@@ -58,7 +58,7 @@ Announcing
 
 - Update the release notes in the numexpr site:
 
-  http://code.google.com/p/numexpr/wiki/ReleaseNotes
+  https://github.com/pydata/numexpr/wiki/Release-Notes
 
   *WARNING*: Remember that the syntax for Google Code pages is
    wiki-oriented and not rest-oriented.  When copying the text from

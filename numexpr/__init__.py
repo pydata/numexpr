@@ -15,7 +15,7 @@ and use less memory than doing the same calculation in Python.
 
 See:
 
-http://code.google.com/p/numexpr/
+https://github.com/pydata/numexpr
 
 for more info about it.
 
@@ -48,7 +48,7 @@ ncores = detect_number_of_cores()
 
 # Initialize the number of threads to be used
 # If this is modified, please update the note in:
-# https://code.google.com/p/numexpr/wiki/UsersGuide?ts=1377763727&updated=UsersGuide#General_routines
+# https://github.com/pydata/numexpr/wiki/Numexpr-Users-Guide
 try:
     nthreads = int(os.environ['NUMEXPR_NUM_THREADS'])
 except KeyError:

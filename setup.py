@@ -186,8 +186,8 @@ def setup_package():
     setup(#name='numexpr',  # name already set in numpy.distutils
           description='Fast numerical expression evaluator for NumPy',
           author='David M. Cooke, Francesc Alted and others',
-          author_email='david.m.cooke@gmail.com, faltet@pytables.org',
-          url='http://code.google.com/p/numexpr/',
+          author_email='david.m.cooke@gmail.com, faltet@gmail.com',
+          url='https://github.com/pydata/numexpr',
           license = 'MIT',
           packages = ['numexpr'],
           configuration = configuration,

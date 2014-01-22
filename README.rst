@@ -262,7 +262,7 @@ benchmarks in the directory bench/.
 
 See more info about how Numexpr works in:
 
-http://code.google.com/p/numexpr/wiki/Overview
+https://github.com/pydata/numexpr/wiki
 
 
 Authors
