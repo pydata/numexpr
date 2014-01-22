@@ -10,6 +10,7 @@
 
 import os
 import sys
+import platform
 import warnings
 
 import numpy
@@ -279,23 +280,24 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
-    # Execution order set here so as to not use too many threads
-    # during the rest of the execution.  See #33 for details.
-    def test_changing_nthreads_00_inc(self):
-        a = linspace(-1, 1, 1e6)
-        b = ((.25*a + .75)*a - 1.5)*a - 2
-        for nthreads in range(1,7):
-            numexpr.set_num_threads(nthreads)
-            c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
-            assert_array_almost_equal(b, c)
+    if 'sparc' not in platform.machine():
+        # Execution order set here so as to not use too many threads
+        # during the rest of the execution.  See #33 for details.
+        def test_changing_nthreads_00_inc(self):
+            a = linspace(-1, 1, 1e6)
+            b = ((.25*a + .75)*a - 1.5)*a - 2
+            for nthreads in range(1,7):
+                numexpr.set_num_threads(nthreads)
+                c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
+                assert_array_almost_equal(b, c)
 
-    def test_changing_nthreads_01_dec(self):
-        a = linspace(-1, 1, 1e6)
-        b = ((.25*a + .75)*a - 1.5)*a - 2
-        for nthreads in range(6, 1, -1):
-            numexpr.set_num_threads(nthreads)
-            c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
-            assert_array_almost_equal(b, c)
+        def test_changing_nthreads_01_dec(self):
+            a = linspace(-1, 1, 1e6)
+            b = ((.25*a + .75)*a - 1.5)*a - 2
+            for nthreads in range(6, 1, -1):
+                numexpr.set_num_threads(nthreads)
+                c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
+                assert_array_almost_equal(b, c)
 
 
 tests = [
@@ -767,7 +769,8 @@ def suite():
 
     for n in range(niter):
         theSuite.addTest(unittest.makeSuite(test_numexpr))
-        theSuite.addTest(unittest.makeSuite(test_numexpr2))
+        if 'sparc' not in platform.machine():
+            theSuite.addTest(unittest.makeSuite(test_numexpr2))
         theSuite.addTest(unittest.makeSuite(test_evaluate))
         theSuite.addTest(unittest.makeSuite(TestExpressions))
         theSuite.addTest(unittest.makeSuite(test_int32_int64))
