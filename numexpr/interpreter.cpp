@@ -1161,7 +1161,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                             NPY_ITER_EXTERNAL_LOOP,
                             order, casting,
                             op_flags, dtypes,
-                            0, NULL, NULL,
+                            -1, NULL, NULL,
                             BLOCK_SIZE1);
         if (iter == NULL) {
             goto fail;
@@ -1178,6 +1178,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         /* Arbitrary threshold for which is the inner loop...benchmark? */
         if (reduction_size < 64) {
             reduction_outer_loop = true;
+	    if ((op_axes == NULL) && (oa_ndim == 0)) oa_ndim = -1;
             iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                                 NPY_ITER_BUFFERED|
                                 NPY_ITER_RANGED|
@@ -1220,6 +1221,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             for (i = 0; i < n_inputs; ++i) {
                 dtypes_outer[i+1] = NULL;
             }
+	    if ((op_axes == NULL) && (oa_ndim == 0)) oa_ndim = -1;
             iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                                 NPY_ITER_RANGED,
                                 order, casting,
