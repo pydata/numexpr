@@ -17,32 +17,34 @@ This allows further acceleration of transcendent expressions.
 Examples of use
 ===============
 
->>> import numpy as np
->>> import numexpr as ne
+::
 
->>> a = np.arange(1e6)   # Choose large arrays
->>> b = np.arange(1e6)
+  >>> import numpy as np
+  >>> import numexpr as ne
 
->>> ne.evaluate("a + 1")   # a simple expression
-array([  1.00000000e+00,   2.00000000e+00,   3.00000000e+00, ...,
-         9.99998000e+05,   9.99999000e+05,   1.00000000e+06])
+  >>> a = np.arange(1e6)   # Choose large arrays
+  >>> b = np.arange(1e6)
 
->>> ne.evaluate('a*b-4.1*a > 2.5*b')   # a more complex one
-array([False, False, False, ...,  True,  True,  True], dtype=bool)
+  >>> ne.evaluate("a + 1")   # a simple expression
+  array([  1.00000000e+00,   2.00000000e+00,   3.00000000e+00, ...,
+           9.99998000e+05,   9.99999000e+05,   1.00000000e+06])
 
->>> ne.evaluate("sin(a) + arcsinh(a/b)")   # you can also use functions
-array([        NaN,  1.72284457,  1.79067101, ...,  1.09567006,
-        0.17523598, -0.09597844])
+  >>> ne.evaluate('a*b-4.1*a > 2.5*b')   # a more complex one
+  array([False, False, False, ...,  True,  True,  True], dtype=bool)
 
->>> s = np.array(['abba', 'abbb', 'abbcdef'])
->>> ne.evaluate("'abba' == s")   # string arrays are supported too
-array([ True, False, False], dtype=bool)
+  >>> ne.evaluate("sin(a) + arcsinh(a/b)")   # you can also use functions
+  array([        NaN,  1.72284457,  1.79067101, ...,  1.09567006,
+          0.17523598, -0.09597844])
+
+  >>> s = np.array(['abba', 'abbb', 'abbcdef'])
+  >>> ne.evaluate("'abba' == s")   # string arrays are supported too
+  array([ True, False, False], dtype=bool)
 
 
 Datatypes supported internally
 ==============================
 
-Numexpr operates internally only with the following types:
+Numexpr operates internally only with the following types::
 
     * 8-bit boolean (bool)
     * 32-bit signed integer (int or int32)
@@ -68,7 +70,7 @@ Casting rules
 
 Casting rules in Numexpr follow closely those of NumPy.  However, for
 implementation reasons, there are some known exceptions to this rule,
-namely:
+namely::
 
     * When an array with type `int8`, `uint8`, `int16` or `uint16` is
       used inside Numexpr, it is internally upcasted to an `int` (or
@@ -96,7 +98,7 @@ namely:
 Supported operators
 ===================
 
-Numexpr supports the set of operators listed below:
+Numexpr supports the set of operators listed below::
 
     * Logical operators: &, |, ~
     * Comparison operators: <, <=, ==, !=, >=, >
@@ -107,7 +109,7 @@ Numexpr supports the set of operators listed below:
 Supported functions
 ===================
 
-The next are the current supported set:
+The next are the current supported set::
 
   * where(bool, number1, number2): number
       Number1 if the bool condition is true, number2 otherwise.
@@ -162,6 +164,8 @@ The next are the current supported set:
 General routines
 ================
 
+::
+
   * evaluate(expression, local_dict=None, global_dict=None,
              out=None, order='K', casting='safe', **kwargs):
     Evaluate a simple array expression element-wise.  See docstrings
@@ -195,34 +199,34 @@ Intel's VML specific support routines
 When compiled with Intel's VML (Vector Math Library), you will be able
 to use some additional functions for controlling its use. These are:
 
-  * set_vml_accuracy_mode(mode):  Set the accuracy for VML operations.
+* set_vml_accuracy_mode(mode):  Set the accuracy for VML operations.
 
-  The `mode` parameter can take the values:
-    - 'low': Equivalent to VML_LA - low accuracy VML functions are called
-    - 'high': Equivalent to VML_HA - high accuracy VML functions are called
-    - 'fast': Equivalent to VML_EP - enhanced performance VML functions are called
+The `mode` parameter can take the values:
+  - 'low': Equivalent to VML_LA - low accuracy VML functions are called
+  - 'high': Equivalent to VML_HA - high accuracy VML functions are called
+  - 'fast': Equivalent to VML_EP - enhanced performance VML functions are called
 
-  It returns the previous mode.
+It returns the previous mode.
 
-  This call is equivalent to the `vmlSetMode()` in the VML library.
-  See:
+This call is equivalent to the `vmlSetMode()` in the VML library.
+See:
 
-  http://www.intel.com/software/products/mkl/docs/webhelp/vml/vml_DataTypesAccuracyModes.html
+http://www.intel.com/software/products/mkl/docs/webhelp/vml/vml_DataTypesAccuracyModes.html
 
-  for more info on the accuracy modes.
+for more info on the accuracy modes.
 
-  * set_vml_num_threads(nthreads): Suggests a maximum number of
-    threads to be used in VML operations.
+* set_vml_num_threads(nthreads): Suggests a maximum number of
+  threads to be used in VML operations.
 
-  This function is equivalent to the call
-  `mkl_domain_set_num_threads(nthreads, MKL_VML)` in the MKL library.
-  See:
+This function is equivalent to the call
+`mkl_domain_set_num_threads(nthreads, MKL_VML)` in the MKL library.
+See:
 
-  http://www.intel.com/software/products/mkl/docs/webhelp/support/functn_mkl_domain_set_num_threads.html
+http://www.intel.com/software/products/mkl/docs/webhelp/support/functn_mkl_domain_set_num_threads.html
 
-  for more info about it.
+for more info about it.
 
-  * get_vml_version():  Get the VML/MKL library version.
+* get_vml_version():  Get the VML/MKL library version.
 
 
 How Numexpr can achieve such a high performance?
