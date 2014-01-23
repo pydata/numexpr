@@ -20,5 +20,6 @@ install:
 script:
   - mkdir empty
   - cd empty
-  - python -c "import numexpr; numexpr.test()"
+  - python -c"import numexpr; numexpr.print_versions()"
+  - nosetests numexpr
 
