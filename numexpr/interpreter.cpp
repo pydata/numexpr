@@ -128,7 +128,7 @@ FuncFFFPtr functions_fff[] = {
 /* fmod not available in VML */
 static void vsfmod(MKL_INT n, const float* x1, const float* x2, float* dest)
 {
-    int j;
+    MKL_INT j;
     for(j=0; j < n; j++) {
     dest[j] = fmod(x1[j], x2[j]);
     };
@@ -171,7 +171,7 @@ FuncDDDPtr functions_ddd[] = {
 /* fmod not available in VML */
 static void vdfmod(MKL_INT n, const double* x1, const double* x2, double* dest)
 {
-    int j;
+    MKL_INT j;
     for(j=0; j < n; j++) {
     dest[j] = fmod(x1[j], x2[j]);
     };
@@ -199,7 +199,7 @@ FuncCCPtr functions_cc[] = {
 /* complex expm1 not available in VML */
 static void vzExpm1(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
-    int j;
+    MKL_INT j;
     vzExp(n, x1, dest);
     for (j=0; j<n; j++) {
     dest[j].real -= 1.0;
@@ -208,7 +208,7 @@ static void vzExpm1(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 
 static void vzLog1p(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
-    int j;
+    MKL_INT j;
     for (j=0; j<n; j++) {
     dest[j].real = x1[j].real + 1;
     dest[j].imag = x1[j].imag;
@@ -219,7 +219,7 @@ static void vzLog1p(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 /* Use this instead of native vzAbs in VML as it seems to work badly */
 static void vzAbs_(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
-    int j;
+    MKL_INT j;
     for (j=0; j<n; j++) {
         dest[j].real = sqrt(x1[j].real*x1[j].real + x1[j].imag*x1[j].imag);
     dest[j].imag = 0;
@@ -228,7 +228,7 @@ static void vzAbs_(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 
 static void vzConj(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
-    int j;
+    MKL_INT j;
     for (j=0; j<n; j++) {
         dest[j].real = x1[j].real
         dest[j].imag = -x1[j].imag
