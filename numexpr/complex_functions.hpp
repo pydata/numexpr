@@ -70,6 +70,20 @@ nc_conj(npy_cdouble *a, npy_cdouble *r)
     return;
 }
 
+// Needed for allowing the internal casting in numexpr machinery for
+// conjugate operations
+inline float fconjf(float x)
+{
+    return x;
+}
+
+// Needed for allowing the internal casting in numexpr machinery for
+// conjugate operations
+inline double fconj(double x)
+{
+    return x;
+}
+
 static void
 nc_prod(npy_cdouble *a, npy_cdouble *b, npy_cdouble *r)
 {

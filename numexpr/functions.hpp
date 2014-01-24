@@ -31,8 +31,9 @@ FUNC_FF(FUNC_LOG_FF,     "log_ff",      logf,   logf2,   vsLn)
 FUNC_FF(FUNC_LOG1P_FF,   "log1p_ff",    log1pf, log1pf2, vsLog1p)
 FUNC_FF(FUNC_LOG10_FF,   "log10_ff",    log10f, log10f2, vsLog10)
 FUNC_FF(FUNC_EXP_FF,     "exp_ff",      expf,   expf2,   vsExp)
-FUNC_FF(FUNC_EXPM1_FF,   "expm1_ff",    expm1f, expm1f,  vsExpm1)
-FUNC_FF(FUNC_ABS_FF,     "absolute_ff", fabsf,  fabsf2,   vsAbs)
+FUNC_FF(FUNC_EXPM1_FF,   "expm1_ff",    expm1f, expm1f2, vsExpm1)
+FUNC_FF(FUNC_ABS_FF,     "absolute_ff", fabsf,  fabsf2,  vsAbs)
+FUNC_FF(FUNC_CONJ_FF,    "conjugate_ff",fconjf, fconjf2, vsConj)
 FUNC_FF(FUNC_FF_LAST,    NULL,          NULL,   NULL,    NULL)
 #ifdef ELIDE_FUNC_FF
 #undef ELIDE_FUNC_FF
@@ -74,6 +75,7 @@ FUNC_DD(FUNC_LOG10_DD,   "log10_dd",    log10, vdLog10)
 FUNC_DD(FUNC_EXP_DD,     "exp_dd",      exp,   vdExp)
 FUNC_DD(FUNC_EXPM1_DD,   "expm1_dd",    expm1, vdExpm1)
 FUNC_DD(FUNC_ABS_DD,     "absolute_dd", fabs,  vdAbs)
+FUNC_DD(FUNC_CONJ_DD,    "conjugate_dd",fconj, vdConj)
 FUNC_DD(FUNC_DD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_DD
 #undef ELIDE_FUNC_DD
@@ -115,7 +117,7 @@ FUNC_CC(FUNC_LOG10_CC,   "log10_cc",    nc_log10, vzLog10)
 FUNC_CC(FUNC_EXP_CC,     "exp_cc",      nc_exp,   vzExp)
 FUNC_CC(FUNC_EXPM1_CC,   "expm1_cc",    nc_expm1, vzExpm1)
 FUNC_CC(FUNC_ABS_CC,     "absolute_cc", nc_abs,   vzAbs_)
-FUNC_CC(FUNC_CONJ_CC,    "conj_cc",     nc_conj,  vzConj)
+FUNC_CC(FUNC_CONJ_CC,    "conjugate_cc",nc_conj,  vzConj)
 FUNC_CC(FUNC_CC_LAST,    NULL,          NULL,     NULL)
 #ifdef ELIDE_FUNC_CC
 #undef ELIDE_FUNC_CC
