@@ -1,7 +1,7 @@
 # References:
 #
 # http://software.intel.com/en-us/intel-mkl
-# https://code.google.com/p/numexpr/wiki/NumexprVML
+# https://github.com/pydata/numexpr/wiki/NumexprMKL
 
 from __future__ import print_function
 import datetime
