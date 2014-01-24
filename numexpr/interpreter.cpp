@@ -216,25 +216,6 @@ static void vzLog1p(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
     vzLn(n, dest, dest);
 };
 
-/* Use this instead of native vzAbs in VML as it seems to work badly */
-static void vzAbs_(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j].real = sqrt(x1[j].real*x1[j].real + x1[j].imag*x1[j].imag);
-    dest[j].imag = 0;
-    };
-};
-
-/* This is needed just for casting between complex and other types */
-static void vsConj(MKL_INT n, const float* x1, float* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = x1[j];
-    };
-}
-
 /* This is needed just for casting between complex and other types */
 static void vdConj(MKL_INT n, const double* x1, double* dest)
 {
