@@ -226,7 +226,7 @@ static void vzAbs_(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
     };
 };
 
-static void vzConj(int n, const MKL_Complex16* x1, MKL_Complex16* dest)
+static void vzConj(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
     int j;
     for (j=0; j<n; j++) {
