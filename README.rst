@@ -131,6 +131,8 @@ The next are the current supported set::
       Square root.
   * abs(float|complex): float|complex
       Absolute value.
+  * conj(complex): complex
+      Conjugate value.
   * {real,imag}(complex): float
       Real or imaginary part of complex.
   * complex(float, float): complex
