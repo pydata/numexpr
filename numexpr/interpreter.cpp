@@ -226,15 +226,6 @@ static void vzAbs_(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
     };
 };
 
-static void vzConj(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j].real = x1[j].real
-        dest[j].imag = -x1[j].imag
-    };
-}
-
 
 typedef void (*FuncCCPtr_vml)(MKL_INT, const MKL_Complex16[], MKL_Complex16[]);
 
