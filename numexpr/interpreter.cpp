@@ -226,6 +226,24 @@ static void vzAbs_(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
     };
 };
 
+/* This is needed just for casting between complex and other types */
+static void vsConj(MKL_INT n, const float* x1, float* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = x1[j];
+    };
+}
+
+/* This is needed just for casting between complex and other types */
+static void vdConj(MKL_INT n, const double* x1, double* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = x1[j];
+    };
+}
+
 
 typedef void (*FuncCCPtr_vml)(MKL_INT, const MKL_Complex16[], MKL_Complex16[]);
 
