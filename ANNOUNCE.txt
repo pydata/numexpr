@@ -33,18 +33,18 @@ Mark Wiebe for advise on how to fix this properly.
 In case you want to know more in detail what has changed in this
 version, see:
 
-http://code.google.com/p/numexpr/wiki/ReleaseNotes
+https://github.com/pydata/numexpr/wiki/Release-Notes
 
 or have a look at RELEASE_NOTES.txt in the tarball.
 
 Where I can find Numexpr?
 =========================
 
-The project is hosted at Google code in:
+The project is hosted at GitHub in:
 
-http://code.google.com/p/numexpr/
+https://github.com/pydata/numexpr
 
-You can get the packages from PyPI as well:
+You can get the packages from PyPI as well (but not for RC releases):
 
 http://pypi.python.org/pypi/numexpr
 
