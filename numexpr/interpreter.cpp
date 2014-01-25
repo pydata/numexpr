@@ -100,15 +100,6 @@ FuncFFPtr functions_ff[] = {
 #endif
 
 #ifdef USE_VML
-typedef void (*FuncFFPtr_vml)(MKL_INT, const float*, float*);
-FuncFFPtr_vml functions_ff_vml[] = {
-#define FUNC_FF(fop, s, f, f_win32, f_vml) f_vml,
-#include "functions.hpp"
-#undef FUNC_FF
-};
-#endif
-
-#ifdef USE_VML
 /* Fake vsConj function just for casting purposes inside numexpr */
 static void vsConj(MKL_INT n, const float* x1, float* dest)
 {
@@ -116,6 +107,15 @@ static void vsConj(MKL_INT n, const float* x1, float* dest)
     for (j=0; j<n; j++) {
         dest[j] = x1[j];
     };
+};
+#endif
+
+#ifdef USE_VML
+typedef void (*FuncFFPtr_vml)(MKL_INT, const float*, float*);
+FuncFFPtr_vml functions_ff_vml[] = {
+#define FUNC_FF(fop, s, f, f_win32, f_vml) f_vml,
+#include "functions.hpp"
+#undef FUNC_FF
 };
 #endif
 
@@ -162,15 +162,6 @@ FuncDDPtr functions_dd[] = {
 };
 
 #ifdef USE_VML
-typedef void (*FuncDDPtr_vml)(MKL_INT, const double*, double*);
-FuncDDPtr_vml functions_dd_vml[] = {
-#define FUNC_DD(fop, s, f, f_vml) f_vml,
-#include "functions.hpp"
-#undef FUNC_DD
-};
-#endif
-
-#ifdef USE_VML
 /* Fake vdConj function just for casting purposes inside numexpr */
 static void vdConj(MKL_INT n, const double* x1, double* dest)
 {
@@ -178,6 +169,15 @@ static void vdConj(MKL_INT n, const double* x1, double* dest)
     for (j=0; j<n; j++) {
         dest[j] = x1[j];
     };
+};
+#endif
+
+#ifdef USE_VML
+typedef void (*FuncDDPtr_vml)(MKL_INT, const double*, double*);
+FuncDDPtr_vml functions_dd_vml[] = {
+#define FUNC_DD(fop, s, f, f_vml) f_vml,
+#include "functions.hpp"
+#undef FUNC_DD
 };
 #endif
 
