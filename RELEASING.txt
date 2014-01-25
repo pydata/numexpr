@@ -73,42 +73,16 @@ Announcing
 Post-release actions
 --------------------
 
-Major/Minor versions
-~~~~~~~~~~~~~~~~~~~~
+- Create a tag ``X.Y.Z`` from ``master``.  Use the next message::
 
-- Create a new branch for possible patch level revisions.  Call this
-  branch just ``/branches/X.Y``.  You can use the next message::
+    $ git tag -a X.Y.Z -m "Tagging version X.Y.Z"
 
-    Created X.Y branch for numexpr X.Y.
+- Push the tag to the github repo::
 
-- Create a tag ``/tags/X.Y`` from ``/branches/X.Y`` (not from
-  trunk!).  Use the next message::
+    $ git push --tags
 
-    Created X.Y tag for numexpr X.Y.
-
-- Edit ``numexpr/version.py`` in trunk to increment the version to the
-  next minor one (i.e. X.Y --> X.(Y+1)).  Set the `release` variable
-  to False.
-
-- Edit ``numexpr/version.py`` in the new branch to add the patch-level
+- Edit ``numexpr/version.py`` to add the patch-level
   revision (i.e. X.Y --> X.Y.1).  Set the `release` variable to False.
-
-Patch level revisions
-~~~~~~~~~~~~~~~~~~~~~
-
-- Create a tag ``/tags/X.Y.Z`` from ``/branches/X.Y.Z``.  Use
-  the next message::
-
-    Created X.Y.Z tag for numexpr X.Y.Z.
-
-- Edit ``numexpr/version.py`` in branch X.Y to increment the version
-  to the next patch-level one (i.e. X.Y.Z --> X.Y.(Z+1)).  Set the
-  `release` variable to False.
-
-For all versions
-~~~~~~~~~~~~~~~~
-
-Do the next actions in trunk or any new branch (if applicable):
 
 - Create new headers for adding new features in ``RELEASE_NOTES.txt``
   and empty the release-specific information in ``ANNOUNCE.txt`` and
