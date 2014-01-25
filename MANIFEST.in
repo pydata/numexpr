@@ -1,6 +1,6 @@
 include MANIFEST.in
 
-include *.txt *.cfg site.cfg.example
+include *.rst *.txt *.cfg site.cfg.example
 
 recursive-include numexpr *.cpp *.hpp *.py
 exclude numexpr/__config__.py
