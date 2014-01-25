@@ -7,15 +7,16 @@ expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
 It wears multi-threaded capabilities, as well as support for Intel's
-VML library (included in Intel MKL), which allows an extremely fast
-evaluation of transcendental functions (sin, cos, tan, exp, log...)
-while squeezing the last drop of performance out of your multi-core
-processors.
+MKL (Math Kernel Library), which allows an extremely fast evaluation
+of transcendental functions (sin, cos, tan, exp, log...)  while
+squeezing the last drop of performance out of your multi-core
+processors.  Look here for a some benchmarks of numexpr using MKL:
+
+https://github.com/pydata/numexpr/wiki/NumexprMKL
 
 Its only dependency is NumPy (MKL is optional), so it works well as an
-easy-to-deploy, easy-to-use, computational kernel for projects that
-don't want to adopt other solutions that require more heavy
-dependencies.
+easy-to-deploy, easy-to-use, computational engine for projects that
+don't want to adopt other solutions requiring more heavy dependencies.
 
 What's new
 ==========
