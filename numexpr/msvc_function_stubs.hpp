@@ -132,4 +132,10 @@ inline float atan2f2(float x, float y) {
     return atan2f(x, y);
 }
 
+// Needed for allowing the internal casting in numexpr machinery for
+// conjugate operations
+inline float fconjf2(float x) {
+    return x;
+}
+
 #endif // NUMEXPR_MSVC_FUNCTION_STUBS_HPP
