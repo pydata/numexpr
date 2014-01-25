@@ -108,6 +108,17 @@ FuncFFPtr_vml functions_ff_vml[] = {
 };
 #endif
 
+#ifdef USE_VML
+/* Fake vsConj function just for casting purposes inside numexpr */
+static void vsConj(MKL_INT n, const float* x1, float* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = x1[j];
+    };
+};
+#endif
+
 typedef float (*FuncFFFPtr)(float, float);
 
 #ifdef _WIN32
@@ -156,6 +167,17 @@ FuncDDPtr_vml functions_dd_vml[] = {
 #define FUNC_DD(fop, s, f, f_vml) f_vml,
 #include "functions.hpp"
 #undef FUNC_DD
+};
+#endif
+
+#ifdef USE_VML
+/* Fake vdConj function just for casting purposes inside numexpr */
+static void vdConj(MKL_INT n, const double* x1, double* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = x1[j];
+    };
 };
 #endif
 
