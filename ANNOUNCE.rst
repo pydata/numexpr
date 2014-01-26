@@ -22,14 +22,17 @@ What's new
 ==========
 
 The repository has been migrated to https://github.com/pydata/numexpr.
-All new tickets and PR should be directed there.
+All new tickets and PR should be directed there.  Also, a `conj()`
+function for computing the conjugate of complex arrays has been added.
+Thanks to David Menéndez.  See PR #125.
 
-Also, a `conj()` function for computing the conjugate of complex
-arrays has been added.  Thanks to David Menéndez.  See PR #125.
+Finallly, we fixed a DeprecationWarning derived of using ``oa_ndim ==
+0`` and ``op_axes == NULL`` in `NpyIter_AdvancedNew`.  Thanks to Mark
+Wiebe for advise on how to fix this properly.
 
-And finallly, we fixed a DeprecationWarning derived of using ``oa_ndim
-== 0`` and ``op_axes == NULL`` in `NpyIter_AdvancedNew`.  Thanks to
-Mark Wiebe for advise on how to fix this properly.
+Many thanks to Christoph Gohlke and Ilan Schnell for his help during
+the testing of this release in all kinds of possible combinations of
+platforms and MKL.
 
 In case you want to know more in detail what has changed in this
 version, see:
