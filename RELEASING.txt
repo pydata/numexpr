@@ -46,12 +46,10 @@ Uploading
 - Go to the downloads section of the Numexpr project in Google Code
   and upload the source tarball and the binary packages.
 
-- Upload it also in the PyPi repository.
+- Upload it also in the PyPi repository:
 
-  * First, register the new version with:
+    $ python setup.py sdist upload
     $ python setup.py register
-
-  * Then upload the files manually using the PyPI web interface.
 
 Announcing
 ----------
