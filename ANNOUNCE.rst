@@ -27,8 +27,9 @@ function for computing the conjugate of complex arrays has been added.
 Thanks to David Menéndez.  See PR #125.
 
 Finallly, we fixed a DeprecationWarning derived of using ``oa_ndim ==
-0`` and ``op_axes == NULL`` in `NpyIter_AdvancedNew`.  Thanks to Mark
-Wiebe for advise on how to fix this properly.
+0`` and ``op_axes == NULL`` when using `NpyIter_AdvancedNew()` and
+NumPy 1.8.  Thanks to Mark Wiebe for advise on how to fix this
+properly.
 
 Many thanks to Christoph Gohlke and Ilan Schnell for his help during
 the testing of this release in all kinds of possible combinations of

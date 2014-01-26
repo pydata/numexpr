@@ -12,8 +12,8 @@ Changes from 2.2.2 to 2.3
   arrays has been added.  Thanks to David Menéndez.  See PR #125.
 
 * [FIX] Fixed a DeprecationWarning derived of using oa_ndim == 0 and
-  op_axes == NULL in NpyIter_AdvancedNew().  Thanks to Mark Wiebe for
-  advise on how to fix this properly.
+  op_axes == NULL when using NpyIter_AdvancedNew() and NumPy 1.8.
+  Thanks to Mark Wiebe for advise on how to fix this properly.
 
 Changes from 2.2.1 to 2.2.2
 ===========================
