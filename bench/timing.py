@@ -1,3 +1,5 @@
+from __future__ import division
+from __future__ import print_function
 ###################################################################
 #  Numexpr - Fast numerical array expression evaluator for NumPy.
 #
@@ -22,29 +24,29 @@ dtype = 'float32'
 #dtype = 'float64'
 
 def compare_times(setup, expr):
-    print "Expression:", expr
+    print("Expression:", expr)
     namespace = {}
     exec setup in namespace
 
     numpy_timer = timeit.Timer(expr, setup)
     numpy_time = numpy_timer.timeit(number=iterations)
-    print 'numpy:', numpy_time / iterations
+    print('numpy:', numpy_time / iterations)
 
     try:
         weave_timer = timeit.Timer('blitz("result=%s")' % expr, setup)
         weave_time = weave_timer.timeit(number=iterations)
-        print "Weave:", weave_time/iterations
+        print("Weave:", weave_time/iterations)
 
-        print "Speed-up of weave over numpy:", round(numpy_time/weave_time, 2)
+        print("Speed-up of weave over numpy:", round(numpy_time/weave_time, 2))
     except:
-        print "Skipping weave timing"
+        print("Skipping weave timing")
 
     numexpr_timer = timeit.Timer('evaluate("%s", optimization="aggressive")' % expr, setup)
     numexpr_time = numexpr_timer.timeit(number=iterations)
-    print "numexpr:", numexpr_time/iterations
+    print("numexpr:", numexpr_time/iterations)
 
     tratio = numpy_time/numexpr_time
-    print "Speed-up of numexpr over numpy:", round(tratio, 2)
+    print("Speed-up of numexpr over numpy:", round(tratio, 2))
     return tratio
 
 setup1 = """\
@@ -130,9 +132,9 @@ def compare(check_only=False):
     total = 0
     for params in experiments:
         total += compare_times(*params)
-        print
+        print()
     average = total / len(experiments)
-    print "Average =", round(average, 2)
+    print("Average =", round(average, 2))
     return average
 
 if __name__ == '__main__':
@@ -142,4 +144,4 @@ if __name__ == '__main__':
     averages = []
     for i in range(iterations):
         averages.append(compare())
-    print "Averages:", ', '.join("%.2f" % x for x in averages)
+    print("Averages:", ', '.join("%.2f" % x for x in averages))

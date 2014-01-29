@@ -1,3 +1,5 @@
+from __future__ import division
+from __future__ import print_function
 ###################################################################
 #  Numexpr - Fast numerical array expression evaluator for NumPy.
 #
@@ -412,10 +414,10 @@ def test_expressions():
             except AssertionError:
                 raise
             except NotImplementedError:
-                print('%r not implemented for %s (scalar=%d, opt=%s)'
-                      % (expr, dtype.__name__, test_scalar, optimization))
+                print(('%r not implemented for %s (scalar=%d, opt=%s)'
+                      % (expr, dtype.__name__, test_scalar, optimization)))
             except:
-                print('numexpr error for expression %r' % (expr,))
+                print(('numexpr error for expression %r' % (expr,)))
                 raise
         method.description = ('test_expressions(%s, test_scalar=%r, '
                               'dtype=%r, optimization=%r, exact=%r)') \
@@ -608,7 +610,7 @@ class test_strings(TestCase):
         msg = "expected NotImplementedError regarding '%s'" % op
         try:
             evaluate(expr, local_dict)
-        except NotImplementedError, nie:
+        except NotImplementedError as nie:
             if "'%s'" % op not in nie.args[0]:
                 self.fail(msg)
         else:
@@ -720,22 +722,22 @@ class test_subprocess(TestCase):
 def print_versions():
     """Print the versions of software that numexpr relies on."""
     if numpy.__version__ < minimum_numpy_version:
-        print "*Warning*: NumPy version is lower than recommended: %s < %s" % \
-              (numpy.__version__, minimum_numpy_version)
-    print '-=' * 38
-    print "Numexpr version:   %s" % numexpr.__version__
-    print "NumPy version:     %s" % numpy.__version__
-    print 'Python version:    %s' % sys.version
+        print("*Warning*: NumPy version is lower than recommended: %s < %s" % \
+              (numpy.__version__, minimum_numpy_version))
+    print('-=' * 38)
+    print("Numexpr version:   %s" % numexpr.__version__)
+    print("NumPy version:     %s" % numpy.__version__)
+    print('Python version:    %s' % sys.version)
     if os.name == 'posix':
         (sysname, nodename, release, version, machine) = os.uname()
-        print 'Platform:          %s-%s' % (sys.platform, machine)
-    print "AMD/Intel CPU?     %s" % numexpr.is_cpu_amd_intel
-    print "VML available?     %s" % use_vml
+        print('Platform:          %s-%s' % (sys.platform, machine))
+    print("AMD/Intel CPU?     %s" % numexpr.is_cpu_amd_intel)
+    print("VML available?     %s" % use_vml)
     if use_vml:
-        print "VML/MKL version:   %s" % numexpr.get_vml_version()
-    print ("Number of threads used by default: %d "
-           "(out of %d detected cores)" % (numexpr.nthreads, numexpr.ncores))
-    print '-=' * 38
+        print("VML/MKL version:   %s" % numexpr.get_vml_version())
+    print(("Number of threads used by default: %d "
+           "(out of %d detected cores)" % (numexpr.nthreads, numexpr.ncores)))
+    print('-=' * 38)
 
 
 def test():

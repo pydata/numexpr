@@ -20,6 +20,7 @@ https://github.com/pydata/numexpr
 for more info about it.
 
 """
+from __future__ import absolute_import
 
 from __config__ import show as show_config, get_info
 
@@ -28,7 +29,7 @@ if get_info('mkl'):
 else:
     use_vml = False
 
-from cpuinfo import cpu
+from .cpuinfo import cpu
 if cpu.is_AMD() or cpu.is_Intel():
     is_cpu_amd_intel = True
 else:
@@ -73,7 +74,7 @@ else:
 # The default for VML is 1 thread (see #39)
 set_vml_num_threads(1)
 
-import version
+from . import version
 
 dirname = os.path.dirname(__file__)
 
