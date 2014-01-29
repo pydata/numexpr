@@ -414,10 +414,10 @@ def test_expressions():
             except AssertionError:
                 raise
             except NotImplementedError:
-                print(('%r not implemented for %s (scalar=%d, opt=%s)'
-                      % (expr, dtype.__name__, test_scalar, optimization)))
+                print('%r not implemented for %s (scalar=%d, opt=%s)'
+                      % (expr, dtype.__name__, test_scalar, optimization))
             except:
-                print(('numexpr error for expression %r' % (expr,)))
+                print('numexpr error for expression %r' % (expr,))
                 raise
         method.description = ('test_expressions(%s, test_scalar=%r, '
                               'dtype=%r, optimization=%r, exact=%r)') \
@@ -735,8 +735,8 @@ def print_versions():
     print("VML available?     %s" % use_vml)
     if use_vml:
         print("VML/MKL version:   %s" % numexpr.get_vml_version())
-    print(("Number of threads used by default: %d "
-           "(out of %d detected cores)" % (numexpr.nthreads, numexpr.ncores)))
+    print("Number of threads used by default: %d "
+           "(out of %d detected cores)" % (numexpr.nthreads, numexpr.ncores))
     print('-=' * 38)
 
 
