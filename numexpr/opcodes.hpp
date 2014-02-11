@@ -154,5 +154,7 @@ OPCODE(111, OP_PROD_FFN, "prod_ffn", Tf, Tf, Tn, T0)
 OPCODE(112, OP_PROD_DDN, "prod_ddn", Td, Td, Tn, T0)
 OPCODE(113, OP_PROD_CCN, "prod_ccn", Tc, Tc, Tn, T0)
 
+OPCODE(114, OP_CONTAINS_SSS, "contains_bss", Tb, Ts, Ts, T0)
+
 /* Should be the last opcode */
-OPCODE(114, OP_END, NULL, T0, T0, T0, T0)
+OPCODE(115, OP_END, NULL, T0, T0, T0, T0)

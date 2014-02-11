@@ -487,6 +487,15 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
     return 0;
 }
 
+int
+stringcontains(const char *s1, const char *s2)
+{
+    if (strstr(s2, s1) != NULL)
+        return 1;
+    return 0;
+}
+
+
 /* Get space for VM temporary registers */
 int get_temps_space(const vm_params& params, char **mem, size_t block_size)
 {
