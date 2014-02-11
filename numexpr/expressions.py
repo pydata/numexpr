@@ -234,11 +234,11 @@ def prod_func(a, axis=None):
 
 
 def contains_func(a, b):
-    if isinstance(b, str):
-        b = ConstantNode(b)
-    if isinstance(b, ConstantNode):
-        return b
-    return FuncNode('contains', [a,b], kind='str')
+    if allConstantNodes([a,b]):
+        return ConstantNode(b in a)
+    if  isinstance(b, ConstantNode):
+        return ConstantNode(b in a)
+    return FuncNode('contains', [a,b], kind='bool')
 
 
 @ophelper

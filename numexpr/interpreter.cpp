@@ -490,9 +490,7 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
 int
 stringcontains(const char *s1, const char *s2)
 {
-    if (strstr(s2, s1) != NULL)
-        return 1;
-    return 0;
+    return strstr(s2, s1) != NULL;
 }
 
 
