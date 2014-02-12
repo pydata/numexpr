@@ -162,6 +162,18 @@ class test_numexpr(TestCase):
                     [(b'mul_ddd', b'r0', b'r1[x]', b'r1[x]'),
                      (b'add_ddd', b'r0', b'r0', b'c2[2.0]')])
 
+    def test_str_contains_basic(self):
+        haystack = array(['abc', 'def', 'xyz', 'x11','za'])
+        res = evaluate('contains(haystack, "ab")')
+        assert_equal(res, [True, False, False, False, False])
+        res = evaluate('contains("abcd", haystack)')
+        assert_equal(res, [True, False, False, False, False])
+        withemptystr = array(['abc', 'def', ''])
+        res = evaluate('contains("abcd", withemptystr)')        
+        assert_equal(res, [True, False, True])
+        res = evaluate('contains(withemptystr, "")')
+        assert_equal(res, [True, True, True])
+
 
 class test_numexpr2(test_numexpr):
     """Testing with 2 threads"""

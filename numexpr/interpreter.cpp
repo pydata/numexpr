@@ -488,9 +488,21 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
 }
 
 int
-stringcontains(const char *s1, const char *s2)
+stringcontains(const char *h, const char *n,  npy_intp hlen, npy_intp nlen)
 {
-    return strstr(s2, s1) != NULL;
+    char* res = NULL;
+    if(nlen > hlen)
+        return 0;
+    char *haystack = (char*) malloc((hlen+1)*sizeof(char));
+    char *needle = (char*) malloc((nlen+1)*sizeof(char));
+    strncpy(haystack, h, hlen*sizeof(char));
+    strncpy(needle, n, nlen*sizeof(char));
+    haystack[hlen] = '\0';
+    needle[nlen] = '\0';
+    res = strstr(haystack, needle);
+    free(haystack);
+    free(needle);
+    return res != NULL;
 }
 
 

@@ -234,12 +234,11 @@ def prod_func(a, axis=None):
 
 
 def contains_func(a, b):
-    if allConstantNodes([a,b]):
-        return ConstantNode(b in a)
-    if  isinstance(b, ConstantNode):
-        return ConstantNode(b in a)
+    if isinstance(a, (str, bytes)):
+        a = ConstantNode(a)
+    if isinstance(b, (str, bytes)):
+        b = ConstantNode(b)
     return FuncNode('contains', [a,b], kind='bool')
-
 
 @ophelper
 def div_op(a, b):
