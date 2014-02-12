@@ -20,6 +20,5 @@ install:
 script:
   - mkdir empty
   - cd empty
-  - python -c"import numexpr; numexpr.print_versions()"
-  - nosetests numexpr
+  - python -c "import sys;import numexpr;sys.exit(0 if numexpr.test() else 1)"
 
