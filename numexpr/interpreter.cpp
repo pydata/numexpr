@@ -490,6 +490,11 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
 int
 stringcontains(const char *h, const char *n,  npy_intp hlen, npy_intp nlen)
 {
+    printf("\n h %s\n", h);
+    printf("hlen %ld\n", hlen );
+    printf("n %s\n", n);
+    printf("nlen %ld\n", nlen);
+
     char* res = NULL;
     if(nlen > hlen)
         return 0;
