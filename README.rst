@@ -103,7 +103,7 @@ Numexpr supports the set of operators listed below::
     * Logical operators: &, |, ~
     * Comparison operators: <, <=, ==, !=, >=, >
     * Unary arithmetic operators: -
-    * Binary arithmetic operators: +, -, *, /, **, %
+    * Binary arithmetic operators: +, -, *, /, **, %, <<, >>
 
 
 Supported functions
