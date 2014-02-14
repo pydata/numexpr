@@ -417,6 +417,11 @@ class ExpressionNode(object):
     __mod__ = binop('mod')
     __rmod__ = binop('mod', reversed=True)
 
+    __lshift__ = binop('lshift')
+    __rlshift__ = binop('lshift', reversed=True)
+    __rshift__ = binop('rshift')
+    __rrshift__ = binop('rshift', reversed=True)
+
     # boolean operations
 
     __and__ = binop('and', kind='bool')
