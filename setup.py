@@ -25,20 +25,19 @@ try:
     import setuptools
 except ImportError:
     setuptools = None
-extra_setup_opts = {}
 
 
 def setup_package():
     metadata = dict(#name='numexpr',  # name already set in numpy.distutils
-                  description='Fast numerical expression evaluator for NumPy',
-                  author='David M. Cooke, Francesc Alted and others',
-                  author_email='david.m.cooke@gmail.com, faltet@gmail.com',
-                  url='https://github.com/pydata/numexpr',
-                  license = 'MIT',
-                  packages = ['numexpr'],
-                  install_requires=['numpy'],
-                  requires=['numpy'],  #  % minimum_numpy_version,
-               )
+                    description='Fast numerical expression evaluator for NumPy',
+                    author='David M. Cooke, Francesc Alted and others',
+                    author_email='david.m.cooke@gmail.com, faltet@gmail.com',
+                    url='https://github.com/pydata/numexpr',
+                    license = 'MIT',
+                    packages = ['numexpr'],
+                    install_requires = ['numpy>=' + minimum_numpy_version],
+                    setup_requires = ['numpy>=' + minimum_numpy_version]
+                   )
     if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
        in ('--help-commands', 'egg_info', '--version', 'clean')):
 
@@ -48,9 +47,10 @@ def setup_package():
         # pip is used to install Numexpr when Numpy is not yet present in
         # the system. 
         # (via https://github.com/abhirk/scikit-learn/blob/master/setup.py)
-
-        from setuptools import setup
-
+        try:
+            from setuptools import setup
+        except ImportError:
+            from distutils.core import setup
     else:
         from numpy.distutils.core import setup
         from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
