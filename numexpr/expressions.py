@@ -234,7 +234,7 @@ def prod_func(a, axis=None):
 
 @ophelper
 def contains_func(a, b):
-    return FuncNode('contains', [a,b], kind='bool')
+    return FuncNode('contains', [a, b], kind='bool')
 
 @ophelper
 def div_op(a, b):
