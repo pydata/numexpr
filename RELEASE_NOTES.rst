@@ -2,6 +2,11 @@
  Release notes for Numexpr 2.3 series
 ======================================
 
+Changes from 2.3.1 to 2.3.2
+===========================
+
+#XXX version-specific blurb XXX#
+
 Changes from 2.3 to 2.3.1
 =========================
 

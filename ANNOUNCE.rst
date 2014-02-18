@@ -1,5 +1,5 @@
 ==========================
- Announcing Numexpr 2.3.1
+ Announcing Numexpr 2.3.2
 ==========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -21,11 +21,7 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-* Added support for shift-left (<<) and shift-right (>>) binary operators.
-  See PR #131. Thanks to fish2000!
-
-* Removed the rpath flag for the GCC linker, because it is probably
-  not necessary and it chokes to clang.
+#XXX version-specific blurb XXX#
 
 In case you want to know more in detail what has changed in this
 version, see:
