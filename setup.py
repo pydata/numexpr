@@ -16,8 +16,6 @@ import os.path as op
 from distutils.command.clean import clean
 
 
-minimum_numpy_version = "1.6"
-
 if sys.version_info < (2, 6):
     raise RuntimeError("must use python 2.6 or greater")
 
@@ -26,6 +24,8 @@ try:
 except ImportError:
     setuptools = None
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 def setup_package():
     metadata = dict(#name='numexpr',  # name already set in numpy.distutils
@@ -35,8 +35,8 @@ def setup_package():
                     url='https://github.com/pydata/numexpr',
                     license = 'MIT',
                     packages = ['numexpr'],
-                    install_requires = ['numpy>=' + minimum_numpy_version],
-                    setup_requires = ['numpy>=' + minimum_numpy_version]
+                    install_requires = requirements,
+                    setup_requires = requirements
                    )
     if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
        in ('--help-commands', 'egg_info', '--version', 'clean')):
