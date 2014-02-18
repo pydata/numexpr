@@ -33,8 +33,6 @@
         variables */                            \
         npy_intp nowarns = ss1+sb1+*x1;             \
         nowarns += 1;                           \
-        printf("\nVEC_ARG1\n");\
-        printf("\ndest %s x1 %s ss1 %ld sb1 %ld nowarns %ld\n", dest, x1, ss1, sb1, nowarns);\
         VEC_LOOP(expr);                         \
     } break
 
@@ -55,8 +53,6 @@
         npy_intp ss2 = params.memsizes[arg2];       \
         npy_intp sb2 = memsteps[arg2];              \
         nowarns += ss2+sb2+*x2;                 \
-        printf("\nVEC_ARG2\n");\
-        printf("\ndest %s x1 %s ss1 %ld sb1 %ld nowarns %ld x2 %s ss2 %ld sb2 %ld nowarns %ld \n", dest, x1, ss1, sb1, nowarns, x2, ss2, sb2, nowarns);\
         VEC_LOOP(expr);                         \
     } break
 
@@ -82,7 +78,6 @@
         npy_intp sb3 = memsteps[arg3];              \
         nowarns += ss2+sb2+*x2;                 \
         nowarns += ss3+sb3+*x3;                 \
-        printf("\nVEC_ARG3\n");\
         VEC_LOOP(expr);                         \
     } break
 

@@ -162,15 +162,53 @@ class test_numexpr(TestCase):
                     [(b'mul_ddd', b'r0', b'r1[x]', b'r1[x]'),
                      (b'add_ddd', b'r0', b'r0', b'c2[2.0]')])
 
-    def test_str_contains_basic(self):
+    def test_str_contains_basic1(self):
         haystack = array(['abc', 'def', 'xyz', 'x11','za'])
         res = evaluate('contains(haystack, "ab")')
         assert_equal(res, [True, False, False, False, False])
+
+    def test_str_contains_basic2(self):
+        haystack = array(['abc', 'def', 'xyz', 'x11','za'])
         res = evaluate('contains("abcd", haystack)')
         assert_equal(res, [True, False, False, False, False])
+
+    def test_str_contains_basic3(self):        
+        haystacks = array(['abckkk', 'adef', 'xyz',   'x11abcp','za', 'abc'])
+        needles =   array(['abc',    'def',  'aterr', 'oot',    'zu', 'ab' ])
+        res = evaluate('contains(haystacks, needles)')
+        assert_equal(res, [True, True, False, False, False, True])
+
+    def test_str_contains_basic4(self):
+        needles =  array(['abc', 'def', 'aterr', 'oot', 'zu', 'ab c', ' abc', 'abc '])
+        res = evaluate('contains("test abc here", needles)')
+        assert_equal(res, [True, False, False, False, False, False, True, True])
+
+    def test_str_contains_basic5(self):
+        needles =  array(['abc', 'ab c', ' abc', ' abc ', '\tabc', 'c h'])
+        res = evaluate('contains("test abc here", needles)')
+        assert_equal(res, [True, False, True, True, False, True])
+
+    def test_str_contains_listproduct(self):
+        """Compare operation of Python 'in' operator with 'contains' using a product of two lists of strings."""
+        from itertools import product
+        small = ['It w', 'as th', 'e Whit', 'e Rab', 'bit,', ' tro', 'tting', ' sl', 'owly', ' back ', 'again,', ' and', ' lo', 'okin', 'g a', 'nxious', 'ly a', 'bou', 't a', 's it w', 'ent,', ' as i', 'f it', ' had l', 'ost', ' some', 'thi', 'ng; a', 'nd ', 'she ', 'heard ', 'it mut', 'terin', 'g to ', 'its', 'elf ', "'The", ' Duch', 'ess! T', 'he ', 'Duches', 's! Oh ', 'my dea', 'r paws', '! Oh ', 'my f', 'ur ', 'and ', 'whiske', 'rs! ', 'She', "'ll g", 'et me', ' ex', 'ecu', 'ted, ', 'as su', 're a', 's f', 'errets', ' are f', 'errets', '! Wh', 'ere ', 'CAN', ' I hav', 'e d', 'roppe', 'd t', 'hem,', ' I wo', 'nder?', "' A", 'lice',
+            ' gu', 'essed', ' in a', ' mom', 'ent ', 'tha', 't it w', 'as ', 'looki', 'ng f', 'or ', 'the fa', 'n and ', 'the', ' pai', 'r of w', 'hit', 'e kid', ' glo', 'ves', ', and ', 'she ', 'very g', 'ood', '-na', 'turedl', 'y be', 'gan h', 'unt', 'ing', ' about', ' for t', 'hem', ', but', ' they ', 'wer', 'e nowh', 'ere to', ' be', ' se', 'en--', 'ever', 'ythin', 'g seem', 'ed ', 'to ', 'have c', 'hang', 'ed ', 'since', ' he', 'r swim', ' in', ' the', ' pool,', ' and', ' the g', 'reat ', 'hal', 'l, w', 'ith', ' th', 'e gl', 'ass t', 'abl', 'e and ', 'the', ' li', 'ttle', ' doo', 'r, ha', 'd v', 'ani', 'shed c', 'omp', 'lete', 'ly.']
+        big = ['It wa', 's the', ' W', 'hit', 'e ', 'Ra', 'bb', 'it, t', 'ro', 'tting s', 'lowly', ' back ', 'agai', 'n, and', ' l', 'ookin', 'g ', 'an', 'xiously', ' about ', 'as it w', 'ent, as', ' if ', 'it had', ' los', 't ', 'so', 'mething', '; and', ' she h', 'eard ', 'it ', 'mutteri', 'ng to', ' itself', " 'The ", 'Duchess', '! ', 'Th', 'e ', 'Duchess', '! Oh m', 'y de', 'ar paws', '! ', 'Oh my ', 'fu', 'r and w', 'hiskers', "! She'", 'll ', 'get', ' me ', 'execute', 'd,', ' a', 's ', 'su', 're as ', 'fe', 'rrets', ' are f', 'errets!', ' Wher', 'e CAN', ' I ha', 've dro', 'pped t', 'hem', ', I ', 'won', "der?' A",
+            'lice g', 'uess', 'ed ', 'in a m', 'omen', 't that', ' i', 't was l', 'ook', 'ing f', 'or th', 'e ', 'fan and', ' th', 'e p', 'air o', 'f whit', 'e ki', 'd glove', 's, and ', 'she v', 'ery ', 'good-na', 'tu', 'redl', 'y be', 'gan hun', 'ti', 'ng abou', 't for t', 'he', 'm, bu', 't t', 'hey ', 'were n', 'owhere', ' to b', 'e s', 'een-', '-eve', 'rythi', 'ng see', 'me', 'd ', 'to ha', 've', ' c', 'hanged', ' sinc', 'e her s', 'wim ', 'in the ', 'pool,', ' an', 'd the g', 'rea', 't h', 'all, wi', 'th the ', 'glas', 's t', 'able an', 'd th', 'e littl', 'e door,', ' had va', 'ni', 'shed co', 'mpletel', 'y.']
+        p = list(product(small, big))
+        python_in = [x[0] in x[1] for x in p]
+        a = [x[0] for x in p]
+        b = [x[1] for x in p]
+        res = [bool(x) for x in evaluate('contains(b, a)')]
+        assert_equal(res, python_in)
+
+    def test_str_contains_withemptystr1(self):
         withemptystr = array(['abc', 'def', ''])
         res = evaluate('contains("abcd", withemptystr)')        
         assert_equal(res, [True, False, True])
+
+    def test_str_contains_withemptystr2(self):
+        withemptystr = array(['abc', 'def', ''])
         res = evaluate('contains(withemptystr, "")')
         assert_equal(res, [True, True, True])
 

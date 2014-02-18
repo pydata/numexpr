@@ -232,12 +232,8 @@ def prod_func(a, axis=None):
         return a
     return FuncNode('prod', [a, axis], kind=a.astKind)
 
-
+@ophelper
 def contains_func(a, b):
-    if isinstance(a, (str, bytes)):
-        a = ConstantNode(a)
-    if isinstance(b, (str, bytes)):
-        b = ConstantNode(b)
     return FuncNode('contains', [a,b], kind='bool')
 
 @ophelper
