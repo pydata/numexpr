@@ -1,5 +1,5 @@
 ==========================
- Announcing Numexpr 2.3
+ Announcing Numexpr 2.3.1
 ==========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -21,19 +21,11 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-The repository has been migrated to https://github.com/pydata/numexpr.
-All new tickets and PR should be directed there.  Also, a `conj()`
-function for computing the conjugate of complex arrays has been added.
-Thanks to David Menéndez.  See PR #125.
+* Added support for shift-left (<<) and shift-right (>>) binary operators.
+  See PR #131. Thanks to fish2000!
 
-Finallly, we fixed a DeprecationWarning derived of using ``oa_ndim ==
-0`` and ``op_axes == NULL`` when using `NpyIter_AdvancedNew()` and
-NumPy 1.8.  Thanks to Mark Wiebe for advise on how to fix this
-properly.
-
-Many thanks to Christoph Gohlke and Ilan Schnell for his help during
-the testing of this release in all kinds of possible combinations of
-platforms and MKL.
+* Removed the rpath flag for the GCC linker, because it is probably
+  not necessary and it chokes to clang.
 
 In case you want to know more in detail what has changed in this
 version, see:

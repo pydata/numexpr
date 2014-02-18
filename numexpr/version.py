@@ -9,7 +9,7 @@
 ####################################################################
 
 version='2.3.1'
-release=False
+release=True
 
 if not release:
     version += '.dev'

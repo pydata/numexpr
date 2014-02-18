@@ -2,6 +2,16 @@
  Release notes for Numexpr 2.3 series
 ======================================
 
+Changes from 2.3 to 2.3.1
+=========================
+
+* Added support for shift-left (<<) and shift-right (>>) binary operators.
+  See PR #131. Thanks to fish2000!
+
+* Removed the rpath flag for the GCC linker, because it is probably
+  not necessary and it chokes to clang.
+
+
 Changes from 2.2.2 to 2.3
 =========================
 
