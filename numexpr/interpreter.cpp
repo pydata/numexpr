@@ -13,11 +13,43 @@
 #include <string.h>
 #include <assert.h>
 #include <vector>
+#include <syslog.h>
 
 #include "numexpr_config.hpp"
 #include "complex_functions.hpp"
 #include "interpreter.hpp"
 #include "numexpr_object.hpp"
+
+
+#ifndef SIZE_MAX
+#define SIZE_MAX ((size_t)-1)
+#endif
+
+#define RETURN_TYPE char*
+
+// AVAILABLE(Haystack, Haystack_Len, J, Needle_Len)
+//                         A macro that returns nonzero if there are
+//                         at least Needle_Len bytes left starting at Haystack[J].
+//                         Haystack is 'unsigned char *', Haystack_Len, J, and Needle_Len
+//                         are 'size_t'; Haystack_Len is an lvalue.  For
+//                         NUL-terminated searches, Haystack_Len can be
+//                         modified each iteration to avoid having
+//                         to compute the end of Haystack up front.
+
+#define AVAILABLE(Haystack, Haystack_Len, J, Needle_Len)   \
+  ((Haystack_Len) >= (J) + (Needle_Len))
+
+#include "gnulib/str-two-way.h"
+
+#ifdef DEBUG
+#define DEBUG_TEST 1
+#else
+#define DEBUG_TEST 0
+#endif
+
+#define LOGDEBUG(...) do { if (DEBUG_TEST) syslog(LOG_MAKEPRI(LOG_USER, LOG_DEBUG),  __VA_ARGS__); } while (0)
+
+
 
 using namespace std;
 
@@ -491,36 +523,6 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
 /* contains(str1, str2) function for string columns */
 
 // Based on Gnulib/strstr.c
-
-#ifndef SIZE_MAX
-#define SIZE_MAX ((size_t)-1)
-#endif
-
-#define RETURN_TYPE char*
-
-// AVAILABLE(Haystack, Haystack_Len, J, Needle_Len)
-//                         A macro that returns nonzero if there are
-//                         at least Needle_Len bytes left starting at Haystack[J].
-//                         Haystack is 'unsigned char *', Haystack_Len, J, and Needle_Len
-//                         are 'size_t'; Haystack_Len is an lvalue.  For
-//                         NUL-terminated searches, Haystack_Len can be
-//                         modified each iteration to avoid having
-//                         to compute the end of Haystack up front.
-
-#define AVAILABLE(Haystack, Haystack_Len, J, Needle_Len)   \
-  ((Haystack_Len) >= (J) + (Needle_Len))
-
-#include "gnulib/str-two-way.h"
-#include <syslog.h>
-
-#ifdef DEBUG
-#define DEBUG_TEST 1
-#else
-#define DEBUG_TEST 0
-#endif
-
-#define LOGDEBUG(...) do { if (DEBUG_TEST) syslog(LOG_MAKEPRI(LOG_USER, LOG_DEBUG),  __VA_ARGS__); } while (0)
-
 
 int
 stringcontains(const char *haystack_start, const char *needle_start,  npy_intp max_haystack_len, npy_intp max_needle_len)
