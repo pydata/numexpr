@@ -488,6 +488,8 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
 }
 
 
+/* contains(str1, str2) function for string columns */
+
 // Based on Gnulib/strstr.c
 
 #ifndef SIZE_MAX
@@ -525,8 +527,8 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
 {
     // needle_len - Length of NEEDLE.
     // haystack_len - Known minimum length of HAYSTACK.
-    size_t haystack_len = fminl(max_haystack_len, strlen(haystack_start));
     size_t needle_len = fminl(max_needle_len, strlen(needle_start));
+    size_t haystack_len = fminl(max_haystack_len, strlen(haystack_start));
 
     const char *haystack = haystack_start;
     const char *needle = needle_start;    
@@ -540,7 +542,6 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
         return 0;
 
     /* Check if needle is prefix of haystack. */
-
     size_t si = 0;
     while (*haystack && *needle && si < needle_len)
     {
@@ -562,23 +563,17 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
                                      haystack_len,
                                      (const unsigned char *) needle_start, needle_len) ;
         int ptrcomp = res != NULL;    
-
         LOGDEBUG("\ntwo_way_short_needle: %.20s\n", res);
         LOGDEBUG("\nreturn %d", ptrcomp);
-
         return ptrcomp;
     }
 
     char* res = two_way_long_needle ((const unsigned char *) haystack, haystack_len,
                               (const unsigned char *) needle, needle_len);
-    
     int ptrcomp2 = res != NULL ? 1 : 0;
-    
     LOGDEBUG("\ntwo_way_long_needle: %.20s\n", res);
     LOGDEBUG("\nreturn %d", ptrcomp2);
-    
     return ptrcomp2;
-
 }
 
 
