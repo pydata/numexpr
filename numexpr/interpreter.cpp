@@ -39,7 +39,7 @@
 #define AVAILABLE(Haystack, Haystack_Len, J, Needle_Len)   \
   ((Haystack_Len) >= (J) + (Needle_Len))
 
-#include "gnulib/str-two-way.h"
+#include "newlib/str-two-way.h"
 
 #ifdef DEBUG
 #define DEBUG_TEST 1
