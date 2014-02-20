@@ -520,21 +520,21 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
 }
 
 
-/* contains(str1, str2) function for string columns */
+/* contains(str1, str2) function for string columns.
 
-// Based on Gnulib/strstr.c
+   Based on Newlib/strstr.c.                        */
 
 int
 stringcontains(const char *haystack_start, const char *needle_start,  npy_intp max_haystack_len, npy_intp max_needle_len)
 {
-    // needle_len - Length of NEEDLE.
-    // haystack_len - Known minimum length of HAYSTACK.
+    // needle_len - Length of needle.
+    // haystack_len - Known minimum length of haystack.
     size_t needle_len = fminl(max_needle_len, strlen(needle_start));
     size_t haystack_len = fminl(max_haystack_len, strlen(haystack_start));
 
     const char *haystack = haystack_start;
     const char *needle = needle_start;    
-    bool ok = true; /* True if NEEDLE is prefix of HAYSTACK.  */    
+    bool ok = true; /* needle is prefix of haystack. */
     LOGDEBUG("\n\nhaystack_start #%.20s#\n", haystack_start);
     LOGDEBUG("haystack_len %ld\n", haystack_len);
     LOGDEBUG("needle_start #%.20s#\n", needle_start);
@@ -543,7 +543,6 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
     if(haystack_len<needle_len)
         return 0;
 
-    /* Check if needle is prefix of haystack. */
     size_t si = 0;
     while (*haystack && *needle && si < needle_len)
     {
@@ -556,9 +555,6 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
       return 1;
     }
 
-    /* Perform the search.  Abstract memory is considered to be an array
-     of 'unsigned char' values, not an array of 'char' values.  See
-     ISO C 99 section 6.2.6.1.  */
     if (needle_len < LONG_NEEDLE_THRESHOLD)
     {
         char *res = two_way_short_needle ((const unsigned char *) haystack_start,
