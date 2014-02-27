@@ -244,6 +244,8 @@
         case OP_EQ_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) == 0));
         case OP_NE_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) != 0));
 
+        case OP_CONTAINS_BSS: VEC_ARG2(b_dest = stringcontains(s1, s2, ss1, ss2));
+
         /* Int */
         case OP_CAST_IB: VEC_ARG1(i_dest = (int)(b1));
         case OP_ONES_LIKE_II: VEC_ARG0(i_dest = 1);

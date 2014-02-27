@@ -233,6 +233,10 @@ def prod_func(a, axis=None):
     return FuncNode('prod', [a, axis], kind=a.astKind)
 
 @ophelper
+def contains_func(a, b):
+    return FuncNode('contains', [a, b], kind='bool')
+
+@ophelper
 def div_op(a, b):
     if get_optimization() in ('moderate', 'aggressive'):
         if (isinstance(b, ConstantNode) and
@@ -348,6 +352,7 @@ functions = {
 
     'sum' : sum_func,
     'prod' : prod_func,
+    'contains' : contains_func,
     }
 
 
