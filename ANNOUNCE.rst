@@ -1,5 +1,5 @@
 ==========================
- Announcing Numexpr 2.3.2
+ Announcing Numexpr 2.4
 ==========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -21,7 +21,8 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-#XXX version-specific blurb XXX#
+A new `contains()` function has been added for detecting substrings in
+strings.
 
 In case you want to know more in detail what has changed in this
 version, see:

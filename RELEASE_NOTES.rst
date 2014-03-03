@@ -1,11 +1,13 @@
 ======================================
- Release notes for Numexpr 2.3 series
+ Release notes for Numexpr 2.4 series
 ======================================
 
-Changes from 2.3.1 to 2.3.2
-===========================
+Changes from 2.3.1 to 2.4
+=========================
 
-#XXX version-specific blurb XXX#
+* A new `contains()` function has been added for detecting substrings
+  in strings.
+
 
 Changes from 2.3 to 2.3.1
 =========================
