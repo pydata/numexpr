@@ -28,18 +28,17 @@
 #define RETURN_TYPE char*
 
 // AVAILABLE(Haystack, Haystack_Len, J, Needle_Len)
-//                         A macro that returns nonzero if there are
-//                         at least Needle_Len bytes left starting at Haystack[J].
-//                         Haystack is 'unsigned char *', Haystack_Len, J, and Needle_Len
-//                         are 'size_t'; Haystack_Len is an lvalue.  For
-//                         NUL-terminated searches, Haystack_Len can be
-//                         modified each iteration to avoid having
-//                         to compute the end of Haystack up front.
+//     A macro that returns nonzero if there are at least Needle_Len
+//     bytes left starting at Haystack[J].
+//     Haystack is 'unsigned char *', Haystack_Len, J, and Needle_Len
+//     are 'size_t'; Haystack_Len is an lvalue.  For NUL-terminated
+//     searches, Haystack_Len can be modified each iteration to avoid
+//     having to compute the end of Haystack up front.
 
 #define AVAILABLE(Haystack, Haystack_Len, J, Needle_Len)   \
   ((Haystack_Len) >= (J) + (Needle_Len))
 
-#include "newlib/str-two-way.h"
+#include "str-two-way.hpp"
 
 #ifdef DEBUG
 #define DEBUG_TEST 1

@@ -143,9 +143,9 @@ OPCODE(103, OP_COPY_SS, "copy_ss", Ts, Ts, T0, T0)
 
 OPCODE(104, OP_WHERE_BBBB, "where_bbbb", Tb, Tb, Tb, Tb)
 
-OPCODE(105, OP_REDUCTION, NULL, T0, T0, T0, T0)
+OPCODE(105, OP_CONTAINS_BSS, "contains_bss", Tb, Ts, Ts, T0)
 
-OPCODE(106, OP_CONTAINS_BSS, "contains_bss", Tb, Ts, Ts, T0)
+OPCODE(106, OP_REDUCTION, NULL, T0, T0, T0, T0)
 
 /* Last argument in a reduction is the axis of the array the
    reduction should be applied along. */
