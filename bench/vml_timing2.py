@@ -4,6 +4,7 @@
 # https://github.com/pydata/numexpr/wiki/NumexprMKL
 
 from __future__ import print_function
+from __future__ import division
 import datetime
 import sys
 import numpy as np

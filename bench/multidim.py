@@ -1,3 +1,5 @@
+from __future__ import division
+from __future__ import print_function
 ###################################################################
 #  Numexpr - Fast numerical array expression evaluator for NumPy.
 #
@@ -85,9 +87,9 @@ for test_shape in test_shapes:
         result3 = test_func_chunked(a, b, c)
     stop3 = time.time()
 
-    print "%s %s (average of %s runs)" % (test_shape, test_dtype, nruns)
-    print "Simple: ", (stop1-start1)/nruns
-    print "Numexpr: ", (stop2-start2)/nruns
-    print "Chunked: ", (stop3-start3)/nruns
+    print("%s %s (average of %s runs)" % (test_shape, test_dtype, nruns))
+    print("Simple: ", (stop1-start1)/nruns)
+    print("Numexpr: ", (stop2-start2)/nruns)
+    print("Chunked: ", (stop3-start3)/nruns)
 
 

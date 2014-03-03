@@ -1,3 +1,4 @@
+from __future__ import print_function
 ###################################################################
 #  Numexpr - Fast numerical array expression evaluator for NumPy.
 #
@@ -47,10 +48,10 @@ if __name__ == '__main__':
         if "ncores" in dir(ne):
             ne.set_num_threads(nthreads)
     if what not in ("numpy", "numexpr"):
-        print "Unrecognized module:", what
+        print("Unrecognized module:", what)
         sys.exit(0)
-    print "Computing: '%s' using %s with %d points" % (expr, what, N)
+    print("Computing: '%s' using %s with %d points" % (expr, what, N))
     t0 = time()
     result = compute()
     ts = round(time() - t0, 3)
-    print "*** Time elapsed:", ts
+    print("*** Time elapsed:", ts)

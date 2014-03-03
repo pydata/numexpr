@@ -1,3 +1,4 @@
+from __future__ import division
 ###################################################################
 #  Numexpr - Fast numerical array expression evaluator for NumPy.
 #
@@ -150,7 +151,7 @@ def bestConstantType(x):
     for converter in float, complex:
         try:
             y = converter(x)
-        except StandardError, err:
+        except Exception as err:
             continue
         if y == x:
             return converter

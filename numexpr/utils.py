@@ -108,7 +108,7 @@ def detect_number_of_cores():
         else: # OSX:
             return int(subprocess.check_output(["sysctl", "-n", "hw.ncpu"]))
     # Windows:
-    if os.environ.has_key("NUMBER_OF_PROCESSORS"):
+    if "NUMBER_OF_PROCESSORS" in os.environ:
         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
         if ncpus > 0:
             return ncpus
