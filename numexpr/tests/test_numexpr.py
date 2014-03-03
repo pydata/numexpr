@@ -162,6 +162,10 @@ class test_numexpr(TestCase):
                     [(b'mul_ddd', b'r0', b'r1[x]', b'r1[x]'),
                      (b'add_ddd', b'r0', b'r0', b'c2[2.0]')])
 
+    def test_str_contains_basic0(self):
+        res = evaluate('contains("abc", "ab")')
+        assert_equal(res, True)
+
     def test_str_contains_basic1(self):
         haystack = array(['abc', 'def', 'xyz', 'x11','za'])
         res = evaluate('contains(haystack, "ab")')
