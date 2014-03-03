@@ -137,6 +137,8 @@ The next are the current supported set::
       Real or imaginary part of complex.
   * complex(float, float): complex
       Complex from real and imaginary parts.
+  * contains(str|str_list, str|str_list): bool|bool_list
+      Returns True for every string in `op1` that contains `op2`.
 
 .. Notes:
 
