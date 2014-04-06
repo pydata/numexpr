@@ -42,16 +42,22 @@ Packaging
 
   Do a quick check that the tarball is sane.
 
-- Make the binary packages for supported Python versions (2.6 and 2.7
-  currently).  Check that installer works correctly.
+Releasing
+---------
+
+- Create a tag ``vX.Y.Z`` from ``master``.  Use the next message:
+
+  $ git tag -a vX.Y.Z -m "Tagging version X.Y.Z"
+
+- Push the tag to the github repo:
+
+  $ git push
+  $ git push --tags
 
 Uploading
 ---------
 
-- Go to the downloads section of the Numexpr project in Google Code
-  and upload the source tarball and the binary packages.
-
-- Upload it also in the PyPi repository:
+- Upload it in the PyPi repository:
 
   $ python setup.py sdist upload
   $ python setup.py register
@@ -70,14 +76,6 @@ Announcing
 
 Post-release actions
 --------------------
-
-- Create a tag ``X.Y.Z`` from ``master``.  Use the next message:
-
-  $ git tag -a vX.Y.Z -m "Tagging version X.Y.Z"
-
-- Push the tag to the github repo:
-
-  $ git push --tags
 
 - Edit ``numexpr/version.py`` to add the patch-level
   revision (i.e. X.Y --> X.Y.1).  Set the `release` variable to False.
