@@ -528,8 +528,8 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
 {
     // needle_len - Length of needle.
     // haystack_len - Known minimum length of haystack.
-    size_t needle_len = fminl(max_needle_len, strlen(needle_start));
-    size_t haystack_len = fminl(max_haystack_len, strlen(haystack_start));
+    size_t needle_len = min(max_needle_len, strlen(needle_start));
+    size_t haystack_len = min(max_haystack_len, strlen(haystack_start));
 
     const char *haystack = haystack_start;
     const char *needle = needle_start;    
