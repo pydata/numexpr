@@ -13,7 +13,9 @@
 #include <string.h>
 #include <assert.h>
 #include <vector>
+#ifndef _MSC_VER
 #include <syslog.h>
+#endif
 
 #include "numexpr_config.hpp"
 #include "complex_functions.hpp"
@@ -46,7 +48,11 @@
 #define DEBUG_TEST 0
 #endif
 
+#ifdef _MSC_VER
+#define LOGDEBUG(...)
+#else
 #define LOGDEBUG(...) do { if (DEBUG_TEST) syslog(LOG_MAKEPRI(LOG_USER, LOG_DEBUG),  __VA_ARGS__); } while (0)
+#endif
 
 
 
