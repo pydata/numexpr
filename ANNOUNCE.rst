@@ -1,6 +1,6 @@
-==========================
- Announcing Numexpr 2.4
-==========================
+===========================
+ Announcing Numexpr 2.4 RC1
+===========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
@@ -22,7 +22,10 @@ What's new
 ==========
 
 A new `contains()` function has been added for detecting substrings in
-strings.
+strings.  Thanks to Marcin Krol.
+
+Also, a new version of setup.py that allows better management of NumPy
+dependency during pip installs.  Thanks to Aleks Bunin.
 
 In case you want to know more in detail what has changed in this
 version, see:
