@@ -22,7 +22,8 @@ What's new
 ==========
 
 A new `contains()` function has been added for detecting substrings in
-strings.  Thanks to Marcin Krol.
+strings.  Only plain strings (bytes) are supported for now (see ticket
+#142).  Thanks to Marcin Krol.
 
 Also, there is a new version of setup.py that allows better management
 of the NumPy dependency during pip installs.  Thanks to Aleks Bunin.

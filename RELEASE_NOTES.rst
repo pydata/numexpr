@@ -6,7 +6,8 @@ Changes from 2.3.1 to 2.4
 =========================
 
 * A new `contains()` function has been added for detecting substrings
-  in strings.  See PR #135.  Thanks to Marcin Krol.
+  in strings.  Only plain strings (bytes) are supported for now.  See
+  PR #135 and ticket #142.  Thanks to Marcin Krol.
 
 * New version of setup.py that allows better management of NumPy
   dependency.  See PR #133.  Thanks to Aleks Bunin.

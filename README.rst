@@ -150,6 +150,8 @@ The next are the current supported set::
   (e.g. "real(abs(cplx))") or via the ``real`` selector
   (e.g. "abs(cplx).real").
 
+  + `contains()` only works with bytes strings, not unicode strings.
+
 More functions can be added if you need them.
 
 
