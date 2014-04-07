@@ -13,7 +13,6 @@
 #include <string.h>
 #include <assert.h>
 #include <vector>
-#include <syslog.h>
 
 #include "numexpr_config.hpp"
 #include "complex_functions.hpp"
@@ -45,8 +44,6 @@
 #else
 #define DEBUG_TEST 0
 #endif
-
-#define LOGDEBUG(...) do { if (DEBUG_TEST) syslog(LOG_MAKEPRI(LOG_USER, LOG_DEBUG),  __VA_ARGS__); } while (0)
 
 
 
@@ -532,12 +529,8 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
     size_t haystack_len = min((size_t)max_haystack_len, strlen(haystack_start));
 
     const char *haystack = haystack_start;
-    const char *needle = needle_start;    
+    const char *needle = needle_start;
     bool ok = true; /* needle is prefix of haystack. */
-    LOGDEBUG("\n\nhaystack_start #%.20s#\n", haystack_start);
-    LOGDEBUG("haystack_len %ld\n", haystack_len);
-    LOGDEBUG("needle_start #%.20s#\n", needle_start);
-    LOGDEBUG("needle_len %ld\n", needle_len);
 
     if(haystack_len<needle_len)
         return 0;
@@ -550,7 +543,6 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
     }
     if (ok)
     {
-      LOGDEBUG("needle is prefix of haystack => return 1");
       return 1;
     }
 
@@ -559,17 +551,13 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
         char *res = two_way_short_needle ((const unsigned char *) haystack_start,
                                      haystack_len,
                                      (const unsigned char *) needle_start, needle_len) ;
-        int ptrcomp = res != NULL;    
-        LOGDEBUG("\ntwo_way_short_needle: %.20s\n", res);
-        LOGDEBUG("\nreturn %d", ptrcomp);
+        int ptrcomp = res != NULL;
         return ptrcomp;
     }
 
     char* res = two_way_long_needle ((const unsigned char *) haystack, haystack_len,
                               (const unsigned char *) needle, needle_len);
     int ptrcomp2 = res != NULL ? 1 : 0;
-    LOGDEBUG("\ntwo_way_long_needle: %.20s\n", res);
-    LOGDEBUG("\nreturn %d", ptrcomp2);
     return ptrcomp2;
 }
 
