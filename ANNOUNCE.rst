@@ -1,5 +1,5 @@
 ===========================
- Announcing Numexpr 2.4 RC1
+ Announcing Numexpr 2.4 RC2
 ===========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -27,6 +27,9 @@ strings.  Only plain strings (bytes) are supported for now (see ticket
 
 Also, there is a new version of setup.py that allows better management
 of the NumPy dependency during pip installs.  Thanks to Aleks Bunin.
+
+Windows related bugs have been addressed and (hopefully) squashed.
+Thanks to Christoph Gohlke.
 
 In case you want to know more in detail what has changed in this
 version, see:
