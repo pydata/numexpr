@@ -163,34 +163,38 @@ class test_numexpr(TestCase):
                      (b'add_ddd', b'r0', b'r0', b'c2[2.0]')])
 
     def test_str_contains_basic0(self):
-        res = evaluate('contains("abc", "ab")')
+        res = evaluate('contains(b"abc", b"ab")')
         assert_equal(res, True)
 
     def test_str_contains_basic1(self):
-        haystack = array(['abc', 'def', 'xyz', 'x11','za'])
-        res = evaluate('contains(haystack, "ab")')
+        haystack = array([b'abc', b'def', b'xyz', b'x11', b'za'])
+        res = evaluate('contains(haystack, b"ab")')
         assert_equal(res, [True, False, False, False, False])
 
     def test_str_contains_basic2(self):
-        haystack = array(['abc', 'def', 'xyz', 'x11','za'])
-        res = evaluate('contains("abcd", haystack)')
+        haystack = array([b'abc', b'def', b'xyz', b'x11', b'za'])
+        res = evaluate('contains(b"abcd", haystack)')
         assert_equal(res, [True, False, False, False, False])
 
     def test_str_contains_basic3(self):
-        haystacks = array(['abckkk', 'adef', 'xyz',   'x11abcp','za', 'abc'])
-        needles =   array(['abc',    'def',  'aterr', 'oot',    'zu', 'ab' ])
+        haystacks = array(
+            [b'abckkk', b'adef', b'xyz', b'x11abcp', b'za', b'abc'])
+        needles =   array(
+            [b'abc', b'def', b'aterr', b'oot', b'zu', b'ab' ])
         res = evaluate('contains(haystacks, needles)')
         assert_equal(res, [True, True, False, False, False, True])
 
     def test_str_contains_basic4(self):
-        needles =  array([
-            'abc', 'def', 'aterr', 'oot', 'zu', 'ab c', ' abc', 'abc '])
-        res = evaluate('contains("test abc here", needles)')
+        needles =  array(
+            [b'abc', b'def', b'aterr', b'oot', b'zu', b'ab c', b' abc',
+             b'abc '])
+        res = evaluate('contains(b"test abc here", needles)')
         assert_equal(res, [True, False, False, False, False, False, True, True])
 
     def test_str_contains_basic5(self):
-        needles =  array(['abc', 'ab c', ' abc', ' abc ', '\tabc', 'c h'])
-        res = evaluate('contains("test abc here", needles)')
+        needles =  array(
+            [b'abc', b'ab c', b' abc', b' abc ', b'\tabc', b'c h'])
+        res = evaluate('contains(b"test abc here", needles)')
         assert_equal(res, [True, False, True, True, False, True])
 
    # Compare operation of Python 'in' operator with 'contains' using a
@@ -241,19 +245,19 @@ class test_numexpr(TestCase):
             ' had va', 'ni', 'shed co', 'mpletel', 'y.']
         p = list(product(small, big))
         python_in = [x[0] in x[1] for x in p]
-        a = [x[0] for x in p]
-        b = [x[1] for x in p]
+        a = [x[0].encode() for x in p]
+        b = [x[1].encode() for x in p]
         res = [bool(x) for x in evaluate('contains(b, a)')]
         assert_equal(res, python_in)
 
     def test_str_contains_withemptystr1(self):
-        withemptystr = array(['abc', 'def', ''])
-        res = evaluate('contains("abcd", withemptystr)')
+        withemptystr = array([b'abc', b'def', b''])
+        res = evaluate('contains(b"abcd", withemptystr)')
         assert_equal(res, [True, False, True])
 
     def test_str_contains_withemptystr2(self):
-        withemptystr = array(['abc', 'def', ''])
-        res = evaluate('contains(withemptystr, "")')
+        withemptystr = array([b'abc', b'def', b''])
+        res = evaluate('contains(withemptystr, b"")')
         assert_equal(res, [True, True, True])
 
 
