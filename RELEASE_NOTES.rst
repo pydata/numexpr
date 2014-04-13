@@ -2,6 +2,11 @@
  Release notes for Numexpr 2.4 series
 ======================================
 
+Changes from 2.4 to 2.4.1
+=========================
+
+ #XXX version-specific blurb XXX#
+
 Changes from 2.3.1 to 2.4
 =========================
 
@@ -12,7 +17,6 @@ Changes from 2.3.1 to 2.4
 * New version of setup.py that allows better management of NumPy
   dependency.  See PR #133.  Thanks to Aleks Bunin.
 
-
 Changes from 2.3 to 2.3.1
 =========================
 
@@ -21,7 +25,6 @@ Changes from 2.3 to 2.3.1
 
 * Removed the rpath flag for the GCC linker, because it is probably
   not necessary and it chokes to clang.
-
 
 Changes from 2.2.2 to 2.3
 =========================
