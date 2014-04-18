@@ -105,14 +105,14 @@ def detect_number_of_cores():
             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
             if isinstance(ncpus, int) and ncpus > 0:
                 return ncpus
-        else: # OSX:
+        else:  # OSX:
             return int(subprocess.check_output(["sysctl", "-n", "hw.ncpu"]))
     # Windows:
     if os.environ.has_key("NUMBER_OF_PROCESSORS"):
         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
         if ncpus > 0:
             return ncpus
-    return 1 # Default
+    return 1  # Default
 
 
 class CacheDict(dict):

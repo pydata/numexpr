@@ -29,6 +29,7 @@ else:
     use_vml = False
 
 from cpuinfo import cpu
+
 if cpu.is_AMD() or cpu.is_Intel():
     is_cpu_amd_intel = True
 else:
@@ -62,6 +63,7 @@ if nthreads > 4096:
     nthreads = 4096
 if 'sparc' in platform.machine():
     import warnings
+
     warnings.warn('The number of threads have been set to 1 because problems related '
                   'to threading have been reported on some sparc machine. '
                   'The number of threads can be changes using the "set_num_threads" '

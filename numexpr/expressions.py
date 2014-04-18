@@ -42,8 +42,8 @@ if sys.version_info[0] > 2:
     scalar_constant_types.append(str)
 scalar_constant_types = tuple(scalar_constant_types)
 
-
 from numexpr import interpreter
+
 
 class Expression(object):
     def __init__(self):
@@ -55,27 +55,35 @@ class Expression(object):
         else:
             return VariableNode(name, default_kind)
 
+
 E = Expression()
+
 
 class Context(threading.local):
     initialized = False
+
     def __init__(self, dict_):
         if self.initialized:
             raise SystemError('__init__ called too many times')
         self.initialized = True
         self.__dict__.update(dict_)
+
     def get(self, value, default):
         return self.__dict__.get(value, default)
+
     def get_current_context(self):
         return self.__dict__
+
     def set_new_context(self, dict_):
         self.__dict__.update(dict_)
 
 # This will be called each time the local object is used in a separate thread
 _context = Context({})
 
+
 def get_optimization():
     return _context.get('optimization', 'none')
+
 
 # helper functions for creating __magic__ methods
 def ophelper(f):
@@ -87,10 +95,12 @@ def ophelper(f):
             if not isinstance(x, ExpressionNode):
                 raise TypeError("unsupported object type: %s" % type(x))
         return f(*args)
+
     func.__name__ = f.__name__
     func.__doc__ = f.__doc__
     func.__dict__.update(f.__dict__)
     return func
+
 
 def allConstantNodes(args):
     "returns True if args are all ConstantNodes."
@@ -99,9 +109,11 @@ def allConstantNodes(args):
             return False
     return True
 
+
 def isConstant(ex):
     "Returns True if ex is a constant scalar of an allowed type."
     return isinstance(ex, scalar_constant_types)
+
 
 def commonKind(nodes):
     node_kinds = [node.astKind for node in nodes]
@@ -115,8 +127,10 @@ def commonKind(nodes):
         n = max(n, kind_rank.index(x.astKind))
     return kind_rank[n]
 
+
 max_int32 = 2147483647
 min_int32 = -max_int32 - 1
+
 
 def bestConstantType(x):
     # ``numpy.string_`` is a subclass of ``bytes``
@@ -160,10 +174,12 @@ def getKind(x):
     converter = bestConstantType(x)
     return type_to_kind[converter]
 
+
 def binop(opname, reversed=False, kind=None):
     # Getting the named method from self (after reversal) does not
     # always work (e.g. int constants do not have a __lt__ method).
     opfunc = getattr(operator, "__%s__" % opname)
+
     @ophelper
     def operation(self, other):
         if reversed:
@@ -172,7 +188,9 @@ def binop(opname, reversed=False, kind=None):
             return ConstantNode(opfunc(self.value, other.value))
         else:
             return OpNode(opname, (self, other), kind=kind)
+
     return operation
+
 
 def func(func, minkind=None, maxkind=None):
     @ophelper
@@ -193,16 +211,19 @@ def func(func, minkind=None, maxkind=None):
             if maxkind and kind_rank.index(maxkind) < kind_rank.index(kind):
                 kind = maxkind
         return FuncNode(func.__name__, args, kind)
+
     return function
+
 
 @ophelper
 def where_func(a, b, c):
     if isinstance(a, ConstantNode):
         #FIXME: This prevents where(True, a, b)
         raise ValueError("too many dimensions")
-    if allConstantNodes([a,b,c]):
+    if allConstantNodes([a, b, c]):
         return ConstantNode(numpy.where(a, b, c))
-    return FuncNode('where', [a,b,c])
+    return FuncNode('where', [a, b, c])
+
 
 def encode_axis(axis):
     if isinstance(axis, ConstantNode):
@@ -216,6 +237,7 @@ def encode_axis(axis):
             raise ValueError("cannot encode axis")
     return RawNode(axis)
 
+
 def sum_func(a, axis=None):
     axis = encode_axis(axis)
     if isinstance(a, ConstantNode):
@@ -223,6 +245,7 @@ def sum_func(a, axis=None):
     if isinstance(a, (bool, int_, long_, float, double, complex)):
         a = ConstantNode(a)
     return FuncNode('sum', [a, axis], kind=a.astKind)
+
 
 def prod_func(a, axis=None):
     axis = encode_axis(axis)
@@ -232,51 +255,58 @@ def prod_func(a, axis=None):
         return a
     return FuncNode('prod', [a, axis], kind=a.astKind)
 
+
 @ophelper
 def contains_func(a, b):
     return FuncNode('contains', [a, b], kind='bool')
+
 
 @ophelper
 def div_op(a, b):
     if get_optimization() in ('moderate', 'aggressive'):
         if (isinstance(b, ConstantNode) and
-            (a.astKind == b.astKind) and
-            a.astKind in ('float', 'double', 'complex')):
-            return OpNode('mul', [a, ConstantNode(1./b.value)])
-    return OpNode('div', [a,b])
+                (a.astKind == b.astKind) and
+                    a.astKind in ('float', 'double', 'complex')):
+            return OpNode('mul', [a, ConstantNode(1. / b.value)])
+    return OpNode('div', [a, b])
+
 
 @ophelper
 def truediv_op(a, b):
     if get_optimization() in ('moderate', 'aggressive'):
         if (isinstance(b, ConstantNode) and
-            (a.astKind == b.astKind) and
-            a.astKind in ('float', 'double', 'complex')):
-            return OpNode('mul', [a, ConstantNode(1./b.value)])
+                (a.astKind == b.astKind) and
+                    a.astKind in ('float', 'double', 'complex')):
+            return OpNode('mul', [a, ConstantNode(1. / b.value)])
     kind = commonKind([a, b])
     if kind in ('bool', 'int', 'long'):
         kind = 'double'
     return OpNode('div', [a, b], kind=kind)
 
+
 @ophelper
 def rtruediv_op(a, b):
     return truediv_op(b, a)
 
+
 @ophelper
 def pow_op(a, b):
     if allConstantNodes([a, b]):
-        return ConstantNode(a**b)
+        return ConstantNode(a ** b)
     if isinstance(b, ConstantNode):
         x = b.value
         if get_optimization() == 'aggressive':
-            RANGE = 50 # Approximate break even point with pow(x,y)
+            RANGE = 50  # Approximate break even point with pow(x,y)
             # Optimize all integral and half integral powers in [-RANGE, RANGE]
             # Note: for complex numbers RANGE could be larger.
-            if (int(2*x) == 2*x) and (-RANGE <= abs(x) <= RANGE):
+            if (int(2 * x) == 2 * x) and (-RANGE <= abs(x) <= RANGE):
                 n = int_(abs(x))
-                ishalfpower = int_(abs(2*x)) % 2
+                ishalfpower = int_(abs(2 * x)) % 2
+
                 def multiply(x, y):
                     if x is None: return y
                     return OpNode('mul', [x, y])
+
                 r = None
                 p = a
                 mask = 1
@@ -286,7 +316,7 @@ def pow_op(a, b):
                     mask <<= 1
                     if mask > n:
                         break
-                    p = OpNode('mul', [p,p])
+                    p = OpNode('mul', [p, p])
                 if ishalfpower:
                     kind = commonKind([a])
                     if kind in ('int', 'long'):
@@ -299,7 +329,7 @@ def pow_op(a, b):
                 return r
         if get_optimization() in ('moderate', 'aggressive'):
             if x == -1:
-                return OpNode('div', [ConstantNode(1),a])
+                return OpNode('div', [ConstantNode(1), a])
             if x == 0:
                 return OpNode('ones_like', [a])
             if x == 0.5:
@@ -309,51 +339,51 @@ def pow_op(a, b):
             if x == 1:
                 return a
             if x == 2:
-                return OpNode('mul', [a,a])
-    return OpNode('pow', [a,b])
+                return OpNode('mul', [a, a])
+    return OpNode('pow', [a, b])
 
 # The functions and the minimum and maximum types accepted
 functions = {
-    'copy' : func(numpy.copy),
-    'ones_like' : func(numpy.ones_like),
-    'sqrt' : func(numpy.sqrt, 'float'),
+    'copy': func(numpy.copy),
+    'ones_like': func(numpy.ones_like),
+    'sqrt': func(numpy.sqrt, 'float'),
 
-    'sin' : func(numpy.sin, 'float'),
-    'cos' : func(numpy.cos, 'float'),
-    'tan' : func(numpy.tan, 'float'),
-    'arcsin' : func(numpy.arcsin, 'float'),
-    'arccos' : func(numpy.arccos, 'float'),
-    'arctan' : func(numpy.arctan, 'float'),
+    'sin': func(numpy.sin, 'float'),
+    'cos': func(numpy.cos, 'float'),
+    'tan': func(numpy.tan, 'float'),
+    'arcsin': func(numpy.arcsin, 'float'),
+    'arccos': func(numpy.arccos, 'float'),
+    'arctan': func(numpy.arctan, 'float'),
 
-    'sinh' : func(numpy.sinh, 'float'),
-    'cosh' : func(numpy.cosh, 'float'),
-    'tanh' : func(numpy.tanh, 'float'),
-    'arcsinh' : func(numpy.arcsinh, 'float'),
-    'arccosh' : func(numpy.arccosh, 'float'),
-    'arctanh' : func(numpy.arctanh, 'float'),
+    'sinh': func(numpy.sinh, 'float'),
+    'cosh': func(numpy.cosh, 'float'),
+    'tanh': func(numpy.tanh, 'float'),
+    'arcsinh': func(numpy.arcsinh, 'float'),
+    'arccosh': func(numpy.arccosh, 'float'),
+    'arctanh': func(numpy.arctanh, 'float'),
 
-    'fmod' : func(numpy.fmod, 'float'),
-    'arctan2' : func(numpy.arctan2, 'float'),
+    'fmod': func(numpy.fmod, 'float'),
+    'arctan2': func(numpy.arctan2, 'float'),
 
-    'log' : func(numpy.log, 'float'),
-    'log1p' : func(numpy.log1p, 'float'),
-    'log10' : func(numpy.log10, 'float'),
-    'exp' : func(numpy.exp, 'float'),
-    'expm1' : func(numpy.expm1, 'float'),
+    'log': func(numpy.log, 'float'),
+    'log1p': func(numpy.log1p, 'float'),
+    'log10': func(numpy.log10, 'float'),
+    'exp': func(numpy.exp, 'float'),
+    'expm1': func(numpy.expm1, 'float'),
 
     'abs': func(numpy.absolute, 'float'),
 
-    'where' : where_func,
+    'where': where_func,
 
-    'real' : func(numpy.real, 'double', 'double'),
-    'imag' : func(numpy.imag, 'double', 'double'),
-    'complex' : func(complex, 'complex'),
-    'conj' : func(numpy.conj, 'complex'),
+    'real': func(numpy.real, 'double', 'double'),
+    'imag': func(numpy.imag, 'double', 'double'),
+    'complex': func(complex, 'complex'),
+    'conj': func(numpy.conj, 'complex'),
 
-    'sum' : sum_func,
-    'prod' : prod_func,
-    'contains' : contains_func,
-    }
+    'sum': sum_func,
+    'prod': prod_func,
+    'contains': contains_func,
+}
 
 
 class ExpressionNode(object):
@@ -379,34 +409,39 @@ class ExpressionNode(object):
         if self.astType == 'constant':
             return ConstantNode(complex(self.value).real)
         return OpNode('real', (self,), 'double')
+
     real = property(get_real)
 
     def get_imag(self):
         if self.astType == 'constant':
             return ConstantNode(complex(self.value).imag)
         return OpNode('imag', (self,), 'double')
+
     imag = property(get_imag)
 
     def __str__(self):
         return '%s(%s, %s, %s)' % (self.__class__.__name__, self.value,
                                    self.astKind, self.children)
+
     def __repr__(self):
         return self.__str__()
 
     def __neg__(self):
         return OpNode('neg', (self,))
+
     def __invert__(self):
         return OpNode('invert', (self,))
+
     def __pos__(self):
         return self
 
     # The next check is commented out. See #24 for more info.
 
     def __nonzero__(self):
-         raise TypeError("You can't use Python's standard boolean operators in "
-                         "NumExpr expressions. You should use their bitwise "
-                         "counterparts instead: '&' instead of 'and', "
-                         "'|' instead of 'or', and '~' instead of 'not'.")
+        raise TypeError("You can't use Python's standard boolean operators in "
+                        "NumExpr expressions. You should use their bitwise "
+                        "counterparts instead: '&' instead of 'and', "
+                        "'|' instead of 'or', and '~' instead of 'not'.")
 
     __add__ = __radd__ = binop('add')
     __sub__ = binop('sub')
@@ -440,14 +475,16 @@ class ExpressionNode(object):
     __le__ = binop('ge', reversed=True, kind='bool')
 
 
-
 class LeafNode(ExpressionNode):
     leafNode = True
 
+
 class VariableNode(LeafNode):
     astType = 'variable'
+
     def __init__(self, value=None, kind=None, children=None):
         LeafNode.__init__(self, value=value, kind=kind)
+
 
 class RawNode(object):
     """Used to pass raw integers to interpreter.
@@ -457,33 +494,42 @@ class RawNode(object):
     """
     astType = 'raw'
     astKind = 'none'
+
     def __init__(self, value):
         self.value = value
         self.children = ()
+
     def __str__(self):
         return 'RawNode(%s)' % (self.value,)
+
     __repr__ = __str__
 
 
 class ConstantNode(LeafNode):
     astType = 'constant'
+
     def __init__(self, value=None, children=None):
         kind = getKind(value)
         # Python float constants are double precision by default
         if kind == 'float':
             kind = 'double'
         LeafNode.__init__(self, value=value, kind=kind)
+
     def __neg__(self):
         return ConstantNode(-self.value)
+
     def __invert__(self):
         return ConstantNode(~self.value)
 
+
 class OpNode(ExpressionNode):
     astType = 'op'
+
     def __init__(self, opcode=None, args=None, kind=None):
         if (kind is None) and (args is not None):
             kind = commonKind(args)
         ExpressionNode.__init__(self, value=opcode, kind=kind, children=args)
+
 
 class FuncNode(OpNode):
     def __init__(self, opcode=None, args=None, kind=None):

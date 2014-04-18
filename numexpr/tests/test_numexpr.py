@@ -7,6 +7,7 @@
 #  See LICENSE.txt and LICENSES/*.txt for details about copyright and
 #  rights to use.
 ####################################################################
+from __future__ import absolute_import, print_function
 
 import os
 import sys
@@ -22,13 +23,14 @@ from numpy import (
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
     log, log1p, log10, exp, expm1, conj)
 from numpy.testing import (assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_allclose)
+                           assert_array_almost_equal, assert_allclose)
 from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 
 import numexpr
 from numexpr import E, NumExpr, evaluate, disassemble, use_vml
 
 import unittest
+
 TestCase = unittest.TestCase
 
 double = numpy.double
@@ -36,6 +38,7 @@ double = numpy.double
 
 # Recommended minimum versions
 minimum_numpy_version = "1.6"
+
 
 class test_numexpr(TestCase):
     """Testing with 1 thread"""
@@ -49,7 +52,7 @@ class test_numexpr(TestCase):
         sig = [('a', double), ('b', double), ('c', double)]
         func = NumExpr(ex, signature=sig)
         x = func(array([1., 2, 3]), array([4., 5, 6]), array([7., 8, 9]))
-        assert_array_equal(x, array([  86.,  124.,  168.]))
+        assert_array_equal(x, array([86., 124., 168.]))
 
     def test_simple_expr_small_array(self):
         func = NumExpr(E.a)
@@ -64,10 +67,10 @@ class test_numexpr(TestCase):
         assert_array_equal(x, y)
 
     def test_rational_expr(self):
-        func = NumExpr((E.a + 2.0*E.b) / (1 + E.a + 4*E.b*E.b))
+        func = NumExpr((E.a + 2.0 * E.b) / (1 + E.a + 4 * E.b * E.b))
         a = arange(1e6)
         b = arange(1e6) * 0.1
-        x = (a + 2*b) / (1 + a + 4*b*b)
+        x = (a + 2 * b) / (1 + a + 4 * b * b)
         y = func(a, b)
         assert_array_almost_equal(x, y)
 
@@ -89,54 +92,54 @@ class test_numexpr(TestCase):
                       (b'add_ddd', b't3', b't3', b'c2[2.0]'),
                       (b'prod_ddn', b'r0', b't3', 2)])
         # Check that full reductions work.
-        x = zeros(1e5)+.01   # checks issue #41
-        assert_allclose(evaluate("sum(x+2,axis=None)"), sum(x+2,axis=None))
-        assert_allclose(evaluate("sum(x+2,axis=0)"), sum(x+2,axis=0))
-        assert_allclose(evaluate("prod(x,axis=0)"), prod(x,axis=0))
+        x = zeros(1e5) + .01  # checks issue #41
+        assert_allclose(evaluate("sum(x+2,axis=None)"), sum(x + 2, axis=None))
+        assert_allclose(evaluate("sum(x+2,axis=0)"), sum(x + 2, axis=0))
+        assert_allclose(evaluate("prod(x,axis=0)"), prod(x, axis=0))
 
         x = arange(10.0)
-        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))
 
         x = arange(100.0)
-        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x-1,axis=0))
-        x = linspace(0.1,1.0,2000)
-        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x-1,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x - 1, axis=0))
+        x = linspace(0.1, 1.0, 2000)
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x - 1, axis=0))
 
         # Check that reductions along an axis work
-        y = arange(9.0).reshape(3,3)
-        assert_allclose(evaluate("sum(y**2, axis=1)"), sum(y**2, axis=1))
-        assert_allclose(evaluate("sum(y**2, axis=0)"), sum(y**2, axis=0))
-        assert_allclose(evaluate("sum(y**2, axis=None)"), sum(y**2, axis=None))
-        assert_allclose(evaluate("prod(y**2, axis=1)"), prod(y**2, axis=1))
-        assert_allclose(evaluate("prod(y**2, axis=0)"), prod(y**2, axis=0))
-        assert_allclose(evaluate("prod(y**2, axis=None)"), prod(y**2, axis=None))
+        y = arange(9.0).reshape(3, 3)
+        assert_allclose(evaluate("sum(y**2, axis=1)"), sum(y ** 2, axis=1))
+        assert_allclose(evaluate("sum(y**2, axis=0)"), sum(y ** 2, axis=0))
+        assert_allclose(evaluate("sum(y**2, axis=None)"), sum(y ** 2, axis=None))
+        assert_allclose(evaluate("prod(y**2, axis=1)"), prod(y ** 2, axis=1))
+        assert_allclose(evaluate("prod(y**2, axis=0)"), prod(y ** 2, axis=0))
+        assert_allclose(evaluate("prod(y**2, axis=None)"), prod(y ** 2, axis=None))
         # Check integers
         x = arange(10.)
         x = x.astype(int)
-        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))
         # Check longs
         x = x.astype(long)
-        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x**2+2,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))
         # Check complex
         x = x + .1j
-        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x**2+2,axis=0))
-        assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x-1,axis=0))
+        assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x - 1, axis=0))
 
     def test_in_place(self):
-        x = arange(10000.).reshape(1000,10)
+        x = arange(10000.).reshape(1000, 10)
         evaluate("x + 3", out=x)
-        assert_equal(x, arange(10000.).reshape(1000,10) + 3)
+        assert_equal(x, arange(10000.).reshape(1000, 10) + 3)
         y = arange(10)
         evaluate("(x - 3) * y + (x - 3)", out=x)
-        assert_equal(x, arange(10000.).reshape(1000,10) * (arange(10) + 1))
+        assert_equal(x, arange(10000.).reshape(1000, 10) * (arange(10) + 1))
 
     def test_axis(self):
-        y = arange(9.0).reshape(3,3)
+        y = arange(9.0).reshape(3, 3)
         try:
             evaluate("sum(y, axis=2)")
         except ValueError:
@@ -159,8 +162,8 @@ class test_numexpr(TestCase):
 
     def test_r0_reuse(self):
         assert_equal(disassemble(NumExpr("x * x + 2", [('x', double)])),
-                    [(b'mul_ddd', b'r0', b'r1[x]', b'r1[x]'),
-                     (b'add_ddd', b'r0', b'r0', b'c2[2.0]')])
+                     [(b'mul_ddd', b'r0', b'r1[x]', b'r1[x]'),
+                      (b'add_ddd', b'r0', b'r0', b'c2[2.0]')])
 
     def test_str_contains_basic0(self):
         res = evaluate('contains(b"abc", b"ab")')
@@ -179,28 +182,30 @@ class test_numexpr(TestCase):
     def test_str_contains_basic3(self):
         haystacks = array(
             [b'abckkk', b'adef', b'xyz', b'x11abcp', b'za', b'abc'])
-        needles =   array(
-            [b'abc', b'def', b'aterr', b'oot', b'zu', b'ab' ])
+        needles = array(
+            [b'abc', b'def', b'aterr', b'oot', b'zu', b'ab'])
         res = evaluate('contains(haystacks, needles)')
         assert_equal(res, [True, True, False, False, False, True])
 
     def test_str_contains_basic4(self):
-        needles =  array(
+        needles = array(
             [b'abc', b'def', b'aterr', b'oot', b'zu', b'ab c', b' abc',
              b'abc '])
         res = evaluate('contains(b"test abc here", needles)')
         assert_equal(res, [True, False, False, False, False, False, True, True])
 
     def test_str_contains_basic5(self):
-        needles =  array(
+        needles = array(
             [b'abc', b'ab c', b' abc', b' abc ', b'\tabc', b'c h'])
         res = evaluate('contains(b"test abc here", needles)')
         assert_equal(res, [True, False, True, True, False, True])
 
-   # Compare operation of Python 'in' operator with 'contains' using a
-   # product of two lists of strings.
+        # Compare operation of Python 'in' operator with 'contains' using a
+        # product of two lists of strings.
+
     def test_str_contains_listproduct(self):
         from itertools import product
+
         small = [
             'It w', 'as th', 'e Whit', 'e Rab', 'bit,', ' tro', 'tting',
             ' sl', 'owly', ' back ', 'again,', ' and', ' lo', 'okin', 'g a',
@@ -208,7 +213,7 @@ class test_numexpr(TestCase):
             ' had l', 'ost', ' some', 'thi', 'ng; a', 'nd ', 'she ', 'heard ',
             'it mut', 'terin', 'g to ', 'its', 'elf ', "'The",
             ' Duch', 'ess! T', 'he ', 'Duches', 's! Oh ', 'my dea', 'r paws',
-             '! Oh ', 'my f', 'ur ', 'and ', 'whiske', 'rs! ', 'She', "'ll g",
+            '! Oh ', 'my f', 'ur ', 'and ', 'whiske', 'rs! ', 'She', "'ll g",
             'et me', ' ex', 'ecu', 'ted, ', 'as su', 're a', 's f', 'errets',
             ' are f', 'errets', '! Wh', 'ere ', 'CAN', ' I hav', 'e d',
             'roppe', 'd t', 'hem,', ' I wo', 'nder?', "' A", 'lice',
@@ -272,7 +277,7 @@ class test_evaluate(TestCase):
         b = array([4., 5., 6.])
         c = array([7., 8., 9.])
         x = evaluate("2*a + 3*b*c")
-        assert_array_equal(x, array([  86.,  124.,  168.]))
+        assert_array_equal(x, array([86., 124., 168.]))
 
     def test_simple_expr_small_array(self):
         x = arange(100.0)
@@ -325,7 +330,7 @@ class test_evaluate(TestCase):
     def test_rational_expr(self):
         a = arange(1e6)
         b = arange(1e6) * 0.1
-        x = (a + 2*b) / (1 + a + 4*b*b)
+        x = (a + 2 * b) / (1 + a + 4 * b * b)
         y = evaluate("(a + 2*b) / (1 + a + 4*b*b)")
         assert_array_almost_equal(x, y)
 
@@ -335,47 +340,48 @@ class test_evaluate(TestCase):
             c.real = a
             c.imag = b
             return c
+
         a = arange(1e4)
-        b = arange(1e4)**1e-5
-        z = a + 1j*b
+        b = arange(1e4) ** 1e-5
+        z = a + 1j * b
         x = z.imag
         x = sin(complex(a, b)).real + z.imag
         y = evaluate("sin(complex(a, b)).real + z.imag")
         assert_array_almost_equal(x, y)
 
     def test_complex_strides(self):
-        a = arange(100).reshape(10,10)[::2]
-        b = arange(50).reshape(5,10)
-        assert_array_equal(evaluate("a+b"), a+b)
+        a = arange(100).reshape(10, 10)[::2]
+        b = arange(50).reshape(5, 10)
+        assert_array_equal(evaluate("a+b"), a + b)
         c = empty([10], dtype=[('c1', int32), ('c2', uint16)])
         c['c1'] = arange(10)
         c['c2'].fill(0xaaaa)
         c1 = c['c1']
         a0 = a[0]
         assert_array_equal(evaluate("c1"), c1)
-        assert_array_equal(evaluate("a0+c1"), a0+c1)
+        assert_array_equal(evaluate("a0+c1"), a0 + c1)
 
     def test_broadcasting(self):
-        a = arange(100).reshape(10,10)[::2]
+        a = arange(100).reshape(10, 10)[::2]
         c = arange(10)
-        d = arange(5).reshape(5,1)
-        assert_array_equal(evaluate("a+c"), a+c)
-        assert_array_equal(evaluate("a+d"), a+d)
-        expr = NumExpr("2.0*a+3.0*c",[('a', double),('c', double)])
-        assert_array_equal(expr(a,c), 2.0*a+3.0*c)
+        d = arange(5).reshape(5, 1)
+        assert_array_equal(evaluate("a+c"), a + c)
+        assert_array_equal(evaluate("a+d"), a + d)
+        expr = NumExpr("2.0*a+3.0*c", [('a', double), ('c', double)])
+        assert_array_equal(expr(a, c), 2.0 * a + 3.0 * c)
 
     def test_all_scalar(self):
         a = 3.
         b = 4.
-        assert_allclose(evaluate("a+b"), a+b)
-        expr = NumExpr("2*a+3*b",[('a', double),('b', double)])
-        assert_equal(expr(a,b), 2*a+3*b)
+        assert_allclose(evaluate("a+b"), a + b)
+        expr = NumExpr("2*a+3*b", [('a', double), ('b', double)])
+        assert_equal(expr(a, b), 2 * a + 3 * b)
 
     def test_run(self):
-        a = arange(100).reshape(10,10)[::2]
+        a = arange(100).reshape(10, 10)[::2]
         b = arange(10)
-        expr = NumExpr("2*a+3*b",[('a', double),('b', double)])
-        assert_array_equal(expr(a,b), expr.run(a,b))
+        expr = NumExpr("2*a+3*b", [('a', double), ('b', double)])
+        assert_array_equal(expr(a, b), expr.run(a, b))
 
     def test_illegal_value(self):
         a = arange(3)
@@ -391,15 +397,15 @@ class test_evaluate(TestCase):
         # during the rest of the execution.  See #33 for details.
         def test_changing_nthreads_00_inc(self):
             a = linspace(-1, 1, 1e6)
-            b = ((.25*a + .75)*a - 1.5)*a - 2
-            for nthreads in range(1,7):
+            b = ((.25 * a + .75) * a - 1.5) * a - 2
+            for nthreads in range(1, 7):
                 numexpr.set_num_threads(nthreads)
                 c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
                 assert_array_almost_equal(b, c)
 
         def test_changing_nthreads_01_dec(self):
             a = linspace(-1, 1, 1e6)
-            b = ((.25*a + .75)*a - 1.5)*a - 2
+            b = ((.25 * a + .75) * a - 1.5) * a - 2
             for nthreads in range(6, 1, -1):
                 numexpr.set_num_threads(nthreads)
                 c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
@@ -407,22 +413,22 @@ class test_evaluate(TestCase):
 
 
 tests = [
-('MISC', ['b*c+d*e',
-          '2*a+3*b',
-          '-a',
-          'sinh(a)',
-          '2*a + (cos(3)+5)*sinh(cos(b))',
-          '2*a + arctan2(a, b)',
-          'arcsin(0.5)',
-          'where(a != 0.0, 2, a)',
-          'where(a > 10, b < a, b > a)',
-          'where((a-10).real != 0.0, a, 2)',
-          '0.25 * (a < 5) + 0.33 * (a >= 5)',
-          'cos(1+1)',
-          '1+1',
-          '1',
-          'cos(a2)',
-          ])]
+    ('MISC', ['b*c+d*e',
+              '2*a+3*b',
+              '-a',
+              'sinh(a)',
+              '2*a + (cos(3)+5)*sinh(cos(b))',
+              '2*a + arctan2(a, b)',
+              'arcsin(0.5)',
+              'where(a != 0.0, 2, a)',
+              'where(a > 10, b < a, b > a)',
+              'where((a-10).real != 0.0, a, 2)',
+              '0.25 * (a < 5) + 0.33 * (a >= 5)',
+              'cos(1+1)',
+              '1+1',
+              '1',
+              'cos(a2)',
+    ])]
 
 optests = []
 for op in list('+-*/%') + ['**']:
@@ -466,11 +472,12 @@ for n in (-7, -2.5, -1.5, -1.3, -.5, 0, 0.0, 1, 2.3, 2.5, 3):
     powtests.append("(a+1)**%s" % n)
 tests.append(('POW_TESTS', powtests))
 
+
 def equal(a, b, exact):
     if array_equal(a, b):
         return True
 
-    if hasattr(a, 'dtype') and a.dtype in ['f4','f8']:
+    if hasattr(a, 'dtype') and a.dtype in ['f4', 'f8']:
         nnans = isnan(a).sum()
         if nnans > 0:
             # For results containing NaNs, just check that the number
@@ -486,19 +493,23 @@ def equal(a, b, exact):
         return (shape(a) == shape(b)) and alltrue(ravel(a) == ravel(b), axis=0)
     else:
         if hasattr(a, 'dtype') and a.dtype == 'f4':
-            atol = 1e-5   # Relax precission for special opcodes, like fmod
+            atol = 1e-5  # Relax precission for special opcodes, like fmod
         else:
             atol = 1e-8
         return (shape(a) == shape(b) and
                 allclose(ravel(a), ravel(b), atol=atol))
 
+
 class Skip(Exception): pass
+
 
 def test_expressions():
     test_no = [0]
+
     def make_test_method(a, a2, b, c, d, e, x, expr,
                          test_scalar, dtype, optimization, exact, section):
         this_locals = locals()
+
         def method():
             # We don't want to listen at RuntimeWarnings like
             # "overflows" or "divide by zero" in plain eval().
@@ -512,9 +523,9 @@ def test_expressions():
                 assert equal(npval, neval, exact), """%r
 (test_scalar=%r, dtype=%r, optimization=%r, exact=%r,
  npval=%r (%r - %r)\n neval=%r (%r - %r))""" % (expr, test_scalar, dtype.__name__,
-                                     optimization, exact,
-                                     npval, type(npval), shape(npval),
-                                     neval, type(neval), shape(neval))
+                                                optimization, exact,
+                                                npval, type(npval), shape(npval),
+                                                neval, type(neval), shape(neval))
             except AssertionError:
                 raise
             except NotImplementedError:
@@ -523,9 +534,10 @@ def test_expressions():
             except:
                 print('numexpr error for expression %r' % (expr,))
                 raise
+
         method.description = ('test_expressions(%s, test_scalar=%r, '
                               'dtype=%r, optimization=%r, exact=%r)') \
-                    % (expr, test_scalar, dtype.__name__, optimization, exact)
+                             % (expr, test_scalar, dtype.__name__, optimization, exact)
         test_no[0] += 1
         method.__name__ = 'test_scalar%d_%s_%s_%s_%04d' % (test_scalar,
                                                            dtype.__name__,
@@ -533,11 +545,12 @@ def test_expressions():
                                                            section.encode('ascii'),
                                                            test_no[0])
         return method
+
     x = None
     for test_scalar in (0, 1, 2):
         for dtype in (int, long, numpy.float32, double, complex):
             array_size = 100
-            a = arange(2*array_size, dtype=dtype)[::2]
+            a = arange(2 * array_size, dtype=dtype)[::2]
             a2 = zeros([array_size, array_size], dtype=dtype)
             b = arange(array_size, dtype=dtype) / array_size
             c = arange(array_size, dtype=dtype)
@@ -547,7 +560,7 @@ def test_expressions():
                 a = a.real
                 for x in [a2, b, c, d, e]:
                     x += 1j
-                    x *= 1+1j
+                    x *= 1 + 1j
             if test_scalar == 1:
                 a = a[array_size // 2]
             if test_scalar == 2:
@@ -556,14 +569,14 @@ def test_expressions():
                 ('none', False), ('moderate', False), ('aggressive', False)]:
                 for section_name, section_tests in tests:
                     for expr in section_tests:
-                        if dtype == complex and (
-                               '<' in expr or '>' in expr or '%' in expr
-                               or "arctan2" in expr or "fmod" in expr):
+                        if (dtype == complex and
+                            ('<' in expr or '>' in expr or '%' in expr
+                             or "arctan2" in expr or "fmod" in expr)):
                             # skip complex comparisons or functions not
                             # defined in complex domain.
                             continue
                         if (dtype in (int, long) and test_scalar and
-                            expr == '(a+1) ** -1'):
+                                    expr == '(a+1) ** -1'):
                             continue
 
                         m = make_test_method(a, a2, b, c, d, e, x,
@@ -572,12 +585,14 @@ def test_expressions():
                                              section_name)
                         yield m
 
+
 class test_int64(TestCase):
     def test_neg(self):
-        a = array([2**31-1, 2**31, 2**32, 2**63-1], dtype=int64)
+        a = array([2 ** 31 - 1, 2 ** 31, 2 ** 32, 2 ** 63 - 1], dtype=int64)
         res = evaluate('-a')
-        assert_array_equal(res, [1-2**31, -(2**31), -(2**32), 1-2**63])
+        assert_array_equal(res, [1 - 2 ** 31, -(2 ** 31), -(2 ** 32), 1 - 2 ** 63])
         self.assertEqual(res.dtype.name, 'int64')
+
 
 class test_int32_int64(TestCase):
     if sys.version_info[0] < 2:
@@ -597,7 +612,7 @@ class test_int32_int64(TestCase):
     def test_big_int(self):
         # Big ints should be promoted to longs.
         res = evaluate('2**40')
-        assert_array_equal(res, 2**40)
+        assert_array_equal(res, 2 ** 40)
         self.assertEqual(res.dtype.name, 'int64')
 
     def test_long_constant_promotion(self):
@@ -663,7 +678,7 @@ class test_strings(TestCase):
     def test_null_chars(self):
         str_list = [
             b'\0\0\0', b'\0\0foo\0', b'\0\0foo\0b', b'\0\0foo\0b\0',
-            b'foo\0', b'foo\0b', b'foo\0b\0', b'foo\0bar\0baz\0\0' ]
+            b'foo\0', b'foo\0b', b'foo\0b\0', b'foo\0bar\0baz\0\0']
         for s in str_list:
             r = evaluate('s')
             self.assertEqual(s, r.tostring())  # check *all* stored data
@@ -723,8 +738,8 @@ class test_strings(TestCase):
     def test_compare_prefix(self):
         # Check comparing two strings where one is a prefix of the
         # other.
-        for s1, s2 in [ (b'foo', b'foobar'), (b'foo', b'foo\0bar'),
-                        (b'foo\0a', b'foo\0bar') ]:
+        for s1, s2 in [(b'foo', b'foobar'), (b'foo', b'foo\0bar'),
+                       (b'foo\0a', b'foo\0bar')]:
             self.assertTrue(evaluate('s1 < s2'))
             self.assertTrue(evaluate('s1 <= s2'))
             self.assertTrue(evaluate('~(s1 == s2)'))
@@ -734,6 +749,7 @@ class test_strings(TestCase):
         # Check for NumPy array-style semantics in string equality.
         s1, s2 = b'foo', b'foo\0\0'
         self.assertTrue(evaluate('s1 == s2'))
+
 
 # Case for testing selections in fields which are aligned but whose
 # data length is not an exact multiple of the length of the record.
@@ -757,9 +773,9 @@ class test_irregular_stride(TestCase):
         assert_array_equal(f0[i0], arange(5, dtype=int32))
         assert_array_equal(f1[i1], arange(5, dtype=float64))
 
+
 # Cases for testing arrays with dimensions that can be zero.
 class test_zerodim(TestCase):
-
     def test_zerodim1d(self):
         a0 = array([], dtype=int32)
         a1 = array([], dtype=float64)
@@ -771,8 +787,8 @@ class test_zerodim(TestCase):
         assert_array_equal(r1, a1)
 
     def test_zerodim3d(self):
-        a0 = array([], dtype=int32).reshape(0,2,4)
-        a1 = array([], dtype=float64).reshape(0,2,4)
+        a0 = array([], dtype=int32).reshape(0, 2, 4)
+        a1 = array([], dtype=float64).reshape(0, 2, 4)
 
         r0 = evaluate('a0 + a1')
         r1 = evaluate('a0 * a1')
@@ -780,25 +796,30 @@ class test_zerodim(TestCase):
         assert_array_equal(r0, a1)
         assert_array_equal(r1, a1)
 
+
 # Case test for threads
 class test_threading(TestCase):
     def test_thread(self):
         import threading
+
         class ThreadTest(threading.Thread):
             def run(self):
                 a = arange(3)
                 assert_array_equal(evaluate('a**3'), array([0, 1, 8]))
+
         test = ThreadTest()
         test.start()
 
+
 # The worker function for the subprocess (needs to be here because Windows
 # has problems pickling nested functions with the multiprocess module :-/)
-def _worker(qout = None):
+def _worker(qout=None):
     ra = numpy.arange(1e3)
     rows = evaluate('ra > 0')
     #print "Succeeded in evaluation!\n"
     if qout is not None:
         qout.put("Done")
+
 
 # Case test for subprocesses (via multiprocessing module)
 class test_subprocess(TestCase):
@@ -821,27 +842,25 @@ class test_subprocess(TestCase):
         #print result
 
 
-
-
 def print_versions():
     """Print the versions of software that numexpr relies on."""
     if numpy.__version__ < minimum_numpy_version:
-        print "*Warning*: NumPy version is lower than recommended: %s < %s" % \
-              (numpy.__version__, minimum_numpy_version)
-    print '-=' * 38
-    print "Numexpr version:   %s" % numexpr.__version__
-    print "NumPy version:     %s" % numpy.__version__
-    print 'Python version:    %s' % sys.version
+        print("*Warning*: NumPy version is lower than recommended: %s < %s" % \
+              (numpy.__version__, minimum_numpy_version))
+    print('-=' * 38)
+    print("Numexpr version:   %s" % numexpr.__version__)
+    print("NumPy version:     %s" % numpy.__version__)
+    print('Python version:    %s' % sys.version)
     if os.name == 'posix':
         (sysname, nodename, release, version, machine) = os.uname()
-        print 'Platform:          %s-%s' % (sys.platform, machine)
-    print "AMD/Intel CPU?     %s" % numexpr.is_cpu_amd_intel
-    print "VML available?     %s" % use_vml
+        print('Platform:          %s-%s' % (sys.platform, machine))
+    print("AMD/Intel CPU?     %s" % numexpr.is_cpu_amd_intel)
+    print("VML available?     %s" % use_vml)
     if use_vml:
-        print "VML/MKL version:   %s" % numexpr.get_vml_version()
-    print ("Number of threads used by default: %d "
-           "(out of %d detected cores)" % (numexpr.nthreads, numexpr.ncores))
-    print '-=' * 38
+        print("VML/MKL version:   %s" % numexpr.get_vml_version())
+    print("Number of threads used by default: %d "
+          "(out of %d detected cores)" % (numexpr.nthreads, numexpr.ncores))
+    print('-=' * 38)
 
 
 def test():
@@ -851,6 +870,8 @@ def test():
 
     print_versions()
     return unittest.TextTestRunner().run(suite())
+
+
 test.__test__ = False
 
 
@@ -867,6 +888,7 @@ def suite():
     def add_method(func):
         def method(self):
             return func()
+
         setattr(TestExpressions, func.__name__,
                 method.__get__(None, TestExpressions))
 
@@ -883,7 +905,7 @@ def suite():
         theSuite.addTest(unittest.makeSuite(test_uint32_int64))
         theSuite.addTest(unittest.makeSuite(test_strings))
         theSuite.addTest(
-            unittest.makeSuite(test_irregular_stride) )
+            unittest.makeSuite(test_irregular_stride))
         theSuite.addTest(unittest.makeSuite(test_zerodim))
 
         # multiprocessing module is not supported on Hurd/kFreeBSD
@@ -898,8 +920,9 @@ def suite():
 
     return theSuite
 
+
 if __name__ == '__main__':
     print_versions()
-    unittest.main(defaultTest = 'suite')
+    unittest.main(defaultTest='suite')
 #    suite = suite()
 #    unittest.TextTestRunner(verbosity=2).run(suite)
