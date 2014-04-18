@@ -27,19 +27,20 @@ except ImportError:
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
+
 def setup_package():
-    metadata = dict(#name='numexpr',  # name already set in numpy.distutils
-                    description='Fast numerical expression evaluator for NumPy',
-                    author='David M. Cooke, Francesc Alted and others',
-                    author_email='david.m.cooke@gmail.com, faltet@gmail.com',
-                    url='https://github.com/pydata/numexpr',
-                    license = 'MIT',
-                    packages = ['numexpr'],
-                    install_requires = requirements,
-                    setup_requires = requirements
-                   )
-    if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
-       in ('--help-commands', 'egg_info', '--version', 'clean')):
+    metadata = dict(  #name='numexpr',  # name already set in numpy.distutils
+                      description='Fast numerical expression evaluator for NumPy',
+                      author='David M. Cooke, Francesc Alted and others',
+                      author_email='david.m.cooke@gmail.com, faltet@gmail.com',
+                      url='https://github.com/pydata/numexpr',
+                      license='MIT',
+                      packages=['numexpr'],
+                      install_requires=requirements,
+                      setup_requires=requirements
+    )
+    if (len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
+    in ('--help-commands', 'egg_info', '--version', 'clean'))):
 
         # For these actions, NumPy is not required.
         #
@@ -66,7 +67,7 @@ def setup_package():
                 def run(self):
                     build_src = self.get_finalized_command('build_src')
                     if build_src.py_modules_dict and self.packages is None:
-                        self.packages = list(build_src.py_modules_dict.keys ())
+                        self.packages = list(build_src.py_modules_dict.keys())
                     old_build_py.run(self)
 
                 def find_package_modules(self, package, package_dir):
@@ -74,7 +75,7 @@ def setup_package():
 
                     # Find build_src generated *.py files.
                     build_src = self.get_finalized_command('build_src')
-                    modules += build_src.py_modules_dict.get(package,[])
+                    modules += build_src.py_modules_dict.get(package, [])
 
                     return modules
 
@@ -87,20 +88,17 @@ def setup_package():
 
                     return modules
 
-                # XXX: Fix find_source_files for item in py_modules such that item is 3-tuple
-                # and item[2] is source file.
-
         except ImportError:  # Python 2
             from numpy.distutils.command.build_py import build_py
 
         DEBUG = False
 
         def localpath(*args):
-            return op.abspath(op.join(*((op.dirname(__file__),)+args)))
+            return op.abspath(op.join(*((op.dirname(__file__),) + args)))
 
         def debug(instring):
             if DEBUG:
-                print(" DEBUG: "+instring)
+                print(" DEBUG: " + instring)
 
 
         def configuration():
@@ -116,8 +114,8 @@ def setup_package():
                 # entries of DEFAULT section in site.cfg
                 default_config = system_info()
                 dict_append(mkl_config_data,
-                            libraries = default_config.get_libraries(),
-                            library_dirs = default_config.get_lib_dirs() )
+                            libraries=default_config.get_libraries(),
+                            library_dirs=default_config.get_lib_dirs())
             else:
                 mkl_config_data = {}
 
@@ -138,8 +136,8 @@ def setup_package():
                             'numexpr/numexpr_config.hpp',
                             'numexpr/numexpr_object.hpp'],
                 'libraries': ['m'],
-                'extra_compile_args': ['-funroll-all-loops',],
-                }
+                'extra_compile_args': ['-funroll-all-loops', ],
+            }
             dict_append(extension_config_data, **mkl_config_data)
             if 'library_dirs' in mkl_config_data:
                 library_dirs = ':'.join(mkl_config_data['library_dirs'])
@@ -206,10 +204,11 @@ def setup_package():
         if setuptools:
             metadata['zip_safe'] = False
 
-        metadata['cmdclass'] = {'build_ext': build_ext,
-                                'clean': cleaner,
-                                'build_py': build_py,
-                                }
+        metadata['cmdclass'] = {
+            'build_ext': build_ext,
+            'clean': cleaner,
+            'build_py': build_py,
+        }
         metadata['configuration'] = configuration
 
     setup(**metadata)
