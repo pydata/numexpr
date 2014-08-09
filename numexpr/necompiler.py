@@ -651,7 +651,7 @@ def getType(a):
         return complex
     if kind == 'S':
         return bytes
-    raise ValueError("unkown type %s" % a.dtype.name)
+    raise ValueError("unknown type %s" % a.dtype.name)
 
 
 def getExprNames(text, context):
