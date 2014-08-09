@@ -22,7 +22,7 @@ Examples of use
   >>> import numpy as np
   >>> import numexpr as ne
 
-  >>> a = np.arange(1e6)   # Choose large arrays
+  >>> a = np.arange(1e6)   # Choose large arrays for better speedups
   >>> b = np.arange(1e6)
 
   >>> ne.evaluate("a + 1")   # a simple expression
