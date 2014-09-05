@@ -515,6 +515,21 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
     return 0;
 }
 
+static int
+stringequal(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
+{
+    int s1len, s2len;
+    if (1) {
+	s1len = strnlen(s1, maxlen1);
+	s2len = strnlen(s2, maxlen2);
+	if (s1len != s2len) return -1;
+	/* They are equal in length, so check until the common length */
+	return strncmp(s1, s2, s2len);
+    }
+    else {
+	return stringcmp(s1, s2, maxlen1, maxlen2);
+    }
+}
 
 /* contains(str1, str2) function for string columns.
 
