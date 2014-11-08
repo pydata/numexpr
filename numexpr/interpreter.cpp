@@ -16,6 +16,7 @@
 
 #include "numexpr_config.hpp"
 #include "complex_functions.hpp"
+#include "complexf_functions.hpp"
 #include "interpreter.hpp"
 #include "numexpr_object.hpp"
 
@@ -68,6 +69,7 @@ static char op_signature_table[][NUMEXPR_MAX_ARGS] = {
 #define Tc 'c'
 #define Ts 's'
 #define Tn 'n'
+#define Tx 'x'
 #define T0 0
 #define OPCODE(n, e, ex, rt, a1, a2, a3) {rt, a1, a2, a3},
 #include "opcodes.hpp"
@@ -80,6 +82,7 @@ static char op_signature_table[][NUMEXPR_MAX_ARGS] = {
 #undef Tc
 #undef Ts
 #undef Tn
+#undef Tx
 #undef T0
 };
 
@@ -294,6 +297,61 @@ FuncCCCPtr functions_ccc[] = {
 #undef FUNC_CCC
 };
 
+typedef void (*FuncXXPtr)(npy_cfloat*, npy_cfloat*);
+
+FuncXXPtr functions_xx[] = {
+#define FUNC_XX(fop, s, f, ...) f,
+#include "functions.hpp"
+#undef FUNC_XX
+};
+
+#ifdef USE_VML
+/* complex expm1 not available in VML */
+static void vcExpm1(MKL_INT n, const MKL_Complex8* x1, MKL_Complex8* dest)
+{
+    MKL_INT j;
+    vcExp(n, x1, dest);
+    for (j=0; j<n; j++) {
+    dest[j].real -= 1.0;
+    };
+};
+
+static void vcLog1p(MKL_INT n, const MKL_Complex8* x1, MKL_Complex8* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+    dest[j].real = x1[j].real + 1;
+    dest[j].imag = x1[j].imag;
+    };
+    vcLn(n, dest, dest);
+};
+
+/* Use this instead of native vcAbs in VML as it seems to work badly */
+static void vcAbs_(MKL_INT n, const MKL_Complex8* x1, MKL_Complex8* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j].real = sqrt(x1[j].real*x1[j].real + x1[j].imag*x1[j].imag);
+    dest[j].imag = 0;
+    };
+};
+
+typedef void (*FuncXXPtr_vml)(MKL_INT, const MKL_Complex8[], MKL_Complex8[]);
+
+FuncXXPtr_vml functions_xx_vml[] = {
+#define FUNC_XX(fop, s, f, f_vml) f_vml,
+#include "functions.hpp"
+#undef FUNC_XX
+};
+#endif
+
+typedef void (*FuncXXXPtr)(npy_cfloat*, npy_cfloat*, npy_cfloat*);
+
+FuncXXXPtr functions_xxx[] = {
+#define FUNC_XXX(fop, s, f) f,
+#include "functions.hpp"
+#undef FUNC_XXX
+};
 
 char
 get_return_sig(PyObject* program)
@@ -328,9 +386,10 @@ typecode_from_char(char c)
         case 'f': return NPY_FLOAT;
         case 'd': return NPY_DOUBLE;
         case 'c': return NPY_CDOUBLE;
+        case 'x': return NPY_CFLOAT;
         case 's': return NPY_STRING;
         default:
-            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcs'");
+            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcxs'");
             return -1;
     }
 }
@@ -446,6 +505,16 @@ check_program(NumExprObject *self)
                     }
                 } else if (op == OP_FUNC_CCCN) {
                     if (arg < 0 || arg >= FUNC_CCC_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                } else if (op == OP_FUNC_XXN) {
+                    if (arg < 0 || arg >= FUNC_XX_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                } else if (op == OP_FUNC_XXXN) {
+                    if (arg < 0 || arg >= FUNC_XXX_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }

@@ -25,9 +25,11 @@ else:
     long_ = numpy.int64
 
 typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float',
-                    'd': 'double', 'c': 'complex', 's': 'bytes', 'n': 'none'}
+                    'd': 'double', 'c': 'complex', 'x' : 'complexf',
+                    's': 'bytes', 'n': 'none'}
 kind_to_typecode = {'bool': 'b', 'int': 'i', 'long': 'l', 'float': 'f',
-                    'double': 'd', 'complex': 'c', 'bytes': 's', 'none': 'n'}
+                    'double': 'd', 'complex': 'c', 'complexf' : 'x',
+                    'bytes': 's', 'none': 'n'}
 type_to_typecode = {bool: 'b', int_: 'i', long_: 'l', float: 'f',
                     double: 'd', complex: 'c', bytes: 's'}
 type_to_kind = expressions.type_to_kind
@@ -124,7 +126,7 @@ def sigPerms(s):
     """Generate all possible signatures derived by upcasting the given
     signature.
     """
-    codes = 'bilfdc'
+    codes = 'bilfdcx'
     if not s:
         yield ''
     elif s[0] in codes:

@@ -16,7 +16,8 @@ import warnings
 
 import numpy
 from numpy import (
-    array, arange, empty, zeros, int32, int64, uint16, complex_, float64, rec,
+    array, arange, empty, zeros, int32, int64, uint16,
+    complex_, complex64, complex128, float64, rec,
     copy, ones_like, where, alltrue, linspace,
     sum, prod, sqrt, fmod,
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
@@ -347,6 +348,21 @@ class test_evaluate(TestCase):
         x = z.imag
         x = sin(complex(a, b)).real + z.imag
         y = evaluate("sin(complex(a, b)).real + z.imag")
+        assert_array_almost_equal(x, y)
+
+    def test_complexf_expr(self):
+        def complex(a, b):
+            c = zeros(a.shape, dtype=complex64)
+            c.real = a
+            c.imag = b
+            return c
+
+        a = arange(1e4)
+        b = arange(1e4) ** 1e-5
+        z = a + 1j * b
+        x = z.imag
+        x = sin(complex64(a+b*1j)).real + z.imag
+        y = evaluate("sin(complexf(a, b)).real + z.imag")
         assert_array_almost_equal(x, y)
 
     def test_complex_strides(self):

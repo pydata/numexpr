@@ -150,6 +150,8 @@
         #define d_reduce    *(double *)dest
         #define cr_reduce   *(double *)dest
         #define ci_reduce   *((double *)dest+1)
+        #define xr_reduce   *(float *)dest
+        #define xi_reduce   *((float *)dest+1)
 #else /* Reduce is the outer loop */
         #define i_reduce    i_dest
         #define l_reduce    l_dest
@@ -157,6 +159,8 @@
         #define d_reduce    d_dest
         #define cr_reduce   cr_dest
         #define ci_reduce   ci_dest
+        #define xr_reduce   xr_dest
+        #define xi_reduce   xi_dest
 #endif
         #define b_dest ((char *)dest)[j]
         #define i_dest ((int *)dest)[j]
@@ -165,6 +169,8 @@
         #define d_dest ((double *)dest)[j]
         #define cr_dest ((double *)dest)[2*j]
         #define ci_dest ((double *)dest)[2*j+1]
+        #define xr_dest ((float *)dest)[2*j]
+        #define xi_dest ((float *)dest)[2*j+1]
         #define s_dest ((char *)dest + j*memsteps[store_in])
         #define b1    ((char   *)(x1+j*sb1))[0]
         #define i1    ((int    *)(x1+j*sb1))[0]
@@ -173,6 +179,8 @@
         #define d1    ((double *)(x1+j*sb1))[0]
         #define c1r   ((double *)(x1+j*sb1))[0]
         #define c1i   ((double *)(x1+j*sb1))[1]
+        #define x1r   ((float *)(x1+j*sb1))[0]
+        #define x1i   ((float *)(x1+j*sb1))[1]
         #define s1    ((char   *)x1+j*sb1)
         #define b2    ((char   *)(x2+j*sb2))[0]
         #define i2    ((int    *)(x2+j*sb2))[0]
@@ -181,6 +189,8 @@
         #define d2    ((double *)(x2+j*sb2))[0]
         #define c2r   ((double *)(x2+j*sb2))[0]
         #define c2i   ((double *)(x2+j*sb2))[1]
+        #define x2r   ((float *)(x2+j*sb2))[0]
+        #define x2i   ((float *)(x2+j*sb2))[1]
         #define s2    ((char   *)x2+j*sb2)
         #define b3    ((char   *)(x3+j*sb3))[0]
         #define i3    ((int    *)(x3+j*sb3))[0]
@@ -189,10 +199,14 @@
         #define d3    ((double *)(x3+j*sb3))[0]
         #define c3r   ((double *)(x3+j*sb3))[0]
         #define c3i   ((double *)(x3+j*sb3))[1]
+        #define x3r   ((float *)(x3+j*sb3))[0]
+        #define x3i   ((float *)(x3+j*sb3))[1]
         #define s3    ((char   *)x3+j*sb3)
         /* Some temporaries */
         double da, db;
         npy_cdouble ca, cb;
+        float fa, fb;
+        npy_cfloat xa, xb;
 
         switch (op) {
 
@@ -208,6 +222,7 @@
         case OP_COPY_FF: VEC_ARG1(memcpy(&f_dest, s1, sizeof(float)));
         case OP_COPY_DD: VEC_ARG1(memcpy(&d_dest, s1, sizeof(double)));
         case OP_COPY_CC: VEC_ARG1(memcpy(&cr_dest, s1, sizeof(double)*2));
+        case OP_COPY_XX: VEC_ARG1(memcpy(&xr_dest, s1, sizeof(double)*2));
 
         /* Bool */
         case OP_INVERT_BB: VEC_ARG1(b_dest = !b1);
@@ -379,7 +394,7 @@
             VEC_ARG2(d_dest = functions_ddd[arg3](d1, d2));
 #endif
 
-        /* Complex */
+        /* Complex double */
         case OP_CAST_CI: VEC_ARG1(cr_dest = (double)(i1);
                                   ci_dest = 0);
         case OP_CAST_CL: VEC_ARG1(cr_dest = (double)(l1);
@@ -440,6 +455,67 @@
         case OP_COMPLEX_CDD: VEC_ARG2(cr_dest = d1;
                                       ci_dest = d2);
 
+        /* Complex float */
+        case OP_CAST_XI: VEC_ARG1(xr_dest = (float)(i1);
+                                  xi_dest = 0);
+        case OP_CAST_XL: VEC_ARG1(xr_dest = (float)(l1);
+                                  xi_dest = 0);
+        case OP_CAST_XF: VEC_ARG1(xr_dest = f1;
+                                  xi_dest = 0);
+        case OP_CAST_XD: VEC_ARG1(xr_dest = d1;
+                                  xi_dest = 0);
+        case OP_ONES_LIKE_XX: VEC_ARG0(xr_dest = 1;
+                                       xi_dest = 0);
+        case OP_NEG_XX: VEC_ARG1(xr_dest = -x1r;
+                                 xi_dest = -x1i);
+
+        case OP_ADD_XXX: VEC_ARG2(xr_dest = x1r + x2r;
+                                  xi_dest = x1i + x2i);
+        case OP_SUB_XXX: VEC_ARG2(xr_dest = x1r - x2r;
+                                  xi_dest = x1i - x2i);
+        case OP_MUL_XXX: VEC_ARG2(fa = x1r*x2r - x1i*x2i;
+                                  xi_dest = x1r*x2i + x1i*x2r;
+                                  xr_dest = fa);
+        case OP_DIV_XXX:
+#ifdef USE_VMLXXX /* VML complex division is slower */
+            VEC_ARG2_VML(vcDiv(BLOCK_SIZE, (const MKL_Complex8*)x1,
+                               (const MKL_Complex8*)x2, (MKL_Complex8*)dest));
+#else
+            VEC_ARG2(fa = x2r*x2r + x2i*x2i;
+                     fb = (x1r*x2r + x1i*x2i) / fa;
+                     xi_dest = (x1i*x2r - x1r*x2i) / fa;
+                     xr_dest = fb);
+#endif
+        case OP_EQ_BXX: VEC_ARG2(b_dest = (x1r == x2r && x1i == x2i));
+        case OP_NE_BXX: VEC_ARG2(b_dest = (x1r != x2r || x1i != x2i));
+
+        case OP_WHERE_XBXX: VEC_ARG3(xr_dest = b1 ? x2r : x3r;
+                                     xi_dest = b1 ? x2i : x3i);
+        case OP_FUNC_XXN:
+#ifdef USE_VML
+            VEC_ARG1_VML(functions_xx_vml[arg2](BLOCK_SIZE,
+                                                (const MKL_Complex8*)x1,
+                                                (MKL_Complex8*)dest));
+#else
+            VEC_ARG1(xa.real = x1r;
+                     xa.imag = x1i;
+                     functions_xx[arg2](&xa, &xa);
+                     xr_dest = xa.real;
+                     xi_dest = xa.imag);
+#endif
+        case OP_FUNC_XXXN: VEC_ARG2(xa.real = x1r;
+                                    xa.imag = x1i;
+                                    xb.real = x2r;
+                                    xb.imag = x2i;
+                                    functions_xxx[arg3](&xa, &xb, &xa);
+                                    xr_dest = xa.real;
+                                    xi_dest = xa.imag);
+
+        case OP_REAL_FX: VEC_ARG1(f_dest = x1r);
+        case OP_IMAG_FX: VEC_ARG1(f_dest = x1i);
+        case OP_COMPLEX_XFF: VEC_ARG2(xr_dest = d1;
+                                      xi_dest = d2);
+
         /* Reductions */
         case OP_SUM_IIN: VEC_ARG1(i_reduce += i1);
         case OP_SUM_LLN: VEC_ARG1(l_reduce += l1);
@@ -447,6 +523,8 @@
         case OP_SUM_DDN: VEC_ARG1(d_reduce += d1);
         case OP_SUM_CCN: VEC_ARG1(cr_reduce += c1r;
                                   ci_reduce += c1i);
+        case OP_SUM_XXN: VEC_ARG1(xr_reduce += x1r;
+                                  xi_reduce += x1i);
 
         case OP_PROD_IIN: VEC_ARG1(i_reduce *= i1);
         case OP_PROD_LLN: VEC_ARG1(l_reduce *= l1);
@@ -455,6 +533,9 @@
         case OP_PROD_CCN: VEC_ARG1(da = cr_reduce*c1r - ci_reduce*c1i;
                                    ci_reduce = cr_reduce*c1i + ci_reduce*c1r;
                                    cr_reduce = da);
+        case OP_PROD_XXN: VEC_ARG1(fa = xr_reduce*x1r - xi_reduce*x1i;
+                                   xi_reduce = xr_reduce*x1i + xi_reduce*x1r;
+                                   xr_reduce = fa);
 
         default:
             *pc_error = pc;
@@ -481,6 +562,8 @@
 #undef d_reduce
 #undef cr_reduce
 #undef ci_reduce
+#undef xr_reduce
+#undef xi_reduce
 #undef b_dest
 #undef i_dest
 #undef l_dest
