@@ -153,14 +153,14 @@ def typeCompileAst(ast):
         basesig = ''.join(x.typecode() for x in list(ast.children))
         # Find some operation that will work on an acceptable casting of args.
         for sig in sigPerms(basesig):
-            value = (ast.value + '_' + retsig + sig).encode('ascii')
+            value = (ast.value + '_' + retsig + sig).encode('latin-1')
             if value in interpreter.opcodes:
                 break
         else:
             for sig in sigPerms(basesig):
-                funcname = (ast.value + '_' + retsig + sig).encode('ascii')
+                funcname = (ast.value + '_' + retsig + sig).encode('latin-1')
                 if funcname in interpreter.funccodes:
-                    value = ('func_%sn' % (retsig + sig)).encode('ascii')
+                    value = ('func_%sn' % (retsig + sig)).encode('latin-1')
                     children += [ASTNode('raw', 'none',
                                          interpreter.funccodes[funcname])]
                     break
@@ -454,7 +454,7 @@ def compileThreeAddrForm(program):
                 return bytes([reg.n])
 
     def quadrupleToString(opcode, store, a1=None, a2=None):
-        cop = chr(interpreter.opcodes[opcode]).encode('ascii')
+        cop = unichr(interpreter.opcodes[opcode]).encode('latin-1')
         cs = nToChr(store)
         ca1 = nToChr(a1)
         ca2 = nToChr(a2)
@@ -578,8 +578,8 @@ def NumExpr(ex, signature=(), **kwargs):
     threeAddrProgram, inputsig, tempsig, constants, input_names = \
         precompile(ex, signature, context)
     program = compileThreeAddrForm(threeAddrProgram)
-    return interpreter.NumExpr(inputsig.encode('ascii'),
-                               tempsig.encode('ascii'),
+    return interpreter.NumExpr(inputsig.encode('latin-1'),
+                               tempsig.encode('latin-1'),
                                program, constants, input_names)
 
 
@@ -614,11 +614,11 @@ def disassemble(nex):
             if arg == 0:
                 return b'r0'
             elif arg < r_constants:
-                return ('r%d[%s]' % (arg, nex.input_names[arg - 1])).encode('ascii')
+                return ('r%d[%s]' % (arg, nex.input_names[arg - 1])).encode('latin-1')
             elif arg < r_temps:
-                return ('c%d[%s]' % (arg, nex.constants[arg - r_constants])).encode('ascii')
+                return ('c%d[%s]' % (arg, nex.constants[arg - r_constants])).encode('latin-1')
             else:
-                return ('t%d' % (arg,)).encode('ascii')
+                return ('t%d' % (arg,)).encode('latin-1')
         else:
             return arg
 
