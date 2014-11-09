@@ -170,6 +170,13 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
                 itemsizes[i] = size_from_char('d');
                 continue;
             }
+            /* NumPy single precision complex number */
+            if (PyArray_IsScalar(o,CFloat)) {
+                PyBytes_AS_STRING(constsig)[i] = 'x';
+                itemsizes[i] = size_from_char('f');
+                continue;                
+            }
+            /* Python double precision complex number */
             if (PyComplex_Check(o)) {
                 PyBytes_AS_STRING(constsig)[i] = 'c';
                 itemsizes[i] = size_from_char('c');
@@ -279,6 +286,16 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
             double value = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(constants, i));
             for (j = 0; j < BLOCK_SIZE1; j++) {
                 dmem[j] = value;
+            }
+        } else if (c == 'x') {
+            /* In this particular case the constant is in a NumPy scalar
+             and in a regular Python object */
+            float *fmem = (float*)mem[i+n_inputs+1];
+            npy_cfloat value = PyArrayScalar_VAL(PyTuple_GET_ITEM(constants, i),
+                                            CFloat);
+            for (j = 0; j < 2*BLOCK_SIZE1; j++) {
+                fmem[j] = value.real;
+                fmem[j+1] = value.imag;
             }
         } else if (c == 'c') {
             double *cmem = (double*)mem[i+n_inputs+1];
