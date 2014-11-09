@@ -24,6 +24,7 @@ size_from_char(char c)
         case 'f': return sizeof(float);
         case 'd': return sizeof(double);
         case 'c': return 2*sizeof(double);
+        case 'x': return 2*sizeof(float);
         case 's': return 0;  /* strings are ok but size must be computed */
         default:
             PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcs'");
