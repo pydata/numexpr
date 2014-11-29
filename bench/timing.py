@@ -8,6 +8,7 @@
 #  rights to use.
 ####################################################################
 
+from __future__ import print_function
 import timeit, numpy
 
 array_size = 1e6

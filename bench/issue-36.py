@@ -1,6 +1,7 @@
 # Small benchmark to get the even point where the threading code
 # performs better than the serial code.  See issue #36 for details.
 
+from __future__ import print_function
 import numpy as np
 import numexpr as ne
 from numpy.testing import assert_array_equal

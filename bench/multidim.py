@@ -11,6 +11,7 @@
 # Script to check that multidimensional arrays are speed-up properly too
 # Based on a script provided by Andrew Collette.
 
+from __future__ import print_function
 import numpy as np
 import numexpr as nx
 import time

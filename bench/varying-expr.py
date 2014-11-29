@@ -12,6 +12,7 @@
 # expressions that changes continously.  It also serves for computing
 # the latency of numexpr when working with small arrays.
 
+from __future__ import print_function
 import sys
 from time import time
 import numpy as np

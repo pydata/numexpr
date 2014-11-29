@@ -8,6 +8,7 @@
 #  rights to use.
 ####################################################################
 
+from __future__ import print_function
 import sys
 import timeit
 import numpy

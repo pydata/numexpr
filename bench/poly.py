@@ -16,6 +16,7 @@
 # Date: 2010-07-06
 #######################################################################
 
+from __future__ import print_function
 import sys
 from time import time
 import numpy as np
