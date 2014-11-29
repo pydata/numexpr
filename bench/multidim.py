@@ -42,8 +42,8 @@ def chunkify(chunksize):
 
             out = np.ndarray(args[0].shape)
 
-            for start in xrange(0, nelements, chunksize):
-                #print start
+            for start in range(0, nelements, chunksize):
+                #print(start)
                 stop = start+chunksize
                 if start+chunksize > nelements:
                     stop = nelements-start
@@ -71,23 +71,23 @@ for test_shape in test_shapes:
 
 
     start1 = time.time()
-    for idx in xrange(nruns):
+    for idx in range(nruns):
         result1 = test_func(a, b, c)
     stop1 = time.time()
 
     start2 = time.time()
-    for idx in xrange(nruns):
+    for idx in range(nruns):
         result2 = nx.evaluate(test_func_str)
     stop2 = time.time()
 
     start3 = time.time()
-    for idx in xrange(nruns):
+    for idx in range(nruns):
         result3 = test_func_chunked(a, b, c)
     stop3 = time.time()
 
-    print "%s %s (average of %s runs)" % (test_shape, test_dtype, nruns)
-    print "Simple: ", (stop1-start1)/nruns
-    print "Numexpr: ", (stop2-start2)/nruns
-    print "Chunked: ", (stop3-start3)/nruns
+    print("%s %s (average of %s runs)" % (test_shape, test_dtype, nruns))
+    print("Simple: ", (stop1-start1)/nruns)
+    print("Numexpr: ", (stop2-start2)/nruns)
+    print("Chunked: ", (stop3-start3)/nruns)
 
 
