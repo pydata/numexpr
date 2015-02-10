@@ -844,7 +844,8 @@ class test_subprocess(TestCase):
 
 def print_versions():
     """Print the versions of software that numexpr relies on."""
-    if numpy.__version__ < minimum_numpy_version:
+    from pkg_resources import parse_version
+    if parse_version(numpy.__version__) < parse_version(minimum_numpy_version):
         print("*Warning*: NumPy version is lower than recommended: %s < %s" % \
               (numpy.__version__, minimum_numpy_version))
     print('-=' * 38)
