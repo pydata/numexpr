@@ -5,15 +5,20 @@
 Changes from 2.4 to 2.4.1
 =========================
 
-* Better determination of methods in `cpuinfo` module.  Thanks to Marc
-  Jofre.
-
 * Added more configuration examples for compiling with MKL/VML
   support.  Thanks to Davide Del Vento.
 
 * Symbol MKL_VML changed into MKL_DOMAIN_VML because the former is
   deprecated in newer MKL.  Thanks to Nick Papior Andersen.
 
+* Better determination of methods in `cpuinfo` module.  Thanks to Marc
+  Jofre.
+
+* Improved NumPy version determination (handy for 1.10.0).  Thanks
+  to Åsmund Hjulstad.
+
+* Benchmarks run now with both Python 2 and Python 3.  Thanks to Zoran
+  Plesivčak.
 
 Changes from 2.3.1 to 2.4
 =========================
