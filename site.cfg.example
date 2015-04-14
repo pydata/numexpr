@@ -38,4 +38,7 @@
 # The next works too, but for LP64 arithmetic
 #mkl_libs = mkl_core, mkl_intel_thread, mkl_intel_lp64, libiomp5md
 
+# Example with Intel compiler version 14.0.2 and MKL v11.1.2 on intel64 architecture
+#mkl_libs = mkl_intel_lp64, mkl_gf_lp64, mkl_intel_thread, mkl_core, mkl_def, mkl_vml_avx, mkl_rt, iomp5
+# For details, see https://github.com/pydata/numexpr/issues/148
 

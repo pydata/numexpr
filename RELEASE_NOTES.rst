@@ -7,6 +7,9 @@ Changes from 2.4 to 2.4.1
 
 * Better determination of methods in `cpuinfo` module.  Thanks to Mark Jofre.
 
+* Added more configuration examples for compiling with MKL/VML
+  support.  Thanks to Davide Del Vento.
+
 
 Changes from 2.3.1 to 2.4
 =========================
