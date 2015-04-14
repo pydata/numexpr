@@ -5,7 +5,8 @@
 Changes from 2.4 to 2.4.1
 =========================
 
- #XXX version-specific blurb XXX#
+* Better determination of methods in `cpuinfo` module.  Thanks to Mark Jofre.
+
 
 Changes from 2.3.1 to 2.4
 =========================

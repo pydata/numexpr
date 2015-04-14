@@ -30,6 +30,7 @@ import os
 import subprocess
 import warnings
 import platform
+import inspect
 
 
 def getoutput(cmd, successful_status=(0,), stacklevel=1):
@@ -94,7 +95,7 @@ class CPUInfoBase(object):
         if not name.startswith('_'):
             if hasattr(self, '_' + name):
                 attr = getattr(self, '_' + name)
-                if type(attr) is types.MethodType:
+                if inspect.ismethod(attr):
                     return lambda func=self._try_call, attr=attr: func(attr)
             else:
                 return lambda: None
