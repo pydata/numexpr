@@ -66,7 +66,7 @@ if 'sparc' in platform.machine():
 
     warnings.warn('The number of threads have been set to 1 because problems related '
                   'to threading have been reported on some sparc machine. '
-                  'The number of threads can be changes using the "set_num_threads" '
+                  'The number of threads can be changed using the "set_num_threads" '
                   'function.')
     set_num_threads(1)
 else:
