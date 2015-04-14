@@ -1,5 +1,5 @@
 =========================
- Announcing Numexpr 2.4.1
+ Announcing Numexpr 2.4.2
 =========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -21,8 +21,7 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-In this version there is improved support for newer MKL library as well
-as other minor improvements.  This version is meant for production.
+#XXX version-specific blurb XXX#
 
 In case you want to know more in detail what has changed in this
 version, see:
