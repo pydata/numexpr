@@ -225,7 +225,7 @@ for more info on the accuracy modes.
   threads to be used in VML operations.
 
 This function is equivalent to the call
-`mkl_domain_set_num_threads(nthreads, MKL_VML)` in the MKL library.
+`mkl_domain_set_num_threads(nthreads, MKL_DOMAIN_VML)` in the MKL library.
 See:
 
 http://www.intel.com/software/products/mkl/docs/webhelp/support/functn_mkl_domain_set_num_threads.html

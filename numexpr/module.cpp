@@ -298,7 +298,7 @@ _set_vml_num_threads(PyObject *self, PyObject *args)
     int max_num_threads;
     if (!PyArg_ParseTuple(args, "i", &max_num_threads))
     return NULL;
-    mkl_domain_set_num_threads(max_num_threads, MKL_VML);
+    mkl_domain_set_num_threads(max_num_threads, MKL_DOMAIN_VML);
     Py_RETURN_NONE;
 }
 
