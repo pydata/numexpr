@@ -9,7 +9,7 @@
 ####################################################################
 
 version = '2.4.1'
-release = False
+release = True
 
 if not release:
     version += '.dev'
