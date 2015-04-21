@@ -28,10 +28,11 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 # Fetch the version for numexpr (will be put in variable `version`)
-exec(open(os.path.join('numexpr', 'version.py')).read())
+with open(os.path.join('numexpr', 'version.py')) as f:
+    exec(f.read())
 
 def setup_package():
-    metadata = dict(  #name='numexpr',  # name already set in numpy.distutils
+    metadata = dict(  name='numexpr',
                       description='Fast numerical expression evaluator for NumPy',
                       version=version,
                       author='David M. Cooke, Francesc Alted and others',
@@ -108,7 +109,7 @@ def setup_package():
             from numpy.distutils.misc_util import Configuration, dict_append
             from numpy.distutils.system_info import system_info
 
-            config = Configuration('numexpr')
+            config = Configuration()
 
             #try to find configuration for MKL, either from environment or site.cfg
             if op.exists('site.cfg'):
@@ -151,7 +152,6 @@ def setup_package():
 
             #version handling
             config.make_svn_version_py()
-            config.get_version('numexpr/version.py')
             return config
 
 
