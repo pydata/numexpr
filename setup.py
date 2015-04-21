@@ -28,12 +28,12 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 # Fetch the version for numexpr (will be put in variable `version`)
-exec(open(os.path.join('numexpr', 'version.py')).read())
+with open(os.path.join('numexpr', 'version.py')) as f:
+    exec(f.read())
 
 def setup_package():
-    metadata = dict(  #name='numexpr',  # name already set in numpy.distutils
+    metadata = dict(
                       description='Fast numerical expression evaluator for NumPy',
-                      version=version,
                       author='David M. Cooke, Francesc Alted and others',
                       author_email='david.m.cooke@gmail.com, faltet@gmail.com',
                       url='https://github.com/pydata/numexpr',
@@ -55,6 +55,9 @@ def setup_package():
             from setuptools import setup
         except ImportError:
             from distutils.core import setup
+
+        metadata['name']    = 'numexpr'
+        metadata['version'] = version
     else:
         from numpy.distutils.core import setup
         from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
@@ -150,7 +153,6 @@ def setup_package():
             config.add_subpackage('tests', 'numexpr/tests')
 
             #version handling
-            config.make_svn_version_py()
             config.get_version('numexpr/version.py')
             return config
 
