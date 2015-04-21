@@ -27,10 +27,13 @@ except ImportError:
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
+# Fetch the version for numexpr (will be put in variable `version`)
+exec(open(os.path.join('numexpr', 'version.py')).read())
 
 def setup_package():
     metadata = dict(  #name='numexpr',  # name already set in numpy.distutils
                       description='Fast numerical expression evaluator for NumPy',
+                      version=version,
                       author='David M. Cooke, Francesc Alted and others',
                       author_email='david.m.cooke@gmail.com, faltet@gmail.com',
                       url='https://github.com/pydata/numexpr',
@@ -46,7 +49,7 @@ def setup_package():
         #
         # They are required to succeed without Numpy for example when
         # pip is used to install Numexpr when Numpy is not yet present in
-        # the system. 
+        # the system.
         # (via https://github.com/abhirk/scikit-learn/blob/master/setup.py)
         try:
             from setuptools import setup
