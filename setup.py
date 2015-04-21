@@ -28,10 +28,11 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 # Fetch the version for numexpr (will be put in variable `version`)
-exec(open(os.path.join('numexpr', 'version.py')).read())
+with open(os.path.join('numexpr', 'version.py')) as f:
+    exec(f.read())
 
 def setup_package():
-    metadata = dict(  #name='numexpr',  # name already set in numpy.distutils
+    metadata = dict(  name='numexpr',
                       description='Fast numerical expression evaluator for NumPy',
                       version=version,
                       author='David M. Cooke, Francesc Alted and others',
