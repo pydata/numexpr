@@ -109,7 +109,7 @@ def setup_package():
             from numpy.distutils.misc_util import Configuration, dict_append
             from numpy.distutils.system_info import system_info
 
-            config = Configuration('numexpr')
+            config = Configuration()
 
             #try to find configuration for MKL, either from environment or site.cfg
             if op.exists('site.cfg'):
@@ -152,7 +152,6 @@ def setup_package():
 
             #version handling
             config.make_svn_version_py()
-            config.get_version('numexpr/version.py')
             return config
 
 
