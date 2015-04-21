@@ -8,8 +8,4 @@
 #  rights to use.
 ####################################################################
 
-version = '2.4.2'
-release = False
-
-if not release:
-    version += '.dev0'
+version = '2.4.2.dev'
