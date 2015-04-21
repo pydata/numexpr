@@ -153,7 +153,6 @@ def setup_package():
             config.add_subpackage('tests', 'numexpr/tests')
 
             #version handling
-            config.make_svn_version_py()
             config.get_version('numexpr/version.py')
             return config
 
