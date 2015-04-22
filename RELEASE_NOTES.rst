@@ -2,12 +2,16 @@
  Release notes for Numexpr 2.4 series
 ======================================
 
+Changes from 2.4.2 to 2.4.3
+===========================
+
+#XXX version-specific blurb XXX#
+
 Changes from 2.4.1 to 2.4.2
 ===========================
 
 * Improved setup.py so that pip can query the name and version without
   actually doing the installation.  Thanks to Joris Borgdorff.
-
 
 Changes from 2.4 to 2.4.1
 =========================

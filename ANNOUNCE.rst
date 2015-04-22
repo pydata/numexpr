@@ -1,5 +1,5 @@
 =========================
- Announcing Numexpr 2.4.2
+ Announcing Numexpr 2.4.3
 =========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -21,9 +21,7 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-This is a maintenance release where basically setup.py has been
-improved so that pip can query the name and version without actually
-doing the installation.  Thanks to Joris Borgdorff.
+#XXX version-specific blurb XXX#
 
 In case you want to know more in detail what has changed in this
 version, see:
