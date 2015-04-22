@@ -21,7 +21,9 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-#XXX version-specific blurb XXX#
+This is a maintenance release where basically setup.py has been
+improved so that pip can query the name and version without actually
+doing the installation.  Thanks to Joris Borgdorff.
 
 In case you want to know more in detail what has changed in this
 version, see:
