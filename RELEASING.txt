@@ -86,6 +86,12 @@ Post-release actions
 
   #XXX version-specific blurb XXX#
 
+  Don't forget to update header to the next version in those files.
+
+- Commit your changes:
+
+  $ git commit -a -m"Post X.Y.Z release actions done"
+
 
 That's all folks!
 
