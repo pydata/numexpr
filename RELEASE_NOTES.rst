@@ -5,7 +5,8 @@
 Changes from 2.4.2 to 2.4.3
 ===========================
 
-#XXX version-specific blurb XXX#
+* Comparisons with empty strings work correctly now.  Fixes #121 and
+  PyTables #184.
 
 Changes from 2.4.1 to 2.4.2
 ===========================

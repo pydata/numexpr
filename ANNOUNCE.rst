@@ -21,7 +21,8 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-#XXX version-specific blurb XXX#
+This is a maintenance release to cope with an old bug affecting
+comparisons with empty strings.  Fixes #121 and PyTables #184.
 
 In case you want to know more in detail what has changed in this
 version, see:
