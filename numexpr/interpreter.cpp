@@ -500,8 +500,14 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
 {
     npy_intp maxlen, nextpos;
     /* Point to this when the end of a string is found,
-       to simulate infinte trailing NUL characters. */
+       to simulate infinte trailing NULL characters. */
     const char null = 0;
+
+    // First check if some of the operands is the empty string and if so,
+    // just check that the first char of the other is the NULL one.
+    // Fixes #121
+    if (maxlen2 == 0) return *s1 != null;
+    if (maxlen1 == 0) return *s2 != null;
 
     maxlen = (maxlen1 > maxlen2) ? maxlen1 : maxlen2;
     for (nextpos = 1;  nextpos <= maxlen;  nextpos++) {

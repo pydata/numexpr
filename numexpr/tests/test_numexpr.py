@@ -14,7 +14,7 @@ import sys
 import platform
 import warnings
 
-import numpy
+import numpy as np
 from numpy import (
     array, arange, empty, zeros, int32, int64, uint16, complex_, float64, rec,
     copy, ones_like, where, alltrue, linspace,
@@ -33,7 +33,7 @@ import unittest
 
 TestCase = unittest.TestCase
 
-double = numpy.double
+double = np.double
 
 
 # Recommended minimum versions
@@ -548,7 +548,7 @@ def test_expressions():
 
     x = None
     for test_scalar in (0, 1, 2):
-        for dtype in (int, long, numpy.float32, double, complex):
+        for dtype in (int, long, np.float32, double, complex):
             array_size = 100
             a = arange(2 * array_size, dtype=dtype)[::2]
             a2 = zeros([array_size, array_size], dtype=dtype)
@@ -617,8 +617,8 @@ class test_int32_int64(TestCase):
 
     def test_long_constant_promotion(self):
         int32array = arange(100, dtype='int32')
-        itwo = numpy.int32(2)
-        ltwo = numpy.int64(2)
+        itwo = np.int32(2)
+        ltwo = np.int64(2)
         res = int32array * 2
         res32 = evaluate('int32array * itwo')
         res64 = evaluate('int32array * ltwo')
@@ -639,15 +639,15 @@ class test_int32_int64(TestCase):
 class test_uint32_int64(TestCase):
     def test_small_uint32(self):
         # Small uint32 should not be downgraded to ints.
-        a = numpy.uint32(42)
+        a = np.uint32(42)
         res = evaluate('a')
         assert_array_equal(res, 42)
         self.assertEqual(res.dtype.name, 'int64')
 
     def test_uint32_constant_promotion(self):
         int32array = arange(100, dtype='int32')
-        stwo = numpy.int32(2)
-        utwo = numpy.uint32(2)
+        stwo = np.int32(2)
+        utwo = np.uint32(2)
         res = int32array * utwo
         res32 = evaluate('int32array * stwo')
         res64 = evaluate('int32array * utwo')
@@ -718,6 +718,22 @@ class test_strings(TestCase):
         sarr2 = self.str_array2
         expr = 'sarr1 + sarr2'
         self.assert_missing_op('add_sss', expr, locals())
+
+    def test_empty_string1(self):
+        a = np.array(["", "pepe"])
+        b = np.array(["pepe2", ""])
+        res = evaluate("(a == '') & (b == 'pepe2')")
+        assert_array_equal(res, np.array([True, False]))
+        res2 = evaluate("(a == 'pepe') & (b == '')")
+        assert_array_equal(res2, np.array([False, True]))
+
+    def test_empty_string2(self):
+        a = np.array(["p", "pepe"])
+        b = np.array(["pepe2", ""])
+        res = evaluate("(a == '') & (b == 'pepe2')")
+        assert_array_equal(res, np.array([False, False]))
+        res2 = evaluate("(a == 'pepe') & (b == '')")
+        assert_array_equal(res, np.array([False, False]))
 
     def test_add_numeric_array(self):
         sarr = self.str_array1
@@ -814,7 +830,7 @@ class test_threading(TestCase):
 # The worker function for the subprocess (needs to be here because Windows
 # has problems pickling nested functions with the multiprocess module :-/)
 def _worker(qout=None):
-    ra = numpy.arange(1e3)
+    ra = np.arange(1e3)
     rows = evaluate('ra > 0')
     #print "Succeeded in evaluation!\n"
     if qout is not None:
@@ -845,12 +861,12 @@ class test_subprocess(TestCase):
 def print_versions():
     """Print the versions of software that numexpr relies on."""
     from pkg_resources import parse_version
-    if parse_version(numpy.__version__) < parse_version(minimum_numpy_version):
+    if parse_version(np.__version__) < parse_version(minimum_numpy_version):
         print("*Warning*: NumPy version is lower than recommended: %s < %s" % \
-              (numpy.__version__, minimum_numpy_version))
+              (np.__version__, minimum_numpy_version))
     print('-=' * 38)
     print("Numexpr version:   %s" % numexpr.__version__)
-    print("NumPy version:     %s" % numpy.__version__)
+    print("NumPy version:     %s" % np.__version__)
     print('Python version:    %s' % sys.version)
     if os.name == 'posix':
         (sysname, nodename, release, version, machine) = os.uname()
