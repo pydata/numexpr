@@ -1,5 +1,5 @@
 =========================
- Announcing Numexpr 2.4.3
+ Announcing Numexpr 2.4.4
 =========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -21,8 +21,7 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-This is a maintenance release to cope with an old bug affecting
-comparisons with empty strings.  Fixes #121 and PyTables #184.
+#XXX version-specific blurb XXX#
 
 In case you want to know more in detail what has changed in this
 version, see:
