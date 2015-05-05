@@ -13,6 +13,7 @@ import os
 import sys
 import platform
 import warnings
+from contextlib import contextmanager
 
 import numpy as np
 from numpy import (
@@ -813,6 +814,26 @@ class test_zerodim(TestCase):
         assert_array_equal(r1, a1)
 
 
+@contextmanager
+def _environment(key, value):
+    old = os.environ.get(key)
+    os.environ[key] = value
+    try:
+        yield
+    finally:
+        if old:
+            os.environ[key] = old
+        else:
+            del os.environ[key]
+
+
+# Test cases for the threading configuration
+class test_threading_config(TestCase):
+    def test_numexpr_num_threads(self):
+        with _environment('NUMEXPR_NUM_THREADS', '3'):
+            self.assertEquals(3, numexpr.detect_number_of_threads())
+
+
 # Case test for threads
 class test_threading(TestCase):
     def test_thread(self):
@@ -924,6 +945,7 @@ def suite():
         theSuite.addTest(
             unittest.makeSuite(test_irregular_stride))
         theSuite.addTest(unittest.makeSuite(test_zerodim))
+        theSuite.addTest(unittest.makeSuite(test_threading_config))
 
         # multiprocessing module is not supported on Hurd/kFreeBSD
         if (pl.system().lower() not in ('gnu', 'gnu/kfreebsd')):
