@@ -830,8 +830,12 @@ def _environment(key, value):
 # Test cases for the threading configuration
 class test_threading_config(TestCase):
     def test_numexpr_num_threads(self):
-        with _environment('NUMEXPR_NUM_THREADS', '3'):
+        with _environment('OMP_NUM_THREADS', '5'), _environment('NUMEXPR_NUM_THREADS', '3'):
             self.assertEquals(3, numexpr.detect_number_of_threads())
+
+    def test_omp_num_threads(self):
+        with _environment('OMP_NUM_THREADS', '5'):
+            self.assertEquals(5, numexpr.detect_number_of_threads())
 
 
 # Case test for threads
