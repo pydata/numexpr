@@ -48,7 +48,10 @@ void *th_worker(void *tidptr)
 
     while (1) {
 
-        gs.init_sentinels_done = 0;     /* sentinels have to be initialised yet */
+        if (tid == 0) {
+            /* sentinels have to be initialised yet */
+            gs.init_sentinels_done = 0;
+        }
 
         /* Meeting point for all threads (wait for initialization) */
         pthread_mutex_lock(&gs.count_threads_mutex);
