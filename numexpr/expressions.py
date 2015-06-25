@@ -60,13 +60,6 @@ E = Expression()
 
 
 class Context(threading.local):
-    initialized = False
-
-    def __init__(self, dict_):
-        if self.initialized:
-            raise SystemError('__init__ called too many times')
-        self.initialized = True
-        self.__dict__.update(dict_)
 
     def get(self, value, default):
         return self.__dict__.get(value, default)
@@ -78,7 +71,7 @@ class Context(threading.local):
         self.__dict__.update(dict_)
 
 # This will be called each time the local object is used in a separate thread
-_context = Context({})
+_context = Context()
 
 
 def get_optimization():
