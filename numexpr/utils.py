@@ -115,6 +115,24 @@ def detect_number_of_cores():
     return 1  # Default
 
 
+def detect_number_of_threads():
+    """
+    If this is modified, please update the note in: https://github.com/pydata/numexpr/wiki/Numexpr-Users-Guide
+    """
+    try:
+        nthreads = int(os.environ['NUMEXPR_NUM_THREADS'])
+    except KeyError:
+        nthreads = int(os.environ.get('OMP_NUM_THREADS', detect_number_of_cores()))
+        # Check that we don't activate too many threads at the same time.
+        # 8 seems a sensible value.
+        if nthreads > 8:
+            nthreads = 8
+    # Check that we don't surpass the MAX_THREADS in interpreter.cpp
+    if nthreads > 4096:
+        nthreads = 4096
+    return nthreads
+
+
 class CacheDict(dict):
     """
     A dictionary that prevents itself from growing too much.

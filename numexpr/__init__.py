@@ -42,25 +42,13 @@ from numexpr.necompiler import NumExpr, disassemble, evaluate
 from numexpr.tests import test, print_versions
 from numexpr.utils import (
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
-    set_num_threads, detect_number_of_cores)
+    set_num_threads, detect_number_of_cores, detect_number_of_threads)
 
 # Detect the number of cores
 ncores = detect_number_of_cores()
+nthreads = detect_number_of_threads()
 
 # Initialize the number of threads to be used
-# If this is modified, please update the note in:
-# https://github.com/pydata/numexpr/wiki/Numexpr-Users-Guide
-try:
-    nthreads = int(os.environ['NUMEXPR_NUM_THREADS'])
-except KeyError:
-    nthreads = ncores
-    # Check that we don't activate too many threads at the same time.
-    # 8 seems a sensible value.
-    if nthreads > 8:
-        nthreads = 8
-# Check that we don't surpass the MAX_THREADS in interpreter.cpp
-if nthreads > 4096:
-    nthreads = 4096
 if 'sparc' in platform.machine():
     import warnings
 
