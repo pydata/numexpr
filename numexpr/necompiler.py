@@ -12,11 +12,12 @@ import __future__
 import sys
 import numpy
 
-from numexpr import interpreter, expressions, use_vml, is_cpu_amd_intel
+from numexpr import interpreter, expressions, use_vml
 from numexpr.utils import CacheDict
 
 # Declare a double type that does not exist in Python space
 double = numpy.double
+complex64 = numpy.complex64
 if sys.version_info[0] < 3:
     int_ = int
     long_ = long
@@ -25,11 +26,13 @@ else:
     long_ = numpy.int64
 
 typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float',
-                    'd': 'double', 'c': 'complex', 's': 'bytes', 'n': 'none'}
+                    'd': 'double', 'c': 'complex', 'x' : 'complex64',
+                    's': 'bytes', 'n': 'none'}
 kind_to_typecode = {'bool': 'b', 'int': 'i', 'long': 'l', 'float': 'f',
-                    'double': 'd', 'complex': 'c', 'bytes': 's', 'none': 'n'}
+                    'double': 'd', 'complex': 'c', 'complex64' : 'x',
+                    'bytes': 's', 'none': 'n'}
 type_to_typecode = {bool: 'b', int_: 'i', long_: 'l', float: 'f',
-                    double: 'd', complex: 'c', bytes: 's'}
+                    double: 'd', complex: 'c', complex64: 'x', bytes: 's'}
 type_to_kind = expressions.type_to_kind
 kind_to_type = expressions.kind_to_type
 default_type = kind_to_type[expressions.default_kind]
@@ -124,7 +127,7 @@ def sigPerms(s):
     """Generate all possible signatures derived by upcasting the given
     signature.
     """
-    codes = 'bilfdc'
+    codes = 'bilfdcx'
     if not s:
         yield ''
     elif s[0] in codes:
@@ -145,20 +148,22 @@ def typeCompileAst(ast):
     Will convert opcodes and functions to appropiate upcast version,
     and add "cast" ops if needed.
     """
+
+    
     children = list(ast.children)
     if ast.astType == 'op':
         retsig = ast.typecode()
         basesig = ''.join(x.typecode() for x in list(ast.children))
         # Find some operation that will work on an acceptable casting of args.
         for sig in sigPerms(basesig):
-            value = (ast.value + '_' + retsig + sig).encode('ascii')
+            value = (ast.value + '_' + retsig + sig).encode('latin-1')
             if value in interpreter.opcodes:
                 break
         else:
             for sig in sigPerms(basesig):
-                funcname = (ast.value + '_' + retsig + sig).encode('ascii')
+                funcname = (ast.value + '_' + retsig + sig).encode('latin-1')
                 if funcname in interpreter.funccodes:
-                    value = ('func_%sn' % (retsig + sig)).encode('ascii')
+                    value = ('func_%sn' % (retsig + sig)).encode('latin-1')
                     children += [ASTNode('raw', 'none',
                                          interpreter.funccodes[funcname])]
                     break
@@ -362,8 +367,8 @@ def optimizeTemporariesAllocation(ast):
     nodes = [n for n in ast.postorderWalk() if n.reg.temporary]
     users_of = dict((n.reg, set()) for n in nodes)
 
-    node_regs = dict((n, set(c.reg for c in n.children if c.reg.temporary))
-                     for n in nodes)
+#    node_regs = dict((n, set(c.reg for c in n.children if c.reg.temporary))
+#                     for n in nodes)
     if nodes and nodes[-1] is not ast:
         nodes_to_check = nodes + [ast]
     else:
@@ -452,7 +457,7 @@ def compileThreeAddrForm(program):
                 return bytes([reg.n])
 
     def quadrupleToString(opcode, store, a1=None, a2=None):
-        cop = chr(interpreter.opcodes[opcode]).encode('ascii')
+        cop = unichr(interpreter.opcodes[opcode]).encode('latin-1')
         cs = nToChr(store)
         ca1 = nToChr(a1)
         ca2 = nToChr(a2)
@@ -576,8 +581,8 @@ def NumExpr(ex, signature=(), **kwargs):
     threeAddrProgram, inputsig, tempsig, constants, input_names = \
         precompile(ex, signature, context)
     program = compileThreeAddrForm(threeAddrProgram)
-    return interpreter.NumExpr(inputsig.encode('ascii'),
-                               tempsig.encode('ascii'),
+    return interpreter.NumExpr(inputsig.encode('latin-1'),
+                               tempsig.encode('latin-1'),
                                program, constants, input_names)
 
 
@@ -612,11 +617,11 @@ def disassemble(nex):
             if arg == 0:
                 return b'r0'
             elif arg < r_constants:
-                return ('r%d[%s]' % (arg, nex.input_names[arg - 1])).encode('ascii')
+                return ('r%d[%s]' % (arg, nex.input_names[arg - 1])).encode('latin-1')
             elif arg < r_temps:
-                return ('c%d[%s]' % (arg, nex.constants[arg - r_constants])).encode('ascii')
+                return ('c%d[%s]' % (arg, nex.constants[arg - r_constants])).encode('latin-1')
             else:
-                return ('t%d' % (arg,)).encode('ascii')
+                return ('t%d' % (arg,)).encode('latin-1')
         else:
             return arg
 
@@ -648,7 +653,10 @@ def getType(a):
             return double  # ``double`` is for floats of more than 32 bits
         return float
     if kind == 'c':
-        return complex
+        # RAM need to distinguish between complex64 and complex128 here
+        if a.dtype.itemsize > 8:
+            return complex
+        return complex64
     if kind == 'S':
         return bytes
     raise ValueError("unknown type %s" % a.dtype.name)

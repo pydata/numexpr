@@ -20,3 +20,7 @@ enhancements.
 Antonio Valentino contributed the port to Python 3.
 
 Google Inc. contributed bug fixes.
+
+S.J. Perkins and Robert A. McLeod added support for single-precision 
+complex64 dtype.
+

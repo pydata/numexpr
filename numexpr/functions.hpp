@@ -8,6 +8,7 @@
   See LICENSE.txt for details about copyright and rights to use.
 **********************************************************************/
 
+
 /* These #if blocks make it easier to query this file, without having
    to define every row function before #including it. */
 #ifndef FUNC_FF
@@ -50,6 +51,47 @@ FUNC_FFF(FUNC_FFF_LAST,    NULL,          NULL,   NULL,    NULL)
 #ifdef ELIDE_FUNC_FFF
 #undef ELIDE_FUNC_FFF
 #undef FUNC_FFF
+#endif
+
+#ifndef FUNC_XX
+#define ELIDE_FUNC_XX
+#define FUNC_XX(...)
+#endif
+FUNC_XX(FUNC_SQRT_XX,    "sqrt_xx",     nx_sqrt, nx_sqrt, vcSqrt)
+FUNC_XX(FUNC_SIN_XX,     "sin_xx",      nx_sin,   vcSin)
+FUNC_XX(FUNC_COS_XX,     "cos_xx",      nx_cos,   vcCos)
+FUNC_XX(FUNC_TAN_XX,     "tan_xx",      nx_tan,   vcTan)
+FUNC_XX(FUNC_ARCSIN_XX,  "arcsin_xx",   nx_asin,  vcAsin)
+FUNC_XX(FUNC_ARXXOS_XX,  "arccos_xx",   nx_acos,  vcAcos)
+FUNC_XX(FUNC_ARCTAN_XX,  "arctan_xx",   nx_atan,  vcAtan)
+FUNC_XX(FUNC_SINH_XX,    "sinh_xx",     nx_sinh,  vcSinh)
+FUNC_XX(FUNC_COSH_XX,    "cosh_xx",     nx_cosh,  vcCosh)
+FUNC_XX(FUNC_TANH_XX,    "tanh_xx",     nx_tanh,  vcTanh)
+FUNC_XX(FUNC_ARCSINH_XX, "arcsinh_xx",  nx_asinh, vcAsinh)
+FUNC_XX(FUNC_ARXXOSH_XX, "arccosh_xx",  nx_acosh, vcAcosh)
+FUNC_XX(FUNC_ARCTANH_XX, "arctanh_xx",  nx_atanh, vcAtanh)
+FUNC_XX(FUNC_LOG_XX,     "log_xx",      nx_log,   vcLn)
+FUNC_XX(FUNC_LOG1P_XX,   "log1p_xx",    nx_log1p, vcLog1p)
+FUNC_XX(FUNC_LOG10_XX,   "log10_xx",    nx_log10, vcLog10)
+FUNC_XX(FUNC_EXP_XX,     "exp_xx",      nx_exp,   vcExp)
+FUNC_XX(FUNC_EXPM1_XX,   "expm1_xx",    nx_expm1, vcExpm1)
+FUNC_XX(FUNC_ABS_XX,     "absolute_xx", nx_abs,   vcAbs_)
+FUNC_XX(FUNC_CONJ_XX,    "conjugate_xx",nx_conj,  vcConj)
+FUNC_XX(FUNC_XX_LAST,    NULL,          NULL,     NULL)
+#ifdef ELIDE_FUNC_XX
+#undef ELIDE_FUNC_XX
+#undef FUNC_XX
+#endif
+
+#ifndef FUNC_XXX
+#define ELIDE_FUNC_XXX
+#define FUNC_XXX(...)
+#endif
+FUNC_XXX(FUNC_POW_XXX,   "pow_xxx", nx_pow)
+FUNC_XXX(FUNC_XXX_LAST,  NULL,      NULL)
+#ifdef ELIDE_FUNC_XXX
+#undef ELIDE_FUNC_XXX
+#undef FUNC_XXX
 #endif
 
 #ifndef FUNC_DD
@@ -134,3 +176,4 @@ FUNC_CCC(FUNC_CCC_LAST,  NULL,      NULL)
 #undef ELIDE_FUNC_CCC
 #undef FUNC_CCC
 #endif
+

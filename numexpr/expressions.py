@@ -27,13 +27,18 @@ if sys.version_info[0] < 3:
 else:
     int_ = numpy.int32
     long_ = numpy.int64
+complex64 = numpy.complex64
 
 type_to_kind = {bool: 'bool', int_: 'int', long_: 'long', float: 'float',
-                double: 'double', complex: 'complex', bytes: 'bytes'}
+                double: 'double', complex: 'complex', complex64: 'complex64',
+                bytes: 'bytes'}
 kind_to_type = {'bool': bool, 'int': int_, 'long': long_, 'float': float,
-                'double': double, 'complex': complex, 'bytes': bytes}
-kind_rank = ['bool', 'int', 'long', 'float', 'double', 'complex', 'none']
-scalar_constant_types = [bool, int_, long, float, double, complex, bytes]
+                'double': double, 'complex': complex, 'complex64' : complex64,
+                'bytes': bytes}
+                
+# RAM: IN SJP's branch, this was letting complex64 cast to double, which is not good behaviour either.
+kind_rank = ['bool', 'int', 'long', 'float', 'double', 'complex64', 'complex', 'none']
+scalar_constant_types = [bool, int_, long, float, complex64, double, complex, bytes]
 
 # Final corrections for Python 3 (mainly for PyTables needs)
 if sys.version_info[0] > 2:
@@ -60,6 +65,13 @@ E = Expression()
 
 
 class Context(threading.local):
+    initialized = False
+
+    def __init__(self, dict_):
+        if self.initialized:
+            raise SystemError('__init__ called too many times')
+        self.initialized = True
+        self.__dict__.update(dict_)
 
     def get(self, value, default):
         return self.__dict__.get(value, default)
@@ -71,7 +83,7 @@ class Context(threading.local):
         self.__dict__.update(dict_)
 
 # This will be called each time the local object is used in a separate thread
-_context = Context()
+_context = Context({})
 
 
 def get_optimization():
@@ -126,6 +138,7 @@ min_int32 = -max_int32 - 1
 
 
 def bestConstantType(x):
+    
     # ``numpy.string_`` is a subclass of ``bytes``
     if isinstance(x, (bytes, str)):
         return bytes
@@ -152,12 +165,14 @@ def bestConstantType(x):
         if not (min_int32 <= x <= max_int32):
             return long_
         return int_
+    if isinstance(x, complex64):
+        return complex64
     # The duality of float and double in Python avoids that we have to list
     # ``double`` too.
     for converter in float, complex:
         try:
             y = converter(x)
-        except StandardError, err:
+        except StandardError:
             continue
         if y == x:
             return converter
@@ -314,6 +329,7 @@ def pow_op(a, b):
                     kind = commonKind([a])
                     if kind in ('int', 'long'):
                         kind = 'double'
+                    # RAM: typo here
                     r = multiply(r, OpNode('sqrt', [a], kind))
                 if r is None:
                     r = OpNode('ones_like', [a])
@@ -367,11 +383,21 @@ functions = {
     'abs': func(numpy.absolute, 'float'),
 
     'where': where_func,
-
-    'real': func(numpy.real, 'double', 'double'),
-    'imag': func(numpy.imag, 'double', 'double'),
+    
+    # RAM: we can't get proper casting behavior because we don't have a 
+    # seperation between kind and order
+    # i.e. c8 <-> f4 and c16 <-> f8
+    # RAM: This block works with double and complex
+    #'real': func(numpy.real, 'double', 'double'),
+    #'imag': func(numpy.imag, 'double', 'double'),
+    #'complex': func(complex, 'complex'),
+    #'conj': func(numpy.conj, 'complex'),
+    
+    # RAM: This works with float32 and complex64
+    'real': func(numpy.real, 'float', 'float'),
+    'imag': func(numpy.imag, 'float', 'float'),
     'complex': func(complex, 'complex'),
-    'conj': func(numpy.conj, 'complex'),
+    'conj': func(numpy.conj, 'complex64'),
 
     'sum': sum_func,
     'prod': prod_func,

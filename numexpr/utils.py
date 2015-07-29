@@ -13,6 +13,7 @@ import subprocess
 
 from numexpr.interpreter import _set_num_threads
 from numexpr import use_vml
+import numexpr
 
 if use_vml:
     from numexpr.interpreter import (
@@ -58,7 +59,7 @@ def set_vml_accuracy_mode(mode):
         return None
 
 
-def set_vml_num_threads(nthreads):
+def set_vml_num_threads(new_nthreads):
     """
     Suggests a maximum number of threads to be used in VML operations.
 
@@ -71,10 +72,10 @@ def set_vml_num_threads(nthreads):
     for more info about it.
     """
     if use_vml:
-        _set_vml_num_threads(nthreads)
+        _set_vml_num_threads(new_nthreads)
 
 
-def set_num_threads(nthreads):
+def set_num_threads(new_nthreads):
     """
     Sets a number of threads to be used in operations.
 
@@ -90,7 +91,8 @@ def set_num_threads(nthreads):
     with common expresions like `(x+1)*(x-2)`, while Numexpr's one
     can.
     """
-    old_nthreads = _set_num_threads(nthreads)
+    old_nthreads = _set_num_threads(new_nthreads)
+    numexpr.nthreads = new_nthreads
     return old_nthreads
 
 
@@ -114,23 +116,25 @@ def detect_number_of_cores():
             return ncpus
     return 1  # Default
 
-
-def detect_number_of_threads():
-    """
-    If this is modified, please update the note in: https://github.com/pydata/numexpr/wiki/Numexpr-Users-Guide
-    """
-    try:
-        nthreads = int(os.environ['NUMEXPR_NUM_THREADS'])
-    except KeyError:
-        nthreads = int(os.environ.get('OMP_NUM_THREADS', detect_number_of_cores()))
-        # Check that we don't activate too many threads at the same time.
+def detect_number_of_threads():		
+    """		
+    If this is modified, please update the note in: https://github.com/pydata/numexpr/wiki/Numexpr-Users-Guide		
+    """		
+    try:		
+        nthreads = int(os.environ['NUMEXPR_NUM_THREADS'])		
+    except KeyError:		
+        nthreads = int(os.environ.get('OMP_NUM_THREADS', detect_number_of_cores()))		
+        # Check that we don't activate too many threads at the same time.		
         # 8 seems a sensible value.
-        if nthreads > 8:
-            nthreads = 8
-    # Check that we don't surpass the MAX_THREADS in interpreter.cpp
-    if nthreads > 4096:
-        nthreads = 4096
-    return nthreads
+        max_sensible_threads = 8
+        if nthreads > max_sensible_threads:	# RAM: add a warning
+            print( "NumExpr warning: threads being set to " + str(max_sensible_threads) /
+                + ", increase with util.set_num_threads(n)" )
+            nthreads = max_sensible_threads		
+    # Check that we don't surpass the MAX_THREADS in interpreter.cpp		
+    if nthreads > 4096:		
+        nthreads = 4096		
+    return nthreads		
 
 
 class CacheDict(dict):

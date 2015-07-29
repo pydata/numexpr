@@ -16,6 +16,7 @@
 
 #include "numexpr_config.hpp"
 #include "complex_functions.hpp"
+#include "complexf_functions.hpp"
 #include "interpreter.hpp"
 #include "numexpr_object.hpp"
 
@@ -68,6 +69,7 @@ static char op_signature_table[][NUMEXPR_MAX_ARGS] = {
 #define Tc 'c'
 #define Ts 's'
 #define Tn 'n'
+#define Tx 'x'
 #define T0 0
 #define OPCODE(n, e, ex, rt, a1, a2, a3) {rt, a1, a2, a3},
 #include "opcodes.hpp"
@@ -80,6 +82,7 @@ static char op_signature_table[][NUMEXPR_MAX_ARGS] = {
 #undef Tc
 #undef Ts
 #undef Tn
+#undef Tx
 #undef T0
 };
 
@@ -113,6 +116,7 @@ op_signature(int op, unsigned int n) {
 
 typedef float (*FuncFFPtr)(float);
 
+//RAM do we need something similar for XX?
 #ifdef _WIN32
 FuncFFPtr functions_ff[] = {
 #define FUNC_FF(fop, s, f, f_win32, ...) f_win32,
@@ -294,6 +298,61 @@ FuncCCCPtr functions_ccc[] = {
 #undef FUNC_CCC
 };
 
+typedef void (*FuncXXPtr)(npy_cfloat*, npy_cfloat*);
+
+FuncXXPtr functions_xx[] = {
+#define FUNC_XX(fop, s, f, ...) f,
+#include "functions.hpp"
+#undef FUNC_XX
+};
+
+#ifdef USE_VML
+/* complex expm1 not available in VML */
+static void vcExpm1(MKL_INT n, const MKL_Complex8* x1, MKL_Complex8* dest)
+{
+    MKL_INT j;
+    vcExp(n, x1, dest);
+    for (j=0; j<n; j++) {
+    dest[j].real -= 1.0;
+    };
+};
+
+static void vcLog1p(MKL_INT n, const MKL_Complex8* x1, MKL_Complex8* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+    dest[j].real = x1[j].real + 1;
+    dest[j].imag = x1[j].imag;
+    };
+    vcLn(n, dest, dest);
+};
+
+/* Use this instead of native vcAbs in VML as it seems to work badly */
+static void vcAbs_(MKL_INT n, const MKL_Complex8* x1, MKL_Complex8* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j].real = sqrt(x1[j].real*x1[j].real + x1[j].imag*x1[j].imag);
+    dest[j].imag = 0;
+    };
+};
+
+typedef void (*FuncXXPtr_vml)(MKL_INT, const MKL_Complex8[], MKL_Complex8[]);
+
+FuncXXPtr_vml functions_xx_vml[] = {
+#define FUNC_XX(fop, s, f, f_vml) f_vml,
+#include "functions.hpp"
+#undef FUNC_XX
+};
+#endif
+
+typedef void (*FuncXXXPtr)(npy_cfloat*, npy_cfloat*, npy_cfloat*);
+
+FuncXXXPtr functions_xxx[] = {
+#define FUNC_XXX(fop, s, f) f,
+#include "functions.hpp"
+#undef FUNC_XXX
+};
 
 char
 get_return_sig(PyObject* program)
@@ -311,6 +370,13 @@ get_return_sig(PyObject* program)
     while (last_opcode == OP_NOOP);
 
     sig = op_signature(last_opcode, 0);
+    // RAM: debug of signature codes
+    //char buffer[256];
+    //sprintf( buffer, "print(' interpreter::get_return_sig, sig = %d')", sig);
+    //PyRun_SimpleString( buffer );
+    // Wow it's annoying to print decimal representation of a string in Python...
+    //sprintf( buffer, "print(' interpreter::get_return_sig, program = ' + ord(%s))", PyString_AsString( PyObject_Str(program)) );
+    //PyRun_SimpleString( buffer );
     if (sig <= 0) {
         return 'X';
     } else {
@@ -328,9 +394,10 @@ typecode_from_char(char c)
         case 'f': return NPY_FLOAT;
         case 'd': return NPY_DOUBLE;
         case 'c': return NPY_CDOUBLE;
+        case 'x': return NPY_CFLOAT;
         case 's': return NPY_STRING;
         default:
-            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcs'");
+            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcxs'");
             return -1;
     }
 }
@@ -449,6 +516,16 @@ check_program(NumExprObject *self)
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
+                } else if (op == OP_FUNC_XXN) {
+                    if (arg < 0 || arg >= FUNC_XX_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                } else if (op == OP_FUNC_XXXN) {
+                    if (arg < 0 || arg >= FUNC_XXX_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
                 } else if (op >= OP_REDUCTION) {
                     ;
                 } else {
@@ -503,10 +580,10 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
        to simulate infinte trailing NULL characters. */
     const char null = 0;
 
-    // First check if some of the operands is the empty string and if so,
-    // just check that the first char of the other is the NULL one.
-    // Fixes #121
-    if (maxlen2 == 0) return *s1 != null;
+    // First check if some of the operands is the empty string and if so,		
+    // just check that the first char of the other is the NULL one.		
+    // Fixes #121		
+    if (maxlen2 == 0) return *s1 != null;		
     if (maxlen1 == 0) return *s2 != null;
 
     maxlen = (maxlen1 > maxlen2) ? maxlen1 : maxlen2;
