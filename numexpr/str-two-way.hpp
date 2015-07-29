@@ -30,7 +30,16 @@
 */
 
 #include <limits.h>
-
+/*
+  Python 2.7 (the only Python 2.x version supported as of now and until 2020)
+  is built on windows with Visual Studio 2008 C compiler. That dictates that
+  the compiler which must be used by authors of third party Python modules.
+  See https://mail.python.org/pipermail/distutils-sig/2014-September/024885.html
+  Unfortunately this version of Visual Studio doesn't claim to be C99 compatible
+  and in particular it lacks the stdint.h header. So we have to replace it with
+  a public domain version.
+  Visual Studio 2010 and later have stdint.h.
+*/
 #ifdef _MSC_VER <= 1500		
 #include "win32/stdint.h"		
 #else		
