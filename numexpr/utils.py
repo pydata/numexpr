@@ -128,8 +128,8 @@ def detect_number_of_threads():
         # 8 seems a sensible value.
         max_sensible_threads = 8
         if nthreads > max_sensible_threads:	# RAM: add a warning
-            print( "NumExpr warning: threads being set to " + str(max_sensible_threads) /
-                + ", increase with util.set_num_threads(n)" )
+            print( "NumExpr warning: threads being set to " + str(max_sensible_threads) 
+				  + ", increase with util.set_num_threads(n)" )
             nthreads = max_sensible_threads		
     # Check that we don't surpass the MAX_THREADS in interpreter.cpp		
     if nthreads > 4096:		
