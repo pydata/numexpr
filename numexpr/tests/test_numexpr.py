@@ -721,19 +721,19 @@ class test_strings(TestCase):
         self.assert_missing_op('add_sss', expr, locals())
 
     def test_empty_string1(self):
-        a = np.array(["", "pepe"])
-        b = np.array(["pepe2", ""])
-        res = evaluate("(a == '') & (b == 'pepe2')")
+        a = np.array([b"", b"pepe"])
+        b = np.array([b"pepe2", b""])
+        res = evaluate("(a == b'') & (b == b'pepe2')")
         assert_array_equal(res, np.array([True, False]))
-        res2 = evaluate("(a == 'pepe') & (b == '')")
+        res2 = evaluate("(a == b'pepe') & (b == b'')")
         assert_array_equal(res2, np.array([False, True]))
 
     def test_empty_string2(self):
-        a = np.array(["p", "pepe"])
-        b = np.array(["pepe2", ""])
-        res = evaluate("(a == '') & (b == 'pepe2')")
+        a = np.array([b"p", b"pepe"])
+        b = np.array([b"pepe2", b""])
+        res = evaluate("(a == b'') & (b == b'pepe2')")
         assert_array_equal(res, np.array([False, False]))
-        res2 = evaluate("(a == 'pepe') & (b == '')")
+        res2 = evaluate("(a == b'pepe') & (b == b'')")
         assert_array_equal(res, np.array([False, False]))
 
     def test_add_numeric_array(self):
