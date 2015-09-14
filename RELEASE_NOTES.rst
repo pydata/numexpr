@@ -6,7 +6,18 @@ Changes from 2.4.3 to 2.4.4
 ===========================
 
 * Honor OMP_NUM_THREADS as a fallback in case NUMEXPR_NUM_THREADS is not
-  set. Fixes #161.
+  set. Fixes #161. (PR #175, Stefan Erb).
+
+* Added support for AppVeyor (PR #178 Andrea Bedini)
+
+* Fix to allow numexpr to be imported after eventlet.monkey_patch(),
+  as suggested in #118 (PR #180 Ben Moran).
+
+* Fix harmless data race that triggers false positives in ThreadSanitizer.
+  (PR #179, Clement Courbet).
+
+* Fixed some string tests on Python 3.  PR #182, Antonio Valentino.
+
 
 Changes from 2.4.2 to 2.4.3
 ===========================
