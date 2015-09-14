@@ -15,8 +15,6 @@ Numexpr: Fast numerical expression evaluator for NumPy
         :target: https://ci.appveyor.com/project/FrancescAlted/numexpr
 .. |pypi| image:: https://pypip.in/d/numexpr/badge.png
         :target: https://pypi.python.org/pypi/numexpr
-.. |version| image:: https://pypip.in/v/numexpr/badge.png
-        :target: https://pypi.python.org/pypi/numexpr
 
 
 What it is Numexpr?
