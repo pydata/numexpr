@@ -1,8 +1,8 @@
-=====================================================
-Numexpr: a fast Python evaluator of NumPy expressions
-=====================================================
+======================================================
+Numexpr: Fast numerical expression evaluator for NumPy
+======================================================
 
-:Author: Francesc Alted
+:Author: David M. Cooke, Francesc Alted and others
 :Contact: faltet@gmail.com
 :URL: https://github.com/pydata/numexpr
 :Travis CI: |travis|
