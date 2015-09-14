@@ -12,7 +12,7 @@ Numexpr: a fast Python evaluator of NumPy expressions
 .. |travis| image:: https://travis-ci.org/pydata/numexpr.png?branch=master
         :target: https://travis-ci.org/pydata/numexpr
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/FrancescAlted/numexpr
-        :target: https://travis-ci.org/pydata/numexpr
+        :target: https://ci.appveyor.com/project/FrancescAlted/numexpr
 .. |pypi| image:: https://pypip.in/d/numexpr/badge.png
         :target: https://pypi.python.org/pypi/numexpr
 .. |version| image:: https://pypip.in/v/numexpr/badge.png

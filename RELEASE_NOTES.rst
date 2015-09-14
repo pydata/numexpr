@@ -5,6 +5,12 @@
 Changes from 2.4.3 to 2.4.4
 ===========================
 
+#XXX version-specific blurb XXX#
+
+
+Changes from 2.4.3 to 2.4.4
+===========================
+
 * Honor OMP_NUM_THREADS as a fallback in case NUMEXPR_NUM_THREADS is not
   set. Fixes #161. (PR #175, Stefan Erb).
 

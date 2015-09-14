@@ -65,10 +65,6 @@ Uploading
 Announcing
 ----------
 
-- Update the release notes in the numexpr site:
-
-  https://github.com/pydata/numexpr/wiki/Release-Notes
-
 - Send an announcement to the NumPy list and python-announce list.
   Use the ``ANNOUNCE.rst`` file as skeleton (or possibly as the
   definitive version).
