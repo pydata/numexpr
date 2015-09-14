@@ -16,7 +16,7 @@ Changes from 2.4.3 to 2.4.4
 * Fix harmless data race that triggers false positives in ThreadSanitizer.
   (PR #179, Clement Courbet).
 
-* Fixed some string tests on Python 3.  PR #182, Antonio Valentino.
+* Fixed some string tests on Python 3 (PR #182, Antonio Valentino).
 
 
 Changes from 2.4.2 to 2.4.3

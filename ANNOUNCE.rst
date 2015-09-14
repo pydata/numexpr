@@ -21,12 +21,15 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-#XXX version-specific blurb XXX#
+This is a maintenance release which contains several bug fixes, like
+better testing on Python3 platform and some harmless data race.  Among
+the enhancements, AppVeyor support is here and OMP_NUM_THREADS is
+honored as a fallback in case NUMEXPR_NUM_THREADS is not set.
 
 In case you want to know more in detail what has changed in this
 version, see:
 
-https://github.com/pydata/numexpr/wiki/Release-Notes
+https://github.com/pydata/numexpr/blob/master/RELEASE_NOTES.rst
 
 or have a look at RELEASE_NOTES.txt in the tarball.
 
