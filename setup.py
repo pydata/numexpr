@@ -198,7 +198,7 @@ def setup_package():
         class build_ext(numpy_build_ext):
             def build_extension(self, ext):
                 # at this point we know what the C compiler is.
-                if self.compiler.compiler_type == 'msvc':
+                if self.compiler.compiler_type == 'msvc' or self.compiler.compiler_type == 'intelemw':
                     ext.extra_compile_args = []
                     # also remove extra linker arguments msvc doesn't understand
                     ext.extra_link_args = []
