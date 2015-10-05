@@ -45,6 +45,7 @@ from numexpr.utils import (
     set_num_threads, detect_number_of_cores, detect_number_of_threads)
 
 # Detect the number of cores
+# RAM: the functions in util don't update numexpr.ncores or numexpr.nthreads, 
 ncores = detect_number_of_cores()
 nthreads = detect_number_of_threads()
 

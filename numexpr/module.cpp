@@ -47,10 +47,9 @@ void *th_worker(void *tidptr)
     vector<char> out_buffer;
 
     while (1) {
-
-        if (tid == 0) {
-            /* sentinels have to be initialised yet */
-            gs.init_sentinels_done = 0;
+        
+        if (tid==0) {
+            gs.init_sentinels_done = 0;     /* sentinels have to be initialised yet */
         }
 
         /* Meeting point for all threads (wait for initialization) */
@@ -423,7 +422,11 @@ initinterpreter()
 #define FUNC_DDD(name, sname, ...) add_func(name, sname);
 #define FUNC_CC(name, sname, ...)  add_func(name, sname);
 #define FUNC_CCC(name, sname, ...) add_func(name, sname);
+#define FUNC_XX(name, sname, ...)  add_func(name, sname);
+#define FUNC_XXX(name, sname, ...) add_func(name, sname);
 #include "functions.hpp"
+#undef FUNC_XXX
+#undef FUNC_XX
 #undef FUNC_CCC
 #undef FUNC_CC
 #undef FUNC_DDD
