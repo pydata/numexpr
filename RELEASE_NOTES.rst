@@ -5,7 +5,7 @@
 Changes from 2.4.3 to 2.4.4
 ===========================
 
-#XXX version-specific blurb XXX#
+- Fix bad #ifdef for including stdint on Windows (PR #186, Mike Sarahan).
 
 
 Changes from 2.4.3 to 2.4.4
