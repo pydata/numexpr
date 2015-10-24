@@ -7,6 +7,9 @@ Changes from 2.4.3 to 2.4.4
 
 - Fix bad #ifdef for including stdint on Windows (PR #186, Mike Sarahan).
 
+- Undone a 'fix' for a harmless data race.  (#185 Benedikt Reinartz,
+  Francesc Alted).
+
 
 Changes from 2.4.3 to 2.4.4
 ===========================
