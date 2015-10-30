@@ -2,13 +2,22 @@
  Release notes for Numexpr 2.4 series
 ======================================
 
+Changes from 2.4.4 to 2.4.5
+===========================
+
+- Undone a 'fix' for a harmless data race.  (#185 Benedikt Reinartz,
+  Francesc Alted).
+
+- Ignore NumPy warnings (Overflow, divide by zero and others) that
+  only show up in Python3.  Masking the warnings in tests is fine
+  because all the results are checked to be valid. (#183,
+  Francesc Alted).
+
+
 Changes from 2.4.3 to 2.4.4
 ===========================
 
 - Fix bad #ifdef for including stdint on Windows (PR #186, Mike Sarahan).
-
-- Undone a 'fix' for a harmless data race.  (#185 Benedikt Reinartz,
-  Francesc Alted).
 
 
 Changes from 2.4.3 to 2.4.4

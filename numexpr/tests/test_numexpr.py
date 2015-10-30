@@ -912,6 +912,10 @@ def test():
     """
 
     print_versions()
+    # For some reason, NumPy issues all kinds of warnings when using Python3.
+    # Ignoring them in tests should be ok, as all results are checked out.
+    # See https://github.com/pydata/numexpr/issues/183 for details.
+    np.seterr(divide='ignore', invalid='ignore', over='ignore', under='ignore')
     return unittest.TextTestRunner().run(suite())
 
 
