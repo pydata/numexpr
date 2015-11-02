@@ -44,7 +44,7 @@
   Visual Studio 2010 and later have stdint.h.
 */
 
-#if _MSC_VER <= 1500
+#if defined(_MSC_VER) && _MSC_VER <= 1500
 #include "win32/stdint.h"
 #else
 #include <stdint.h>
