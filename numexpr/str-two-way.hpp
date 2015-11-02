@@ -44,10 +44,12 @@
   Visual Studio 2010 and later have stdint.h.
 */
 
-#if _MSC_VER <= 1500
-#include "win32/stdint.h"
+#ifdef _MSC_VER
+  #if _MSC_VER <= 1500
+    #include "win32/stdint.h"
+  #endif
 #else
-#include <stdint.h>
+  #include <stdint.h>
 #endif
 
 /* We use the Two-Way string matching algorithm, which guarantees
