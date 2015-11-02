@@ -507,11 +507,11 @@ class SunOSCPUInfo(CPUInfoBase):
             return
         info = command_info(arch='arch',
                             mach='mach',
-                            uname_i='uname_i',
+                            uname_i=['uname', '-i'],
                             isainfo_b=['isainfo', '-b'],
                             isainfo_n=['isainfo', '-n'],
         )
-        info['uname_X'] = key_value_from_command('uname -X', sep='=')
+        info['uname_X'] = key_value_from_command(['uname', '-X'], sep='=')
         for line in command_by_line(['psrinfo', '-v', '0']):
             m = re.match(r'\s*The (?P<p>[\w\d]+) processor operates at', line)
             if m:
