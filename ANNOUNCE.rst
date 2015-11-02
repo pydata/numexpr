@@ -21,7 +21,10 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-#XXX version-specific blurb XXX#
+This is a maintenance release where an important bug in multithreading
+code has been fixed (#185 Benedikt Reinartz, Francesc Alted).  Also,
+many harmless warnings (overflow/underflow, divide by zero and others)
+in the test suite have been silenced  (#183, Francesc Alted).
 
 In case you want to know more in detail what has changed in this
 version, see:
