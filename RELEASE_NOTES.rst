@@ -2,6 +2,14 @@
  Release notes for Numexpr 2.4 series
 ======================================
 
+Changes from 2.4.5 to 2.4.6
+===========================
+
+- Fixed some UserWarnings in Solaris (PR #189, Graham Jones).
+
+- Better handling of MSVC defines. (#168, Francesc Alted).
+
+
 Changes from 2.4.4 to 2.4.5
 ===========================
 
