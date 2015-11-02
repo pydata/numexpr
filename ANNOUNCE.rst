@@ -1,5 +1,5 @@
 =========================
- Announcing Numexpr 2.4.6
+ Announcing Numexpr 2.4.7
 =========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -21,9 +21,7 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-This is a quick maintenance version that offers better handling of
-MSVC symbols (#168, Francesc Alted), as well as fising some
-UserWarnings in Solaris (#189, Graham Jones).
+#XXX version-specific blurb XXX#
 
 In case you want to know more in detail what has changed in this
 version, see:
