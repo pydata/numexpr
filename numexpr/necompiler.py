@@ -261,7 +261,8 @@ def stringToExpression(s, types, context):
 
 
 def isReduction(ast):
-    return ast.value.startswith(b'sum_') or ast.value.startswith(b'prod_')
+    prefixes = (b'sum_', b'prod_', b'min_', b'max_')
+    return any(ast.value.startswith(p) for p in prefixes)
 
 
 def getInputOrder(ast, input_order=None):

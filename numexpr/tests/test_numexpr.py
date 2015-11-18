@@ -97,17 +97,25 @@ class test_numexpr(TestCase):
         assert_allclose(evaluate("sum(x+2,axis=None)"), sum(x + 2, axis=None))
         assert_allclose(evaluate("sum(x+2,axis=0)"), sum(x + 2, axis=0))
         assert_allclose(evaluate("prod(x,axis=0)"), prod(x, axis=0))
+        assert_allclose(evaluate("min(x)"), np.min(x))
+        assert_allclose(evaluate("max(x,axis=0)"), np.max(x, axis=0))
 
         x = arange(10.0)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("min(x**2+2,axis=0)"), np.min(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("max(x**2+2,axis=0)"), np.max(x ** 2 + 2, axis=0))
 
         x = arange(100.0)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x - 1, axis=0))
+        assert_allclose(evaluate("min(x-1,axis=0)"), np.min(x - 1, axis=0))
+        assert_allclose(evaluate("max(x-1,axis=0)"), np.max(x - 1, axis=0))
         x = linspace(0.1, 1.0, 2000)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x - 1, axis=0))
+        assert_allclose(evaluate("min(x-1,axis=0)"), np.min(x - 1, axis=0))
+        assert_allclose(evaluate("max(x-1,axis=0)"), np.max(x - 1, axis=0))
 
         # Check that reductions along an axis work
         y = arange(9.0).reshape(3, 3)
@@ -117,15 +125,25 @@ class test_numexpr(TestCase):
         assert_allclose(evaluate("prod(y**2, axis=1)"), prod(y ** 2, axis=1))
         assert_allclose(evaluate("prod(y**2, axis=0)"), prod(y ** 2, axis=0))
         assert_allclose(evaluate("prod(y**2, axis=None)"), prod(y ** 2, axis=None))
+        assert_allclose(evaluate("min(y**2, axis=1)"), np.min(y ** 2, axis=1))
+        assert_allclose(evaluate("min(y**2, axis=0)"), np.min(y ** 2, axis=0))
+        assert_allclose(evaluate("min(y**2, axis=None)"), np.min(y ** 2, axis=None))
+        assert_allclose(evaluate("max(y**2, axis=1)"), np.max(y ** 2, axis=1))
+        assert_allclose(evaluate("max(y**2, axis=0)"), np.max(y ** 2, axis=0))
+        assert_allclose(evaluate("max(y**2, axis=None)"), np.max(y ** 2, axis=None))
         # Check integers
         x = arange(10.)
         x = x.astype(int)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("min(x**2+2,axis=0)"), np.min(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("max(x**2+2,axis=0)"), np.max(x ** 2 + 2, axis=0))
         # Check longs
         x = x.astype(long)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("min(x**2+2,axis=0)"), np.min(x ** 2 + 2, axis=0))
+        assert_allclose(evaluate("max(x**2+2,axis=0)"), np.max(x ** 2 + 2, axis=0))
         # Check complex
         x = x + .1j
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
