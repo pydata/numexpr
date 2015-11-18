@@ -93,7 +93,7 @@ class test_numexpr(TestCase):
                       (b'add_ddd', b't3', b't3', b'c2[2.0]'),
                       (b'prod_ddn', b'r0', b't3', 2)])
         # Check that full reductions work.
-        x = zeros(1e5) + .01  # checks issue #41
+        x = zeros(100000) + .01  # checks issue #41
         assert_allclose(evaluate("sum(x+2,axis=None)"), sum(x + 2, axis=None))
         assert_allclose(evaluate("sum(x+2,axis=0)"), sum(x + 2, axis=0))
         assert_allclose(evaluate("prod(x,axis=0)"), prod(x, axis=0))
