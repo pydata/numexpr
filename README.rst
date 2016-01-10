@@ -58,9 +58,7 @@ Numexpr performs best on matrices that do not fit in CPU cache.
 In order to get a better idea on the different speed-ups
 that can be achieved on your platform, run the provided benchmarks.
 
-See more info about how Numexpr works in the wiki_.
-
-.. wiki_ https://github.com/pydata/numexpr/wiki
+See more info about how Numexpr works in the `wiki <https://github.com/pydata/numexpr/wiki>`_.
 
 
 Examples of use
@@ -273,8 +271,7 @@ This call is equivalent to the `vmlSetMode()` in the VML library.
 This function is equivalent to the call
 `mkl_domain_set_num_threads(nthreads, MKL_DOMAIN_VML)` in the MKL library.
 
-See the Intel documentation on `VM Service Functions`_ for more information.
-.. _`VM Service Functions` https://software.intel.com/en-us/node/521831
+See the Intel documentation on `VM Service Functions <https://software.intel.com/en-us/node/521831>`_ for more information.
 
 * get_vml_version():  Get the VML/MKL library version.
 
