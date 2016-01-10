@@ -20,3 +20,5 @@ enhancements.
 Antonio Valentino contributed the port to Python 3.
 
 Google Inc. contributed bug fixes.
+
+David Cox improved readability of the Readme.
