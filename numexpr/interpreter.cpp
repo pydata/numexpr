@@ -691,12 +691,18 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
                         bool need_output_buffering, int *pc_error,
                         char **errmsg)
 {
-    int i;
+    int i, ret = -1;
     npy_intp numblocks, taskfactor;
 
     if (errmsg == NULL) {
         return -1;
     }
+
+    /* Ensure only one parallel job is running at a time (otherwise
+       the global th_params get corrupted). */
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&gs.parallel_mutex);
+    Py_END_ALLOW_THREADS;
 
     /* Populate parameters for worker threads */
     NpyIter_GetIterIndexRange(iter, &th_params.start, &th_params.vlen);
@@ -723,7 +729,7 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
             for (; i > 0; --i) {
                 NpyIter_Deallocate(th_params.iter[i]);
             }
-            return -1;
+            goto end;
         }
     }
     th_params.memsteps[0] = params.memsteps;
@@ -739,7 +745,7 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
             for (i = 0; i < gs.nthreads; ++i) {
                 NpyIter_Deallocate(th_params.iter[i]);
             }
-            return -1;
+            goto end;
         }
         memcpy(th_params.memsteps[i], th_params.memsteps[0],
                 sizeof(npy_intp) *
@@ -778,7 +784,11 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
         PyMem_Del(th_params.memsteps[i]);
     }
 
-    return th_params.ret_code;
+    ret = th_params.ret_code;
+
+end:
+    pthread_mutex_unlock(&gs.parallel_mutex);
+    return ret;
 }
 
 static int

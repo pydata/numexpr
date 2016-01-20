@@ -187,6 +187,7 @@ int init_threads(void)
 
     /* Initialize mutex and condition variable objects */
     pthread_mutex_init(&gs.count_mutex, NULL);
+    pthread_mutex_init(&gs.parallel_mutex, NULL);
 
     /* Barrier initialization */
     pthread_mutex_init(&gs.count_threads_mutex, NULL);
