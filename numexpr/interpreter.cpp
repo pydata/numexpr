@@ -45,7 +45,12 @@
 #define DEBUG_TEST 0
 #endif
 
-
+#ifndef INFINITY
+#define INFINITY (DBL_MAX+DBL_MAX)
+#endif
+#ifndef NAN
+#define NAN (INFINITY-INFINITY)
+#endif
 
 using namespace std;
 
