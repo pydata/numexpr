@@ -841,6 +841,7 @@ class test_threading_config(TestCase):
 
 # Case test for threads
 class test_threading(TestCase):
+
     def test_thread(self):
         import threading
 
@@ -851,6 +852,25 @@ class test_threading(TestCase):
 
         test = ThreadTest()
         test.start()
+        test.join()
+
+    def test_multithread(self):
+        import threading
+
+        # Running evaluate() from multiple threads shouldn't crash
+        def work(n):
+            a = arange(n)
+            evaluate('a+a')
+
+        work(10)  # warm compilation cache
+
+        nthreads = 30
+        threads = [threading.Thread(target=work, args=(1e5,))
+                   for i in range(nthreads)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
 
 
 # The worker function for the subprocess (needs to be here because Windows

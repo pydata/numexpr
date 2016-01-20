@@ -27,11 +27,14 @@ struct global_state {
     int force_serial;                /* force serial code instead of parallel? */
     int pid;                         /* the PID for this process */
 
-    /* Syncronization variables */
+    /* Synchronization variables for threadpool state */
     pthread_mutex_t count_mutex;
     int count_threads;
     pthread_mutex_t count_threads_mutex;
     pthread_cond_t count_threads_cv;
+
+    /* Mutual exclusion for access to global thread params (th_params) */
+    pthread_mutex_t parallel_mutex;
 
     global_state() {
         nthreads = 1;
