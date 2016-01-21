@@ -48,6 +48,19 @@ enum FuncCCCCodes {
 #undef FUNC_CCC
 };
 
+enum FuncXXCodes {
+#define FUNC_XX(fop, ...) fop,
+#include "functions.hpp"
+#undef FUNC_XX
+};
+
+enum FuncXXXCodes {
+#define FUNC_XXX(fop, ...) fop,
+#include "functions.hpp"
+#undef FUNC_XXX
+};
+
+
 struct vm_params {
     int prog_len;
     unsigned char *program;

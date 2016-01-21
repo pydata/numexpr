@@ -134,3 +134,44 @@ FUNC_CCC(FUNC_CCC_LAST,  NULL,      NULL)
 #undef ELIDE_FUNC_CCC
 #undef FUNC_CCC
 #endif
+
+#ifndef FUNC_XX
+#define ELIDE_FUNC_XX
+#define FUNC_XX(...)
+#endif
+FUNC_XX(FUNC_SQRT_XX,    "sqrt_xx",     ncf_sqrt,  vcSqrt)
+FUNC_XX(FUNC_SIN_XX,     "sin_xx",      ncf_sin,   vcSin)
+FUNC_XX(FUNC_COS_XX,     "cos_xx",      ncf_cos,   vcCos)
+FUNC_XX(FUNC_TAN_XX,     "tan_xx",      ncf_tan,   vcTan)
+FUNC_XX(FUNC_ARCSIN_XX,  "arcsin_xx",   ncf_asin,  vcAsin)
+FUNC_XX(FUNC_ARXXOS_XX,  "arccos_xx",   ncf_acos,  vcAcos)
+FUNC_XX(FUNC_ARCTAN_XX,  "arctan_xx",   ncf_atan,  vcAtan)
+FUNC_XX(FUNC_SINH_XX,    "sinh_xx",     ncf_sinh,  vcSinh)
+FUNC_XX(FUNC_COSH_XX,    "cosh_xx",     ncf_cosh,  vcCosh)
+FUNC_XX(FUNC_TANH_XX,    "tanh_xx",     ncf_tanh,  vcTanh)
+FUNC_XX(FUNC_ARCSINH_XX, "arcsinh_xx",  ncf_asinh, vcAsinh)
+FUNC_XX(FUNC_ARXXOSH_XX, "arccosh_xx",  ncf_acosh, vcAcosh)
+FUNC_XX(FUNC_ARCTANH_XX, "arctanh_xx",  ncf_atanh, vcAtanh)
+FUNC_XX(FUNC_LOG_XX,     "log_xx",      ncf_log,   vcLn)
+FUNC_XX(FUNC_LOG1P_XX,   "log1p_xx",    ncf_log1p, vcLog1p)
+FUNC_XX(FUNC_LOG10_XX,   "log10_xx",    ncf_log10, vcLog10)
+FUNC_XX(FUNC_EXP_XX,     "exp_xx",      ncf_exp,   vcExp)
+FUNC_XX(FUNC_EXPM1_XX,   "expm1_xx",    ncf_expm1, vcExpm1)
+FUNC_XX(FUNC_ABS_XX,     "absolute_xx", ncf_abs,   vcAbs_)
+FUNC_XX(FUNC_CONJ_XX,    "conjugate_xx",ncf_conj,  vcConj)
+FUNC_XX(FUNC_XX_LAST,    NULL,          NULL,     NULL)
+#ifdef ELIDE_FUNC_XX
+#undef ELIDE_FUNC_XX
+#undef FUNC_XX
+#endif
+
+#ifndef FUNC_XXX
+#define ELIDE_FUNC_XXX
+#define FUNC_XXX(...)
+#endif
+FUNC_XXX(FUNC_POW_XXX,   "pow_xxx", ncf_pow)
+FUNC_XXX(FUNC_XXX_LAST,  NULL,      NULL)
+#ifdef ELIDE_FUNC_XXX
+#undef ELIDE_FUNC_XXX
+#undef FUNC_XXX
+#endif
