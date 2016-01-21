@@ -11,6 +11,7 @@
 import __future__
 import sys
 import numpy
+import threading
 
 from numexpr import interpreter, expressions, use_vml, is_cpu_amd_intel
 from numexpr.utils import CacheDict
@@ -684,6 +685,7 @@ def getExprNames(text, context):
 _names_cache = CacheDict(256)
 _numexpr_cache = CacheDict(256)
 
+evaluate_lock = threading.Lock()
 
 def evaluate(ex, local_dict=None, global_dict=None,
              out=None, order='K', casting='safe', **kwargs):
@@ -729,39 +731,40 @@ def evaluate(ex, local_dict=None, global_dict=None,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
     """
-    if not isinstance(ex, (str, unicode)):
-        raise ValueError("must specify expression as a string")
-    # Get the names for this expression
-    context = getContext(kwargs, frame_depth=1)
-    expr_key = (ex, tuple(sorted(context.items())))
-    if expr_key not in _names_cache:
-        _names_cache[expr_key] = getExprNames(ex, context)
-    names, ex_uses_vml = _names_cache[expr_key]
-    # Get the arguments based on the names.
-    call_frame = sys._getframe(1)
-    if local_dict is None:
-        local_dict = call_frame.f_locals
-    if global_dict is None:
-        global_dict = call_frame.f_globals
-
-    arguments = []
-    for name in names:
+    with evaluate_lock:
+        if not isinstance(ex, (str, unicode)):
+            raise ValueError("must specify expression as a string")
+        # Get the names for this expression
+        context = getContext(kwargs, frame_depth=1)
+        expr_key = (ex, tuple(sorted(context.items())))
+        if expr_key not in _names_cache:
+            _names_cache[expr_key] = getExprNames(ex, context)
+        names, ex_uses_vml = _names_cache[expr_key]
+        # Get the arguments based on the names.
+        call_frame = sys._getframe(1)
+        if local_dict is None:
+            local_dict = call_frame.f_locals
+        if global_dict is None:
+            global_dict = call_frame.f_globals
+    
+        arguments = []
+        for name in names:
+            try:
+                a = local_dict[name]
+            except KeyError:
+                a = global_dict[name]
+            arguments.append(numpy.asarray(a))
+    
+        # Create a signature
+        signature = [(name, getType(arg)) for (name, arg) in zip(names, arguments)]
+    
+        # Look up numexpr if possible.
+        numexpr_key = expr_key + (tuple(signature),)
         try:
-            a = local_dict[name]
+            compiled_ex = _numexpr_cache[numexpr_key]
         except KeyError:
-            a = global_dict[name]
-        arguments.append(numpy.asarray(a))
-
-    # Create a signature
-    signature = [(name, getType(arg)) for (name, arg) in zip(names, arguments)]
-
-    # Look up numexpr if possible.
-    numexpr_key = expr_key + (tuple(signature),)
-    try:
-        compiled_ex = _numexpr_cache[numexpr_key]
-    except KeyError:
-        compiled_ex = _numexpr_cache[numexpr_key] = \
-            NumExpr(ex, signature, **context)
-    kwargs = {'out': out, 'order': order, 'casting': casting,
-              'ex_uses_vml': ex_uses_vml}
-    return compiled_ex(*arguments, **kwargs)
+            compiled_ex = _numexpr_cache[numexpr_key] = \
+                NumExpr(ex, signature, **context)
+        kwargs = {'out': out, 'order': order, 'casting': casting,
+                  'ex_uses_vml': ex_uses_vml}
+        return compiled_ex(*arguments, **kwargs)
