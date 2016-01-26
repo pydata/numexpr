@@ -45,7 +45,12 @@
 #define DEBUG_TEST 0
 #endif
 
-
+#ifndef INFINITY
+#define INFINITY (DBL_MAX+DBL_MAX)
+#endif
+#ifndef NAN
+#define NAN (INFINITY-INFINITY)
+#endif
 
 using namespace std;
 
@@ -1372,16 +1377,26 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     /* Initialize the output to the reduction unit */
     if (is_reduction) {
         PyArrayObject *a = NpyIter_GetOperandArray(iter)[0];
-        if (last_opcode(self->program) >= OP_SUM &&
-            last_opcode(self->program) < OP_PROD) {
-                PyObject *zero = PyLong_FromLong(0);
-                PyArray_FillWithScalar(a, zero);
-                Py_DECREF(zero);
+        PyObject *fill;
+        int op = last_opcode(self->program);
+        if (op < OP_PROD) {
+            /* sum identity is 0 */
+            fill = PyLong_FromLong(0);
+        } else if (op >= OP_PROD && op < OP_MIN) {
+            /* product identity is 1 */
+            fill = PyLong_FromLong(1);
+        } else if (PyArray_DESCR(a)->kind == 'f') {
+            /* floating point min/max identity is NaN */
+            fill = PyFloat_FromDouble(NAN);
+        } else if (op >= OP_MIN && op < OP_MAX) {
+            /* integer min identity */
+            fill = PyLong_FromLong(LONG_MAX);
         } else {
-                PyObject *one = PyLong_FromLong(1);
-                PyArray_FillWithScalar(a, one);
-                Py_DECREF(one);
+            /* integer max identity */
+            fill = PyLong_FromLong(LONG_MIN);
         }
+        PyArray_FillWithScalar(a, fill);
+        Py_DECREF(fill);
     }
 
     /* Get the sizes of all the operands */

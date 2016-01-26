@@ -231,22 +231,15 @@ def encode_axis(axis):
     return RawNode(axis)
 
 
-def sum_func(a, axis=None):
-    axis = encode_axis(axis)
-    if isinstance(a, ConstantNode):
-        return a
-    if isinstance(a, (bool, int_, long_, float, double, complex)):
-        a = ConstantNode(a)
-    return FuncNode('sum', [a, axis], kind=a.astKind)
-
-
-def prod_func(a, axis=None):
-    axis = encode_axis(axis)
-    if isinstance(a, (bool, int_, long_, float, double, complex)):
-        a = ConstantNode(a)
-    if isinstance(a, ConstantNode):
-        return a
-    return FuncNode('prod', [a, axis], kind=a.astKind)
+def gen_reduce_axis_func(name):
+    def _func(a, axis=None):
+        axis = encode_axis(axis)
+        if isinstance(a, ConstantNode):
+            return a
+        if isinstance(a, (bool, int_, long_, float, double, complex)):
+            a = ConstantNode(a)
+        return FuncNode(name, [a, axis], kind=a.astKind)
+    return _func
 
 
 @ophelper
@@ -373,8 +366,10 @@ functions = {
     'complex': func(complex, 'complex'),
     'conj': func(numpy.conj, 'complex'),
 
-    'sum': sum_func,
-    'prod': prod_func,
+    'sum': gen_reduce_axis_func('sum'),
+    'prod': gen_reduce_axis_func('prod'),
+    'min': gen_reduce_axis_func('min'),
+    'max': gen_reduce_axis_func('max'),
     'contains': contains_func,
 }
 
