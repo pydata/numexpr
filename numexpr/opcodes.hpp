@@ -150,19 +150,30 @@ OPCODE(106, OP_REDUCTION, NULL, T0, T0, T0, T0)
 /* Last argument in a reduction is the axis of the array the
    reduction should be applied along. */
 
-OPCODE(107, OP_SUM, NULL, T0, T0, T0, T0)
-OPCODE(108, OP_SUM_IIN, "sum_iin", Ti, Ti, Tn, T0)
-OPCODE(109, OP_SUM_LLN, "sum_lln", Tl, Tl, Tn, T0)
-OPCODE(110, OP_SUM_FFN, "sum_ffn", Tf, Tf, Tn, T0)
-OPCODE(111, OP_SUM_DDN, "sum_ddn", Td, Td, Tn, T0)
-OPCODE(112, OP_SUM_CCN, "sum_ccn", Tc, Tc, Tn, T0)
+OPCODE(107, OP_SUM_IIN, "sum_iin", Ti, Ti, Tn, T0)
+OPCODE(108, OP_SUM_LLN, "sum_lln", Tl, Tl, Tn, T0)
+OPCODE(109, OP_SUM_FFN, "sum_ffn", Tf, Tf, Tn, T0)
+OPCODE(110, OP_SUM_DDN, "sum_ddn", Td, Td, Tn, T0)
+OPCODE(111, OP_SUM_CCN, "sum_ccn", Tc, Tc, Tn, T0)
 
-OPCODE(113, OP_PROD, NULL, T0, T0, T0, T0)
-OPCODE(114, OP_PROD_IIN, "prod_iin", Ti, Ti, Tn, T0)
-OPCODE(115, OP_PROD_LLN, "prod_lln", Tl, Tl, Tn, T0)
-OPCODE(116, OP_PROD_FFN, "prod_ffn", Tf, Tf, Tn, T0)
-OPCODE(117, OP_PROD_DDN, "prod_ddn", Td, Td, Tn, T0)
-OPCODE(118, OP_PROD_CCN, "prod_ccn", Tc, Tc, Tn, T0)
+OPCODE(112, OP_PROD, NULL, T0, T0, T0, T0)
+OPCODE(113, OP_PROD_IIN, "prod_iin", Ti, Ti, Tn, T0)
+OPCODE(114, OP_PROD_LLN, "prod_lln", Tl, Tl, Tn, T0)
+OPCODE(115, OP_PROD_FFN, "prod_ffn", Tf, Tf, Tn, T0)
+OPCODE(116, OP_PROD_DDN, "prod_ddn", Td, Td, Tn, T0)
+OPCODE(117, OP_PROD_CCN, "prod_ccn", Tc, Tc, Tn, T0)
+
+OPCODE(118, OP_MIN, NULL, T0, T0, T0, T0)
+OPCODE(119, OP_MIN_IIN, "min_iin", Ti, Ti, Tn, T0)
+OPCODE(120, OP_MIN_LLN, "min_lln", Tl, Tl, Tn, T0)
+OPCODE(121, OP_MIN_FFN, "min_ffn", Tf, Tf, Tn, T0)
+OPCODE(122, OP_MIN_DDN, "min_ddn", Td, Td, Tn, T0)
+
+OPCODE(123, OP_MAX, NULL, T0, T0, T0, T0)
+OPCODE(124, OP_MAX_IIN, "max_iin", Ti, Ti, Tn, T0)
+OPCODE(125, OP_MAX_LLN, "max_lln", Tl, Tl, Tn, T0)
+OPCODE(126, OP_MAX_FFN, "max_ffn", Tf, Tf, Tn, T0)
+OPCODE(127, OP_MAX_DDN, "max_ddn", Td, Td, Tn, T0)
 
 /* Should be the last opcode */
-OPCODE(119, OP_END, NULL, T0, T0, T0, T0)
+OPCODE(128, OP_END, NULL, T0, T0, T0, T0)

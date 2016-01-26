@@ -456,6 +456,16 @@
                                    ci_reduce = cr_reduce*c1i + ci_reduce*c1r;
                                    cr_reduce = da);
 
+        case OP_MIN_IIN: VEC_ARG1(i_reduce = fmin(i_reduce, i1));
+        case OP_MIN_LLN: VEC_ARG1(l_reduce = fmin(l_reduce, l1));
+        case OP_MIN_FFN: VEC_ARG1(f_reduce = fmin(f_reduce, f1));
+        case OP_MIN_DDN: VEC_ARG1(d_reduce = fmin(d_reduce, d1));
+
+        case OP_MAX_IIN: VEC_ARG1(i_reduce = fmax(i_reduce, i1));
+        case OP_MAX_LLN: VEC_ARG1(l_reduce = fmax(l_reduce, l1));
+        case OP_MAX_FFN: VEC_ARG1(f_reduce = fmax(f_reduce, f1));
+        case OP_MAX_DDN: VEC_ARG1(d_reduce = fmax(d_reduce, d1));
+
         default:
             *pc_error = pc;
             return -3;
