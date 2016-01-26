@@ -19,6 +19,13 @@
 #include "interpreter.hpp"
 #include "numexpr_object.hpp"
 
+#ifdef _MSC_VER
+/* Some missing symbols and functions for Win */
+#define fmax max
+#define fmin min
+#define INFINITY (DBL_MAX+DBL_MAX)
+#define NAN (INFINITY-INFINITY)
+#endif
 
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)
@@ -45,12 +52,6 @@
 #define DEBUG_TEST 0
 #endif
 
-#ifndef INFINITY
-#define INFINITY (DBL_MAX+DBL_MAX)
-#endif
-#ifndef NAN
-#define NAN (INFINITY-INFINITY)
-#endif
 
 using namespace std;
 
