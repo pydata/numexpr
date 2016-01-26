@@ -213,6 +213,12 @@ The following reduction operations are currently supported::
   * prod(number, axis=None): Product of array elements over a given
     axis.  Negative axis are not supported.
 
+  * min(number, axis=None): Minimum of array elements over a given
+    axis.  Negative axis are not supported.
+
+  * max(number, axis=None): Maximum of array elements over a given
+    axis.  Negative axis are not supported.
+
 
 General routines
 ================

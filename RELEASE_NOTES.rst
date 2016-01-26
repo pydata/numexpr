@@ -7,9 +7,9 @@ Changes from 2.4.6 to 2.4.7
 
 - Added locking for allowing the use of numexpr in multi-threaded
   callers (this does not prevent numexpr to use multiple cores
-  simultaneously).  (PR#199, Antoine Pitrou, PR#200, Jenn Olsen).
+  simultaneously).  (PR #199, Antoine Pitrou, PR #200, Jenn Olsen).
 
-
+- Added new min() and max() functions (PR #195, CJ Carey).
 
 
 Changes from 2.4.5 to 2.4.6
