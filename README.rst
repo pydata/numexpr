@@ -25,12 +25,40 @@ expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
 In addition, its multi-threaded capabilities can make use of all your
-cores, which may accelerate computations, most specially if they are
+cores -- which may accelerate computations, most specially if they are
 not memory-bounded (e.g. those using transcendental functions).
 
 Last but not least, numexpr can make use of Intel's VML (Vector Math
 Library, normally integrated in its Math Kernel Library, or MKL).
 This allows further acceleration of transcendent expressions.
+
+
+How Numexpr achieves high performance 
+================================================
+
+The main reason why Numexpr achieves better performance than NumPy 
+is that it avoids allocating memory for intermediate results. This 
+results in better cache utilization and reduces memory access in
+general. Due to this, Numexpr works best with large arrays. 
+
+Numexpr parses expressions into its own op-codes that are then used by
+an integrated computing virtual machine. The array operands are split
+into small chunks that easily fit in the cache of the CPU and passed to 
+the virtual machine. The virtual machine then applies the operations 
+on each chunk. It's worth noting that all temporaries and constants 
+in the expression are also chunked.
+
+The result is that Numexpr can get the most of your machine computing
+capabilities for array-wise computations. Common speed-ups with regard 
+to NumPy are usually between 0.95x (for very simple expressions 
+like ’a + 1’) and 4x (for relatively complex ones like 'a*b-4.1*a > 2.5*b'),
+although much higher speed-ups can be achieved (up to 15x in some cases).
+
+Numexpr performs best on matrices that do not fit in CPU cache. 
+In order to get a better idea on the different speed-ups
+that can be achieved on your platform, run the provided benchmarks.
+
+See more info about how Numexpr works in the `wiki <https://github.com/pydata/numexpr/wiki>`_.
 
 
 Examples of use
@@ -79,9 +107,9 @@ type inference rules, see below).  Have this in mind when doing
 estimations about the memory consumption during the computation of
 your expressions.
 
-Also, the types in Numexpr conditions are somewhat stricter than those
-of Python.  For instance, the only valid constants for booleans are
-`True` and `False`, and they are never automatically cast to integers.
+Also, the types in Numexpr conditions are somewhat more restrictive 
+than those of Python.  For instance, the only valid constants for booleans 
+are `True` and `False`, and they are never automatically cast to integers.
 
 
 Casting rules
@@ -128,7 +156,7 @@ Numexpr supports the set of operators listed below::
 Supported functions
 ===================
 
-The next are the current supported set::
+Supported functions are listed below::
 
   * where(bool, number1, number2): number
       Number1 if the bool condition is true, number2 otherwise.
@@ -171,13 +199,13 @@ The next are the current supported set::
 
   + `contains()` only works with bytes strings, not unicode strings.
 
-More functions can be added if you need them.
+You may add additional functions as needed.
 
 
 Supported reduction operations
 ==============================
 
-The next are the current supported set:
+The following reduction operations are currently supported::
 
   * sum(number, axis=None): Sum of array elements over a given axis.
     Negative axis are not supported.
@@ -211,7 +239,7 @@ General routines
     `set_vml_num_threads(nthreads)` to perform the parallel job with
     VML instead.  However, you should get very similar performance
     with VML-optimized functions, and VML's parallelizer cannot deal
-    with common expresions like `(x+1)*(x-2)`, while Numexpr's one
+    with common expressions like `(x+1)*(x-2)`, while Numexpr's one
     can.
 
   * detect_number_of_cores(): Detects the number of cores in the
@@ -222,9 +250,9 @@ Intel's VML specific support routines
 =====================================
 
 When compiled with Intel's VML (Vector Math Library), you will be able
-to use some additional functions for controlling its use. These are:
+to use some additional functions for controlling its use. These are outlined below::
 
-* set_vml_accuracy_mode(mode):  Set the accuracy for VML operations.
+  * set_vml_accuracy_mode(mode):  Set the accuracy for VML operations.
 
 The `mode` parameter can take the values:
   - 'low': Equivalent to VML_LA - low accuracy VML functions are called
@@ -234,64 +262,18 @@ The `mode` parameter can take the values:
 It returns the previous mode.
 
 This call is equivalent to the `vmlSetMode()` in the VML library.
-See:
 
-http://www.intel.com/software/products/mkl/docs/webhelp/vml/vml_DataTypesAccuracyModes.html
+:: 
 
-for more info on the accuracy modes.
-
-* set_vml_num_threads(nthreads): Suggests a maximum number of
-  threads to be used in VML operations.
+  * set_vml_num_threads(nthreads): Suggests a maximum number of
+    threads to be used in VML operations.
 
 This function is equivalent to the call
 `mkl_domain_set_num_threads(nthreads, MKL_DOMAIN_VML)` in the MKL library.
-See:
 
-http://www.intel.com/software/products/mkl/docs/webhelp/support/functn_mkl_domain_set_num_threads.html
-
-for more info about it.
+See the Intel documentation on `VM Service Functions <https://software.intel.com/en-us/node/521831>`_ for more information.
 
 * get_vml_version():  Get the VML/MKL library version.
-
-
-How Numexpr can achieve such a high performance?
-================================================
-
-The main reason why Numexpr achieves better performance than NumPy (or
-even than plain C code) is that it avoids the creation of whole
-temporaries for keeping intermediate results, so saving memory
-bandwidth (the main bottleneck in many computations in nowadays
-computers). Due to this, it works best with arrays that are large
-enough (typically larger than processor caches).
-
-Briefly, it works as follows. Numexpr parses the expression into its
-own op-codes, that will be used by the integrated computing virtual
-machine. Then, the array operands are split in small chunks (that
-easily fit in the cache of the CPU) and passed to the virtual
-machine. Then, the computational phase starts, and the virtual machine
-applies the op-code operations for each chunk, saving the outcome in
-the resulting array. It is worth noting that all the temporaries and
-constants in the expression are kept in the same small chunk sizes
-than the operand ones, avoiding additional memory (and most specially,
-memory bandwidth) waste.
-
-The result is that Numexpr can get the most of your machine computing
-capabilities for array-wise computations.  Just to give you an idea of
-its performance, common speed-ups with regard to NumPy are usually
-between 0.95x (for very simple expressions, like ’a + 1’) and 4x (for
-relatively complex ones, like 'a*b-4.1*a > 2.5*b'), although much
-higher speed-ups can be achieved (up to 15x can be seen in not too
-esoteric expressions) because this depends on the kind of the
-operations and how many operands participates in the expression.  Of
-course, Numexpr will perform better (in comparison with NumPy) with
-larger matrices, i.e. typically those that does not fit in the cache
-of your CPU.  In order to get a better idea on the different speed-ups
-that can be achieved for your own platform, you may want to run the
-benchmarks in the directory bench/.
-
-See more info about how Numexpr works in:
-
-https://github.com/pydata/numexpr/wiki
 
 
 Authors
@@ -303,7 +285,7 @@ See AUTHORS.txt
 License
 =======
 
-Numexpr is distributed under the MIT license (see LICENSE.txt file).
+Numexpr is distributed under the MIT license.
 
 
 
