@@ -4,9 +4,7 @@
 #  cpuinfo - Get information about CPU
 #
 #      License: BSD
-#      Author:  Pearu Peterson <pearu@cens.ioc.ee>
-#
-#  See LICENSES/cpuinfo.txt for details about copyright and
+#      Author:  Pearu Peterson <pearu@cens.ioc.ee>pr
 #  rights to use.
 ####################################################################
 
@@ -636,8 +634,7 @@ class Win32CPUInfo(CPUInfoBase):
                                     info[-1]["Model"] = int(srch.group("MDL"))
                                     info[-1]["Stepping"] = int(srch.group("STP"))
         except:
-            print
-            sys.exc_value, '(ignoring)'
+            print sys.exc_value, '(ignoring)'
         self.__class__.info = info
 
     def _not_impl(self):
