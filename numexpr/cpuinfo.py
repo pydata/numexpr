@@ -38,7 +38,7 @@ def getoutput(cmd, successful_status=(0,), stacklevel=1):
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         output, _ = p.communicate()
         status = p.returncode
-    except EnvironmentError, e:
+    except EnvironmentError as e:
         warnings.warn(str(e), UserWarning, stacklevel=stacklevel)
         return False, ''
     if os.WIFEXITED(status) and os.WEXITSTATUS(status) in successful_status:
@@ -99,7 +99,7 @@ class CPUInfoBase(object):
                     return lambda func=self._try_call, attr=attr: func(attr)
             else:
                 return lambda: None
-        raise AttributeError, name
+        raise AttributeError(name)
 
     def _getNCPUs(self):
         return 1
@@ -128,7 +128,7 @@ class LinuxCPUInfo(CPUInfoBase):
             info[0]['uname_m'] = output.strip()
         try:
             fo = open('/proc/cpuinfo')
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             warnings.warn(str(e), UserWarning)
         else:
             for line in fo:
@@ -600,12 +600,16 @@ class Win32CPUInfo(CPUInfoBase):
     # mean?
 
     def __init__(self):
+        try:
+            import _winreg
+        except ImportError:  # Python 3
+            import winreg as _winreg
+
         if self.info is not None:
             return
         info = []
         try:
             #XXX: Bad style to use so long `try:...except:...`. Fix it!
-            import _winreg
 
             prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)" \
                               "\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
@@ -636,7 +640,7 @@ class Win32CPUInfo(CPUInfoBase):
                                     info[-1]["Model"] = int(srch.group("MDL"))
                                     info[-1]["Stepping"] = int(srch.group("STP"))
         except:
-            print sys.exc_value, '(ignoring)'
+            print(sys.exc_value, '(ignoring)')
         self.__class__.info = info
 
     def _not_impl(self):
@@ -804,4 +808,4 @@ if __name__ == "__main__":
                     info.append('%s=%s' % (name[1:], r))
                 else:
                     info.append(name[1:])
-    print 'CPU information: ' + ' '.join(info)
+    print('CPU information: ' + ' '.join(info))
