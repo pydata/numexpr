@@ -144,317 +144,401 @@
         #define      arg3   params.program[pc+5]
         // Iterator reduce macros
 #ifdef REDUCTION_INNER_LOOP // Reduce is the inner loop
-        #define i_reduce    *(int *)dest
-        #define l_reduce    *(long long *)dest
-        #define f_reduce    *(float *)dest
-        #define d_reduce    *(double *)dest
-        #define cr_reduce   *(double *)dest
-        #define ci_reduce   *((double *)dest+1)
+        #define i4_reduce    *(npy_int32 *)dest
+        #define i8_reduce    *(npy_int64 *)dest
+        #define f4_reduce    *(npy_float32 *)dest
+        #define f8_reduce    *(npy_float64 *)dest
+        #define c16r_reduce   *(npy_float64 *)dest
+        #define c16i_reduce   *((npy_float64 *)dest+1)
+        #define c8r_reduce   *(npy_float32 *)dest
+        #define c8i_reduce   *((npy_float32 *)dest+1)
 #else /* Reduce is the outer loop */
-        #define i_reduce    i_dest
-        #define l_reduce    l_dest
-        #define f_reduce    f_dest
-        #define d_reduce    d_dest
-        #define cr_reduce   cr_dest
-        #define ci_reduce   ci_dest
+        #define i4_reduce    i4_dest
+        #define i8_reduce    i8_dest
+        #define f4_reduce    f4_dest
+        #define f8_reduce    f8_dest
+        #define c16r_reduce   c16r_dest
+        #define c16i_reduce   c16i_dest
+        #define c8r_reduce   c8r_dest
+        #define c8i_reduce   c8i_dest
 #endif
-        #define b_dest ((char *)dest)[j]
-        #define i_dest ((int *)dest)[j]
-        #define l_dest ((long long *)dest)[j]
-        #define f_dest ((float *)dest)[j]
-        #define d_dest ((double *)dest)[j]
-        #define cr_dest ((double *)dest)[2*j]
-        #define ci_dest ((double *)dest)[2*j+1]
-        #define s_dest ((char *)dest + j*memsteps[store_in])
-        #define b1    ((char   *)(x1+j*sb1))[0]
-        #define i1    ((int    *)(x1+j*sb1))[0]
-        #define l1    ((long long *)(x1+j*sb1))[0]
-        #define f1    ((float  *)(x1+j*sb1))[0]
-        #define d1    ((double *)(x1+j*sb1))[0]
-        #define c1r   ((double *)(x1+j*sb1))[0]
-        #define c1i   ((double *)(x1+j*sb1))[1]
-        #define s1    ((char   *)x1+j*sb1)
-        #define b2    ((char   *)(x2+j*sb2))[0]
-        #define i2    ((int    *)(x2+j*sb2))[0]
-        #define l2    ((long long *)(x2+j*sb2))[0]
-        #define f2    ((float  *)(x2+j*sb2))[0]
-        #define d2    ((double *)(x2+j*sb2))[0]
-        #define c2r   ((double *)(x2+j*sb2))[0]
-        #define c2i   ((double *)(x2+j*sb2))[1]
-        #define s2    ((char   *)x2+j*sb2)
-        #define b3    ((char   *)(x3+j*sb3))[0]
-        #define i3    ((int    *)(x3+j*sb3))[0]
-        #define l3    ((long long *)(x3+j*sb3))[0]
-        #define f3    ((float  *)(x3+j*sb3))[0]
-        #define d3    ((double *)(x3+j*sb3))[0]
-        #define c3r   ((double *)(x3+j*sb3))[0]
-        #define c3i   ((double *)(x3+j*sb3))[1]
-        #define s3    ((char   *)x3+j*sb3)
+        #define b1_dest ((npy_bool *)dest)[j]
+        #define i4_dest ((npy_int32 *)dest)[j]
+        #define i8_dest ((npy_int64 *)dest)[j]
+        #define f4_dest ((npy_float32 *)dest)[j]
+        #define f8_dest ((npy_float64 *)dest)[j]
+        #define c16r_dest ((npy_float64 *)dest)[2*j]
+        #define c16i_dest ((npy_float64 *)dest)[2*j+1]
+        #define c8r_dest ((npy_float32 *)dest)[2*j]
+        #define c8i_dest ((npy_float32 *)dest)[2*j+1]
+        #define s1_dest ((char *)dest + j*memsteps[store_in])
+        #define b1_1    ((char   *)(x1+j*sb1))[0]
+        #define i4_1    ((npy_int32    *)(x1+j*sb1))[0]
+        #define i8_1    ((npy_int64 *)(x1+j*sb1))[0]
+        #define f4_1    ((npy_float32  *)(x1+j*sb1))[0]
+        #define f8_1    ((npy_float64 *)(x1+j*sb1))[0]
+        #define c16_1r   ((npy_float64 *)(x1+j*sb1))[0]
+        #define c16_1i   ((npy_float64 *)(x1+j*sb1))[1]
+        #define c8_1r   ((npy_float32 *)(x1+j*sb1))[0]
+        #define c8_1i   ((npy_float32 *)(x1+j*sb1))[1]
+        #define s1_1    ((char   *)x1+j*sb1)
+        #define b1_2    ((npy_bool   *)(x2+j*sb2))[0]
+        #define i4_2    ((npy_int32    *)(x2+j*sb2))[0]
+        #define i8_2    ((npy_int64 *)(x2+j*sb2))[0]
+        #define f4_2    ((npy_float32  *)(x2+j*sb2))[0]
+        #define f8_2    ((npy_float64 *)(x2+j*sb2))[0]
+        #define c16_2r   ((npy_float64 *)(x2+j*sb2))[0]
+        #define c16_2i   ((npy_float64 *)(x2+j*sb2))[1]
+        #define c8_2r   ((npy_float32 *)(x2+j*sb2))[0]
+        #define c8_2i   ((npy_float32 *)(x2+j*sb2))[1]
+        #define s1_2    ((char   *)x2+j*sb2)
+        #define b1_3    ((npy_bool   *)(x3+j*sb3))[0]
+        #define i4_3    ((npy_int32    *)(x3+j*sb3))[0]
+        #define i8_3    ((npy_int64 *)(x3+j*sb3))[0]
+        #define f4_3    ((npy_float32  *)(x3+j*sb3))[0]
+        #define f8_3    ((npy_float64 *)(x3+j*sb3))[0]
+        #define c16_3r   ((npy_float64 *)(x3+j*sb3))[0]
+        #define c16_3i   ((npy_float64 *)(x3+j*sb3))[1]
+        #define c8_3r   ((npy_float32 *)(x3+j*sb3))[0]
+        #define c8_3i   ((npy_float32 *)(x3+j*sb3))[1]
+        #define s1_3    ((char   *)x3+j*sb3)
         /* Some temporaries */
         double da, db;
         npy_cdouble ca, cb;
+        float fa, fb;
+        npy_cfloat xa, xb;
 
         switch (op) {
 
         case OP_NOOP: break;
 
-        case OP_COPY_BB: VEC_ARG1(b_dest = b1);
-        case OP_COPY_SS: VEC_ARG1(memcpy(s_dest, s1, ss1));
+        case OP_COPY_B1B1: VEC_ARG1(b1_dest = b1_1);
+        case OP_COPY_S1S1: VEC_ARG1(memcpy(s1_dest, s1_1, ss1));
         /* The next versions of copy opcodes can cope with unaligned
            data even on platforms that crash while accessing it
            (like the Sparc architecture under Solaris). */
-        case OP_COPY_II: VEC_ARG1(memcpy(&i_dest, s1, sizeof(int)));
-        case OP_COPY_LL: VEC_ARG1(memcpy(&l_dest, s1, sizeof(long long)));
-        case OP_COPY_FF: VEC_ARG1(memcpy(&f_dest, s1, sizeof(float)));
-        case OP_COPY_DD: VEC_ARG1(memcpy(&d_dest, s1, sizeof(double)));
-        case OP_COPY_CC: VEC_ARG1(memcpy(&cr_dest, s1, sizeof(double)*2));
+        case OP_COPY_I4I4: VEC_ARG1(memcpy(&i4_dest, s1_1, sizeof(npy_int32)));
+        case OP_COPY_I8I8: VEC_ARG1(memcpy(&i8_dest, s1_1, sizeof(npy_int64)));
+        case OP_COPY_F4F4: VEC_ARG1(memcpy(&f4_dest, s1_1, sizeof(npy_float32)));
+        case OP_COPY_F8F8: VEC_ARG1(memcpy(&f8_dest, s1_1, sizeof(npy_float64)));
+        case OP_COPY_C16C16: VEC_ARG1(memcpy(&c16r_dest, s1_1, sizeof(npy_complex64)));
+        case OP_COPY_C8C8: VEC_ARG1(memcpy(&c8r_dest, s1_1, sizeof(npy_complex128)));
 
         /* Bool */
-        case OP_INVERT_BB: VEC_ARG1(b_dest = !b1);
-        case OP_AND_BBB: VEC_ARG2(b_dest = (b1 && b2));
-        case OP_OR_BBB: VEC_ARG2(b_dest = (b1 || b2));
+        case OP_INVERT_B1B1: VEC_ARG1(b1_dest = !b1_1);
+        case OP_AND_B1B1B1: VEC_ARG2(b1_dest = (b1_1 && b1_2));
+        case OP_OR_B1B1B1: VEC_ARG2(b1_dest = (b1_1 || b1_2));
 
-        case OP_EQ_BBB: VEC_ARG2(b_dest = (b1 == b2));
-        case OP_NE_BBB: VEC_ARG2(b_dest = (b1 != b2));
-        case OP_WHERE_BBBB: VEC_ARG3(b_dest = b1 ? b2 : b3);
+        case OP_EQ_B1B1B1: VEC_ARG2(b1_dest = (b1_1 == b1_2));
+        case OP_NE_B1B1B1: VEC_ARG2(b1_dest = (b1_1 != b1_2));
+        case OP_WHERE_B1B1B1B1: VEC_ARG3(b1_dest = b1_1 ? b1_2 : b1_3);
 
         /* Comparisons */
-        case OP_GT_BII: VEC_ARG2(b_dest = (i1 > i2));
-        case OP_GE_BII: VEC_ARG2(b_dest = (i1 >= i2));
-        case OP_EQ_BII: VEC_ARG2(b_dest = (i1 == i2));
-        case OP_NE_BII: VEC_ARG2(b_dest = (i1 != i2));
+        case OP_GT_B1I4I4: VEC_ARG2(b1_dest = (i4_1 > i4_2));
+        case OP_GE_B1I4I4: VEC_ARG2(b1_dest = (i4_1 >= i4_2));
+        case OP_EQ_B1I4I4: VEC_ARG2(b1_dest = (i4_1 == i4_2));
+        case OP_NE_B1I4I4: VEC_ARG2(b1_dest = (i4_1 != i4_2));
 
-        case OP_GT_BLL: VEC_ARG2(b_dest = (l1 > l2));
-        case OP_GE_BLL: VEC_ARG2(b_dest = (l1 >= l2));
-        case OP_EQ_BLL: VEC_ARG2(b_dest = (l1 == l2));
-        case OP_NE_BLL: VEC_ARG2(b_dest = (l1 != l2));
+        case OP_GT_B1I8I8: VEC_ARG2(b1_dest = (i8_1 > i8_2));
+        case OP_GE_B1I8I8: VEC_ARG2(b1_dest = (i8_1 >= i8_2));
+        case OP_EQ_B1I8I8: VEC_ARG2(b1_dest = (i8_1 == i8_2));
+        case OP_NE_B1I8I8: VEC_ARG2(b1_dest = (i8_1 != i8_2));
 
-        case OP_GT_BFF: VEC_ARG2(b_dest = (f1 > f2));
-        case OP_GE_BFF: VEC_ARG2(b_dest = (f1 >= f2));
-        case OP_EQ_BFF: VEC_ARG2(b_dest = (f1 == f2));
-        case OP_NE_BFF: VEC_ARG2(b_dest = (f1 != f2));
+        case OP_GT_B1F4F4: VEC_ARG2(b1_dest = (f4_1 > f4_2));
+        case OP_GE_B1F4F4: VEC_ARG2(b1_dest = (f4_1 >= f4_2));
+        case OP_EQ_B1F4F4: VEC_ARG2(b1_dest = (f4_1 == f4_2));
+        case OP_NE_B1F4F4: VEC_ARG2(b1_dest = (f4_1 != f4_2));
 
-        case OP_GT_BDD: VEC_ARG2(b_dest = (d1 > d2));
-        case OP_GE_BDD: VEC_ARG2(b_dest = (d1 >= d2));
-        case OP_EQ_BDD: VEC_ARG2(b_dest = (d1 == d2));
-        case OP_NE_BDD: VEC_ARG2(b_dest = (d1 != d2));
+        case OP_GT_B1F8F8: VEC_ARG2(b1_dest = (f8_1 > f8_2));
+        case OP_GE_B1F8F8: VEC_ARG2(b1_dest = (f8_1 >= f8_2));
+        case OP_EQ_B1F8F8: VEC_ARG2(b1_dest = (f8_1 == f8_2));
+        case OP_NE_B1F8F8: VEC_ARG2(b1_dest = (f8_1 != f8_2));
 
-        case OP_GT_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) > 0));
-        case OP_GE_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) >= 0));
-        case OP_EQ_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) == 0));
-        case OP_NE_BSS: VEC_ARG2(b_dest = (stringcmp(s1, s2, ss1, ss2) != 0));
+        case OP_GT_B1S1S1: VEC_ARG2(b1_dest = (stringcmp(s1_1, s1_2, ss1, ss2) > 0));
+        case OP_GE_B1S1S1: VEC_ARG2(b1_dest = (stringcmp(s1_1, s1_2, ss1, ss2) >= 0));
+        case OP_EQ_B1S1S1: VEC_ARG2(b1_dest = (stringcmp(s1_1, s1_2, ss1, ss2) == 0));
+        case OP_NE_B1S1S1: VEC_ARG2(b1_dest = (stringcmp(s1_1, s1_2, ss1, ss2) != 0));
 
-        case OP_CONTAINS_BSS: VEC_ARG2(b_dest = stringcontains(s1, s2, ss1, ss2));
+        case OP_CONTAINS_B1S1S1: VEC_ARG2(b1_dest = stringcontains(s1_1, s1_2, ss1, ss2));
 
         /* Int */
-        case OP_CAST_IB: VEC_ARG1(i_dest = (int)(b1));
-        case OP_ONES_LIKE_II: VEC_ARG0(i_dest = 1);
-        case OP_NEG_II: VEC_ARG1(i_dest = -i1);
+        case OP_CAST_I4B1: VEC_ARG1(i4_dest = (npy_int32)(b1_1));
+        case OP_ONES_LIKE_I4I4: VEC_ARG0(i4_dest = 1);
+        case OP_NEG_I4I4: VEC_ARG1(i4_dest = -i4_1);
 
-        case OP_ADD_III: VEC_ARG2(i_dest = i1 + i2);
-        case OP_SUB_III: VEC_ARG2(i_dest = i1 - i2);
-        case OP_MUL_III: VEC_ARG2(i_dest = i1 * i2);
-        case OP_DIV_III: VEC_ARG2(i_dest = i2 ? (i1 / i2) : 0);
-        case OP_POW_III: VEC_ARG2(i_dest = (i2 < 0) ? (1 / i1) : (int)pow((double)i1, i2));
-        case OP_MOD_III: VEC_ARG2(i_dest = i2 ? (i1 % i2) : 0);
-        case OP_LSHIFT_III: VEC_ARG2(i_dest = i1 << i2);
-        case OP_RSHIFT_III: VEC_ARG2(i_dest = i1 >> i2);
+        case OP_ADD_I4I4I4: VEC_ARG2(i4_dest = i4_1 + i4_2);
+        case OP_SUB_I4I4I4: VEC_ARG2(i4_dest = i4_1 - i4_2);
+        case OP_MUL_I4I4I4: VEC_ARG2(i4_dest = i4_1 * i4_2);
+        case OP_DIV_I4I4I4: VEC_ARG2(i4_dest = i4_2 ? (i4_1 / i4_2) : 0);
+        case OP_POW_I4I4I4: VEC_ARG2(i4_dest = (i4_2 < 0) ? (1 / i4_1) : (npy_int32)pow((npy_float32)i4_1, i4_2));
+        case OP_MOD_I4I4I4: VEC_ARG2(i4_dest = i4_2 ? (i4_1 % i4_2) : 0);
+        case OP_LSHIFT_I4I4I4: VEC_ARG2(i4_dest = i4_1 << i4_2);
+        case OP_RSHIFT_I4I4I4: VEC_ARG2(i4_dest = i4_1 >> i4_2);
 
-        case OP_WHERE_IBII: VEC_ARG3(i_dest = b1 ? i2 : i3);
+        case OP_WHERE_I4B1I4I4: VEC_ARG3(i4_dest = b1_1 ? i4_2 : i4_3);
 
         /* Long */
-        case OP_CAST_LI: VEC_ARG1(l_dest = (long long)(i1));
-        case OP_ONES_LIKE_LL: VEC_ARG0(l_dest = 1);
-        case OP_NEG_LL: VEC_ARG1(l_dest = -l1);
+        case OP_CAST_I8I4: VEC_ARG1(i8_dest = (npy_int64)(i4_1));
+        case OP_ONES_LIKE_I8I8: VEC_ARG0(i8_dest = 1);
+        case OP_NEG_I8I8: VEC_ARG1(i8_dest = -i8_1);
 
-        case OP_ADD_LLL: VEC_ARG2(l_dest = l1 + l2);
-        case OP_SUB_LLL: VEC_ARG2(l_dest = l1 - l2);
-        case OP_MUL_LLL: VEC_ARG2(l_dest = l1 * l2);
-        case OP_DIV_LLL: VEC_ARG2(l_dest = l2 ? (l1 / l2) : 0);
-        case OP_POW_LLL: VEC_ARG2(l_dest = (l2 < 0) ? (1 / l1) : (long long)pow((long double)l1, (long double)l2));
-        case OP_MOD_LLL: VEC_ARG2(l_dest = l2 ? (l1 % l2) : 0);
-        case OP_LSHIFT_LLL: VEC_ARG2(l_dest = l1 << l2);
-        case OP_RSHIFT_LLL: VEC_ARG2(l_dest = l1 >> l2);
+        case OP_ADD_I8I8I8: VEC_ARG2(i8_dest = i8_1 + i8_2);
+        case OP_SUB_I8I8I8: VEC_ARG2(i8_dest = i8_1 - i8_2);
+        case OP_MUL_I8I8I8: VEC_ARG2(i8_dest = i8_1 * i8_2);
+        case OP_DIV_I8I8I8: VEC_ARG2(i8_dest = i8_2 ? (i8_1 / i8_2) : 0);
+        case OP_POW_I8I8I8: VEC_ARG2(i8_dest = (i8_2 < 0) ? (1 / i8_1) : (npy_int64)pow((npy_float64)i8_1, (npy_float64)i8_2));
+        case OP_MOD_I8I8I8: VEC_ARG2(i8_dest = i8_2 ? (i8_1 % i8_2) : 0);
+        case OP_LSHIFT_I8I8I8: VEC_ARG2(i8_dest = i8_1 << i8_2);
+        case OP_RSHIFT_I8I8I8: VEC_ARG2(i8_dest = i8_1 >> i8_2);
 
-        case OP_WHERE_LBLL: VEC_ARG3(l_dest = b1 ? l2 : l3);
+        case OP_WHERE_I8B1I8I8: VEC_ARG3(i8_dest = b1_1 ? i8_2 : i8_3);
 
         /* Float */
-        case OP_CAST_FI: VEC_ARG1(f_dest = (float)(i1));
-        case OP_CAST_FL: VEC_ARG1(f_dest = (float)(l1));
-        case OP_ONES_LIKE_FF: VEC_ARG0(f_dest = 1.0);
-        case OP_NEG_FF: VEC_ARG1(f_dest = -f1);
+        case OP_CAST_F4I4: VEC_ARG1(f4_dest = (npy_float32)(i4_1));
+        case OP_CAST_F4I8: VEC_ARG1(f4_dest = (npy_float32)(i8_1));
+        case OP_ONES_LIKE_F4F4: VEC_ARG0(f4_dest = 1.0);
+        case OP_NEG_F4F4: VEC_ARG1(f4_dest = -f4_1);
 
-        case OP_ADD_FFF: VEC_ARG2(f_dest = f1 + f2);
-        case OP_SUB_FFF: VEC_ARG2(f_dest = f1 - f2);
-        case OP_MUL_FFF: VEC_ARG2(f_dest = f1 * f2);
-        case OP_DIV_FFF:
+        case OP_ADD_F4F4F4: VEC_ARG2(f4_dest = f4_1 + f4_2);
+        case OP_SUB_F4F4F4: VEC_ARG2(f4_dest = f4_1 - f4_2);
+        case OP_MUL_F4F4F4: VEC_ARG2(f4_dest = f4_1 * f4_2);
+        case OP_DIV_F4F4F4:
 #ifdef USE_VML
             VEC_ARG2_VML(vsDiv(BLOCK_SIZE,
-                               (float*)x1, (float*)x2, (float*)dest));
+                               (npy_float32*)x1, (npy_float32*)x2, (npy_float32*)dest));
 #else
-            VEC_ARG2(f_dest = f1 / f2);
+            VEC_ARG2(f4_dest = f4_1 / f4_2);
 #endif
-        case OP_POW_FFF:
+        case OP_POW_F4F4F4:
 #ifdef USE_VML
             VEC_ARG2_VML(vsPow(BLOCK_SIZE,
-                               (float*)x1, (float*)x2, (float*)dest));
+                               (npy_float32*)x1, (npy_float32*)x2, (npy_float32*)dest));
 #else
-            VEC_ARG2(f_dest = powf(f1, f2));
+            VEC_ARG2(f4_dest = powf(f4_1, f4_2));
 #endif
-        case OP_MOD_FFF: VEC_ARG2(f_dest = f1 - floorf(f1/f2) * f2);
+        case OP_MOD_F4F4F4: VEC_ARG2(f4_dest = f4_1 - floorf(f4_1/f4_2) * f4_2);
 
-        case OP_SQRT_FF:
+        case OP_SQRT_F4F4:
 #ifdef USE_VML
-            VEC_ARG1_VML(vsSqrt(BLOCK_SIZE, (float*)x1, (float*)dest));
+            VEC_ARG1_VML(vsSqrt(BLOCK_SIZE, (npy_float32*)x1, (npy_float32*)dest));
 #else
-            VEC_ARG1(f_dest = sqrtf(f1));
+            VEC_ARG1(f4_dest = sqrtf(f4_1));
 #endif
 
-        case OP_WHERE_FBFF: VEC_ARG3(f_dest = b1 ? f2 : f3);
+        case OP_WHERE_F4B1F4F4: VEC_ARG3(f4_dest = b1_1 ? f4_2 : f4_3);
 
-        case OP_FUNC_FFN:
+        case OP_FUNC_F4F4N0:
 #ifdef USE_VML
             VEC_ARG1_VML(functions_ff_vml[arg2](BLOCK_SIZE,
-                                                (float*)x1, (float*)dest));
+                                                (npy_float32*)x1, (npy_float32*)dest));
 #else
-            VEC_ARG1(f_dest = functions_ff[arg2](f1));
+            VEC_ARG1(f4_dest = functions_f4f4[arg2](f4_1));
 #endif
-        case OP_FUNC_FFFN:
+        case OP_FUNC_F4F4F4N0:
 #ifdef USE_VML
             VEC_ARG2_VML(functions_fff_vml[arg3](BLOCK_SIZE,
-                                                 (float*)x1, (float*)x2,
-                                                 (float*)dest));
+                                                 (npy_float32*)x1, (npy_float32*)x2,
+                                                 (npy_float32*)dest));
 #else
-            VEC_ARG2(f_dest = functions_fff[arg3](f1, f2));
+            VEC_ARG2(f4_dest = functions_f4f4f4[arg3](f4_1, f4_2));
 #endif
 
         /* Double */
-        case OP_CAST_DI: VEC_ARG1(d_dest = (double)(i1));
-        case OP_CAST_DL: VEC_ARG1(d_dest = (double)(l1));
-        case OP_CAST_DF: VEC_ARG1(d_dest = (double)(f1));
-        case OP_ONES_LIKE_DD: VEC_ARG0(d_dest = 1.0);
-        case OP_NEG_DD: VEC_ARG1(d_dest = -d1);
+        case OP_CAST_F8I4: VEC_ARG1(f8_dest = (npy_float64)(i4_1));
+        case OP_CAST_F8I8: VEC_ARG1(f8_dest = (npy_float64)(i8_1));
+        case OP_CAST_F8F4: VEC_ARG1(f8_dest = (npy_float64)(f4_1));
+        case OP_ONES_LIKE_F8F8: VEC_ARG0(f8_dest = 1.0);
+        case OP_NEG_F8F8: VEC_ARG1(f8_dest = -f8_1);
 
-        case OP_ADD_DDD: VEC_ARG2(d_dest = d1 + d2);
-        case OP_SUB_DDD: VEC_ARG2(d_dest = d1 - d2);
-        case OP_MUL_DDD: VEC_ARG2(d_dest = d1 * d2);
-        case OP_DIV_DDD:
+        case OP_ADD_F8F8F8: VEC_ARG2(f8_dest = f8_1 + f8_2);
+        case OP_SUB_F8F8F8: VEC_ARG2(f8_dest = f8_1 - f8_2);
+        case OP_MUL_F8F8F8: VEC_ARG2(f8_dest = f8_1 * f8_2);
+        case OP_DIV_F8F8F8:
 #ifdef USE_VML
             VEC_ARG2_VML(vdDiv(BLOCK_SIZE,
-                               (double*)x1, (double*)x2, (double*)dest));
+                               (npy_float64*)x1, (npy_float64*)x2, (npy_float64*)dest));
 #else
-            VEC_ARG2(d_dest = d1 / d2);
+            VEC_ARG2(f8_dest = f8_1 / f8_2);
 #endif
-        case OP_POW_DDD:
+        case OP_POW_F8F8F8:
 #ifdef USE_VML
             VEC_ARG2_VML(vdPow(BLOCK_SIZE,
-                               (double*)x1, (double*)x2, (double*)dest));
+                               (npy_float64*)x1, (npy_float64*)x2, (npy_float64*)dest));
 #else
-            VEC_ARG2(d_dest = pow(d1, d2));
+            VEC_ARG2(f8_dest = pow(f8_1, f8_2));
 #endif
-        case OP_MOD_DDD: VEC_ARG2(d_dest = d1 - floor(d1/d2) * d2);
+        case OP_MOD_F8F8F8: VEC_ARG2(f8_dest = f8_1 - floor(f8_1/f8_2) * f8_2);
 
-        case OP_SQRT_DD:
+        case OP_SQRT_F8F8:
 #ifdef USE_VML
-            VEC_ARG1_VML(vdSqrt(BLOCK_SIZE, (double*)x1, (double*)dest));
+            VEC_ARG1_VML(vdSqrt(BLOCK_SIZE, (npy_float64*)x1, (npy_float64*)dest));
 #else
-            VEC_ARG1(d_dest = sqrt(d1));
+            VEC_ARG1(f8_dest = sqrt(f8_1));
 #endif
 
-        case OP_WHERE_DBDD: VEC_ARG3(d_dest = b1 ? d2 : d3);
+        case OP_WHERE_F8B1F8F8: VEC_ARG3(f8_dest = b1_1 ? f8_2 : f8_3);
 
-        case OP_FUNC_DDN:
+        case OP_FUNC_F8F8N0:
 #ifdef USE_VML
             VEC_ARG1_VML(functions_dd_vml[arg2](BLOCK_SIZE,
-                                                (double*)x1, (double*)dest));
+                                                (npy_float64*)x1, (npy_float64*)dest));
 #else
-            VEC_ARG1(d_dest = functions_dd[arg2](d1));
+            VEC_ARG1(f8_dest = functions_f8f8[arg2](f8_1));
 #endif
-        case OP_FUNC_DDDN:
+        case OP_FUNC_F8F8F8N0:
 #ifdef USE_VML
             VEC_ARG2_VML(functions_ddd_vml[arg3](BLOCK_SIZE,
-                                                 (double*)x1, (double*)x2,
-                                                 (double*)dest));
+                                                 (npy_float64*)x1, (npy_float64*)x2,
+                                                 (npy_float64*)dest));
 #else
-            VEC_ARG2(d_dest = functions_ddd[arg3](d1, d2));
+            VEC_ARG2(f8_dest = functions_f8f8f8[arg3](f8_1, f8_2));
 #endif
 
-        /* Complex */
-        case OP_CAST_CI: VEC_ARG1(cr_dest = (double)(i1);
-                                  ci_dest = 0);
-        case OP_CAST_CL: VEC_ARG1(cr_dest = (double)(l1);
-                                  ci_dest = 0);
-        case OP_CAST_CF: VEC_ARG1(cr_dest = f1;
-                                  ci_dest = 0);
-        case OP_CAST_CD: VEC_ARG1(cr_dest = d1;
-                                  ci_dest = 0);
-        case OP_ONES_LIKE_CC: VEC_ARG0(cr_dest = 1;
-                                       ci_dest = 0);
-        case OP_NEG_CC: VEC_ARG1(cr_dest = -c1r;
-                                 ci_dest = -c1i);
+        /* Complex double */
+        case OP_CAST_C16I4: VEC_ARG1(c16r_dest = (npy_float64)(i4_1);
+                                  c16i_dest = 0);
+        case OP_CAST_C16I8: VEC_ARG1(c16r_dest = (npy_float64)(i8_1);
+                                  c16i_dest = 0);
+        case OP_CAST_C16F4: VEC_ARG1(c16r_dest = f4_1;
+                                  c16i_dest = 0);
+        case OP_CAST_C16F8: VEC_ARG1(c16r_dest = f8_1;
+                                  c16i_dest = 0);
+        case OP_ONES_LIKE_C16C16: VEC_ARG0(c16r_dest = 1;
+                                       c16i_dest = 0);
+        case OP_NEG_C16C16: VEC_ARG1(c16r_dest = -c16_1r;
+                                 c16i_dest = -c16_1i);
 
-        case OP_ADD_CCC: VEC_ARG2(cr_dest = c1r + c2r;
-                                  ci_dest = c1i + c2i);
-        case OP_SUB_CCC: VEC_ARG2(cr_dest = c1r - c2r;
-                                  ci_dest = c1i - c2i);
-        case OP_MUL_CCC: VEC_ARG2(da = c1r*c2r - c1i*c2i;
-                                  ci_dest = c1r*c2i + c1i*c2r;
-                                  cr_dest = da);
-        case OP_DIV_CCC:
+        case OP_ADD_C16C16C16: VEC_ARG2(c16r_dest = c16_1r + c16_2r;
+                                  c16i_dest = c16_1i + c16_2i);
+        case OP_SUB_C16C16C16: VEC_ARG2(c16r_dest = c16_1r - c16_2r;
+                                  c16i_dest = c16_1i - c16_2i);
+        case OP_MUL_C16C16C16: VEC_ARG2(da = c16_1r*c16_2r - c16_1i*c16_2i;
+                                  c16i_dest = c16_1r*c16_2i + c16_1i*c16_2r;
+                                  c16r_dest = da);
+        case OP_DIV_C16C16C16:
 #ifdef USE_VMLXXX /* VML complex division is slower */
             VEC_ARG2_VML(vzDiv(BLOCK_SIZE, (const MKL_Complex16*)x1,
                                (const MKL_Complex16*)x2, (MKL_Complex16*)dest));
 #else
-            VEC_ARG2(da = c2r*c2r + c2i*c2i;
-                     db = (c1r*c2r + c1i*c2i) / da;
-                     ci_dest = (c1i*c2r - c1r*c2i) / da;
-                     cr_dest = db);
+            VEC_ARG2(da = c16_2r*c16_2r + c16_2i*c16_2i;
+                     db = (c16_1r*c16_2r + c16_1i*c16_2i) / da;
+                     c16i_dest = (c16_1i*c16_2r - c16_1r*c16_2i) / da;
+                     c16r_dest = db);
 #endif
-        case OP_EQ_BCC: VEC_ARG2(b_dest = (c1r == c2r && c1i == c2i));
-        case OP_NE_BCC: VEC_ARG2(b_dest = (c1r != c2r || c1i != c2i));
+        case OP_EQ_B1C16C16: VEC_ARG2(b1_dest = (c16_1r == c16_2r && c16_1i == c16_2i));
+        case OP_NE_B1C16C16: VEC_ARG2(b1_dest = (c16_1r != c16_2r || c16_1i != c16_2i));
 
-        case OP_WHERE_CBCC: VEC_ARG3(cr_dest = b1 ? c2r : c3r;
-                                     ci_dest = b1 ? c2i : c3i);
-        case OP_FUNC_CCN:
+        case OP_WHERE_C16B1C16C16: VEC_ARG3(c16r_dest = b1_1 ? c16_2r : c16_3r;
+                                     c16i_dest = b1_1 ? c16_2i : c16_3i);
+        case OP_FUNC_C16C16N0:
 #ifdef USE_VML
             VEC_ARG1_VML(functions_cc_vml[arg2](BLOCK_SIZE,
                                                 (const MKL_Complex16*)x1,
                                                 (MKL_Complex16*)dest));
 #else
-            VEC_ARG1(ca.real = c1r;
-                     ca.imag = c1i;
-                     functions_cc[arg2](&ca, &ca);
-                     cr_dest = ca.real;
-                     ci_dest = ca.imag);
+            VEC_ARG1(ca.real = c16_1r;
+                     ca.imag = c16_1i;
+                     functions_c16c16[arg2](&ca, &ca);
+                     c16r_dest = ca.real;
+                     c16i_dest = ca.imag);
 #endif
-        case OP_FUNC_CCCN: VEC_ARG2(ca.real = c1r;
-                                    ca.imag = c1i;
-                                    cb.real = c2r;
-                                    cb.imag = c2i;
-                                    functions_ccc[arg3](&ca, &cb, &ca);
-                                    cr_dest = ca.real;
-                                    ci_dest = ca.imag);
+        case OP_FUNC_C16C16C16N0: VEC_ARG2(ca.real = c16_1r;
+                                    ca.imag = c16_1i;
+                                    cb.real = c16_2r;
+                                    cb.imag = c16_2i;
+                                    functions_c16c16c16[arg3](&ca, &cb, &ca);
+                                    c16r_dest = ca.real;
+                                    c16i_dest = ca.imag);
 
-        case OP_REAL_DC: VEC_ARG1(d_dest = c1r);
-        case OP_IMAG_DC: VEC_ARG1(d_dest = c1i);
-        case OP_COMPLEX_CDD: VEC_ARG2(cr_dest = d1;
-                                      ci_dest = d2);
+        case OP_REAL_F8C16: VEC_ARG1(f8_dest = c16_1r);
+        case OP_IMAG_F8C16: VEC_ARG1(f8_dest = c16_1i);
+        case OP_COMPLEX_C16F8F8: VEC_ARG2(c16r_dest = f8_1;
+                                      c16i_dest = f8_2);
+
+        /* Complex float */
+        case OP_CAST_C8I4: VEC_ARG1(c8r_dest = (npy_float32)(i4_1);
+                                  c8i_dest = 0);
+        case OP_CAST_C8I8: VEC_ARG1(c8r_dest = (npy_float32)(i8_1);
+                                  c8i_dest = 0);
+        case OP_CAST_C8F4: VEC_ARG1(c8r_dest = f4_1;
+                                  c8i_dest = 0);
+        // RAM: this needs a downcast
+        case OP_CAST_C8F8: VEC_ARG1(c8r_dest = (npy_float32)f8_1;
+                                  c8i_dest = 0);
+        case OP_ONES_LIKE_C8C8: VEC_ARG0(c8r_dest = 1;
+                                       c8i_dest = 0);
+        case OP_NEG_C8C8: VEC_ARG1(c8r_dest = -c8_1r;
+                                 c8i_dest = -c8_1i);
+
+        case OP_ADD_C8C8C8: VEC_ARG2(c8r_dest = c8_1r + c8_2r;
+                                  c8i_dest = c8_1i + c8_2i);
+        case OP_SUB_C8C8C8: VEC_ARG2(c8r_dest = c8_1r - c8_2r;
+                                  c8i_dest = c8_1i - c8_2i);
+        case OP_MUL_C8C8C8: VEC_ARG2(fa = c8_1r*c8_2r - c8_1i*c8_2i;
+                                  c8i_dest = c8_1r*c8_2i + c8_1i*c8_2r;
+                                  c8r_dest = fa);
+        case OP_DIV_C8C8C8:
+#ifdef USE_VMLXXX /* VML complex division is slower */
+            VEC_ARG2_VML(vcDiv(BLOCK_SIZE, (const MKL_Complex8*)x1,
+                               (const MKL_Complex8*)x2, (MKL_Complex8*)dest));
+#else
+            VEC_ARG2(fa = c8_2r*c8_2r + c8_2i*c8_2i;
+                     fb = (c8_1r*c8_2r + c8_1i*c8_2i) / fa;
+                     c8i_dest = (c8_1i*c8_2r - c8_1r*c8_2i) / fa;
+                     c8r_dest = fb);
+#endif
+        case OP_EQ_B1C8C8: VEC_ARG2(b1_dest = (c8_1r == c8_2r && c8_1i == c8_2i));
+        case OP_NE_B1C8C8: VEC_ARG2(b1_dest = (c8_1r != c8_2r || c8_1i != c8_2i));
+
+        case OP_WHERE_C8B1C8C8: VEC_ARG3(c8r_dest = b1_1 ? c8_2r : c8_3r;
+                                     c8i_dest = b1_1 ? c8_2i : c8_3i);
+        
+        case OP_FUNC_C8C8N0:
+#ifdef USE_VML
+            VEC_ARG1_VML(functions_xx_vml[arg2](BLOCK_SIZE,
+                                                (const MKL_Complex8*)x1,
+                                                (MKL_Complex8*)dest));
+#else
+            // RAM: Ok something in here is not right...
+            VEC_ARG1(xa.real = c8_1r;
+                     xa.imag = c8_1i;
+                     functions_c8c8[arg2](&xa, &xa);
+                     c8r_dest = xa.real;
+                     c8i_dest = xa.imag);
+#endif
+        case OP_FUNC_C8C8C8N0: VEC_ARG2(xa.real = c8_1r;
+                                    xa.imag = c8_1i;
+                                    xb.real = c8_2r;
+                                    xb.imag = c8_2i;
+                                    functions_c8c8c8[arg3](&xa, &xb, &xa);
+                                    c8r_dest = xa.real;
+                                    c8i_dest = xa.imag);
+
+        case OP_REAL_F4C8: VEC_ARG1(f4_dest = c8_1r);
+        case OP_IMAG_F4C8: VEC_ARG1(f4_dest = c8_1i);
+        case OP_COMPLEX_C8F4F4: VEC_ARG2(c8r_dest = f8_1;
+                                      c8i_dest = f8_2);
 
         /* Reductions */
-        case OP_SUM_IIN: VEC_ARG1(i_reduce += i1);
-        case OP_SUM_LLN: VEC_ARG1(l_reduce += l1);
-        case OP_SUM_FFN: VEC_ARG1(f_reduce += f1);
-        case OP_SUM_DDN: VEC_ARG1(d_reduce += d1);
-        case OP_SUM_CCN: VEC_ARG1(cr_reduce += c1r;
-                                  ci_reduce += c1i);
+        case OP_SUM_I4I4N0: VEC_ARG1(i4_reduce += i4_1);
+        case OP_SUM_I8I8N0: VEC_ARG1(i8_reduce += i8_1);
+        case OP_SUM_F4F4N0: VEC_ARG1(f4_reduce += f4_1);
+        case OP_SUM_F8F8N0: VEC_ARG1(f8_reduce += f8_1);
+        case OP_SUM_C16C16N0: VEC_ARG1(c16r_reduce += c16_1r;
+                                  c16i_reduce += c16_1i);
+        case OP_SUM_C8C8N0: VEC_ARG1(c8r_reduce += c8_1r;
+                                  c8i_reduce += c8_1i);
 
-        case OP_PROD_IIN: VEC_ARG1(i_reduce *= i1);
-        case OP_PROD_LLN: VEC_ARG1(l_reduce *= l1);
-        case OP_PROD_FFN: VEC_ARG1(f_reduce *= f1);
-        case OP_PROD_DDN: VEC_ARG1(d_reduce *= d1);
-        case OP_PROD_CCN: VEC_ARG1(da = cr_reduce*c1r - ci_reduce*c1i;
-                                   ci_reduce = cr_reduce*c1i + ci_reduce*c1r;
-                                   cr_reduce = da);
+        case OP_PROD_I4I4N0: VEC_ARG1(i4_reduce *= i4_1);
+        case OP_PROD_I8I8N0: VEC_ARG1(i8_reduce *= i8_1);
+        case OP_PROD_F4F4N0: VEC_ARG1(f4_reduce *= f4_1);
+        case OP_PROD_F8F8N0: VEC_ARG1(f8_reduce *= f8_1);
+        case OP_PROD_C16C16N0: VEC_ARG1(da = c16r_reduce*c16_1r - c16i_reduce*c16_1i;
+                                   c16i_reduce = c16r_reduce*c16_1i + c16i_reduce*c16_1r;
+                                   c16r_reduce = da);
+        case OP_PROD_C8C8N0: VEC_ARG1(fa = c8r_reduce*c8_1r - c8i_reduce*c8_1i;
+                                   c8i_reduce = c8r_reduce*c8_1i + c8i_reduce*c8_1r;
+                                   c8r_reduce = fa);
 
         default:
             *pc_error = pc;
@@ -462,6 +546,7 @@
             break;
         }
     }
+
 
 #ifndef NO_OUTPUT_BUFFERING
     // If output buffering was necessary, copy the buffer to the output
@@ -475,44 +560,54 @@
 #undef VEC_ARG2
 #undef VEC_ARG3
 
-#undef i_reduce
-#undef l_reduce
-#undef f_reduce
-#undef d_reduce
-#undef cr_reduce
-#undef ci_reduce
-#undef b_dest
-#undef i_dest
-#undef l_dest
-#undef f_dest
-#undef d_dest
-#undef cr_dest
-#undef ci_dest
-#undef s_dest
-#undef b1
-#undef i1
-#undef l1
-#undef f1
-#undef d1
-#undef c1r
-#undef c1i
-#undef s1
-#undef b2
-#undef i2
-#undef l2
-#undef f2
-#undef d2
-#undef c2r
-#undef c2i
-#undef s2
-#undef b3
-#undef i3
-#undef l3
-#undef f3
-#undef d3
-#undef c3r
-#undef c3i
-#undef s3
+#undef i4_reduce
+#undef i8_reduce
+#undef f4_reduce
+#undef f8_reduce
+#undef c16r_reduce
+#undef c16i_reduce
+#undef c8r_reduce
+#undef c8i_reduce
+#undef b1_dest
+#undef i4_dest
+#undef i8_dest
+#undef f4_dest
+#undef f8_dest
+#undef c16r_dest
+#undef c16i_dest
+#undef c8r_dest
+#undef c8i_dest
+#undef s1_dest
+#undef b1_1
+#undef i4_1
+#undef i8_1
+#undef f4_1
+#undef f8_1
+#undef c16_1r
+#undef c16_1i
+#undef c8_1r
+#undef c8_1i
+#undef s1_1
+#undef b1_2
+#undef i4_2
+#undef i8_2
+#undef f4_2
+#undef f8_2
+#undef c16_2r
+#undef c16_2i
+#undef c8_2r
+#undef c8_2i
+#undef s1_2
+#undef b1_3
+#undef i4_3
+#undef i8_3
+#undef f4_3
+#undef f8_3
+#undef c16_3r
+#undef c16_3i
+#undef c8_3r
+#undef c8_3i
+#undef s1_3
 }
 
 /*

@@ -7,6 +7,10 @@
 #  define USE_UNALIGNED_ACCESS 1
 #endif
 
+#define NUMEXPR_MAX_ARGS 4
+#define NUMEXPR_WORD_SSIZE 4
+#define NUMEXPR_PROGBYTES 16
+
 #ifdef USE_VML
 /* The values below have been tuned for a nowadays Core2 processor */
 /* Note: with VML functions a larger block size (e.g. 4096) allows to make use

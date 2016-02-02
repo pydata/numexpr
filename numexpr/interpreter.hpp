@@ -12,45 +12,58 @@ enum OpCodes {
 #undef OPCODE
 };
 
-enum FuncFFCodes {
-#define FUNC_FF(fop, ...) fop,
+enum FuncF4F4Codes {
+#define FUNC_F4F4(fop, ...) fop,
 #include "functions.hpp"
-#undef FUNC_FF
+#undef FUNC_F4F4
 };
 
-enum FuncFFFCodes {
-#define FUNC_FFF(fop, ...) fop,
+enum FuncF4F4F4Codes {
+#define FUNC_F4F4F4(fop, ...) fop,
 #include "functions.hpp"
-#undef FUNC_FFF
+#undef FUNC_F4F4F4
 };
 
-enum FuncDDCodes {
-#define FUNC_DD(fop, ...) fop,
+enum FuncF8F8Codes {
+#define FUNC_F8F8(fop, ...) fop,
 #include "functions.hpp"
-#undef FUNC_DD
+#undef FUNC_F8F8
 };
 
-enum FuncDDDCodes {
-#define FUNC_DDD(fop, ...) fop,
+enum FuncF8F8F8Codes {
+#define FUNC_F8F8F8(fop, ...) fop,
 #include "functions.hpp"
-#undef FUNC_DDD
+#undef FUNC_F8F8F8
 };
 
-enum FuncCCCodes {
-#define FUNC_CC(fop, ...) fop,
+enum FuncC16C16Codes {
+#define FUNC_C16C16(fop, ...) fop,
 #include "functions.hpp"
-#undef FUNC_CC
+#undef FUNC_C16C16
 };
 
-enum FuncCCCCodes {
-#define FUNC_CCC(fop, ...) fop,
+enum FuncC16C16C16Codes {
+#define FUNC_C16C16C16(fop, ...) fop,
 #include "functions.hpp"
-#undef FUNC_CCC
+#undef FUNC_C16C16C16
 };
+
+enum FuncC8C8Codes {
+#define FUNC_C8C8(fop, ...) fop,
+#include "functions.hpp"
+#undef FUNC_C8C8
+};
+
+enum FuncC8C8C8Codes {
+#define FUNC_C8C8C8(fop, ...) fop,
+#include "functions.hpp"
+#undef FUNC_C8C8C8
+};
+
 
 struct vm_params {
     int prog_len;
-    unsigned char *program;
+    unsigned short *program;
     int n_inputs;
     int n_constants;
     int n_temps;
@@ -92,7 +105,7 @@ extern thread_data th_params;
 
 PyObject *NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds);
 
-char get_return_sig(PyObject* program);
+unsigned short get_return_sig(PyObject* program);
 int check_program(NumExprObject *self);
 int get_temps_space(const vm_params& params, char **mem, size_t block_size);
 void free_temps_space(const vm_params& params, char **mem);

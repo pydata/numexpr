@@ -16,6 +16,7 @@
 
 #include "numexpr_config.hpp"
 #include "complex_functions.hpp"
+#include "complexf_functions.hpp"
 #include "interpreter.hpp"
 #include "numexpr_object.hpp"
 
@@ -45,43 +46,49 @@
 #define DEBUG_TEST 0
 #endif
 
-
-
 using namespace std;
 
 // Global state
 thread_data th_params;
 
-/* This file and interp_body should really be generated from a description of
-   the opcodes -- there's too much repetition here for manually editing */
+// This file and interp_body should really be generated from a description of
+//   the opcodes -- there's too much repetition here for manually editing
 
 
-/* bit of a misnomer; includes the return value. */
-#define NUMEXPR_MAX_ARGS 4
+// bit of a misnomer; includes the return value. 
 
-static char op_signature_table[][NUMEXPR_MAX_ARGS] = {
-#define Tb 'b'
-#define Ti 'i'
-#define Tl 'l'
-#define Tf 'f'
-#define Td 'd'
-#define Tc 'c'
-#define Ts 's'
-#define Tn 'n'
+/*
+   To add a function to the lookup table, add to FUNC_CODES (first
+   group is 1-arg functions, second is 2-arg functions), also to
+   functions_f4 or functions_f4f4 as appropriate. Finally, use add_func
+   down below to add to funccodes. Functions with more arguments
+   aren't implemented at present, but should be easy; just copy the 1-
+   or 2-arg case.
+
+   Some functions (for example, sqrt) are repeated in this table that
+   are opcodes, but there's no problem with that as the compiler
+   selects opcodes over functions, and this makes it easier to compare
+   opcode vs. function speeds.
+*/
+
+
+
+static int op_signature_table[][NUMEXPR_MAX_ARGS] = {
 #define T0 0
+#define Tb1 1
+#define Ti4 2
+#define Ti8 3
+#define Tf4 4
+#define Tf8 5
+#define Tc8 6
+#define Tc16 7
+#define Ts1 8
+#define Tn0 9
 #define OPCODE(n, e, ex, rt, a1, a2, a3) {rt, a1, a2, a3},
 #include "opcodes.hpp"
 #undef OPCODE
-#undef Tb
-#undef Ti
-#undef Tl
-#undef Tf
-#undef Td
-#undef Tc
-#undef Ts
-#undef Tn
-#undef T0
 };
+
 
 /* returns the sig of the nth op, '\0' if no more ops -1 on failure */
 static int
@@ -95,35 +102,22 @@ op_signature(int op, unsigned int n) {
     return op_signature_table[op][n];
 }
 
+//#include "vml_stubs.hpp"
 
 
-/*
-   To add a function to the lookup table, add to FUNC_CODES (first
-   group is 1-arg functions, second is 2-arg functions), also to
-   functions_f or functions_ff as appropriate. Finally, use add_func
-   down below to add to funccodes. Functions with more arguments
-   aren't implemented at present, but should be easy; just copy the 1-
-   or 2-arg case.
-
-   Some functions (for example, sqrt) are repeated in this table that
-   are opcodes, but there's no problem with that as the compiler
-   selects opcodes over functions, and this makes it easier to compare
-   opcode vs. function speeds.
-*/
-
-typedef float (*FuncFFPtr)(float);
+typedef float (*FuncF4F4Ptr)(float);
 
 #ifdef _WIN32
-FuncFFPtr functions_ff[] = {
-#define FUNC_FF(fop, s, f, f_win32, ...) f_win32,
+FuncF4F4Ptr functions_f4f4[] = {
+#define FUNC_F4F4(fop, s, f, f_win32, ...) f_win32,
 #include "functions.hpp"
-#undef FUNC_FF
+#undef FUNC_F4F4
 };
 #else
-FuncFFPtr functions_ff[] = {
-#define FUNC_FF(fop, s, f, ...) f,
+FuncF4F4Ptr functions_f4f4[] = {
+#define FUNC_F4F4(fop, s, f, ...) f,
 #include "functions.hpp"
-#undef FUNC_FF
+#undef FUNC_F4F4
 };
 #endif
 
@@ -139,27 +133,27 @@ static void vsConj(MKL_INT n, const float* x1, float* dest)
 #endif
 
 #ifdef USE_VML
-typedef void (*FuncFFPtr_vml)(MKL_INT, const float*, float*);
-FuncFFPtr_vml functions_ff_vml[] = {
-#define FUNC_FF(fop, s, f, f_win32, f_vml) f_vml,
+typedef void (*FuncF4F4Ptr_vml)(MKL_INT, const float*, float*);
+FuncFFPtr_vml functions_f4f4_vml[] = {
+#define FUNC_F4F4(fop, s, f, f_win32, f_vml) f_vml,
 #include "functions.hpp"
-#undef FUNC_FF
+#undef FUNC_F4F4
 };
 #endif
 
-typedef float (*FuncFFFPtr)(float, float);
+typedef float (*FuncF4F4F4Ptr)(float, float);
 
 #ifdef _WIN32
-FuncFFFPtr functions_fff[] = {
-#define FUNC_FFF(fop, s, f, f_win32, ...) f_win32,
+FuncFFFPtr functions_f4f4f4[] = {
+#define FUNC_F4F4F4(fop, s, f, f_win32, ...) f_win32,
 #include "functions.hpp"
-#undef FUNC_FFF
+#undef FUNC_F4F4F4
 };
 #else
-FuncFFFPtr functions_fff[] = {
-#define FUNC_FFF(fop, s, f, ...) f,
+FuncF4F4F4Ptr functions_f4f4f4[] = {
+#define FUNC_F4F4F4(fop, s, f, ...) f,
 #include "functions.hpp"
-#undef FUNC_FFF
+#undef FUNC_F4F4F4
 };
 #endif
 
@@ -173,20 +167,20 @@ static void vsfmod(MKL_INT n, const float* x1, const float* x2, float* dest)
     };
 };
 
-typedef void (*FuncFFFPtr_vml)(MKL_INT, const float*, const float*, float*);
-FuncFFFPtr_vml functions_fff_vml[] = {
-#define FUNC_FFF(fop, s, f, f_win32, f_vml) f_vml,
+typedef void (*FuncF4F4F4Ptr_vml)(MKL_INT, const float*, const float*, float*);
+FuncF4F4F4Ptr_vml functions_fff_vml[] = {
+#define FUNC_F4F4F4(fop, s, f, f_win32, f_vml) f_vml,
 #include "functions.hpp"
-#undef FUNC_FFF
+#undef FUNC_F4F4F4
 };
 #endif
 
-typedef double (*FuncDDPtr)(double);
+typedef double (*FuncF8F8Ptr)(double);
 
-FuncDDPtr functions_dd[] = {
-#define FUNC_DD(fop, s, f, ...) f,
+FuncF8F8Ptr functions_f8f8[] = {
+#define FUNC_F8F8(fop, s, f, ...) f,
 #include "functions.hpp"
-#undef FUNC_DD
+#undef FUNC_F8F8
 };
 
 #ifdef USE_VML
@@ -201,20 +195,20 @@ static void vdConj(MKL_INT n, const double* x1, double* dest)
 #endif
 
 #ifdef USE_VML
-typedef void (*FuncDDPtr_vml)(MKL_INT, const double*, double*);
-FuncDDPtr_vml functions_dd_vml[] = {
-#define FUNC_DD(fop, s, f, f_vml) f_vml,
+typedef void (*FuncF8F8Ptr_vml)(MKL_INT, const double*, double*);
+FuncF8F8Ptr_vml functions_f8f8_vml[] = {
+#define FUNC_F8F8(fop, s, f, f_vml) f_vml,
 #include "functions.hpp"
-#undef FUNC_DD
+#undef FUNC_F8F8
 };
 #endif
 
-typedef double (*FuncDDDPtr)(double, double);
+typedef double (*FuncF8F8F8Ptr)(double, double);
 
-FuncDDDPtr functions_ddd[] = {
-#define FUNC_DDD(fop, s, f, ...) f,
+FuncF8F8F8Ptr functions_f8f8f8[] = {
+#define FUNC_F8F8F8(fop, s, f, ...) f,
 #include "functions.hpp"
-#undef FUNC_DDD
+#undef FUNC_F8F8F8
 };
 
 #ifdef USE_VML
@@ -227,22 +221,22 @@ static void vdfmod(MKL_INT n, const double* x1, const double* x2, double* dest)
     };
 };
 
-typedef void (*FuncDDDPtr_vml)(MKL_INT, const double*, const double*, double*);
-FuncDDDPtr_vml functions_ddd_vml[] = {
-#define FUNC_DDD(fop, s, f, f_vml) f_vml,
+typedef void (*FuncF8F8F8Ptr_vml)(MKL_INT, const double*, const double*, double*);
+FuncF8F8F8Ptr_vml functions_ddd_vml[] = {
+#define FUNC_F8F8F8(fop, s, f, f_vml) f_vml,
 #include "functions.hpp"
-#undef FUNC_DDD
+#undef FUNC_F8F8F8
 };
 #endif
 
 
 
-typedef void (*FuncCCPtr)(npy_cdouble*, npy_cdouble*);
+typedef void (*FuncC16C16Ptr)(npy_cdouble*, npy_cdouble*);
 
-FuncCCPtr functions_cc[] = {
-#define FUNC_CC(fop, s, f, ...) f,
+FuncC16C16Ptr functions_c16c16[] = {
+#define FUNC_C16C16(fop, s, f, ...) f,
 #include "functions.hpp"
-#undef FUNC_CC
+#undef FUNC_C16C16
 };
 
 #ifdef USE_VML
@@ -276,176 +270,401 @@ static void vzAbs_(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
     };
 };
 
-typedef void (*FuncCCPtr_vml)(MKL_INT, const MKL_Complex16[], MKL_Complex16[]);
+typedef void (*FuncC16C16Ptr_vml)(MKL_INT, const MKL_Complex16[], MKL_Complex16[]);
 
-FuncCCPtr_vml functions_cc_vml[] = {
-#define FUNC_CC(fop, s, f, f_vml) f_vml,
+FuncCCPtr_vml functions_c16c16_vml[] = {
+#define FUNC_C16C16(fop, s, f, f_vml) f_vml,
 #include "functions.hpp"
-#undef FUNC_CC
+#undef FUNC_C16C16
 };
 #endif
 
 
-typedef void (*FuncCCCPtr)(npy_cdouble*, npy_cdouble*, npy_cdouble*);
+typedef void (*FuncC16C16C16Ptr)(npy_cdouble*, npy_cdouble*, npy_cdouble*);
 
-FuncCCCPtr functions_ccc[] = {
-#define FUNC_CCC(fop, s, f) f,
+FuncC16C16C16Ptr functions_c16c16c16[] = {
+#define FUNC_C16C16C16(fop, s, f) f,
 #include "functions.hpp"
-#undef FUNC_CCC
+#undef FUNC_C16C16C16
 };
 
+typedef void (*FuncC8C8Ptr)(npy_cfloat*, npy_cfloat*);
 
-char
-get_return_sig(PyObject* program)
+FuncC8C8Ptr functions_c8c8[] = {
+#define FUNC_C8C8(fop, s, f, ...) f,
+#include "functions.hpp"
+#undef FUNC_C8C8
+};
+
+#ifdef USE_VML
+/* complex expm1 not available in VML */
+static void vcExpm1(MKL_INT n, const MKL_Complex8* x1, MKL_Complex8* dest)
 {
-    int sig;
-    char last_opcode;
-    Py_ssize_t end = PyBytes_Size(program);
-    char *program_str = PyBytes_AS_STRING(program);
+    MKL_INT j;
+    vcExp(n, x1, dest);
+    for (j=0; j<n; j++) {
+    dest[j].real -= 1.0;
+    };
+};
 
-    do {
-        end -= 4;
-        if (end < 0) return 'X';
-        last_opcode = program_str[end];
-    }
-    while (last_opcode == OP_NOOP);
+static void vcLog1p(MKL_INT n, const MKL_Complex8* x1, MKL_Complex8* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+    dest[j].real = x1[j].real + 1;
+    dest[j].imag = x1[j].imag;
+    };
+    vcLn(n, dest, dest);
+};
 
-    sig = op_signature(last_opcode, 0);
-    if (sig <= 0) {
-        return 'X';
-    } else {
-        return (char)sig;
-    }
+/* Use this instead of native vcAbs in VML as it seems to work badly */
+static void vcAbs_(MKL_INT n, const MKL_Complex8* x1, MKL_Complex8* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j].real = sqrt(x1[j].real*x1[j].real + x1[j].imag*x1[j].imag);
+    dest[j].imag = 0;
+    };
+};
+
+typedef void (*FuncC8C8Ptr_vml)(MKL_INT, const MKL_Complex8[], MKL_Complex8[]);
+
+FuncC8C8Ptr_vml functions_c8c8_vml[] = {
+#define FUNC_C8C8(fop, s, f, f_vml) f_vml,
+#include "functions.hpp"
+#undef FUNC_C8C8
+};
+#endif
+
+typedef void (*FuncC8C8C8Ptr)(npy_cfloat*, npy_cfloat*, npy_cfloat*);
+
+FuncC8C8C8Ptr functions_c8c8c8[] = {
+#define FUNC_C8C8C8(fop, s, f) f,
+#include "functions.hpp"
+#undef FUNC_C8C8C8
+};
+
+// This is causing a linker error
+unsigned short 
+convert_bytes2word( char* program_str )
+{
+    PyRun_SimpleString( "print('WARNING: non-endian safe bytearray to short conversion')" );
+    unsigned short retcode = ((unsigned char)program_str[3] << 24) | ((unsigned char)program_str[2] << 16) | ((unsigned char)program_str[1] << 8) | (unsigned char)program_str[0];
+    return retcode;
 }
 
+
 static int
-typecode_from_char(char c)
+typecode_from_sig( unsigned short sig )
 {
-    switch (c) {
-        case 'b': return NPY_BOOL;
-        case 'i': return NPY_INT;
-        case 'l': return NPY_LONGLONG;
-        case 'f': return NPY_FLOAT;
-        case 'd': return NPY_DOUBLE;
-        case 'c': return NPY_CDOUBLE;
-        case 's': return NPY_STRING;
+    // RAM: Can I just replace the defines above with the NPY enums?
+    switch (sig) {
+        case 1: return NPY_BOOL;
+        case 2: return NPY_INT32;
+        case 3: return NPY_INT64;
+        case 4: return NPY_FLOAT32;
+        case 5: return NPY_FLOAT64;
+        case 6: return NPY_COMPLEX64;
+        case 7: return NPY_COMPLEX128;
+        case 8: return NPY_STRING;
         default:
-            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcs'");
+            PyErr_SetString(PyExc_TypeError, "signature value not in 'bilfdcxs'");
             return -1;
     }
 }
 
 static int
-last_opcode(PyObject *program_object) {
-    Py_ssize_t n;
-    unsigned char *program;
-    PyBytes_AsStringAndSize(program_object, (char **)&program, &n);
-    return program[n-4];
+typecode_from_bytecode(char* bytecode)
+{
+    switch (bytecode[0]) {
+        // RAM: re-factor to have kind and order seperately
+        // http://docs.scipy.org/doc/numpy-1.10.0/reference/c-api.dtype.html
+        case 'b': return NPY_BOOL;
+        case 'i':
+            switch( bytecode[1] ) {
+                case '1': return NPY_INT8;
+                case '2': return NPY_INT16;
+                case '4': return NPY_INT32;
+                case '8': return NPY_INT64;
+            }
+        case 'u':
+            switch( bytecode[1] ) {
+                case '1': return NPY_UINT8;
+                case '2': return NPY_UINT16;
+                case '4': return NPY_UINT32;
+                case '8': return NPY_UINT64;
+            }
+        case 'f':
+            switch( bytecode[1] ) {
+                case '4': return NPY_FLOAT32;
+                case '8': return NPY_FLOAT64;
+            }
+        case 'c': 
+            switch( bytecode[1] ) {
+                case '8': return NPY_COMPLEX64;
+                case '1': return NPY_COMPLEX128; // This one is three chars, but it's still unique ATM
+            }
+        case 's': return NPY_STRING;
+        default:
+            PyErr_SetString(PyExc_TypeError, "signature value not in '[buifcs]<byte-depth>'"); //RAM: TODO fix error message
+            return -1;
+    }
 }
 
-static int
-get_reduction_axis(PyObject* program) {
-    Py_ssize_t end = PyBytes_Size(program);
-    int axis = ((unsigned char *)PyBytes_AS_STRING(program))[end-1];
+
+unsigned short
+get_return_sig(NumExprObject *ne_object)
+{
+    int sig;
+    unsigned short last_opcode;
+    // RAM: bytearrayobject.c in Python2.7.11/Objects has the private members 
+    //Py_ssize_t end = PyByteArray_Size(program);
+    //char *program_str = PyByteArray_AS_STRING(program); // Dump byte-array as char array including nulls
+    // Here we can't really use PyBytes_AS_STRING anymore due to \x00 character in the integer-encodes.
+    // So we need to parse to get to \xffffffff, or pass in the program length from Python.  Passing in 
+    // program length from Python may be the easiest approach
+    //char *program_str = PyBytes_FromStringAndSize(program, NUMEXPR_PROGBYTES )
+
+    // RAM: debug of signature codes
+	// RAM: debug of signature codes
+    char buffer[256];
+    //PyObject* foo = PyString_AsEncodedObject( PyString_FromStringAndSize(program_str,end), "hex", "strict");
+    //sprintf( buffer, "print( 'interpreter::get_return_sig, end = %d, program = %s' )", end, PyString_AsString(foo) );
+    //PyRun_SimpleString( buffer );
+
+    //char* bar = PyObject_Str( program[0] )
+    //sprintf( buffer, "print( 'buffer index_test = %s' )", PyString_AsString(bar) );
+    //PyRun_SimpleString( buffer );
+    int end = ne_object->word_count;
+    do {
+        //op_str = PyBytes_FromStringAndSize(program_str[end-NUMEXPR_PROGBYTES], NUMEXPR_PROGBYTES );
+        end -= NUMEXPR_MAX_ARGS;
+        if (end < 0) 
+        {
+            sprintf( buffer, "print( 'DEBUG: ran-out of array end = %d' )", end ); PyRun_SimpleString( buffer );
+            return (unsigned short)-1;
+        }
+        // last_opcode = (short)program_str[end];
+        
+        // Ergh, these are unsigned chars in Python byte-arrays, but the API returns char*
+        last_opcode = ne_object->program_words[end];
+        // last_opcode = convert_bytes2word( program_str+end );
+        //last_opcode = ((unsigned char)program_str[end+3] << 24) | ((unsigned char)program_str[end+2] << 16) | ((unsigned char)program_str[end+1] << 8) | (unsigned char)program_str[end];
+        //sprintf( buffer, "print( 'interpreter::get_return_sig, last_opcode = %d' )", last_opcode  );
+        //PyRun_SimpleString( buffer );
+    }
+    while (last_opcode == OP_NOOP);
+
+    
+    // OK so last_opcode was an int, is still an int?  String needs to be converted to an int...
+    //char buffer[256];
+    sig = op_signature(last_opcode, 0); // Returns an int
+    sprintf( buffer, "print( 'interpreter::get_return_sig, sig = %d' )", sig  );
+    PyRun_SimpleString( buffer );
+    if (sig <= 0) {
+        return (unsigned short)-1;
+    } else {
+        return (unsigned short)sig;
+    }
+}
+
+//static unsigned short
+//last_opcode(PyObject *program_object) {
+//    Py_ssize_t prog_len = PyByteArray_Size( program_object );
+//    char *program_str = PyByteArray_AS_STRING(program_object );
+//    return convert_bytes2word( program_str + prog_len - NUMEXPR_PROGBYTES  );
+//}
+
+static unsigned short
+last_opcode(NumExprObject *ne_object) {
+    return ne_object->program_words[ ne_object->word_count - NUMEXPR_MAX_ARGS ];
+}
+
+//static unsigned short
+//get_reduction_axis(PyObject* program_object) {
+//    Py_ssize_t end = PyByteArray_Size(program_object);
+//    char *program_str = PyByteArray_AS_STRING(program_object);
+//   unsigned short axis = convert_bytes2word( program_str + end - NUMEXPR_WORD_SSIZE );
+//    //int axis = ((unsigned char *)PyBytes_AS_STRING(program))[end-1];
+//    if (axis != 255 && axis >= NPY_MAXDIMS)
+//        axis = NPY_MAXDIMS - axis;
+//    return axis;
+//}
+
+static unsigned short
+get_reduction_axis(NumExprObject *ne_object) {
+    //Py_ssize_t end = PyByteArray_Size(program_object);
+    //char *program_str = PyByteArray_AS_STRING(program_object);
+    //unsigned short axis = convert_bytes2word( program_str + end - NUMEXPR_WORD_SSIZE );
+    //int axis = ((unsigned char *)PyBytes_AS_STRING(program))[end-1];
+
+    unsigned short axis = ne_object->program_words[ ne_object->word_count-1 ];
     if (axis != 255 && axis >= NPY_MAXDIMS)
         axis = NPY_MAXDIMS - axis;
     return axis;
 }
 
 
-
 int
 check_program(NumExprObject *self)
 {
-    unsigned char *program;
+    char *program_str;
     Py_ssize_t prog_len, n_buffers, n_inputs;
-    int pc, arg, argloc, argno, sig;
-    char *fullsig, *signature;
+    int pc, argloc, argno;
+    unsigned short op, arg, sig;
+    //char *fullsig;
+    //char *signature;
 
-    if (PyBytes_AsStringAndSize(self->program, (char **)&program,
-                                &prog_len) < 0) {
-        PyErr_Format(PyExc_RuntimeError, "invalid program: can't read program");
+    PyRun_SimpleString( "print('Debug interpreter:check_program start')" );
+    if( !PyByteArray_Check(self->program_bytes) || PyByteArray_AS_STRING(self->program_bytes) < 0 ) {
+        PyErr_Format( PyExc_RuntimeError, "invalid program: can't read program" );
         return -1;
     }
-    if (prog_len % 4 != 0) {
-        PyErr_Format(PyExc_RuntimeError, "invalid program: prog_len mod 4 != 0");
+    else
+    {
+        prog_len = PyByteArray_Size(self->program_bytes);
+        program_str = PyByteArray_AS_STRING(self->program_bytes);
+    }
+
+    // Count number of words in self->program_bytes
+    if (prog_len % NUMEXPR_PROGBYTES != 0) { // RAM: Each program element is now 4 * 4 = 16 bytes
+        PyErr_Format(PyExc_RuntimeError, "invalid program: prog_len mod 4 != 0, prog_len = %d", prog_len);
         return -1;
     }
-    if (PyBytes_AsStringAndSize(self->fullsig, (char **)&fullsig,
-                                &n_buffers) < 0) {
-        PyErr_Format(PyExc_RuntimeError, "invalid program: can't read fullsig");
-        return -1;
+    self->word_count = prog_len / NUMEXPR_WORD_SSIZE;
+    // Init the word array
+    // Code is using malloc so I should probably too
+    //self->program_words = new unsigned int[self->word_count];
+    self->program_words = (unsigned short *)malloc( prog_len );
+    for( int i = 0; i < self->word_count; i++ ){
+        self->program_words[i] = convert_bytes2word( program_str + NUMEXPR_WORD_SSIZE*i );
     }
-    if (PyBytes_AsStringAndSize(self->signature, (char **)&signature,
-                                &n_inputs) < 0) {
+    
+    
+    // TODO: how many buffers do I need???
+    // 1 for return + n_inputs + n_constants + n_temps
+    n_buffers = 1 + self->n_inputs + self->n_constants + self->n_temps;
+
+    char buffer[256];
+    sprintf( buffer, "print('Debug interpreter:check_program converted program to word array of len %d, n_buffers = %d')", self->word_count, n_buffers );
+    PyRun_SimpleString( buffer );
+
+    //char *program_str = PyByteArray_AS_STRING(self->program); // Dump byte-array as char array including nulls
+    // Here we can't really use PyBytes_AS_STRING anymore due to \x00 character in the integer-encodes.
+    // So we need to parse to get to \xffffffff, or pass in the program length from Python.  Passing in 
+    // program length from Python may be the easiest approach
+    //char *program_str = PyBytes_FromStringAndSize(program, NUMEXPR_PROGBYTES )
+	// RAM: debug of signature codes
+    //char buffer[256];
+    //PyObject* foo = PyString_AsEncodedObject( PyString_FromStringAndSize(program_str,prog_len), "hex", "strict");
+    //sprintf( buffer, "print( 'DEBUG: interpreter::check_program, prog_len = %d, program = %s' )", prog_len, PyString_AsString(foo) );
+    //PyRun_SimpleString( buffer );
+
+    
+    if ( n_inputs < 0) {
         PyErr_Format(PyExc_RuntimeError, "invalid program: can't read signature");
         return -1;
     }
-    if (n_buffers > 255) {
+    //PyRun_SimpleString( "print('Debug interpreter:check_program 4')" );
+    if ( n_buffers > 65535 ) {
         PyErr_Format(PyExc_RuntimeError, "invalid program: too many buffers");
         return -1;
     }
-    for (pc = 0; pc < prog_len; pc += 4) {
-        unsigned int op = program[pc];
+    //PyRun_SimpleString( "print('Debug interpreter:check_program 5')" );
+    for (pc = 0; pc < self->word_count; pc += NUMEXPR_MAX_ARGS) {
+        // Could this seg-fault?  Where exactly was program assigned????  Up top...
+        //PyRun_SimpleString( "print('Debug interpreter:check_program 5A')" );
+        // TODO: this needs to be composed from 4 bytes as above
+
+        //unsigned short op = program[pc];
+        //*(program + pc)
+        op = self->program_words[pc];
+        //unsigned short op = ((unsigned char)program[pc+3] << 24) | ((unsigned char)program[pc+2] << 16) | ((unsigned char)program[pc+1] << 8) | (unsigned char)program[pc];
+        
+        // DEBUG
+        //char buffer[256];
+        //sprintf( buffer, "print( 'DEBUG: interpreter::check_program, 4-byte op = %d' )", op );
+        //PyRun_SimpleString( buffer );
+
         if (op == OP_NOOP) {
             continue;
         }
-        if ((op >= OP_REDUCTION) && pc != prog_len-4) {
+        //PyRun_SimpleString( "print('Debug interpreter:check_program 6')" );
+        if ((op >= OP_REDUCTION) && pc != self->word_count-NUMEXPR_MAX_ARGS) {
                 PyErr_Format(PyExc_RuntimeError,
                     "invalid program: reduction operations must occur last");
                 return -1;
         }
-        for (argno = 0; ; argno++) {
+        //PyRun_SimpleString( "print('Debug interpreter:check_program 7')" );
+        for (argno = 0; ; argno ++ ) {
             sig = op_signature(op, argno);
+
             if (sig == -1) {
                 PyErr_Format(PyExc_RuntimeError, "invalid program: illegal opcode at %i (%d)", pc, op);
                 return -1;
             }
             if (sig == 0) break;
             if (argno < 3) {
-                argloc = pc+argno+1;
+                argloc = pc + (argno + 1);
             }
             if (argno >= 3) {
-                if (pc + 1 >= prog_len) {
+                if ( pc + 1 >= self->word_count ) {
                     PyErr_Format(PyExc_RuntimeError, "invalid program: double opcode (%c) at end (%i)", pc, sig);
                     return -1;
                 }
-                argloc = pc+argno+2;
+                argloc =  pc + ( argno + 2);
             }
-            arg = program[argloc];
 
-            if (sig != 'n' && ((arg >= n_buffers) || (arg < 0))) {
+            arg = self->program_words[argloc];
+
+            //char buffer[256];
+            sprintf( buffer, "print( 'DEBUG: interpreter::check_program, op: %d, sig: %d, argloc: %d, arg: %d' )", op, sig, argloc, arg );
+            PyRun_SimpleString( buffer );
+
+            // RAM: 65535 is a special, deadspace code (FF:FF:FF:FF)
+            // arg != 65535 &&
+            if (sig != Tn0 &&  ((arg >= n_buffers) || (arg < 0))) {
                 PyErr_Format(PyExc_RuntimeError, "invalid program: buffer out of range (%i) at %i", arg, argloc);
                 return -1;
             }
-            if (sig == 'n') {
-                if (op == OP_FUNC_FFN) {
-                    if (arg < 0 || arg >= FUNC_FF_LAST) {
+            if (sig == Tn0) {
+                if (op == OP_FUNC_F4F4N0) {
+                    if (arg < 0 || arg >= FUNC_F4F4_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op == OP_FUNC_FFFN) {
-                    if (arg < 0 || arg >= FUNC_FFF_LAST) {
+                } else if (op == OP_FUNC_F4F4F4N0) {
+                    if (arg < 0 || arg >= FUNC_F4F4F4_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op == OP_FUNC_DDN) {
-                    if (arg < 0 || arg >= FUNC_DD_LAST) {
+                } else if (op == OP_FUNC_F8F8N0) {
+                    if (arg < 0 || arg >= FUNC_F8F8_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op == OP_FUNC_DDDN) {
-                    if (arg < 0 || arg >= FUNC_DDD_LAST) {
+                } else if (op == OP_FUNC_F8F8F8N0) {
+                    if (arg < 0 || arg >= FUNC_F8F8F8_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op == OP_FUNC_CCN) {
-                    if (arg < 0 || arg >= FUNC_CC_LAST) {
+                } else if (op == OP_FUNC_C16C16N0) {
+                    if (arg < 0 || arg >= FUNC_C16C16_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op == OP_FUNC_CCCN) {
-                    if (arg < 0 || arg >= FUNC_CCC_LAST) {
+                } else if (op == OP_FUNC_C16C16C16N0) {
+                    if (arg < 0 || arg >= FUNC_C16C16C16_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                } else if (op == OP_FUNC_C8C8N0) {
+                    if (arg < 0 || arg >= FUNC_C8C8_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                } else if (op == OP_FUNC_C8C8C8N0) {
+                    if (arg < 0 || arg >= FUNC_C8C8C8_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
@@ -457,16 +676,22 @@ check_program(NumExprObject *self)
                 }
             /* The next is to avoid problems with the ('i','l') duality,
                specially in 64-bit platforms */
-            } else if (((sig == 'l') && (fullsig[arg] == 'i')) ||
+            } 
+            /*
+            else if (((sig == 'l') && (fullsig[arg] == 'i')) ||
                        ((sig == 'i') && (fullsig[arg] == 'l'))) {
               ;
-            } else if (sig != fullsig[arg]) {
+            } else if (sig != fullsig[arg]) 
+            {
+                // RAM: This will always trigger.  Again, what is fullsig actually useful for?
                 PyErr_Format(PyExc_RuntimeError,
                 "invalid : opcode signature doesn't match buffer (%c vs %c) at %i", sig, fullsig[arg], argloc);
                 return -1;
             }
+            */
         }
     }
+    PyRun_SimpleString( "print('Debug interpreter:check_program finished successfully')" );
     return 0;
 }
 
@@ -503,10 +728,10 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
        to simulate infinte trailing NULL characters. */
     const char null = 0;
 
-    // First check if some of the operands is the empty string and if so,
-    // just check that the first char of the other is the NULL one.
-    // Fixes #121
-    if (maxlen2 == 0) return *s1 != null;
+    // First check if some of the operands is the empty string and if so,		
+    // just check that the first char of the other is the NULL one.		
+    // Fixes #121		
+    if (maxlen2 == 0) return *s1 != null;		
     if (maxlen1 == 0) return *s2 != null;
 
     maxlen = (maxlen1 > maxlen2) ? maxlen1 : maxlen2;
@@ -685,12 +910,13 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps,
     return 0;
 }
 
-/* Parallel iterator version of VM engine */
+// Parallel iterator version of VM engine
 static int
 vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
                         bool need_output_buffering, int *pc_error,
                         char **errmsg)
 {
+    PyRun_SimpleString( "print( 'Debug interpreter::vm_engine_iter_parrallel *** START ***' )" );
     int i;
     npy_intp numblocks, taskfactor;
 
@@ -698,12 +924,11 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
         return -1;
     }
 
-    /* Populate parameters for worker threads */
+    // Populate parameters for worker threads
     NpyIter_GetIterIndexRange(iter, &th_params.start, &th_params.vlen);
-    /*
-     * Try to make it so each thread gets 16 tasks.  This is a compromise
-     * between 1 task per thread and one block per task.
-     */
+
+    //Try to make it so each thread gets 16 tasks.  This is a compromise
+    //between 1 task per thread and one block per task.
     taskfactor = 16*BLOCK_SIZE1*gs.nthreads;
     numblocks = (th_params.vlen - th_params.start + taskfactor - 1) /
                             taskfactor;
@@ -726,7 +951,11 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
             return -1;
         }
     }
+    PyRun_SimpleString( "print( 'Debug interpreter::vm_engine_iter_parrallel *** 1 ***' )" );
     th_params.memsteps[0] = params.memsteps;
+
+    // RAM: Hmm... something messed up here???
+
     /* Make one copy of memsteps for each additional thread */
     for (i = 1; i < gs.nthreads; ++i) {
         th_params.memsteps[i] = PyMem_New(npy_intp,
@@ -746,10 +975,14 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
                 (1 + params.n_inputs + params.n_constants + params.n_temps));
     }
 
+    // RAM: may not be able to call print from inside multithreaded environment.
+    PyRun_SimpleString( "print( 'Debug interpreter::vm_engine_iter_parrallel *** 2 ***' )" );
     Py_BEGIN_ALLOW_THREADS;
+    //PyRun_SimpleString( "print( 'Debug interpreter::vm_engine_iter_parrallel *** 2A ***' )" );
 
     /* Synchronization point for all threads (wait for initialization) */
     pthread_mutex_lock(&gs.count_threads_mutex);
+    //PyRun_SimpleString( "print( 'Debug interpreter::vm_engine_iter_parrallel *** 3 ***' )" );
     if (gs.count_threads < gs.nthreads) {
         gs.count_threads++;
         pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
@@ -758,7 +991,7 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
         pthread_cond_broadcast(&gs.count_threads_cv);
     }
     pthread_mutex_unlock(&gs.count_threads_mutex);
-
+    //PyRun_SimpleString( "print( 'Debug interpreter::vm_engine_iter_parrallel *** 4 ***' )" );
     /* Synchronization point for all threads (wait for finalization) */
     pthread_mutex_lock(&gs.count_threads_mutex);
     if (gs.count_threads > 0) {
@@ -769,9 +1002,11 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
         pthread_cond_broadcast(&gs.count_threads_cv);
     }
     pthread_mutex_unlock(&gs.count_threads_mutex);
+    //PyRun_SimpleString( "print( 'Debug interpreter::vm_engine_iter_parrallel *** 5 ***' )" );
 
     Py_END_ALLOW_THREADS;
 
+    //PyRun_SimpleString( "print( 'Debug interpreter::vm_engine_iter_parrallel *** 6 ***' )" );
     /* Deallocate all the iterator and memsteps copies */
     for (i = 1; i < gs.nthreads; ++i) {
         NpyIter_Deallocate(th_params.iter[i]);
@@ -791,13 +1026,28 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     vm_params params;
     char *errmsg = NULL;
 
-    *pc_error = -1;
-    if (PyBytes_AsStringAndSize(self->program, (char **)&(params.program),
-                                &plen) < 0) {
-        return -1;
-    }
+    PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ###START###' )" );
 
-    params.prog_len = (int)plen;
+    *pc_error = -1;
+
+    //prog_len = PyByteArray_Size(self->program_bytes);
+    //program_str = PyByteArray_AS_STRING(self->program_bytes);
+
+    // This is crashing for sure, but WTF is it doing?
+    // params is a vm_params object
+    // Should we have made program into an int array by now?
+
+    // RAM: This check has been done already
+    //if (PyBytes_AsStringAndSize(self->program_bytes, (char **)&(params.program),
+    //                            &plen) < 0) {
+    //    return -1;
+    //}
+    // RAM: we do need to fill up params.program and plen
+
+
+    PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 1 ###' )" );
+    params.program = self->program_words;
+    params.prog_len = self->word_count;
     params.output = NULL;
     params.inputs = NULL;
     params.index_data = NULL;
@@ -807,28 +1057,41 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     params.mem = self->mem;
     params.memsteps = self->memsteps;
     params.memsizes = self->memsizes;
-    params.r_end = (int)PyBytes_Size(self->fullsig);
+    //params.r_end = (int)PyBytes_Size(self->fullsig);
     params.out_buffer = NULL;
 
+    // TODO: figure out how to output memsteps and memsizes
+
+
+    PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 2 ###' )" );
     if ((gs.nthreads == 1) || gs.force_serial) {
         // Can do it as one "task"
         if (reduce_iter == NULL) {
+            PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 3 ###' )" );
             // Allocate memory for output buffering if needed
             vector<char> out_buffer(need_output_buffering ?
                                 (self->memsizes[0] * BLOCK_SIZE1) : 0);
+            PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 3A ###' )" );
             params.out_buffer = need_output_buffering ? &out_buffer[0] : NULL;
             // Reset the iterator to allocate its buffers
+            PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 3B ###' )" );
             if(NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
                 return -1;
             }
+            PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 3C ###' )" );
             get_temps_space(params, params.mem, BLOCK_SIZE1);
-            Py_BEGIN_ALLOW_THREADS;
+            PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 3D ###' )" );
+            Py_BEGIN_ALLOW_THREADS; // RAM: NO DEBUGGING OUTPUT ALLOWED FROM WITHIN Py_BEGIN_ALLOW_THREADS
+            //PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 3E ###' )" );
             r = vm_engine_iter_task(iter, params.memsteps,
                                         params, pc_error, &errmsg);
+            //PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 3F ###' )" );
             Py_END_ALLOW_THREADS;
+            //PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 3E ###' )" );
             free_temps_space(params, params.mem);
         }
         else {
+            PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 4 ###' )" );
             if (reduction_outer_loop) {
                 char **dataptr;
                 NpyIter_IterNextFunc *iternext;
@@ -856,6 +1119,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                 free_temps_space(params, params.mem);
             }
             else {
+                PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 5 ###' )" );
                 char **dataptr;
                 NpyIter_IterNextFunc *iternext;
 
@@ -884,6 +1148,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
         }
     }
     else {
+        PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 6 ###' )" );
         if (reduce_iter == NULL) {
             r = vm_engine_iter_parallel(iter, params, need_output_buffering,
                         pc_error, &errmsg);
@@ -893,7 +1158,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
             r = -1;
         }
     }
-
+    PyRun_SimpleString( "print( 'Debug interpreter::run_interpreter ### 7 ###' )" );
     if (r < 0 && errmsg != NULL) {
         PyErr_SetString(PyExc_RuntimeError, errmsg);
     }
@@ -910,7 +1175,7 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     npy_intp *memsteps;
 
     *pc_error = -1;
-    if (PyBytes_AsStringAndSize(self->program, (char **)&(params.program),
+    if (PyBytes_AsStringAndSize(self->program_bytes, (char **)&(params.program),
                                 &plen) < 0) {
         return -1;
     }
@@ -927,7 +1192,7 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     params.mem = self->mem;
     memsteps = self->memsteps;
     params.memsizes = self->memsizes;
-    params.r_end = (int)PyBytes_Size(self->fullsig);
+    //params.r_end = (int)PyBytes_Size(self->fullsig);
 
     mem = params.mem;
     get_temps_space(params, mem, 1);
@@ -946,6 +1211,7 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
 PyObject *
 NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 {
+    PyRun_SimpleString( "print('Debug CLEAN UP THE STRING PARSRING interpreter::run step 0')" );
     PyArrayObject *operands[NPY_MAXARGS];
     PyArray_Descr *dtypes[NPY_MAXARGS], **dtypes_tmp;
     PyObject *tmp, *ret;
@@ -968,30 +1234,41 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     NpyIter *iter = NULL, *reduce_iter = NULL;
 
+    PyRun_SimpleString( "print('Debug interpreter::run step 1')" );
     // Check whether we need to restart threads
     if (!gs.init_threads_done || gs.pid != getpid()) {
         numexpr_set_nthreads(gs.nthreads);
     }
 
+    PyRun_SimpleString( "print('Debug interpreter::run step 1A')" );
     // Don't force serial mode by default
     gs.force_serial = 0;
 
     // Check whether there's a reduction as the final step
-    is_reduction = last_opcode(self->program) > OP_REDUCTION;
-
+    is_reduction = last_opcode(self) > OP_REDUCTION;
+    
+    PyRun_SimpleString( "print('Debug interpreter::run step 2')" );
     n_inputs = (int)PyTuple_Size(args);
-    if (PyBytes_Size(self->signature) != n_inputs) {
-        return PyErr_Format(PyExc_ValueError,
-                            "number of inputs doesn't match program");
-    }
-    else if (n_inputs+1 > NPY_MAXARGS) {
+
+    //char buffer[256];
+    //sprintf( buffer, "print(' run PyBytes_Size(self->signature) = %d,  n_inputs = %d')\n", PyBytes_Size(self->signature), n_inputs);
+    //PyRun_SimpleString( buffer );
+    // This check doesn't work anymore because signature is like 'f8f8' or 'c16c16'
+//    if (PyBytes_Size(self->signature) != n_inputs) {
+//        return PyErr_Format(PyExc_ValueError,
+//                            "number of inputs doesn't match program");
+//    }
+//    else 
+    if (n_inputs+1 > NPY_MAXARGS) {
         return PyErr_Format(PyExc_ValueError,
                             "too many inputs");
     }
 
+    PyRun_SimpleString( "print('Debug interpreter::run step 3')" );
     memset(operands, 0, sizeof(operands));
     memset(dtypes, 0, sizeof(dtypes));
 
+    PyRun_SimpleString( "print('Debug interpreter::run step 4')" );
     if (kwds) {
         tmp = PyDict_GetItemString(kwds, "casting"); // borrowed ref
         if (tmp != NULL && !PyArray_CastingConverter(tmp, &casting)) {
@@ -1024,23 +1301,38 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
         }
     }
+    PyRun_SimpleString( "print( 'Debug interpreter::run step 5' )" );
 
-    for (i = 0; i < n_inputs; i++) {
+
+    // RAM: each code is now 4-bytes instead of 1, and long ints are encodes as such
+    for ( i = 0; i < n_inputs; i++ ) 
+    {
+        PyRun_SimpleString( "print( 'Debug interpreter::run step A1' )" );
         PyObject *o = PyTuple_GET_ITEM(args, i); // borrowed ref
+        PyRun_SimpleString( "print( 'Debug interpreter::run step A2' )" );
         PyObject *a;
-        char c = PyBytes_AS_STRING(self->signature)[i];
-        int typecode = typecode_from_char(c);
+
+        // So we're not getting to here???
+        PyRun_SimpleString( "print( 'Debug interpreter::run step B' )" );
+        // TODO: make this four bytes
+        //char* bytecode = PyBytes_AS_STRING(self->signature);
+
+        // int typecode = typecode_from_sig(kind, order);
+        PyRun_SimpleString( "print( 'Debug interpreter::run step C') " );
+        //int typecode = typecode_from_bytecode( bytecode );
+        PyRun_SimpleString( "print( 'Debug interpreter::run step D' )" );
         // Convert it if it's not an array
         if (!PyArray_Check(o)) {
-            if (typecode == -1) goto fail;
-            a = PyArray_FROM_OTF(o, typecode, NPY_NOTSWAPPED);
+            if (self->sig_words[i] == -1) goto fail;
+            a = PyArray_FROM_OTF(o, self->sig_words[i], NPY_NOTSWAPPED);
         }
         else {
             Py_INCREF(o);
             a = o;
         }
+        PyRun_SimpleString( "print('Debug interpreter::run step E')" );
         operands[i+1] = (PyArrayObject *)a;
-        dtypes[i+1] = PyArray_DescrFromType(typecode);
+        dtypes[i+1] = PyArray_DescrFromType(self->sig_words[i]);
 
         if (operands[0] != NULL) {
             // Check for the case where "out" is one of the inputs
@@ -1064,12 +1356,13 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                         NPY_ITER_NBO
                         ;
     }
-
+    PyRun_SimpleString( "print( 'Debug interpreter::run step 6' )" );
     if (is_reduction) {
+        PyRun_SimpleString( "print( 'Debug interpreter::run REDUCATION' )" );
         // A reduction can not result in a string,
         // so we don't need to worry about item sizes here.
-        char retsig = get_return_sig(self->program);
-        reduction_axis = get_reduction_axis(self->program);
+        unsigned short retsig = get_return_sig(self);
+        reduction_axis = get_reduction_axis(self);
 
         // Need to set up op_axes for the non-reduction part
         if (reduction_axis != 255) {
@@ -1127,7 +1420,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             if (operands[0] == NULL) {
                 npy_intp dim = 1;
                 operands[0] = (PyArrayObject *)PyArray_SimpleNew(0, &dim,
-                                            typecode_from_char(retsig));
+                                            typecode_from_sig(retsig));
                 if (!operands[0])
                     goto fail;
             } else if (PyArray_SIZE(operands[0]) != 1) {
@@ -1137,7 +1430,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
         }
 
-        dtypes[0] = PyArray_DescrFromType(typecode_from_char(retsig));
+        dtypes[0] = PyArray_DescrFromType(typecode_from_sig(retsig));
 
         op_flags[0] = NPY_ITER_READWRITE|
                       NPY_ITER_ALLOCATE|
@@ -1150,9 +1443,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                       (oa_ndim == 0 ? 0 : NPY_ITER_NO_BROADCAST);
     }
     else {
-        char retsig = get_return_sig(self->program);
+        PyRun_SimpleString( "print( 'Debug interpreter::run NOT REDUCTION' )" );
+        unsigned short retsig = get_return_sig(self);
+        PyRun_SimpleString( "print( 'Debug interpreter::run NOT REDUCTION 2' )" );
         if (retsig != 's') {
-            dtypes[0] = PyArray_DescrFromType(typecode_from_char(retsig));
+            dtypes[0] = PyArray_DescrFromType(typecode_from_sig(retsig));
         } else {
             /* Since the *only* supported operation returning a string
              * is a copy, the size of returned strings
@@ -1181,7 +1476,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     // Check for empty arrays in expression
     if (n_inputs > 0) {
-        char retsig = get_return_sig(self->program);
+        unsigned short retsig = get_return_sig(self);
 
         // Check length for all inputs
         int zeroi, zerolen = 0;
@@ -1198,7 +1493,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             int ndim = PyArray_NDIM(operands[zeroi]);
             npy_intp *dims = PyArray_DIMS(operands[zeroi]);
             operands[0] = (PyArrayObject *)PyArray_SimpleNew(ndim, dims,
-                                              typecode_from_char(retsig));
+                                              typecode_from_sig(retsig));
             if (operands[0] == NULL) {
                 goto fail;
             }
@@ -1209,16 +1504,16 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-
+    PyRun_SimpleString( "print( 'Debug interpreter::run step 7' )" );
     /* A case with a single constant output */
     if (n_inputs == 0) {
-        char retsig = get_return_sig(self->program);
+        unsigned short retsig = get_return_sig(self);
 
         /* Allocate the output */
         if (operands[0] == NULL) {
             npy_intp dim = 1;
             operands[0] = (PyArrayObject *)PyArray_SimpleNew(0, &dim,
-                                        typecode_from_char(retsig));
+                                        typecode_from_sig(retsig));
             if (operands[0] == NULL) {
                 goto fail;
             }
@@ -1252,7 +1547,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         goto cleanup_and_exit;
     }
 
-
+    PyRun_SimpleString( "print( 'Debug interpreter::run step 8' )" );
     /* Allocate the iterator or nested iterators */
     if (reduction_size == 1) {
         /* When there's no reduction, reduction_size is 1 as well */
@@ -1358,12 +1653,12 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
         }
     }
-
+    PyRun_SimpleString( "print( 'Debug interpreter::run step 9' )" );
     /* Initialize the output to the reduction unit */
     if (is_reduction) {
         PyArrayObject *a = NpyIter_GetOperandArray(iter)[0];
-        if (last_opcode(self->program) >= OP_SUM &&
-            last_opcode(self->program) < OP_PROD) {
+        if (last_opcode(self) >= OP_SUM &&
+            last_opcode(self) < OP_PROD) {
                 PyObject *zero = PyLong_FromLong(0);
                 PyArray_FillWithScalar(a, zero);
                 Py_DECREF(zero);
@@ -1374,6 +1669,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
+    PyRun_SimpleString( "print( 'Debug interpreter::run step 10' )" );
     /* Get the sizes of all the operands */
     dtypes_tmp = NpyIter_GetDescrArray(iter);
     for (i = 0; i < n_inputs+1; ++i) {
@@ -1390,10 +1686,12 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         gs.force_serial = 1;
     }
 
+    PyRun_SimpleString( "print( 'Debug interpreter::run step 11' )" );
     r = run_interpreter(self, iter, reduce_iter,
                              reduction_outer_loop, need_output_buffering,
                              &pc_error);
 
+    PyRun_SimpleString( "print( 'Debug interpreter::run step 12' )" );
     if (r < 0) {
         if (r == -1) {
             if (!PyErr_Occurred()) {
@@ -1412,11 +1710,12 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
         goto fail;
     }
-
+    PyRun_SimpleString( "print( 'Debug interpreter::run step 12' )" );
     /* Get the output from the iterator */
     ret = (PyObject *)NpyIter_GetOperandArray(iter)[0];
     Py_INCREF(ret);
 
+    PyRun_SimpleString( "print( 'Debug interpreter::run step 13' )" );
     NpyIter_Deallocate(iter);
     if (reduce_iter != NULL) {
         NpyIter_Deallocate(reduce_iter);
@@ -1426,7 +1725,7 @@ cleanup_and_exit:
         Py_XDECREF(operands[i]);
         Py_XDECREF(dtypes[i]);
     }
-
+    PyRun_SimpleString( "print( 'Debug interpreter::run !!!DONE!!!' )" );
     return ret;
 fail:
     for (i = 0; i < n_inputs+1; i++) {

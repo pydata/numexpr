@@ -9,14 +9,19 @@
   See LICENSE.txt for details about copyright and rights to use.
 **********************************************************************/
 
+
+
 struct NumExprObject
 {
     PyObject_HEAD
     PyObject *signature;    /* a python string */
     PyObject *tempsig;
     PyObject *constsig;
-    PyObject *fullsig;
-    PyObject *program;      /* a python string */
+    //PyObject *fullsig;
+    PyObject *program_bytes;      // a python bytearray 
+    // RAM: words are arrays of ints converted from the byte arrays
+    unsigned short *program_words, *sig_words, *tempsig_words, *constsig_words; 
+    
     PyObject *constants;    /* a tuple of int/float/complex */
     PyObject *input_names;  /* tuple of strings */
     char **mem;             /* pointers to registers */
@@ -27,6 +32,7 @@ struct NumExprObject
     int  n_inputs;
     int  n_constants;
     int  n_temps;
+    int word_count; // RAM: number of words in program_words
 };
 
 extern PyTypeObject NumExprType;

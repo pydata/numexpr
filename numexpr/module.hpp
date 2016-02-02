@@ -14,6 +14,7 @@
 
 #include "numexpr_config.hpp"
 
+
 struct global_state {
     /* Global variables for threads */
     int nthreads;                    /* number of desired threads in pool */

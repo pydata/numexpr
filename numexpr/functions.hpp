@@ -6,131 +6,175 @@
       Author:  See AUTHORS.txt
 
   See LICENSE.txt for details about copyright and rights to use.
-**********************************************************************/
+*********************************************************************
+*/
 
-/* These #if blocks make it easier to query this file, without having
-   to define every row function before #including it. */
-#ifndef FUNC_FF
-#define ELIDE_FUNC_FF
-#define FUNC_FF(...)
-#endif
-FUNC_FF(FUNC_SQRT_FF,    "sqrt_ff",     sqrtf,  sqrtf2,  vsSqrt)
-FUNC_FF(FUNC_SIN_FF,     "sin_ff",      sinf,   sinf2,   vsSin)
-FUNC_FF(FUNC_COS_FF,     "cos_ff",      cosf,   cosf2,   vsCos)
-FUNC_FF(FUNC_TAN_FF,     "tan_ff",      tanf,   tanf2,   vsTan)
-FUNC_FF(FUNC_ARCSIN_FF,  "arcsin_ff",   asinf,  asinf2,  vsAsin)
-FUNC_FF(FUNC_ARCCOS_FF,  "arccos_ff",   acosf,  acosf2,  vsAcos)
-FUNC_FF(FUNC_ARCTAN_FF,  "arctan_ff",   atanf,  atanf2,  vsAtan)
-FUNC_FF(FUNC_SINH_FF,    "sinh_ff",     sinhf,  sinhf2,  vsSinh)
-FUNC_FF(FUNC_COSH_FF,    "cosh_ff",     coshf,  coshf2,  vsCosh)
-FUNC_FF(FUNC_TANH_FF,    "tanh_ff",     tanhf,  tanhf2,  vsTanh)
-FUNC_FF(FUNC_ARCSINH_FF, "arcsinh_ff",  asinhf, asinhf2, vsAsinh)
-FUNC_FF(FUNC_ARCCOSH_FF, "arccosh_ff",  acoshf, acoshf2, vsAcosh)
-FUNC_FF(FUNC_ARCTANH_FF, "arctanh_ff",  atanhf, atanhf2, vsAtanh)
-FUNC_FF(FUNC_LOG_FF,     "log_ff",      logf,   logf2,   vsLn)
-FUNC_FF(FUNC_LOG1P_FF,   "log1p_ff",    log1pf, log1pf2, vsLog1p)
-FUNC_FF(FUNC_LOG10_FF,   "log10_ff",    log10f, log10f2, vsLog10)
-FUNC_FF(FUNC_EXP_FF,     "exp_ff",      expf,   expf2,   vsExp)
-FUNC_FF(FUNC_EXPM1_FF,   "expm1_ff",    expm1f, expm1f2, vsExpm1)
-FUNC_FF(FUNC_ABS_FF,     "absolute_ff", fabsf,  fabsf2,  vsAbs)
-FUNC_FF(FUNC_CONJ_FF,    "conjugate_ff",fconjf, fconjf2, vsConj)
-FUNC_FF(FUNC_FF_LAST,    NULL,          NULL,   NULL,    NULL)
-#ifdef ELIDE_FUNC_FF
-#undef ELIDE_FUNC_FF
-#undef FUNC_FF
-#endif
 
-#ifndef FUNC_FFF
-#define ELIDE_FUNC_FFF
-#define FUNC_FFF(...)
+// These #if blocks make it easier to query this file, without having
+// to define every row function before #including it. 
+#ifndef FUNC_F4F4
+#define ELIDE_FUNC_F4F4
+#define FUNC_F4F4(...)
 #endif
-FUNC_FFF(FUNC_FMOD_FFF,    "fmod_fff",    fmodf,  fmodf2,  vsfmod)
-FUNC_FFF(FUNC_ARCTAN2_FFF, "arctan2_fff", atan2f, atan2f2, vsAtan2)
-FUNC_FFF(FUNC_FFF_LAST,    NULL,          NULL,   NULL,    NULL)
-#ifdef ELIDE_FUNC_FFF
-#undef ELIDE_FUNC_FFF
-#undef FUNC_FFF
+FUNC_F4F4(FUNC_SQRT_F4F4,    "sqrt_f4f4",     sqrtf,  sqrtf2,  vsSqrt)
+FUNC_F4F4(FUNC_SIN_F4F4,     "sin_f4f4",      sinf,   sinf2,   vsSin)
+FUNC_F4F4(FUNC_COS_F4F4,     "cos_f4f4",      cosf,   cosf2,   vsCos)
+FUNC_F4F4(FUNC_TAN_F4F4,     "tan_f4f4",      tanf,   tanf2,   vsTan)
+FUNC_F4F4(FUNC_ARCSIN_F4F4,  "arcsin_f4f4",   asinf,  asinf2,  vsAsin)
+FUNC_F4F4(FUNC_ARCCOS_F4F4,  "arccos_f4f4",   acosf,  acosf2,  vsAcos)
+FUNC_F4F4(FUNC_ARCTAN_F4F4,  "arctan_f4f4",   atanf,  atanf2,  vsAtan)
+FUNC_F4F4(FUNC_SINH_F4F4,    "sinh_f4f4",     sinhf,  sinhf2,  vsSinh)
+FUNC_F4F4(FUNC_COSH_F4F4,    "cosh_f4f4",     coshf,  coshf2,  vsCosh)
+FUNC_F4F4(FUNC_TANH_F4F4,    "tanh_f4f4",     tanhf,  tanhf2,  vsTanh)
+FUNC_F4F4(FUNC_ARCSINH_F4F4, "arcsinh_f4f4",  asinhf, asinhf2, vsAsinh)
+FUNC_F4F4(FUNC_ARCCOSH_F4F4, "arccosh_f4f4",  acoshf, acoshf2, vsAcosh)
+FUNC_F4F4(FUNC_ARCTANH_F4F4, "arctanh_f4f4",  atanhf, atanhf2, vsAtanh)
+FUNC_F4F4(FUNC_LOG_F4F4,     "log_f4f4",      logf,   logf2,   vsLn)
+FUNC_F4F4(FUNC_LOG1P_F4F4,   "log1p_f4f4",    log1pf, log1pf2, vsLog1p)
+FUNC_F4F4(FUNC_LOG10_F4F4,   "log10_f4f4",    log10f, log10f2, vsLog10)
+FUNC_F4F4(FUNC_EXP_F4F4,     "exp_f4f4",      expf,   expf2,   vsExp)
+FUNC_F4F4(FUNC_EXPM1_F4F4,   "expm1_f4f4",    expm1f, expm1f2, vsExpm1)
+FUNC_F4F4(FUNC_ABS_F4F4,     "absolute_f4f4", fabsf,  fabsf2,  vsAbs)
+FUNC_F4F4(FUNC_CONJ_F4F4,    "conjugate_f4f4",fconjf, fconjf2, vsConj)
+FUNC_F4F4(FUNC_F4F4_LAST,    NULL,          NULL,   NULL,    NULL)
+#ifdef ELIDE_FUNC_F4F4
+#undef ELIDE_FUNC_F4F4
+#undef FUNC_F4F4
 #endif
 
-#ifndef FUNC_DD
-#define ELIDE_FUNC_DD
-#define FUNC_DD(...)
+#ifndef FUNC_F4F4F4
+#define ELIDE_FUNC_F4F4F4
+#define FUNC_F4F4F4(...)
 #endif
-FUNC_DD(FUNC_SQRT_DD,    "sqrt_dd",     sqrt,  vdSqrt)
-FUNC_DD(FUNC_SIN_DD,     "sin_dd",      sin,   vdSin)
-FUNC_DD(FUNC_COS_DD,     "cos_dd",      cos,   vdCos)
-FUNC_DD(FUNC_TAN_DD,     "tan_dd",      tan,   vdTan)
-FUNC_DD(FUNC_ARCSIN_DD,  "arcsin_dd",   asin,  vdAsin)
-FUNC_DD(FUNC_ARCCOS_DD,  "arccos_dd",   acos,  vdAcos)
-FUNC_DD(FUNC_ARCTAN_DD,  "arctan_dd",   atan,  vdAtan)
-FUNC_DD(FUNC_SINH_DD,    "sinh_dd",     sinh,  vdSinh)
-FUNC_DD(FUNC_COSH_DD,    "cosh_dd",     cosh,  vdCosh)
-FUNC_DD(FUNC_TANH_DD,    "tanh_dd",     tanh,  vdTanh)
-FUNC_DD(FUNC_ARCSINH_DD, "arcsinh_dd",  asinh, vdAsinh)
-FUNC_DD(FUNC_ARCCOSH_DD, "arccosh_dd",  acosh, vdAcosh)
-FUNC_DD(FUNC_ARCTANH_DD, "arctanh_dd",  atanh, vdAtanh)
-FUNC_DD(FUNC_LOG_DD,     "log_dd",      log,   vdLn)
-FUNC_DD(FUNC_LOG1P_DD,   "log1p_dd",    log1p, vdLog1p)
-FUNC_DD(FUNC_LOG10_DD,   "log10_dd",    log10, vdLog10)
-FUNC_DD(FUNC_EXP_DD,     "exp_dd",      exp,   vdExp)
-FUNC_DD(FUNC_EXPM1_DD,   "expm1_dd",    expm1, vdExpm1)
-FUNC_DD(FUNC_ABS_DD,     "absolute_dd", fabs,  vdAbs)
-FUNC_DD(FUNC_CONJ_DD,    "conjugate_dd",fconj, vdConj)
-FUNC_DD(FUNC_DD_LAST,    NULL,          NULL,  NULL)
-#ifdef ELIDE_FUNC_DD
-#undef ELIDE_FUNC_DD
-#undef FUNC_DD
+FUNC_F4F4F4(FUNC_FMOD_F4F4F4,    "fmod_f4f4f4",    fmodf,  fmodf2,  vsfmod)
+FUNC_F4F4F4(FUNC_ARCTAN2_F4F4F4, "arctan2_f4f4f4", atan2f, atan2f2, vsAtan2)
+FUNC_F4F4F4(FUNC_F4F4F4_LAST,    NULL,          NULL,   NULL,    NULL)
+#ifdef ELIDE_FUNC_F4F4F4
+#undef ELIDE_FUNC_F4F4F4
+#undef FUNC_F4F4F4
 #endif
 
-#ifndef FUNC_DDD
-#define ELIDE_FUNC_DDD
-#define FUNC_DDD(...)
+#ifndef FUNC_C8C8
+#define ELIDE_FUNC_C8C8
+#define FUNC_C8C8(...)
 #endif
-FUNC_DDD(FUNC_FMOD_DDD,    "fmod_ddd",    fmod,  vdfmod)
-FUNC_DDD(FUNC_ARCTAN2_DDD, "arctan2_ddd", atan2, vdAtan2)
-FUNC_DDD(FUNC_DDD_LAST,    NULL,          NULL,  NULL)
-#ifdef ELIDE_FUNC_DDD
-#undef ELIDE_FUNC_DDD
-#undef FUNC_DDD
-#endif
-
-#ifndef FUNC_CC
-#define ELIDE_FUNC_CC
-#define FUNC_CC(...)
-#endif
-FUNC_CC(FUNC_SQRT_CC,    "sqrt_cc",     nc_sqrt,  vzSqrt)
-FUNC_CC(FUNC_SIN_CC,     "sin_cc",      nc_sin,   vzSin)
-FUNC_CC(FUNC_COS_CC,     "cos_cc",      nc_cos,   vzCos)
-FUNC_CC(FUNC_TAN_CC,     "tan_cc",      nc_tan,   vzTan)
-FUNC_CC(FUNC_ARCSIN_CC,  "arcsin_cc",   nc_asin,  vzAsin)
-FUNC_CC(FUNC_ARCCOS_CC,  "arccos_cc",   nc_acos,  vzAcos)
-FUNC_CC(FUNC_ARCTAN_CC,  "arctan_cc",   nc_atan,  vzAtan)
-FUNC_CC(FUNC_SINH_CC,    "sinh_cc",     nc_sinh,  vzSinh)
-FUNC_CC(FUNC_COSH_CC,    "cosh_cc",     nc_cosh,  vzCosh)
-FUNC_CC(FUNC_TANH_CC,    "tanh_cc",     nc_tanh,  vzTanh)
-FUNC_CC(FUNC_ARCSINH_CC, "arcsinh_cc",  nc_asinh, vzAsinh)
-FUNC_CC(FUNC_ARCCOSH_CC, "arccosh_cc",  nc_acosh, vzAcosh)
-FUNC_CC(FUNC_ARCTANH_CC, "arctanh_cc",  nc_atanh, vzAtanh)
-FUNC_CC(FUNC_LOG_CC,     "log_cc",      nc_log,   vzLn)
-FUNC_CC(FUNC_LOG1P_CC,   "log1p_cc",    nc_log1p, vzLog1p)
-FUNC_CC(FUNC_LOG10_CC,   "log10_cc",    nc_log10, vzLog10)
-FUNC_CC(FUNC_EXP_CC,     "exp_cc",      nc_exp,   vzExp)
-FUNC_CC(FUNC_EXPM1_CC,   "expm1_cc",    nc_expm1, vzExpm1)
-FUNC_CC(FUNC_ABS_CC,     "absolute_cc", nc_abs,   vzAbs_)
-FUNC_CC(FUNC_CONJ_CC,    "conjugate_cc",nc_conj,  vzConj)
-FUNC_CC(FUNC_CC_LAST,    NULL,          NULL,     NULL)
-#ifdef ELIDE_FUNC_CC
-#undef ELIDE_FUNC_CC
-#undef FUNC_CC
+FUNC_C8C8(FUNC_SQRT_C8C8,    "sqrt_c8c8",     nx_sqrt, nx_sqrt, vcSqrt)
+FUNC_C8C8(FUNC_SIN_C8C8,     "sin_c8c8",      nx_sin,   vcSin)
+FUNC_C8C8(FUNC_COS_C8C8,     "cos_c8c8",      nx_cos,   vcCos)
+FUNC_C8C8(FUNC_TAN_C8C8,     "tan_c8c8",      nx_tan,   vcTan)
+FUNC_C8C8(FUNC_ARCSIN_C8C8,  "arcsin_c8c8",   nx_asin,  vcAsin)
+FUNC_C8C8(FUNC_ARCCOS_C8C8,  "arccos_c8c8",   nx_acos,  vcAcos)
+FUNC_C8C8(FUNC_ARCTAN_C8C8,  "arctan_c8c8",   nx_atan,  vcAtan)
+FUNC_C8C8(FUNC_SINH_C8C8,    "sinh_c8c8",     nx_sinh,  vcSinh)
+FUNC_C8C8(FUNC_COSH_C8C8,    "cosh_c8c8",     nx_cosh,  vcCosh)
+FUNC_C8C8(FUNC_TANH_C8C8,    "tanh_c8c8",     nx_tanh,  vcTanh)
+FUNC_C8C8(FUNC_ARCSINH_C8C8, "arcsinh_c8c8",  nx_asinh, vcAsinh)
+FUNC_C8C8(FUNC_ARCCOSH_C8C8, "arccosh_c8c8",  nx_acosh, vcAcosh)
+FUNC_C8C8(FUNC_ARCTANH_C8C8, "arctanh_c8c8",  nx_atanh, vcAtanh)
+FUNC_C8C8(FUNC_LOG_C8C8,     "log_c8c8",      nx_log,   vcLn)
+FUNC_C8C8(FUNC_LOG1P_C8C8,   "log1p_c8c8",    nx_log1p, vcLog1p)
+FUNC_C8C8(FUNC_LOG10_C8C8,   "log10_c8c8",    nx_log10, vcLog10)
+FUNC_C8C8(FUNC_EXP_C8C8,     "exp_c8c8",      nx_exp,   vcExp)
+FUNC_C8C8(FUNC_EXPM1_C8C8,   "expm1_c8c8",    nx_expm1, vcExpm1)
+FUNC_C8C8(FUNC_ABS_C8C8,     "absolute_c8c8", nx_abs,   vcAbs_)
+FUNC_C8C8(FUNC_CONJ_C8C8,    "conjugate_c8c8",nx_conj,  vcConj)
+FUNC_C8C8(FUNC_C8C8_LAST,    NULL,          NULL,     NULL)
+#ifdef ELIDE_FUNC_C8C8
+#undef ELIDE_FUNC_C8C8
+#undef FUNC_C8C8
 #endif
 
-#ifndef FUNC_CCC
-#define ELIDE_FUNC_CCC
-#define FUNC_CCC(...)
+#ifndef FUNC_C8C8C8
+#define ELIDE_FUNC_C8C8C8
+#define FUNC_C8C8C8(...)
 #endif
-FUNC_CCC(FUNC_POW_CCC,   "pow_ccc", nc_pow)
-FUNC_CCC(FUNC_CCC_LAST,  NULL,      NULL)
-#ifdef ELIDE_FUNC_CCC
-#undef ELIDE_FUNC_CCC
-#undef FUNC_CCC
+FUNC_C8C8C8(FUNC_POW_C8C8C8,   "pow_c8c8c8", nx_pow)
+FUNC_C8C8C8(FUNC_C8C8C8_LAST,  NULL,      NULL)
+#ifdef ELIDE_FUNC_C8C8C8
+#undef ELIDE_FUNC_C8C8C8
+#undef FUNC_C8C8C8
 #endif
+
+#ifndef FUNC_F8F8
+#define ELIDE_FUNC_F8F8
+#define FUNC_F8F8(...)
+#endif
+FUNC_F8F8(FUNC_SQRT_F8F8,    "sqrt_f8f8",     sqrt,  vdSqrt)
+FUNC_F8F8(FUNC_SIN_F8F8,     "sin_f8f8",      sin,   vdSin)
+FUNC_F8F8(FUNC_COS_F8F8,     "cos_f8f8",      cos,   vdCos)
+FUNC_F8F8(FUNC_TAN_F8F8,     "tan_f8f8",      tan,   vdTan)
+FUNC_F8F8(FUNC_ARCSIN_F8F8,  "arcsin_f8f8",   asin,  vdAsin)
+FUNC_F8F8(FUNC_ARCCOS_F8F8,  "arccos_f8f8",   acos,  vdAcos)
+FUNC_F8F8(FUNC_ARCTAN_F8F8,  "arctan_f8f8",   atan,  vdAtan)
+FUNC_F8F8(FUNC_SINH_F8F8,    "sinh_f8f8",     sinh,  vdSinh)
+FUNC_F8F8(FUNC_COSH_F8F8,    "cosh_f8f8",     cosh,  vdCosh)
+FUNC_F8F8(FUNC_TANH_F8F8,    "tanh_f8f8",     tanh,  vdTanh)
+FUNC_F8F8(FUNC_ARCSINH_F8F8, "arcsinh_f8f8",  asinh, vdAsinh)
+FUNC_F8F8(FUNC_ARCCOSH_F8F8, "arccosh_f8f8",  acosh, vdAcosh)
+FUNC_F8F8(FUNC_ARCTANH_F8F8, "arctanh_f8f8",  atanh, vdAtanh)
+FUNC_F8F8(FUNC_LOG_F8F8,     "log_f8f8",      log,   vdLn)
+FUNC_F8F8(FUNC_LOG1P_F8F8,   "log1p_f8f8",    log1p, vdLog1p)
+FUNC_F8F8(FUNC_LOG10_F8F8,   "log10_f8f8",    log10, vdLog10)
+FUNC_F8F8(FUNC_EXP_F8F8,     "exp_f8f8",      exp,   vdExp)
+FUNC_F8F8(FUNC_EXPM1_F8F8,   "expm1_f8f8",    expm1, vdExpm1)
+FUNC_F8F8(FUNC_ABS_F8F8,     "absolute_f8f8", fabs,  vdAbs)
+FUNC_F8F8(FUNC_CONJ_F8F8,    "conjugate_f8f8",fconj, vdConj)
+FUNC_F8F8(FUNC_F8F8_LAST,    NULL,          NULL,  NULL)
+#ifdef ELIDE_FUNC_F8F8
+#undef ELIDE_FUNC_F8F8
+#undef FUNC_F8F8
+#endif
+
+#ifndef FUNC_F8F8F8
+#define ELIDE_FUNC_F8F8F8
+#define FUNC_F8F8F8(...)
+#endif
+FUNC_F8F8F8(FUNC_FMOD_F8F8F8,    "fmod_f8f8f8",    fmod,  vdfmod)
+FUNC_F8F8F8(FUNC_ARCTAN2_F8F8F8, "arctan2_f8f8f8", atan2, vdAtan2)
+FUNC_F8F8F8(FUNC_F8F8F8_LAST,    NULL,          NULL,  NULL)
+#ifdef ELIDE_FUNC_F8F8F8
+#undef ELIDE_FUNC_F8F8F8
+#undef FUNC_F8F8F8
+#endif
+
+#ifndef FUNC_C16C16
+#define ELIDE_FUNC_C16C16
+#define FUNC_C16C16(...)
+#endif
+FUNC_C16C16(FUNC_SQRT_C16C16,    "sqrt_c16c16",     nc_sqrt,  vzSqrt)
+FUNC_C16C16(FUNC_SIN_C16C16,     "sin_c16c16",      nc_sin,   vzSin)
+FUNC_C16C16(FUNC_COS_C16C16,     "cos_c16c16",      nc_cos,   vzCos)
+FUNC_C16C16(FUNC_TAN_C16C16,     "tan_c16c16",      nc_tan,   vzTan)
+FUNC_C16C16(FUNC_ARCSIN_C16C16,  "arcsin_c16c16",   nc_asin,  vzAsin)
+FUNC_C16C16(FUNC_ARCCOS_C16C16,  "arccos_c16c16",   nc_acos,  vzAcos)
+FUNC_C16C16(FUNC_ARCTAN_C16C16,  "arctan_c16c16",   nc_atan,  vzAtan)
+FUNC_C16C16(FUNC_SINH_C16C16,    "sinh_c16c16",     nc_sinh,  vzSinh)
+FUNC_C16C16(FUNC_COSH_C16C16,    "cosh_c16c16",     nc_cosh,  vzCosh)
+FUNC_C16C16(FUNC_TANH_C16C16,    "tanh_c16c16",     nc_tanh,  vzTanh)
+FUNC_C16C16(FUNC_ARCSINH_C16C16, "arcsinh_c16c16",  nc_asinh, vzAsinh)
+FUNC_C16C16(FUNC_ARCCOSH_C16C16, "arccosh_c16c16",  nc_acosh, vzAcosh)
+FUNC_C16C16(FUNC_ARCTANH_C16C16, "arctanh_c16c16",  nc_atanh, vzAtanh)
+FUNC_C16C16(FUNC_LOG_C16C16,     "log_c16c16",      nc_log,   vzLn)
+FUNC_C16C16(FUNC_LOG1P_C16C16,   "log1p_c16c16",    nc_log1p, vzLog1p)
+FUNC_C16C16(FUNC_LOG10_C16C16,   "log10_c16c16",    nc_log10, vzLog10)
+FUNC_C16C16(FUNC_EXP_C16C16,     "exp_c16c16",      nc_exp,   vzExp)
+FUNC_C16C16(FUNC_EXPM1_C16C16,   "expm1_c16c16",    nc_expm1, vzExpm1)
+FUNC_C16C16(FUNC_ABS_C16C16,     "absolute_c16c16", nc_abs,   vzAbs_)
+FUNC_C16C16(FUNC_CONJ_C16C16,    "conjugate_c16c16",nc_conj,  vzConj)
+FUNC_C16C16(FUNC_C16C16_LAST,    NULL,          NULL,     NULL)
+#ifdef ELIDE_FUNC_C16C16
+#undef ELIDE_FUNC_C16C16
+#undef FUNC_C16C16
+#endif
+
+#ifndef FUNC_C16C16C16
+#define ELIDE_FUNC_C16C16C16
+#define FUNC_C16C16C16(...)
+#endif
+FUNC_C16C16C16(FUNC_POW_C16C16C16,   "pow_c16c16c16", nc_pow)
+FUNC_C16C16C16(FUNC_C16C16C16_LAST,  NULL,      NULL)
+#ifdef ELIDE_FUNC_C16C16C16
+#undef ELIDE_FUNC_C16C16C16
+#undef FUNC_C16C16C16
+#endif
+

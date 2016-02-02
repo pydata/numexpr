@@ -14,7 +14,26 @@ import os
 import sys
 import os.path as op
 from distutils.command.clean import clean
+import time
 
+# STARTmonkey-patch for parallel compilation (on Linux?)
+def parallelCCompile(self, sources, output_dir=None, macros=None, include_dirs=None, debug=0, extra_preargs=None, extra_postargs=None, depends=None):
+    # those lines are copied from distutils.ccompiler.CCompiler directly
+    macros, objects, extra_postargs, pp_opts, build = self._setup_compile(output_dir, macros, include_dirs, sources, depends, extra_postargs)
+    cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+    # parallel code
+    N=8 # number of parallel compilations
+    import multiprocessing.pool
+    def _single_compile(obj):
+        try: src, ext = build[obj]
+        except KeyError: return
+        self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+    # convert to list, imap is evaluated on-demand
+    list(multiprocessing.pool.ThreadPool(N).imap(_single_compile,objects))
+    return objects
+import distutils.ccompiler
+distutils.ccompiler.CCompiler.compile=parallelCCompile
+# END monkey-patch for parrallel compilation
 
 if sys.version_info < (2, 6):
     raise RuntimeError("must use python 2.6 or greater")
@@ -140,7 +159,8 @@ def setup_package():
                             'numexpr/module.hpp',
                             'numexpr/msvc_function_stubs.hpp',
                             'numexpr/numexpr_config.hpp',
-                            'numexpr/numexpr_object.hpp'],
+                            'numexpr/numexpr_object.hpp',
+			    'numexpr/opcodes.hpp'],
                 'libraries': ['m'],
                 'extra_compile_args': ['-funroll-all-loops', ],
             }
@@ -220,4 +240,7 @@ def setup_package():
 
 
 if __name__ == '__main__':
+    t0 = time.time()
     setup_package()
+    t1 = time.time()
+    print( "error: build/install time (s): " + str(t1-t0) )

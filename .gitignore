@@ -1,0 +1,5 @@
+.metadata
+build
+dist
+*.pyc
+numexpr.egg-info

@@ -22,7 +22,6 @@ using namespace std;
 // in its 'th_params' variable
 global_state gs;
 
-
 /* Do the worker job for a certain thread */
 void *th_worker(void *tidptr)
 {
@@ -47,10 +46,9 @@ void *th_worker(void *tidptr)
     vector<char> out_buffer;
 
     while (1) {
-
-        if (tid == 0) {
-            /* sentinels have to be initialised yet */
-            gs.init_sentinels_done = 0;
+        
+        if (tid==0) {
+            gs.init_sentinels_done = 0;     /* sentinels have to be initialised yet */
         }
 
         /* Meeting point for all threads (wait for initialization) */
@@ -417,20 +415,23 @@ initinterpreter()
 
 #define add_func(name, sname)                           \
     if (add_symbol(d, sname, name, "add_func") < 0) { INITERROR; }
-#define FUNC_FF(name, sname, ...)  add_func(name, sname);
-#define FUNC_FFF(name, sname, ...) add_func(name, sname);
-#define FUNC_DD(name, sname, ...)  add_func(name, sname);
-#define FUNC_DDD(name, sname, ...) add_func(name, sname);
-#define FUNC_CC(name, sname, ...)  add_func(name, sname);
-#define FUNC_CCC(name, sname, ...) add_func(name, sname);
+#define FUNC_F4F4(name, sname, ...)  add_func(name, sname);
+#define FUNC_F4F4F4(name, sname, ...) add_func(name, sname);
+#define FUNC_F8F8(name, sname, ...)  add_func(name, sname);
+#define FUNC_F8F8F9(name, sname, ...) add_func(name, sname);
+#define FUNC_C8C8(name, sname, ...)  add_func(name, sname);
+#define FUNC_C8C8C8(name, sname, ...) add_func(name, sname);
+#define FUNC_C16C16(name, sname, ...)  add_func(name, sname);
+#define FUNC_C16C16C16(name, sname, ...) add_func(name, sname);
 #include "functions.hpp"
-#undef FUNC_CCC
-#undef FUNC_CC
-#undef FUNC_DDD
-#undef FUNC_DD
-#undef FUNC_DD
-#undef FUNC_FFF
-#undef FUNC_FF
+#undef FUNC_C16C16C16
+#undef FUNC_C16C16
+#undef FUNC_C8C8C8
+#undef FUNC_C8C8
+#undef FUNC_F8F8F8
+#undef FUNC_F8F8
+#undef FUNC_F4F4F4
+#undef FUNC_F4F4
 #undef add_func
 
     if (PyModule_AddObject(m, "funccodes", d) < 0) INITERROR;
