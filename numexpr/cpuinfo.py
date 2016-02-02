@@ -796,16 +796,13 @@ if __name__ == "__main__":
     cpu.is_Intel()
     cpu.is_Alpha()
 
-    print
-    'CPU information:',
+    info = []
     for name in dir(cpuinfo):
         if name[0] == '_' and name[1] != '_':
             r = getattr(cpu, name[1:])()
             if r:
                 if r != 1:
-                    print
-                    '%s=%s' % (name[1:], r),
+                    info.append('%s=%s' % (name[1:], r))
                 else:
-                    print
-                    name[1:],
-    print
+                    info.append(name[1:])
+    print 'CPU information: ' + ' '.join(info)
