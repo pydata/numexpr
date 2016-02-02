@@ -4,7 +4,9 @@
 #  cpuinfo - Get information about CPU
 #
 #      License: BSD
-#      Author:  Pearu Peterson <pearu@cens.ioc.ee>pr
+#      Author:  Pearu Peterson <pearu@cens.ioc.ee>
+#
+#  See LICENSES/cpuinfo.txt for details about copyright and
 #  rights to use.
 ####################################################################
 
