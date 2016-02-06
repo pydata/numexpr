@@ -1,5 +1,5 @@
 =========================
- Announcing Numexpr 2.5
+ Announcing Numexpr 2.5.1
 =========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -21,10 +21,7 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-In this version, a lock has been added so that numexpr can be called
-from multithreaded apps.  Mind that this does not prevent numexpr to
-use multiple cores internally.  Also, a new min() and max() functions
-have been added.  Thanks to contributors!
+ #XXX version-specific blurb XXX#
 
 In case you want to know more in detail what has changed in this
 version, see:
