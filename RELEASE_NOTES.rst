@@ -1,9 +1,9 @@
 ======================================
- Release notes for Numexpr 2.4 series
+ Release notes for Numexpr 2.5 series
 ======================================
 
-Changes from 2.4.6 to 2.4.7
-===========================
+Changes from 2.4.6 to 2.5
+=========================
 
 - Added locking for allowing the use of numexpr in multi-threaded
   callers (this does not prevent numexpr to use multiple cores
