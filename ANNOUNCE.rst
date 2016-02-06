@@ -8,7 +8,7 @@ and use less memory than doing the same calculation in Python.
 
 It wears multi-threaded capabilities, as well as support for Intel's
 MKL (Math Kernel Library), which allows an extremely fast evaluation
-of transcendental functions (sin, cos, tan, exp, log...)  while
+of transcendental functions (sin, cos, tan, exp, log...) while
 squeezing the last drop of performance out of your multi-core
 processors.  Look here for a some benchmarks of numexpr using MKL:
 
@@ -22,9 +22,9 @@ What's new
 ==========
 
 In this version, a lock has been added so that numexpr can be called
-not from multithreaded apps.  Mind that this does not prevent numexpr
-to use multiple cores internally.  Also, a new min() and max()
-functions have been added.  Thanks to contributors!
+from multithreaded apps.  Mind that this does not prevent numexpr to
+use multiple cores internally.  Also, a new min() and max() functions
+have been added.  Thanks to contributors!
 
 In case you want to know more in detail what has changed in this
 version, see:
