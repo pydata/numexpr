@@ -60,6 +60,14 @@ Uploading
 
   $ python setup.py sdist upload
 
+Build wheels
+------------
+
+Matthew Brett has a nice wheels repository for hosting wheels at
+http://wheels.scipy.org/).  For triggering a build do:
+
+  $ git commit --allow-empty -m"Triggering a build for X.Y.Z release"
+
 Announcing
 ----------
 
