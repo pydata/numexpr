@@ -102,8 +102,6 @@ op_signature(int op, unsigned int n) {
     return op_signature_table[op][n];
 }
 
-//#include "vml_stubs.hpp"
-
 
 typedef float (*FuncF4F4Ptr)(float);
 
@@ -142,9 +140,10 @@ FuncFFPtr_vml functions_f4f4_vml[] = {
 #endif
 
 typedef float (*FuncF4F4F4Ptr)(float, float);
+int test = 1;
 
 #ifdef _WIN32
-FuncFFFPtr functions_f4f4f4[] = {
+FuncF4F4F4Ptr functions_f4f4f4[] = {
 #define FUNC_F4F4F4(fop, s, f, f_win32, ...) f_win32,
 #include "functions.hpp"
 #undef FUNC_F4F4F4
@@ -344,12 +343,21 @@ FuncC8C8C8Ptr functions_c8c8c8[] = {
 #undef FUNC_C8C8C8
 };
 
-// This is causing a linker error
+
 unsigned short 
 convert_bytes2word( char* program_str )
 {
-    PyRun_SimpleString( "print('WARNING: non-endian safe bytearray to short conversion')" );
+    // RAM: fix endian issues with defines
+//#ifdef _WIN32
+//    unsigned short retcode = ((unsigned char)program_str[0] << 24) | ((unsigned char)program_str[1] << 16) | ((unsigned char)program_str[2] << 8) | (unsigned char)program_str[3];
+//#else
     unsigned short retcode = ((unsigned char)program_str[3] << 24) | ((unsigned char)program_str[2] << 16) | ((unsigned char)program_str[1] << 8) | (unsigned char)program_str[0];
+//#endif
+    char buffer [256];
+    sprintf( buffer, "print( 'WIN32::interpreter program bytearray = %d:%d:%d:%d' )", program_str[0], program_str[1], program_str[2], program_str[3] );
+    PyRun_SimpleString( buffer );
+    sprintf( buffer, "print( 'WIN32::interpreter retcode = %d' )", retcode );
+    PyRun_SimpleString( buffer );
     return retcode;
 }
 

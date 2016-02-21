@@ -305,6 +305,8 @@ _set_vml_num_threads(PyObject *self, PyObject *args)
 
 #endif
 
+
+
 static PyObject *
 _set_num_threads(PyObject *self, PyObject *args)
 {
@@ -399,6 +401,10 @@ initinterpreter()
     PyModule_AddObject(m, "NumExpr", (PyObject *)&NumExprType);
 
     import_array();
+
+    // RAM: Let's export the block sizes to Python side for benchmarking comparisons
+    PyModule_AddIntConstant(m, "__BLOCK_SIZE1__", BLOCK_SIZE1 );
+    PyModule_AddIntConstant(m, "__BLOCK_SIZE2__", BLOCK_SIZE2 );
 
     d = PyDict_New();
     if (!d) INITERROR;

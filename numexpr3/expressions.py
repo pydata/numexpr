@@ -65,7 +65,7 @@ kindorder_to_type = { (1,1):bool,
 scalar_constant_types = tuple( type_to_kindorder.keys() )
 
 
-from numexpr import interpreter
+from numexpr3 import interpreter
 
 
 class Expression(object):

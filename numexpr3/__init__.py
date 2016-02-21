@@ -37,10 +37,10 @@ else:
 
 import os, os.path
 import platform
-from numexpr.expressions import E
-from numexpr.necompiler import NumExpr, disassemble, evaluate
-from numexpr.tests import test, print_versions
-from numexpr.utils import (
+from numexpr3.expressions import E
+from numexpr3.necompiler import NumExpr, disassemble, evaluate
+from numexpr3.tests import test, print_versions
+from numexpr3.utils import (
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
     set_num_threads, detect_number_of_cores, detect_number_of_threads)
 

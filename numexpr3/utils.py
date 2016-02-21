@@ -11,12 +11,12 @@
 import os
 import subprocess
 
-from numexpr.interpreter import _set_num_threads
-from numexpr import use_vml
-import numexpr
+from numexpr3.interpreter import _set_num_threads
+from numexpr3 import use_vml
+import numexpr3
 
 if use_vml:
-    from numexpr.interpreter import (
+    from numexpr3.interpreter import (
         _get_vml_version, _set_vml_accuracy_mode, _set_vml_num_threads)
 
 
@@ -92,7 +92,7 @@ def set_num_threads(new_nthreads):
     can.
     """
     old_nthreads = _set_num_threads(new_nthreads)
-    numexpr.nthreads = new_nthreads
+    numexpr3.nthreads = new_nthreads
     return old_nthreads
 
 

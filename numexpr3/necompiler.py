@@ -12,8 +12,8 @@ import __future__
 import sys
 import numpy
 
-from numexpr import interpreter, expressions, use_vml
-from numexpr.utils import CacheDict
+from numexpr3 import interpreter, expressions, use_vml
+from numexpr3.utils import CacheDict
 
 # Declare a double type that does not exist in Python space
 #double = numpy.double

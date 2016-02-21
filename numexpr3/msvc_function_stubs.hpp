@@ -38,6 +38,7 @@
 #define fabsf(x)    ((float)fabs((double)(x)))
 #define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
+#define hypotf(x, y)    ((float)hypot((double)(x), (double)(y)))
 
 /* The next are directly called from interp_body.cpp */
 #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
@@ -46,7 +47,13 @@
 #endif  // _MSC_VER < 1400
 
 
+
 /* Now the actual stubs */
+
+// RAM: hypotf was also missing
+inline float hypotf2(float x, float y) {
+    return hypotf(x, y);
+}
 
 inline float sqrtf2(float x) {
     return sqrtf(x);
