@@ -6,7 +6,8 @@
 Changes from 2.5 to 2.5.1
 =========================
 
- #XXX version-specific blurb XXX#
+- Fix that allows numexpr-powered apps to be profiled with pympler.
+  Thanks to @nbecker.
 
 Changes from 2.4.6 to 2.5
 =========================

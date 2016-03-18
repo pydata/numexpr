@@ -51,7 +51,10 @@ class Expression(object):
 
     def __getattr__(self, name):
         if name.startswith('_'):
-            return self.__dict__[name]
+            try:
+                return self.__dict__[name]
+            except KeyError:
+                raise AttributeError
         else:
             return VariableNode(name, default_kind)
 
