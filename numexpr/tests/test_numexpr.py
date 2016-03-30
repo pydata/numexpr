@@ -380,6 +380,16 @@ class test_evaluate(TestCase):
         assert_array_equal(evaluate("c1"), c1)
         assert_array_equal(evaluate("a0+c1"), a0 + c1)
 
+    def test_recarray_strides(self):
+        a = arange(100)
+        b = arange(100,200)
+        recarr = np.rec.array(None, formats='f4,f4', shape=(100,))
+        recarr['f0'] = a
+        recarr['f1'] = b
+        c = recarr['f1']
+        assert_array_almost_equal(evaluate("sqrt(c) > 1."), sqrt(c) > 1.)
+        assert_array_almost_equal(evaluate("log10(c)"), log10(c))
+
     def test_broadcasting(self):
         a = arange(100).reshape(10, 10)[::2]
         c = arange(10)
