@@ -35,6 +35,36 @@ type_to_kind = expressions.type_to_kind
 kind_to_type = expressions.kind_to_type
 default_type = kind_to_type[expressions.default_kind]
 
+# VML functions that are implemented in numexpr
+vml_functions = [
+    "div",  # interp_body.cpp
+    "inv",  # interp_body.cpp
+    "pow",  # interp_body.cpp
+    # Keep the rest of this list in sync with the ones listed in functions.hpp
+    "sqrt",
+    "sin",
+    "cos",
+    "tan",
+    "arcsin",
+    "arccos",
+    "arctan",
+    "sinh",
+    "cosh",
+    "tanh",
+    "arcsinh",
+    "arccosh",
+    "arctanh",
+    "log",
+    "log1p",
+    "log10",
+    "exp",
+    "expm1",
+    "abs",
+    "conj",
+    "arctan2",
+    "fmod",
+    ]
+
 # Final addtions for Python 3 (mainly for PyTables needs)
 if sys.version_info[0] > 2:
     typecode_to_kind['s'] = 'str'
@@ -665,15 +695,7 @@ def getExprNames(text, context):
         ex_uses_vml = False
     else:
         for node in ast.postorderWalk():
-            if node.astType == 'op' \
-                    and node.value in ['sin', 'cos', 'exp', 'log',
-                                       'expm1', 'log1p',
-                                       'pow', 'div',
-                                       'sqrt', 'inv',
-                                       'sinh', 'cosh', 'tanh',
-                                       'arcsin', 'arccos', 'arctan',
-                                       'arccosh', 'arcsinh', 'arctanh',
-                                       'arctan2', 'abs']:
+            if node.astType == 'op' and node.value in vml_functions:
                 ex_uses_vml = True
                 break
         else:
@@ -747,7 +769,7 @@ def evaluate(ex, local_dict=None, global_dict=None,
             local_dict = call_frame.f_locals
         if global_dict is None:
             global_dict = call_frame.f_globals
-    
+
         arguments = []
         for name in names:
             try:
@@ -755,10 +777,10 @@ def evaluate(ex, local_dict=None, global_dict=None,
             except KeyError:
                 a = global_dict[name]
             arguments.append(numpy.asarray(a))
-    
+
         # Create a signature
         signature = [(name, getType(arg)) for (name, arg) in zip(names, arguments)]
-    
+
         # Look up numexpr if possible.
         numexpr_key = expr_key + (tuple(signature),)
         try:
