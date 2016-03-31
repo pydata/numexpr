@@ -1,5 +1,5 @@
 =========================
- Announcing Numexpr 2.5.1
+ Announcing Numexpr 2.5.2
 =========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -21,12 +21,7 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-Fixed a critical bug that caused wrong evaluations of log10() and
-conj().  These produced wrong results when numexpr was compiled with
-Intel's MKL (which is a popular build since Anaconda ships it by
-default) and non-contiguous data.  This is considered a *critical* bug
-and upgrading is highly recommended. Thanks to Tom Kooij and Arne de
-Laat for reporting and providing a test unit.
+#XXX version-specific blurb XXX#
 
 In case you want to know more in detail what has changed in this
 version, see:

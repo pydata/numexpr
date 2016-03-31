@@ -71,8 +71,8 @@ http://wheels.scipy.org/).  For triggering a build do:
 Announcing
 ----------
 
-- Send an announcement to the NumPy list and python-announce list.
-  Use the ``ANNOUNCE.rst`` file as skeleton (or possibly as the
+- Send an announcement to the NumPy list, PyData and python-announce
+  list.  Use the ``ANNOUNCE.rst`` file as skeleton (or possibly as the
   definitive version).
 
 
