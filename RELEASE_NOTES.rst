@@ -6,8 +6,15 @@
 Changes from 2.5 to 2.5.1
 =========================
 
+- Fix for log10() and conj() functions.  These produced wrong results
+  when numexpr was compiled with Intel's MKL (which is a popular build
+  since Anaconda ships it by default) and non-contiguous data (issue
+  #210).  Thanks to Arne de Laat and Tom Kooij for reporting and
+  providing a nice test unit.
+
 - Fix that allows numexpr-powered apps to be profiled with pympler.
   Thanks to @nbecker.
+
 
 Changes from 2.4.6 to 2.5
 =========================
