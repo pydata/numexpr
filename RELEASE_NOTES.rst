@@ -5,7 +5,9 @@
 Changes from 2.5.1 to 2.5.2
 ===========================
 
-#XXX version-specific blurb XXX#
+- conj() and abs() actually added as VML-powered functions, preventing
+  the same problems than log10() before (PR #212).  Thanks to Tom Kooij
+  for the fix!
 
 
 Changes from 2.5 to 2.5.1
