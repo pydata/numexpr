@@ -429,7 +429,7 @@ class test_evaluate(TestCase):
         for func in vml_funcs:
             strexpr = func+'(a)'
             _, ex_uses_vml = numexpr.necompiler.getExprNames(strexpr, {})
-            assert_equal(ex_uses_vml, True, strexpr)
+            assert_equal(ex_uses_vml, use_vml, strexpr)
 
     if 'sparc' not in platform.machine():
         # Execution order set here so as to not use too many threads
