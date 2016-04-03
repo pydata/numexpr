@@ -421,6 +421,16 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
+    def test_ex_uses_vml(self):
+        vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
+                      "sinh", "cosh", "tanh", "arcsinh", "arccosh", "arctanh",
+                      "log", "log1p","log10", "exp", "expm1", "abs", "conj",
+                      "arctan2", "fmod"]
+        for func in vml_funcs:
+            strexpr = func+'(a)'
+            _, ex_uses_vml = numexpr.necompiler.getExprNames(strexpr, {})
+            assert_equal(ex_uses_vml, True, strexpr)
+
     if 'sparc' not in platform.machine():
         # Execution order set here so as to not use too many threads
         # during the rest of the execution.  See #33 for details.

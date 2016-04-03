@@ -59,8 +59,8 @@ vml_functions = [
     "log10",
     "exp",
     "expm1",
-    "abs",
-    "conj",
+    "absolute",
+    "conjugate",
     "arctan2",
     "fmod",
     ]
