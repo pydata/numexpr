@@ -21,7 +21,11 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-#XXX version-specific blurb XXX#
+This is a maintenance release shaking some remaining problems with VML
+(it is nice to see how Anaconda VML's support helps raising hidden
+issues).  Now conj() and abs() are actually added as VML-powered
+functions, preventing the same problems than log10() before (PR #212);
+thanks to Tom Kooij.  Upgrading to this release is highly recommended.
 
 In case you want to know more in detail what has changed in this
 version, see:
