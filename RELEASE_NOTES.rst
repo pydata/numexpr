@@ -5,7 +5,8 @@
 Changes from 2.5.2 to 2.5.3
 ===========================
 
-#XXX version-specific blurb XXX#
+- The '--name' flag for `setup.py` returning the name of the package
+  is honored now (issue #215).
 
 
 Changes from 2.5.1 to 2.5.2

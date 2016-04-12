@@ -42,8 +42,10 @@ def setup_package():
                       install_requires=requirements,
                       setup_requires=requirements
     )
-    if (len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
-    in ('--help-commands', 'egg_info', '--version', 'clean'))):
+    if (len(sys.argv) >= 2 and
+        ('--help' in sys.argv[1:] or
+         (sys.argv[1] in (
+             '--help-commands', 'egg_info', '--version', 'clean', '--name')))):
 
         # For these actions, NumPy is not required.
         #
@@ -77,7 +79,8 @@ def setup_package():
                     old_build_py.run(self)
 
                 def find_package_modules(self, package, package_dir):
-                    modules = old_build_py.find_package_modules(self, package, package_dir)
+                    modules = old_build_py.find_package_modules(
+                        self, package, package_dir)
 
                     # Find build_src generated *.py files.
                     build_src = self.get_finalized_command('build_src')
@@ -116,8 +119,8 @@ def setup_package():
             #try to find configuration for MKL, either from environment or site.cfg
             if op.exists('site.cfg'):
                 mkl_config_data = config.get_info('mkl')
-                # some version of MKL need to be linked with libgfortran, for this, use
-                # entries of DEFAULT section in site.cfg
+                # Some version of MKL needs to be linked with libgfortran.
+                # For this, use entries of DEFAULT section in site.cfg.
                 default_config = system_info()
                 dict_append(mkl_config_data,
                             libraries=default_config.get_libraries(),
@@ -125,7 +128,7 @@ def setup_package():
             else:
                 mkl_config_data = {}
 
-            #setup information for C extension
+            # setup information for C extension
             if os.name == 'nt':
                 pthread_win = ['numexpr/win32/pthread.c']
             else:
