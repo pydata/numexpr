@@ -35,30 +35,31 @@ Library, normally integrated in its Math Kernel Library, or MKL).
 This allows further acceleration of transcendent expressions.
 
 
-How Numexpr achieves high performance 
-================================================
+How Numexpr achieves high performance
+=====================================
 
-The main reason why Numexpr achieves better performance than NumPy 
-is that it avoids allocating memory for intermediate results. This 
+The main reason why Numexpr achieves better performance than NumPy is
+that it avoids allocating memory for intermediate results. This
 results in better cache utilization and reduces memory access in
-general. Due to this, Numexpr works best with large arrays. 
+general. Due to this, Numexpr works best with large arrays.
 
 Numexpr parses expressions into its own op-codes that are then used by
 an integrated computing virtual machine. The array operands are split
-into small chunks that easily fit in the cache of the CPU and passed to 
-the virtual machine. The virtual machine then applies the operations 
-on each chunk. It's worth noting that all temporaries and constants 
-in the expression are also chunked.
+into small chunks that easily fit in the cache of the CPU and passed
+to the virtual machine. The virtual machine then applies the
+operations on each chunk. It's worth noting that all temporaries and
+constants in the expression are also chunked.
 
 The result is that Numexpr can get the most of your machine computing
-capabilities for array-wise computations. Common speed-ups with regard 
-to NumPy are usually between 0.95x (for very simple expressions 
-like ’a + 1’) and 4x (for relatively complex ones like 'a*b-4.1*a > 2.5*b'),
-although much higher speed-ups can be achieved (up to 15x in some cases).
+capabilities for array-wise computations. Common speed-ups with regard
+to NumPy are usually between 0.95x (for very simple expressions like
+’a + 1’) and 4x (for relatively complex ones like 'a*b-4.1*a >
+2.5*b'), although much higher speed-ups can be achieved (up to 15x in
+some cases).
 
-Numexpr performs best on matrices that do not fit in CPU cache. 
-In order to get a better idea on the different speed-ups
-that can be achieved on your platform, run the provided benchmarks.
+Numexpr performs best on matrices that do not fit in CPU cache.  In
+order to get a better idea on the different speed-ups that can be
+achieved on your platform, run the provided benchmarks.
 
 See more info about how Numexpr works in the `wiki <https://github.com/pydata/numexpr/wiki>`_.
 
@@ -109,9 +110,10 @@ type inference rules, see below).  Have this in mind when doing
 estimations about the memory consumption during the computation of
 your expressions.
 
-Also, the types in Numexpr conditions are somewhat more restrictive 
-than those of Python.  For instance, the only valid constants for booleans 
-are `True` and `False`, and they are never automatically cast to integers.
+Also, the types in Numexpr conditions are somewhat more restrictive
+than those of Python.  For instance, the only valid constants for
+booleans are `True` and `False`, and they are never automatically cast
+to integers.
 
 
 Casting rules
@@ -232,6 +234,13 @@ General routines
     Evaluate a simple array expression element-wise.  See docstrings
     for more info on parameters.  Also, see examples above.
 
+  * re_evaluate(local_dict=None):
+    Re-evaluate the previous executed array expression without any
+    check.  This is meant for accelerating loops that are
+    re-evaluating the same expression repeatedly without changing
+    anything else than the operands.  If unsure, use evaluate() which
+    is safer.
+
   * test():  Run all the tests in the test suite.
 
   * print_versions():  Print the versions of software that numexpr
@@ -271,7 +280,7 @@ It returns the previous mode.
 
 This call is equivalent to the `vmlSetMode()` in the VML library.
 
-:: 
+::
 
   * set_vml_num_threads(nthreads): Suggests a maximum number of
     threads to be used in VML operations.

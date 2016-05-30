@@ -1,9 +1,16 @@
 ======================================
- Release notes for Numexpr 2.5 series
+ Release notes for Numexpr 2.6 series
 ======================================
 
-Changes from 2.5.2 to 2.5.3
+
+Changes from 2.5.2 to 2.6.0
 ===========================
+
+- Introduced a new re_evaluate() function for re-evaluating the
+  previous executed array expression without any check.  This is meant
+  for accelerating loops that are re-evaluating the same expression
+  repeatedly without changing anything else than the operands.  If
+  unsure, use evaluate() which is safer.
 
 - The '--name' flag for `setup.py` returning the name of the package
   is honored now (issue #215).

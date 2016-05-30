@@ -28,7 +28,7 @@ from numpy.testing import (assert_equal, assert_array_equal,
 from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 
 import numexpr
-from numexpr import E, NumExpr, evaluate, disassemble, use_vml
+from numexpr import E, NumExpr, evaluate, re_evaluate, disassemble, use_vml
 
 import unittest
 
@@ -307,6 +307,22 @@ class test_evaluate(TestCase):
         x = arange(1e6)
         y = evaluate("x")
         assert_array_equal(x, y)
+
+    def test_re_evaluate(self):
+        a = array([1., 2., 3.])
+        b = array([4., 5., 6.])
+        c = array([7., 8., 9.])
+        x = evaluate("2*a + 3*b*c")
+        x = re_evaluate()
+        assert_array_equal(x, array([86., 124., 168.]))
+
+    def test_re_evaluate_dict(self):
+        a = array([1., 2., 3.])
+        b = array([4., 5., 6.])
+        c = array([7., 8., 9.])
+        x = evaluate("2*a + 3*b*c", local_dict={'a': a, 'b': b, 'c': c})
+        x = re_evaluate()
+        assert_array_equal(x, array([86., 124., 168.]))
 
     # Test for issue #37
     if sys.version_info[0] < 3:
