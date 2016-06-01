@@ -2,7 +2,6 @@
  Release notes for Numexpr 2.6 series
 ======================================
 
-
 Changes from 2.5.2 to 2.6.0
 ===========================
 
@@ -11,6 +10,12 @@ Changes from 2.5.2 to 2.6.0
   for accelerating loops that are re-evaluating the same expression
   repeatedly without changing anything else than the operands.  If
   unsure, use evaluate() which is safer.
+
+- The BLOCK_SIZE1 and BLOCK_SIZE2 constants have been re-checked in
+  order to find a value maximizing most of the benchmarks in bench/
+  directory.  The new values (8192 and 16 respectively) give somewhat
+  better results (~5%) overall.  The CPU used for fine tuning is a
+  relatively new Haswell processor (E3-1240 v3).
 
 - The '--name' flag for `setup.py` returning the name of the package
   is honored now (issue #215).
