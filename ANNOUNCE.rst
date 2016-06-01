@@ -1,5 +1,5 @@
 =========================
- Announcing Numexpr 2.5.3
+ Announcing Numexpr 2.6.0
 =========================
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
@@ -21,7 +21,20 @@ don't want to adopt other solutions requiring more heavy dependencies.
 What's new
 ==========
 
-#XXX version-specific blurb XXX#
+This is a minor version bump because it introduces a new function.
+Also some minor fine tuning for recent CPUs has been done:
+
+- Introduced a new re_evaluate() function for re-evaluating the
+  previous executed array expression without any check.  This is meant
+  for accelerating loops that are re-evaluating the same expression
+  repeatedly without changing anything else than the operands.  If
+  unsure, use evaluate() which is safer.
+
+- The BLOCK_SIZE1 and BLOCK_SIZE2 constants have been re-checked in
+  order to find a value maximizing most of the benchmarks in bench/
+  directory.  The new values (8192 and 16 respectively) give somewhat
+  better results (~5%) overall.  The CPU used for fine tuning is a
+  relatively new Haswell processor (E3-1240 v3).
 
 In case you want to know more in detail what has changed in this
 version, see:
