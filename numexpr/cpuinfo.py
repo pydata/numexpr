@@ -498,6 +498,32 @@ class DarwinCPUInfo(CPUInfoBase):
 
     def _is_ppc860(self): return self.__machine(860)
 
+class NetBSDCPUInfo(CPUInfoBase):
+	info = None
+
+	def __init__(self):
+		if self.info is not None:
+			return
+		info = {}
+		info['sysctl_hw'] = key_value_from_command(['sysctl', 'hw'], sep='=')
+		info['arch'] = info['sysctl_hw'].get('hw.machine_arch', 1)
+		info['machine'] = info['sysctl_hw'].get('hw.machine', 1)
+		self.__class__.info = info
+
+	def _not_impl(self): pass
+
+	def _getNCPUs(self):
+		return int(self.info['sysctl_hw'].get('hw.ncpu', 1))
+
+	def _is_Intel(self):
+		if self.info['sysctl_hw'].get('hw.model', "")[0:5] == 'Intel':
+			return True
+		return False
+
+	def _is_AMD(self):
+		if self.info['sysctl_hw'].get('hw.model', "")[0:3] == 'AMD':
+			return True
+		return False
 
 class SunOSCPUInfo(CPUInfoBase):
     info = None
@@ -781,6 +807,8 @@ elif sys.platform.startswith('irix'):
     cpuinfo = IRIXCPUInfo
 elif sys.platform == 'darwin':
     cpuinfo = DarwinCPUInfo
+elif sys.platform[0:6] == 'netbsd':
+    cpuinfo = NetBSDCPUInfo
 elif sys.platform.startswith('sunos'):
     cpuinfo = SunOSCPUInfo
 elif sys.platform.startswith('win32'):
