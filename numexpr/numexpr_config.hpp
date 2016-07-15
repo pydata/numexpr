@@ -7,6 +7,10 @@
 #  define USE_UNALIGNED_ACCESS 1
 #endif
 
+#ifdef SCIPY_MKL_H
+#define USE_VML
+#endif
+
 #ifdef USE_VML
 /* The values below have been tuned for a Haswell processor (E3-1240 v3) */
 /* Note: with VML functions a larger block size (e.g. 8192) allows to make use
@@ -31,10 +35,6 @@
 #else
   #include <pthread.h>
   #include "unistd.h"
-#endif
-
-#ifdef SCIPY_MKL_H
-#define USE_VML
 #endif
 
 #ifdef USE_VML
