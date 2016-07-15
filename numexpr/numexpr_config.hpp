@@ -12,14 +12,12 @@
 #endif
 
 #ifdef USE_VML
-/* The values below have been tuned for a Haswell processor (E3-1240 v3) */
-/* Note: with VML functions a larger block size (e.g. 8192) allows to make use
- * of the automatic multithreading capabilities of the VML library */
-#define BLOCK_SIZE1 8192
+/* The values below have been tuned for a Skylake processor (E3-1245 v5 @ 3.50GHz) */
+#define BLOCK_SIZE1 1024
 #define BLOCK_SIZE2 16
 #else
-/* The values below have been tuned for a Haswell processor (E3-1240 v3) */
-#define BLOCK_SIZE1 8192
+/* The values below have been tuned for a Skylake processor (E3-1245 v5 @ 3.50GHz) */
+#define BLOCK_SIZE1 1024
 #define BLOCK_SIZE2 16
 #endif
 

@@ -10,7 +10,7 @@ import numpy as np
 import numexpr as ne
 from time import time
 
-N = 1e7 # higher value can cause segfault (on x86)
+N = int(5e7)
 
 x = np.linspace(0, 1, N)
 y = np.linspace(0, 1, N)

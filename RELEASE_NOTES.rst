@@ -5,7 +5,14 @@
 Changes from 2.6.0 to 2.6.1
 ===========================
 
-#XXX version-specific blurb XXX#
+- Fixed a performance regression in some situations as consequence of
+  increasing too much the BLOCK_SIZE1 constant.  After more careful
+  benchmarks (both in VML and non-VML modes), the value has been set
+  again to 1024 (down from 8192).  The benchmarks have been made with
+  a relatively new processor (Intel Xeon E3-1245 v5 @ 3.50GHz), so
+  they should work well for a good range of processors again.
+
+- Added NetBSD support to CPU detection.  Thanks to Thomas Klausner.
 
 
 Changes from 2.5.2 to 2.6.0
