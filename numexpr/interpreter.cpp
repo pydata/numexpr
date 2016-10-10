@@ -905,7 +905,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                         pc_error, &errmsg);
         }
         else {
-            errmsg = "Parallel engine doesn't support reduction yet";
+            errmsg = (char *) "Parallel engine doesn't support reduction yet";
             r = -1;
         }
     }
