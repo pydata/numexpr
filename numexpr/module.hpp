@@ -8,6 +8,8 @@
 #  define NO_IMPORT_ARRAY
 #endif
 
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
 #include <Python.h>
 #include <numpy/ndarrayobject.h>
 #include <numpy/arrayscalars.h>

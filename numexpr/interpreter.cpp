@@ -1049,7 +1049,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         // Convert it if it's not an array
         if (!PyArray_Check(o)) {
             if (typecode == -1) goto fail;
-            a = PyArray_FROM_OTF(o, typecode, NPY_NOTSWAPPED);
+            a = PyArray_FROM_OTF(o, typecode, NPY_ARRAY_NOTSWAPPED);
         }
         else {
             Py_INCREF(o);
@@ -1178,7 +1178,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 dtypes[0] = PyArray_DESCR(operands[1]);
                 Py_INCREF(dtypes[0]);
             } else {  // constant, like in '"foo"'
-                dtypes[0] = PyArray_DescrNewFromType(PyArray_STRING);
+                dtypes[0] = PyArray_DescrNewFromType(NPY_STRING);
                 dtypes[0]->elsize = (int)self->memsizes[1];
             }  // no string temporaries, so no third case
         }
@@ -1253,7 +1253,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
             Py_INCREF(dtypes[0]);
             a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
-                                        NPY_ALIGNED|NPY_UPDATEIFCOPY);
+                                        NPY_ARRAY_ALIGNED|NPY_ARRAY_UPDATEIFCOPY);
             if (a == NULL) {
                 goto fail;
             }
