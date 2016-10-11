@@ -357,7 +357,7 @@ extern "C" {
 
 #if PY_MAJOR_VERSION >= 3
 
-/* XXX: handle the "global_state" state via moduedef */
+/* XXX: handle the "global_state" state via moduledef */
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "interpreter",
