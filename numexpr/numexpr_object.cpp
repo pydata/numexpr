@@ -81,6 +81,8 @@ NumExpr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
+#define CHARP(s) ((char *)(s))
+
 static int
 NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
 {
@@ -94,9 +96,9 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
     npy_intp *memsteps;
     npy_intp *memsizes;
     int rawmemsize;
-    static char *kwlist[] = {"signature", "tempsig",
-                             "program",  "constants",
-                             "input_names", NULL};
+    static char *kwlist[] = {CHARP("signature"), CHARP("tempsig"),
+			     CHARP("program"),  CHARP("constants"),
+			     CHARP("input_names"), NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "SSS|OO", kwlist,
                                      &signature,
@@ -357,15 +359,15 @@ static PyMethodDef NumExpr_methods[] = {
 };
 
 static PyMemberDef NumExpr_members[] = {
-    {"signature", T_OBJECT_EX, offsetof(NumExprObject, signature), READONLY, NULL},
-    {"constsig", T_OBJECT_EX, offsetof(NumExprObject, constsig), READONLY, NULL},
-    {"tempsig", T_OBJECT_EX, offsetof(NumExprObject, tempsig), READONLY, NULL},
-    {"fullsig", T_OBJECT_EX, offsetof(NumExprObject, fullsig), READONLY, NULL},
+    {CHARP("signature"), T_OBJECT_EX, offsetof(NumExprObject, signature), READONLY, NULL},
+    {CHARP("constsig"), T_OBJECT_EX, offsetof(NumExprObject, constsig), READONLY, NULL},
+    {CHARP("tempsig"), T_OBJECT_EX, offsetof(NumExprObject, tempsig), READONLY, NULL},
+    {CHARP("fullsig"), T_OBJECT_EX, offsetof(NumExprObject, fullsig), READONLY, NULL},
 
-    {"program", T_OBJECT_EX, offsetof(NumExprObject, program), READONLY, NULL},
-    {"constants", T_OBJECT_EX, offsetof(NumExprObject, constants),
+    {CHARP("program"), T_OBJECT_EX, offsetof(NumExprObject, program), READONLY, NULL},
+    {CHARP("constants"), T_OBJECT_EX, offsetof(NumExprObject, constants),
      READONLY, NULL},
-    {"input_names", T_OBJECT, offsetof(NumExprObject, input_names), 0, NULL},
+    {CHARP("input_names"), T_OBJECT, offsetof(NumExprObject, input_names), 0, NULL},
     {NULL},
 };
 
