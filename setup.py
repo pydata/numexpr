@@ -151,6 +151,7 @@ def setup_package():
             if 'library_dirs' in mkl_config_data:
                 library_dirs = ':'.join(mkl_config_data['library_dirs'])
             config.add_extension('interpreter', **extension_config_data)
+            config.set_options(quiet=True)
 
             config.make_config_py()
             config.add_subpackage('tests', 'numexpr/tests')
