@@ -533,7 +533,7 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
    Based on Newlib/strstr.c.                        */
 
 int
-stringcontains(const char *haystack_start, const char *needle_start,  npy_intp max_haystack_len, npy_intp max_needle_len)
+stringcontains(const char *haystack_start, const char *needle_start, npy_intp max_haystack_len, npy_intp max_needle_len)
 {
     // needle_len - Length of needle.
     // haystack_len - Known minimum length of haystack.
@@ -543,6 +543,7 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
     const char *haystack = haystack_start;
     const char *needle = needle_start;
     bool ok = true; /* needle is prefix of haystack. */
+    char *res;
 
     size_t si = 0;
     size_t min_len = min(needle_len, haystack_len);
@@ -571,17 +572,13 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
 
     if (needle_len < LONG_NEEDLE_THRESHOLD)
     {
-        char *res = two_way_short_needle ((const unsigned char *) haystack_start,
-                                     haystack_len,
-                                     (const unsigned char *) needle_start, needle_len) ;
-        int ptrcomp = res != NULL;
-        return ptrcomp;
+        res = two_way_short_needle((const unsigned char *)haystack_start, haystack_len,
+                                   (const unsigned char *)needle_start, needle_len);
+    } else {
+        res = two_way_long_needle((const unsigned char *)haystack_start, haystack_len,
+                                  (const unsigned char *)needle_start, needle_len);
     }
-
-    char* res = two_way_long_needle ((const unsigned char *) haystack_start, haystack_len,
-                              (const unsigned char *) needle_start, needle_len);
-    int ptrcomp2 = res != NULL ? 1 : 0;
-    return ptrcomp2;
+    return res != NULL ? 1 : 0;
 }
 
 
