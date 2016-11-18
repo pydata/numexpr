@@ -578,8 +578,8 @@ stringcontains(const char *haystack_start, const char *needle_start,  npy_intp m
         return ptrcomp;
     }
 
-    char* res = two_way_long_needle ((const unsigned char *) haystack, haystack_len,
-                              (const unsigned char *) needle, needle_len);
+    char* res = two_way_long_needle ((const unsigned char *) haystack_start, haystack_len,
+                              (const unsigned char *) needle_start, needle_len);
     int ptrcomp2 = res != NULL ? 1 : 0;
     return ptrcomp2;
 }

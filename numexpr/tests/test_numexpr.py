@@ -284,6 +284,12 @@ class test_numexpr(TestCase):
         res = evaluate('contains(withemptystr, b"")')
         assert_equal(res, [True, True, True])
 
+    def test_str_contains_long_needle(self):
+        a = b'1' + b'a' * 40
+        b = b'a' * 40
+        res = evaluate('contains(a, b)')
+        assert_equal(res, True)
+
 
 class test_numexpr2(test_numexpr):
     """Testing with 2 threads"""
