@@ -558,7 +558,7 @@ stringcontains(const char *haystack_start, const char *needle_start, npy_intp ma
         if (ok)
             return 1;
         needle_len = si;
-    } else if (si == haystack_len || *haystack == 0) {
+    } else {
         /* haystack less needle */
         return 0;
     }
