@@ -271,7 +271,7 @@
         case OP_SUB_LLL: VEC_ARG2(l_dest = l1 - l2);
         case OP_MUL_LLL: VEC_ARG2(l_dest = l1 * l2);
         case OP_DIV_LLL: VEC_ARG2(l_dest = l2 ? (l1 / l2) : 0);
-        case OP_POW_LLL: VEC_ARG2(l_dest = (l2 < 0) ? (1 / l1) : (long long)pow((long double)l1, (long double)l2));
+        case OP_POW_LLL: VEC_ARG2(l_dest = (l2 < 0) ? (1 / l1) : (long long)llround(pow((long double)l1, (long double)l2)));
         case OP_MOD_LLL: VEC_ARG2(l_dest = l2 ? (l1 % l2) : 0);
         case OP_LSHIFT_LLL: VEC_ARG2(l_dest = l1 << l2);
         case OP_RSHIFT_LLL: VEC_ARG2(l_dest = l1 >> l2);
