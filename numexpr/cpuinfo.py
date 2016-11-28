@@ -276,6 +276,27 @@ class LinuxCPUInfo(CPUInfoBase):
 
     _is_Xeon = _is_XEON
 
+    # Power
+    def _is_Power(self):
+        return re.match(r'.*POWER.*',
+                       self.info[0]['cpu']) is not None
+
+    def _is_Power7(self):
+        return re.match(r'.*POWER7.*',
+                       self.info[0]['cpu']) is not None
+
+    def _is_Power8(self):
+        return re.match(r'.*POWER8.*',
+                       self.info[0]['cpu']) is not None
+
+    def _is_Power9(self):
+        return re.match(r'.*POWER9.*',
+                       self.info[0]['cpu']) is not None
+
+    def _has_Altivec(self):
+        return re.match(r'.*altivec\ supported.*',
+                       self.info[0]['cpu']) is not None
+
     # Varia
 
     def _is_singleCPU(self):
