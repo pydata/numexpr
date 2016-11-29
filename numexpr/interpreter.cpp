@@ -9,7 +9,7 @@
 
 #include "module.hpp"
 #include <numpy/npy_cpu.h>
-#include <cmath>
+#include <math.h>
 #include <string.h>
 #include <assert.h>
 #include <vector>
