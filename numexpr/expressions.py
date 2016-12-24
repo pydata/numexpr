@@ -15,6 +15,8 @@ import sys
 import threading
 
 import numpy
+from distutils.version import LooseVersion
+_np_version = LooseVersion(numpy.__version__)
 
 # Declare a double type that does not exist in Python space
 double = numpy.double
@@ -160,7 +162,7 @@ def bestConstantType(x):
     for converter in float, complex:
         try:
             y = converter(x)
-        except StandardError, err:
+        except StandardError as err:
             continue
         if y == x:
             return converter
@@ -280,6 +282,14 @@ def rtruediv_op(a, b):
 
 @ophelper
 def pow_op(a, b):
+    if (_np_version >= '1.12.0b1' and
+        b.astKind in ('int', 'long') and
+        a.astKind in ('int', 'long') and
+        numpy.any(b.value < 0)):
+
+        raise ValueError(
+            'Integers to negative integer powers are not allowed.')
+
     if allConstantNodes([a, b]):
         return ConstantNode(a ** b)
     if isinstance(b, ConstantNode):
