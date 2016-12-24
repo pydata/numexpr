@@ -160,7 +160,7 @@ def bestConstantType(x):
     for converter in float, complex:
         try:
             y = converter(x)
-        except StandardError, err:
+        except StandardError as err:
             continue
         if y == x:
             return converter

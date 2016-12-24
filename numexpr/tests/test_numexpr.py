@@ -800,7 +800,7 @@ class test_strings(TestCase):
         msg = "expected NotImplementedError regarding '%s'" % op
         try:
             evaluate(expr, local_dict)
-        except NotImplementedError, nie:
+        except NotImplementedError as nie:
             if "'%s'" % op not in nie.args[0]:
                 self.fail(msg)
         else:
