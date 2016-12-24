@@ -573,10 +573,11 @@ def test_expressions():
                 npval = eval(expr, globals(), this_locals)
                 warnings.simplefilter("always")
                 npval = eval(expr, globals(), this_locals)
-            except Exception as np_exception:
+            except Exception as ex:
                 # just store the exception in a variable
                 # compatibility with numpy v1.12
                 # see also https://github.com/pydata/numexpr/issues/239
+                np_exception = ex
                 npval = None
             else:
                 np_exception = None
