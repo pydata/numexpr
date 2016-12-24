@@ -458,7 +458,7 @@ check_program(NumExprObject *self)
                 } else if (op >= OP_REDUCTION) {
                     ;
                 } else {
-                    PyErr_Format(PyExc_RuntimeError, "invalid program: internal checker errror processing %i", argloc);
+                    PyErr_Format(PyExc_RuntimeError, "invalid program: internal checker error processing %i", argloc);
                     return -1;
                 }
             /* The next is to avoid problems with the ('i','l') duality,
