@@ -566,29 +566,49 @@ def test_expressions():
         this_locals = locals()
 
         def method():
-            # We don't want to listen at RuntimeWarnings like
-            # "overflows" or "divide by zero" in plain eval().
-            warnings.simplefilter("ignore")
-            npval = eval(expr, globals(), this_locals)
-            warnings.simplefilter("always")
-            npval = eval(expr, globals(), this_locals)
+            try:
+                # We don't want to listen at RuntimeWarnings like
+                # "overflows" or "divide by zero" in plain eval().
+                warnings.simplefilter("ignore")
+                npval = eval(expr, globals(), this_locals)
+                warnings.simplefilter("always")
+                npval = eval(expr, globals(), this_locals)
+            except Exception as np_exception:
+                # just store the exception in a variable
+                # compatibility with numpy v1.12
+                # see also https://github.com/pydata/numexpr/issues/239
+                npval = None
+            else:
+                np_exception = None
+
             try:
                 neval = evaluate(expr, local_dict=this_locals,
                                  optimization=optimization)
+            except AssertionError:
+                raise
+            except NotImplementedError:
+                print('%r not implemented for %s (scalar=%d, opt=%s)'
+                      % (expr, dtype.__name__, test_scalar, optimization))
+            except Exception as ne_exception:
+                same_exc_type = issubclass(type(ne_exception),
+                                           type(np_exception))
+                if np_exception is None or not same_exc_type:
+                    print('numexpr error for expression %r' % (expr,))
+                    raise
+            except:
+                print('numexpr error for expression %r' % (expr,))
+                raise
+            else:
+                msg = ('expected numexpr error not raised for expression '
+                       '%r' % (expr,))
+                assert np_exception is None, msg
+
                 assert equal(npval, neval, exact), """%r
 (test_scalar=%r, dtype=%r, optimization=%r, exact=%r,
  npval=%r (%r - %r)\n neval=%r (%r - %r))""" % (expr, test_scalar, dtype.__name__,
                                                 optimization, exact,
                                                 npval, type(npval), shape(npval),
                                                 neval, type(neval), shape(neval))
-            except AssertionError:
-                raise
-            except NotImplementedError:
-                print('%r not implemented for %s (scalar=%d, opt=%s)'
-                      % (expr, dtype.__name__, test_scalar, optimization))
-            except:
-                print('numexpr error for expression %r' % (expr,))
-                raise
 
         method.description = ('test_expressions(%s, test_scalar=%r, '
                               'dtype=%r, optimization=%r, exact=%r)') \
