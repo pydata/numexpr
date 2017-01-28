@@ -15,8 +15,8 @@ import sys
 import threading
 
 import numpy
-from distutils.version import LooseVersion
-_np_version = LooseVersion(numpy.__version__)
+from pkg_resources import parse_version
+_np_version = parse_version(numpy.__version__)
 
 # Declare a double type that does not exist in Python space
 double = numpy.double
@@ -282,7 +282,7 @@ def rtruediv_op(a, b):
 
 @ophelper
 def pow_op(a, b):
-    if (_np_version >= '1.12.0b1' and
+    if (_np_version >= parse_version('1.12.0b1') and
         b.astKind in ('int', 'long') and
         a.astKind in ('int', 'long') and
         numpy.any(b.value < 0)):
