@@ -15,7 +15,7 @@ before_install:
   - free -m
   - df -h
   - ulimit -a
-  - pip install -q --use-mirrors numpy
+  - pip install -q numpy
   - python -V
 
 install:
