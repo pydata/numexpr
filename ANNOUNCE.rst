@@ -7,8 +7,9 @@ What's new
 
 This is a maintenance release that fixes several issues, with special
 emphasis in keeping compatibility with newer NumPy versions.  Also,
-initial support for POWER processors is here.  Thanks to Oleksandr Pavlyk,
-Breno Leitao, Fernando Seiti Furusato and Antonio Valentino.
+initial support for POWER processors is here.  Thanks to Oleksandr
+Pavlyk, Alexander Shadchin, Breno Leitao, Fernando Seiti Furusato and
+Antonio Valentino.
 
 In case you want to know more in detail what has changed in this
 version, see:

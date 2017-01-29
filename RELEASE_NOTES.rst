@@ -10,6 +10,8 @@ Changes from 2.6.1 to 2.6.2
 
 - Removed several warnings (#226 and #227).  Thanks to Oleksander Pavlyk.
 
+- Fix bugs in function `stringcontains()` (#230).  Thanks to Alexander Shadchin.
+
 - Detection of the POWER processor (#232).  Thanks to Breno Leitao.
 
 - Fix pow result casting (#235).  Thanks to Fernando Seiti Furusato.
