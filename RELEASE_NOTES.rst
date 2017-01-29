@@ -5,7 +5,20 @@
 Changes from 2.6.1 to 2.6.2
 ===========================
 
- #XXX version-specific blurb XXX#
+- Updates to keep with API changes in newer NumPy versions (#228).
+  Thanks to Oleksandr Pavlyk.
+
+- Removed several warnings (#226 and #227).  Thanks to Oleksander Pavlyk.
+
+- Detection of the POWER processor (#232).  Thanks to Breno Leitao.
+
+- Fix pow result casting (#235).  Thanks to Fernando Seiti Furusato.
+
+- Fix integers to negative integer powers (#240).  Thanks to Antonio Valentino.
+
+- Detect numpy exceptions in expression evaluation (#240).  Thanks to Antonio Valentino.
+
+- Better handling of RC versions (#243).  Thanks to Antonio Valentino.
 
 
 Changes from 2.6.0 to 2.6.1

@@ -1,16 +1,14 @@
 =========================
- Announcing Numexpr 2.6.1
+ Announcing Numexpr 2.6.2
 =========================
 
 What's new
 ==========
 
-This is a manintenance release that fixes a performance regression in
-some situations. More specifically, the BLOCK_SIZE1 constant has been
-set to 1024 (down from 8192). This allows for better cache utilization
-when there are many operands.  Fixes #221.
-
-Also, support for NetBSD has been added.  Thanks to Thomas Klausner.
+This is a maintenance release that fixes several issues, with special
+emphasis in keeping compatibility with newer NumPy versions.  Also,
+initial support for POWER processors is here.  Thanks to Oleksandr Pavlyk,
+Breno Leitao, Fernando Seiti Furusato and Antonio Valentino.
 
 In case you want to know more in detail what has changed in this
 version, see:
