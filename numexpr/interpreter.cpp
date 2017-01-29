@@ -533,44 +533,52 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
    Based on Newlib/strstr.c.                        */
 
 int
-stringcontains(const char *haystack_start, const char *needle_start,  npy_intp max_haystack_len, npy_intp max_needle_len)
+stringcontains(const char *haystack_start, const char *needle_start, npy_intp max_haystack_len, npy_intp max_needle_len)
 {
     // needle_len - Length of needle.
     // haystack_len - Known minimum length of haystack.
-    size_t needle_len = min((size_t)max_needle_len, strlen(needle_start));
-    size_t haystack_len = min((size_t)max_haystack_len, strlen(haystack_start));
+    size_t needle_len = (size_t)max_needle_len;
+    size_t haystack_len = (size_t)max_haystack_len;
 
     const char *haystack = haystack_start;
     const char *needle = needle_start;
     bool ok = true; /* needle is prefix of haystack. */
-
-    if(haystack_len<needle_len)
-        return 0;
+    char *res;
 
     size_t si = 0;
-    while (*haystack && *needle && si < needle_len)
+    size_t min_len = min(needle_len, haystack_len);
+    while (*haystack && *needle && si < min_len)
     {
       ok &= *haystack++ == *needle++;
       si++;
     }
-    if (ok)
-    {
-      return 1;
+
+    /* check needle is prefix of haystack and calc needle length */
+    if (si == needle_len || *needle == 0) {
+        if (ok)
+            return 1;
+        needle_len = si;
+    } else {
+        /* haystack less needle */
+        return 0;
     }
+
+    /* calc haystack length */
+    while (*haystack && si < haystack_len) {
+        haystack++;
+        si++;
+    }
+    haystack_len = si;
 
     if (needle_len < LONG_NEEDLE_THRESHOLD)
     {
-        char *res = two_way_short_needle ((const unsigned char *) haystack_start,
-                                     haystack_len,
-                                     (const unsigned char *) needle_start, needle_len) ;
-        int ptrcomp = res != NULL;
-        return ptrcomp;
+        res = two_way_short_needle((const unsigned char *)haystack_start, haystack_len,
+                                   (const unsigned char *)needle_start, needle_len);
+    } else {
+        res = two_way_long_needle((const unsigned char *)haystack_start, haystack_len,
+                                  (const unsigned char *)needle_start, needle_len);
     }
-
-    char* res = two_way_long_needle ((const unsigned char *) haystack, haystack_len,
-                              (const unsigned char *) needle, needle_len);
-    int ptrcomp2 = res != NULL ? 1 : 0;
-    return ptrcomp2;
+    return res != NULL ? 1 : 0;
 }
 
 
