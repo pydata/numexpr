@@ -8,7 +8,13 @@
 #  define NO_IMPORT_ARRAY
 #endif
 
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
+// For suppressing depricated char cast warnings
+#define CHARP(s) ((char *)(s))
+
 #include <Python.h>
+#include <numpy/npy_common.h>
 #include <numpy/ndarrayobject.h>
 #include <numpy/arrayscalars.h>
 
@@ -17,7 +23,7 @@
 
 struct global_state {
     /* Global variables for threads */
-    int nthreads;                    /* number of desired threads in pool */
+    int n_thread;                    /* number of desired threads in pool */
     int init_threads_done;           /* pool of threads initialized? */
     int end_threads;                 /* should exisiting threads end? */
     pthread_t threads[MAX_THREADS];  /* opaque structure for threads */
@@ -35,7 +41,7 @@ struct global_state {
     pthread_cond_t count_threads_cv;
 
     global_state() {
-        nthreads = 1;
+        n_thread = 1;
         init_threads_done = 0;
         end_threads = 0;
         pid = 0;

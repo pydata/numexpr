@@ -53,59 +53,50 @@ Ignore the "Missing compiler_cxx fix for MSVCCompiler" error message.
 You also need the .NET Framework 3.5 SP1 installed for Python 2.7
 """
 
-if sys.version_info < (2, 6):
-    raise RuntimeError("must use python 2.6 or greater")
+if sys.version_info < (2, 7):
+    raise RuntimeError( "NumExpr3 requires Python 2.7 or greater." )
+    
+if sys.version_info.major == 3 and sys.version_info.minor < 3:
+    raise RuntimeError( "NumExpr requires Python 3.3 or greater." )
+    
+import setuptools
 
-try:
-    import setuptools
-except ImportError:
-    setuptools = None
+
+# Increment version for each PyPi release.
+major_ver = 3
+minor_ver = 0
+nano_ver = 0
+branch = 'a0'
+version = "%d.%d.%d%s" % (major_ver, minor_ver, nano_ver, branch)
+
+# Write __version__.py
+with open( "numexpr3/__version__.py", 'w' ) as fh:
+    fh.write( "__version__ = '" + version + "'\n" )
 
 with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
+    requirements = f.read().splitlines()    
 
-# Fetch the version for numexpr (will be put in variable `version`)
-with open(os.path.join('numexpr3', 'version.py')) as f:
-    exec(f.read())
+
+def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
+    from code_generators import interp_generator
+    print( "=====GENERATING INTERPRETER CODE=====" )
+    # Try to auto-detect MKL and C++/11 here.
+    # mkl=True 
     
+    # TODO: pass a configuration dict instead of a list of parameters.  For 
+    # example ICC might be another one...
+    interp_generator.generate( blocksize=blocksize, mkl=mkl, C11=C11 )
     
-# RAM: NEW compile-time definition of #define BLOCK_SIZE variables
-blocks_text = """/*********************************************************************
-  Numexpr - Fast numerical array expression evaluator for NumPy.
-
-      License: MIT
-      Author:  See AUTHORS.txt
-
-  See LICENSE.txt for details about copyright and rights to use.
-**********************************************************************/
-
-#ifdef USE_VML
-// The values below have been tuned for a nowadays Core2 processor 
-// Note: with VML functions a larger block size (e.g. 4096) allows to make use
-// of the automatic multithreading capabilities of the VML library 
-#define BLOCK_SIZE1 4096
-#define BLOCK_SIZE2 32
-#else
-// The values below have been tuned for a nowadays Core2 processor
-// Note: without VML available a smaller block size is best, specially
-// for the strided and unaligned cases.  Recent implementation of
-// multithreading make it clear that larger block sizes benefit
-// performance (although it seems like we don't need very large sizes
-// like VML yet). 
-#define BLOCK_SIZE1 1024
-#define BLOCK_SIZE2 16
-#endif
-"""
-with open( "numexpr3/blocks.hpp", 'wb' ) as fh:
-     fh.writelines( blocks_text )
-
+#def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.hpp', 
+#             blocksize=(4096,32), bounds_check=True, mkl=False ):
+    
 def setup_package():
     metadata = dict(
                       description='Fast numerical expression evaluator for NumPy',
-                      author='David M. Cooke, Francesc Alted and others',
-                      author_email='david.m.cooke@gmail.com, faltet@gmail.com',
+                      author='Robert A. McLeod, David M. Cooke, Francesc Alted, and others',
+                      author_email='robbmcleod@gmail.com, faltet@gmail.com',
                       url='https://github.com/pydata/numexpr',
-                      license='MIT',
+                      license='BSD',
                       packages=['numexpr3'],
                       install_requires=requirements,
                       setup_requires=requirements
@@ -119,10 +110,8 @@ def setup_package():
         # pip is used to install Numexpr when Numpy is not yet present in
         # the system.
         # (via https://github.com/abhirk/scikit-learn/blob/master/setup.py)
-        try:
-            from setuptools import setup
-        except ImportError:
-            from distutils.core import setup
+        from setuptools import setup
+
 
         metadata['name']    = 'numexpr3'
         metadata['version'] = version
@@ -132,7 +121,6 @@ def setup_package():
 
         try:  # Python 3
             # Code taken form numpy/distutils/command/build_py.py
-            # XXX: update LICENSES
             from distutils.command.build_py import build_py_2to3 as old_build_py
             from numpy.distutils.misc_util import is_string
 
@@ -177,41 +165,66 @@ def setup_package():
 
         def configuration():
             from numpy.distutils.misc_util import Configuration, dict_append
-            from numpy.distutils.system_info import system_info
+            from numpy.distutils.system_info import system_info, mkl_info
 
             config = Configuration('numexpr3')
 
             #try to find configuration for MKL, either from environment or site.cfg
             if op.exists('site.cfg'):
-                mkl_config_data = config.get_info('mkl')
+                # RAM: argh, distutils...
+                # Probably here we should build custom build_mkl or build_icc 
+                # commands instead?
+                mkl_config = mkl_info() 
+
+                
+                print( 'Found Intel MKL at: {}'.format( mkl_config.get_mkl_rootdir() ) )
+                # Check if the user mis-typed a directory
+#                mkl_include_dir = mkl_config.get_include_dirs()
+#                mkl_lib_dir = mkl_config.get_lib_dirs()
+                    
+                mkl_config_data = config.get_info('mkl') 
+                
                 # some version of MKL need to be linked with libgfortran, for this, use
                 # entries of DEFAULT section in site.cfg
-                default_config = system_info()
+                # default_config = system_info() # You don't work
+#                dict_append(mkl_config_data,
+#                            libraries=default_config.get_libraries(),
+#                            library_dirs=default_config.get_lib_dirs())
+                # RAM: mkl_info() doesn't see to populate get_libraries()...
                 dict_append(mkl_config_data,
-                            libraries=default_config.get_libraries(),
-                            library_dirs=default_config.get_lib_dirs())
+                            include_dirs=mkl_config.get_include_dirs(), 
+                            libraries=mkl_config.get_libraries(),
+                            library_dirs=mkl_config.get_lib_dirs() )
             else:
                 mkl_config_data = {}
+                
+            print( "DEBUG: mkl_config_data: {}".format(mkl_config_data) )
 
             #setup information for C extension
             if os.name == 'nt':
                 pthread_win = ['numexpr3/win32/pthread.c']
             else:
                 pthread_win = []
+            # TODO: add support for -msse2 and -mavx2 flags via auto-detection?
+            # Maybe we need a newer cpuinfo.py
             extension_config_data = {
                 'sources': ['numexpr3/interpreter.cpp',
                             'numexpr3/module.cpp',
                             'numexpr3/numexpr_object.cpp'] + pthread_win,
-                'depends': ['numexpr3/interp_body.cpp',
-                            'numexpr3/complex_functions.hpp',
-                            'numexpr3/interpreter.hpp',
+                'depends': [
+                            'numexpr3/interp_body_GENERATED.cpp',
+                            'numexpr3/interp_header_GENERATED.hpp',
                             'numexpr3/module.hpp',
                             'numexpr3/msvc_function_stubs.hpp',
                             'numexpr3/numexpr_config.hpp',
                             'numexpr3/numexpr_object.hpp',
-                            'numexpr3/opcodes.hpp'],
+                            'numexpr3/complex_functions.hpp',
+                            'numexpr3/string_functions.hpp',
+                            ],
                 'libraries': ['m'],
-                'extra_compile_args': ['-funroll-all-loops', ],
+                # TODO: compile detections of AVX2 and SSE2 using numpy.distutils
+                #'extra_compile_args': ['-funroll-all-loops','-fdiagnostics-color=always', '-mavx2', '-msse2' ],
+                'extra_compile_args': ['-funroll-all-loops','-fdiagnostics-color=always', ],
             }
             dict_append(extension_config_data, **mkl_config_data)
             if 'library_dirs' in mkl_config_data:
@@ -243,6 +256,7 @@ def setup_package():
                     import imp
                 except ImportError:
                     if os.name == 'posix':
+                        # RAM: with Python 3 the lib is now versioned.
                         paths = [localpath("numexpr/interpreter.so")]
                     else:
                         paths = [localpath("numexpr/interpreter.pyd")]
@@ -264,8 +278,28 @@ def setup_package():
 
                 clean.run(self)
 
-        class build_ext(numpy_build_ext):
+        class no_gen(numpy_build_ext):
+            ''' Identical to build_ext but without generation, for debugging.'''
+
             def build_extension(self, ext):
+            
+                # at this point we know what the C compiler is.
+                if self.compiler.compiler_type == 'msvc':
+                    ext.extra_compile_args = []
+                    # also remove extra linker arguments msvc doesn't understand
+                    ext.extra_link_args = []
+                    # also remove gcc math library
+                    ext.libraries.remove('m')
+                numpy_build_ext.build_extension(self, ext)
+                
+        class build_ext(numpy_build_ext):
+            ''' Builds the interpreter shared/dynamic library.'''
+                
+            
+            def build_extension(self, ext):
+                # Run Numpy to C generator 
+                run_generator()
+                    
                 # at this point we know what the C compiler is.
                 if self.compiler.compiler_type == 'msvc':
                     ext.extra_compile_args = []
@@ -282,14 +316,15 @@ def setup_package():
             'build_ext': build_ext,
             'clean': cleaner,
             'build_py': build_py,
+            'no_gen': no_gen,
         }
         metadata['configuration'] = configuration
 
     setup(**metadata)
-
+    return metadata
 
 if __name__ == '__main__':
     t0 = time.time()
-    setup_package()
+    sp = setup_package()
     t1 = time.time()
-    print( "No error on " + sys.argv[1] +  " in time (s): " + str(t1-t0) )
+    print( "Build success: " + sys.argv[1] +  " in time (s): " + str(t1-t0) )

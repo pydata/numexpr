@@ -38,7 +38,7 @@ def getoutput(cmd, successful_status=(0,), stacklevel=1):
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         output, _ = p.communicate()
         status = p.returncode
-    except EnvironmentError, e:
+    except EnvironmentError as e:
         warnings.warn(str(e), UserWarning, stacklevel=stacklevel)
         return False, ''
     if os.WIFEXITED(status) and os.WEXITSTATUS(status) in successful_status:
@@ -99,7 +99,7 @@ class CPUInfoBase(object):
                     return lambda func=self._try_call, attr=attr: func(attr)
             else:
                 return lambda: None
-        raise AttributeError, name
+        raise AttributeError( name )
 
     def _getNCPUs(self):
         return 1
@@ -128,7 +128,7 @@ class LinuxCPUInfo(CPUInfoBase):
             info[0]['uname_m'] = output.strip()
         try:
             fo = open('/proc/cpuinfo')
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             warnings.warn(str(e), UserWarning)
         else:
             for line in fo:

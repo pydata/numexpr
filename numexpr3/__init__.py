@@ -1,7 +1,7 @@
 ###################################################################
 #  Numexpr - Fast numerical array expression evaluator for NumPy.
 #
-#      License: MIT
+#      License: BSD
 #      Author:  See AUTHORS.txt
 #
 #  See LICENSE.txt and LICENSES/*.txt for details about copyright and
@@ -28,7 +28,7 @@ if get_info('mkl'):
 else:
     use_vml = False
 
-from cpuinfo import cpu
+from .cpuinfo import cpu
 
 if cpu.is_AMD() or cpu.is_Intel():
     is_cpu_amd_intel = True
@@ -37,7 +37,6 @@ else:
 
 import os, os.path
 import platform
-from numexpr3.expressions import E
 from numexpr3.necompiler import NumExpr, disassemble, evaluate
 from numexpr3.tests import test, print_versions
 from numexpr3.utils import (

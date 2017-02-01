@@ -5,6 +5,7 @@
  */
 
 
+
 /* Before including this file, you need to include <string.h>, and define:
      RETURN_TYPE		A macro that expands to the return type.
      AVAILABLE(h, h_l, j, n_l)	A macro that returns nonzero if there are
@@ -30,8 +31,8 @@
 */
 
 #include <limits.h>
-/*
-  Python 2.7 (the only Python 2.x version supported as of now and until 2020)
+
+/*  Python 2.7 (the only Python 2.x version supported as of now and until 2020)
   is built on windows with Visual Studio 2008 C compiler. That dictates that
   the compiler which must be used by authors of third party Python modules.
   See https://mail.python.org/pipermail/distutils-sig/2014-September/024885.html
@@ -40,10 +41,13 @@
   a public domain version.
   Visual Studio 2010 and later have stdint.h.
 */
-#ifdef _MSC_VER <= 1500		
-#include "win32/stdint.h"		
-#else		
+
+#ifdef _MSC_VER
+#if _MSC_VER <= 1500
+#include "win32/stdint.h"
+#else
 #include <stdint.h>
+#endif
 #endif
 
 /* We use the Two-Way string matching algorithm, which guarantees
@@ -63,6 +67,14 @@
    needle, the better the potential performance gain.  On the other
    hand, on non-POSIX systems with CHAR_BIT larger than eight, the
    memory required for the table is prohibitive.  */
+
+
+#define RETURN_TYPE char*
+   
+   
+#define AVAILABLE(Haystack, Haystack_Len, J, Needle_Len)   \
+  ((Haystack_Len) >= (J) + (Needle_Len))
+  
 #if CHAR_BIT < 10
 # define LONG_NEEDLE_THRESHOLD 32U
 #else
@@ -77,6 +89,8 @@
 #ifndef CMP_FUNC
 # define CMP_FUNC memcmp
 #endif
+
+using namespace std;
 
 /* Perform a critical factorization of NEEDLE, of length NEEDLE_LEN.
    Return the index of the first byte in the right half, and set
@@ -427,3 +441,75 @@ two_way_long_needle (const unsigned char *haystack, size_t haystack_len,
 #undef CMP_FUNC
 #undef MAX
 #undef RETURN_TYPE
+
+/////////////////////////////////////////////////////////////
+// Original string functions in interpreter.cpp below here://
+/////////////////////////////////////////////////////////////
+int
+stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
+{
+    npy_intp maxlen, nextpos;
+    // Point to this when the end of a string is found, to simulate infinte 
+    // trailing NULL characters. 
+    const char null = 0;
+
+    // First check if some of the operands is the empty string and if so,
+    // just check that the first char of the other is the NULL one.
+    // Fixes #121
+    if (maxlen2 == 0) return *s1 != null;
+    if (maxlen1 == 0) return *s2 != null;
+
+    maxlen = (maxlen1 > maxlen2) ? maxlen1 : maxlen2;
+    for (nextpos = 1;  nextpos <= maxlen;  nextpos++) {
+        if (*s1 < *s2)
+            return -1;
+        if (*s1 > *s2)
+            return +1;
+        s1 = (nextpos >= maxlen1) ? &null : s1+1;
+        s2 = (nextpos >= maxlen2) ? &null : s2+1;
+    }
+    return 0;
+}
+
+int
+stringcontains(const char *haystack_start, const char *needle_start,  npy_intp max_haystack_len, npy_intp max_needle_len)
+{
+    // contains(str1, str2) function for string columns.
+    // Based on Newlib/strstr.c.      
+    // needle_len - Length of needle.
+    // haystack_len - Known minimum length of haystack.
+    size_t needle_len = min((size_t)max_needle_len, strlen(needle_start));
+    size_t haystack_len = min((size_t)max_haystack_len, strlen(haystack_start));
+
+    const char *haystack = haystack_start;
+    const char *needle = needle_start;
+    bool ok = true; /* needle is prefix of haystack. */
+
+    if(haystack_len<needle_len)
+        return 0;
+
+    size_t si = 0;
+    while (*haystack && *needle && si < needle_len)
+    {
+      ok &= *haystack++ == *needle++;
+      si++;
+    }
+    if (ok)
+    {
+      return 1;
+    }
+
+    if (needle_len < LONG_NEEDLE_THRESHOLD)
+    {
+        char *res = two_way_short_needle ((const unsigned char *) haystack_start,
+                                     haystack_len,
+                                     (const unsigned char *) needle_start, needle_len) ;
+        int ptrcomp = res != NULL;
+        return ptrcomp;
+    }
+
+    char* res = two_way_long_needle ((const unsigned char *) haystack, haystack_len,
+                              (const unsigned char *) needle, needle_len);
+    int ptrcomp2 = res != NULL ? 1 : 0;
+    return ptrcomp2;
+}

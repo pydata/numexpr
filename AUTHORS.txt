@@ -1,7 +1,7 @@
 Numexpr was initially written by David Cooke, and extended to more
 types by Tim Hochberg.
 
-Francesc Alted contributed support for booleans and simple-precision
+Francesc Alted contributed support for booleans and single-precision
 floating point types, efficient strided and unaligned array operations
 and multi-threading code.
 
@@ -21,6 +21,3 @@ Antonio Valentino contributed the port to Python 3.
 
 Google Inc. contributed bug fixes.
 
-Robert A. McLeod added support for more then 127 op-codes by converting the 
-virtual machine to 4-byte words from string (4 billion op codes).  
-S.J. Perkins complex64 data type branch was used as the template. 

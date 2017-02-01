@@ -1,6 +1,6 @@
 // Numexpr - Fast numerical array expression evaluator for NumPy.
 //
-//      License: MIT
+//      License: BSD
 //      Author:  See AUTHORS.txt
 //
 //  See LICENSE.txt for details about copyright and rights to use.
@@ -13,47 +13,46 @@
 #include <structmember.h>
 #include <vector>
 
-#include "interpreter.hpp"
+#include "interp_header_GENERATED.hpp"
 #include "numexpr_object.hpp"
 
 using namespace std;
 
-// Global state. The file interpreter.hpp also has some global state
+// Global state. The file interp_header_GENERATED.hpp also has some global state
 // in its 'th_params' variable
 global_state gs;
 
-/* Do the worker job for a certain thread */
+// Do the worker job for a certain thread
 void *th_worker(void *tidptr)
 {
     int tid = *(int *)tidptr;
-    /* Parameters for threads */
+    // Parameters for threads
     npy_intp start;
     npy_intp vlen;
     npy_intp block_size;
     NpyIter *iter;
-    vm_params params;
+    NumExprObject *params;
+
     int *pc_error;
     int ret;
-    int n_inputs;
-    int n_constants;
-    int n_temps;
-    size_t memsize;
-    char **mem;
-    npy_intp *memsteps;
+    //npy_uint16 n_ndarray, n_reg, n_scalar, n_temp;
+    //size_t memsize;
+    //char **mem;
+    //npy_intp *memsteps;
     npy_intp istart, iend;
-    char **errmsg;
+    char **errorMessage;
     // For output buffering if needed
     vector<char> out_buffer;
 
     while (1) {
         
         if (tid==0) {
-            gs.init_sentinels_done = 0;     /* sentinels have to be initialised yet */
+            gs.init_sentinels_done = 0; // sentinels have to be initialised yet
         }
 
-        /* Meeting point for all threads (wait for initialization) */
+        // Meeting point for all threads (wait for initialization)
         pthread_mutex_lock(&gs.count_threads_mutex);
-        if (gs.count_threads < gs.nthreads) {
+        if (gs.count_threads < gs.n_thread) {
             gs.count_threads++;
             pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
         }
@@ -62,51 +61,58 @@ void *th_worker(void *tidptr)
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
 
-        /* Check if thread has been asked to return */
+        // Check if thread has been asked to return
         if (gs.end_threads) {
             return(0);
         }
 
-        /* Get parameters for this thread before entering the main loop */
+        // Get parameters for this thread before entering the main loop 
         start = th_params.start;
         vlen = th_params.vlen;
         block_size = th_params.block_size;
-        params = th_params.params;
+        params = NumExprObject_copy_threadsafe( th_params.params );
         pc_error = th_params.pc_error;
 
         // If output buffering is needed, allocate it
+        // RAM: is this thread-safe???  params is the same thing 
         if (th_params.need_output_buffering) {
-            out_buffer.resize(params.memsizes[0] * BLOCK_SIZE1);
-            params.out_buffer = &out_buffer[0];
+            out_buffer.resize( GET_RETURN_REG(params).itemsize * BLOCK_SIZE1);
+            params->outBuffer = (char *)(&out_buffer[0]);
         } else {
-            params.out_buffer = NULL;
+            params->outBuffer = NULL;
         }
 
-        /* Populate private data for each thread */
-        n_inputs = params.n_inputs;
-        n_constants = params.n_constants;
-        n_temps = params.n_temps;
-        memsize = (1+n_inputs+n_constants+n_temps) * sizeof(char *);
-        /* XXX malloc seems thread safe for POSIX, but for Win? */
-        mem = (char **)malloc(memsize);
-        memcpy(mem, params.mem, memsize);
+        // Populate private data for each thread
+        // RAM: unnecessary if we just safe_copy params
+        // n_ndarray = params.n_ndarray;
+        //n_scalar = params.n_scalar;
+        //n_temp = params.n_temp;
+        //n_reg = params.n_reg;
+        
+        // RAM ok this is all different.  
+        // RAM: allocate space for temporaries for each thread
+        //memsize = (1 + n_reg) * sizeof(npy_intp);
+        // malloc seems thread safe for POSIX, but for Win?
+        //mem = (char **)malloc(memsize);
+        //memcpy(mem, params.mem, memsize);
+        //memsize = copy_strides(params);
 
-        errmsg = th_params.errmsg;
+        errorMessage = th_params.errorMessage;
 
-        params.mem = mem;
+        //params.mem = mem;
 
-        /* Loop over blocks */
+        // Loop over blocks
         pthread_mutex_lock(&gs.count_mutex);
         if (!gs.init_sentinels_done) {
-            /* Set sentinels and other global variables */
+            // Set sentinels and other global variables
             gs.gindex = start;
             istart = gs.gindex;
             iend = istart + block_size;
             if (iend > vlen) {
                 iend = vlen;
             }
-            gs.init_sentinels_done = 1;  /* sentinels have been initialised */
-            gs.giveup = 0;            /* no giveup initially */
+            gs.init_sentinels_done = 1;  // sentinels have been initialised
+            gs.giveup = 0;            // no giveup initially
         } else {
             gs.gindex += block_size;
             istart = gs.gindex;
@@ -115,35 +121,36 @@ void *th_worker(void *tidptr)
                 iend = vlen;
             }
         }
-        /* Grab one of the iterators */
+        // Grab one of the iterators
         iter = th_params.iter[tid];
         if (iter == NULL) {
             th_params.ret_code = -1;
             gs.giveup = 1;
         }
-        memsteps = th_params.memsteps[tid];
-        /* Get temporary space for each thread */
-        ret = get_temps_space(params, mem, BLOCK_SIZE1);
+        //
+        //memsteps = th_params.memsteps[tid];
+        // Get temporary space for each thread
+        ret = get_temps_space(params, BLOCK_SIZE1);
         if (ret < 0) {
-            /* Propagate error to main thread */
+            // Propagate error to main thread 
             th_params.ret_code = ret;
             gs.giveup = 1;
         }
         pthread_mutex_unlock(&gs.count_mutex);
 
         while (istart < vlen && !gs.giveup) {
-            /* Reset the iterator to the range for this task */
+            // Reset the iterator to the range for this task
             ret = NpyIter_ResetToIterIndexRange(iter, istart, iend,
-                                                errmsg);
-            /* Execute the task */
+                                                errorMessage);
+            // Execute the task 
             if (ret >= 0) {
-                ret = vm_engine_iter_task(iter, memsteps, params, pc_error, errmsg);
+                ret = vm_engine_iter_task(iter, params, pc_error, errorMessage);
             }
 
             if (ret < 0) {
                 pthread_mutex_lock(&gs.count_mutex);
                 gs.giveup = 1;
-                /* Propagate error to main thread */
+                // Propagate error to main thread
                 th_params.ret_code = ret;
                 pthread_mutex_unlock(&gs.count_mutex);
                 break;
@@ -159,7 +166,7 @@ void *th_worker(void *tidptr)
             pthread_mutex_unlock(&gs.count_mutex);
         }
 
-        /* Meeting point for all threads (wait for finalization) */
+        // Meeting point for all threads (wait for finalization)
         pthread_mutex_lock(&gs.count_threads_mutex);
         if (gs.count_threads > 0) {
             gs.count_threads--;
@@ -170,31 +177,32 @@ void *th_worker(void *tidptr)
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
 
-        /* Release resources */
-        free_temps_space(params, mem);
-        free(mem);
+        // Release resources */
+        free_temps_space(params);
+        // TODO: keep an array of NumExprObjs for threads instead of creating/destroying structs often.
+        free(params);
 
-    }  /* closes while(1) */
+    }  // closes while(1)
 
-    /* This should never be reached, but anyway */
+    // This should never be reached
     return(0);
 }
-
-/* Initialize threads */
+        
+// Initialize threads 
 int init_threads(void)
 {
     int tid, rc;
 
-    /* Initialize mutex and condition variable objects */
+    // Initialize mutex and condition variable objects
     pthread_mutex_init(&gs.count_mutex, NULL);
 
-    /* Barrier initialization */
+    // Barrier initialization
     pthread_mutex_init(&gs.count_threads_mutex, NULL);
     pthread_cond_init(&gs.count_threads_cv, NULL);
-    gs.count_threads = 0;      /* Reset threads counter */
+    gs.count_threads = 0;      // Reset threads counter
 
-    /* Finally, create the threads */
-    for (tid = 0; tid < gs.nthreads; tid++) {
+    // Finally, create the threads
+    for (tid = 0; tid < gs.n_thread; tid++) {
         gs.tids[tid] = tid;
         rc = pthread_create(&gs.threads[tid], NULL, th_worker,
                             (void *)&gs.tids[tid]);
@@ -206,38 +214,38 @@ int init_threads(void)
         }
     }
 
-    gs.init_threads_done = 1;                 /* Initialization done! */
-    gs.pid = (int)getpid();                   /* save the PID for this process */
+    gs.init_threads_done = 1;         // Initialization done!
+    gs.pid = (int)getpid();           // save the PID for this process
 
     return(0);
 }
-
-/* Set the number of threads in numexpr's VM */
-int numexpr_set_nthreads(int nthreads_new)
+        
+// Set the number of threads in numexpr's VM
+int numexpr_set_nthreads(int n_thread_new)
 {
-    int nthreads_old = gs.nthreads;
+    int n_thread_old = gs.n_thread;
     int t, rc;
     void *status;
 
-    if (nthreads_new > MAX_THREADS) {
+    if (n_thread_new > MAX_THREADS) {
         fprintf(stderr,
                 "Error.  nthreads cannot be larger than MAX_THREADS (%d)",
                 MAX_THREADS);
         return -1;
     }
-    else if (nthreads_new <= 0) {
+    else if (n_thread_new <= 0) {
         fprintf(stderr, "Error.  nthreads must be a positive integer");
         return -1;
     }
 
-    /* Only join threads if they are not initialized or if our PID is
-       different from that in pid var (probably means that we are a
-       subprocess, and thus threads are non-existent). */
-    if (gs.nthreads > 1 && gs.init_threads_done && gs.pid == getpid()) {
-        /* Tell all existing threads to finish */
+    // Only join threads if they are not initialized or if our PID is
+    //   different from that in pid var (probably means that we are a
+    //   subprocess, and thus threads are non-existent).
+    if (gs.n_thread > 1 && gs.init_threads_done && gs.pid == getpid()) {
+        // Tell all existing threads to finish 
         gs.end_threads = 1;
         pthread_mutex_lock(&gs.count_threads_mutex);
-        if (gs.count_threads < gs.nthreads) {
+        if (gs.count_threads < gs.n_thread) {
             gs.count_threads++;
             pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
         }
@@ -246,8 +254,8 @@ int numexpr_set_nthreads(int nthreads_new)
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
 
-        /* Join exiting threads */
-        for (t=0; t<gs.nthreads; t++) {
+        // Join exiting threads 
+        for (t=0; t<gs.n_thread; t++) {
             rc = pthread_join(gs.threads[t], &status);
             if (rc) {
                 fprintf(stderr,
@@ -261,13 +269,13 @@ int numexpr_set_nthreads(int nthreads_new)
         gs.end_threads = 0;
     }
 
-    /* Launch a new pool of threads (if necessary) */
-    gs.nthreads = nthreads_new;
-    if (gs.nthreads > 1 && (!gs.init_threads_done || gs.pid != getpid())) {
+    // Launch a new pool of threads (if necessary)
+    gs.n_thread = n_thread_new;
+    if (gs.n_thread > 1 && (!gs.init_threads_done || gs.pid != getpid())) {
         init_threads();
     }
 
-    return nthreads_old;
+    return n_thread_old;
 }
 
 
@@ -310,11 +318,11 @@ _set_vml_num_threads(PyObject *self, PyObject *args)
 static PyObject *
 _set_num_threads(PyObject *self, PyObject *args)
 {
-    int num_threads, nthreads_old;
-    if (!PyArg_ParseTuple(args, "i", &num_threads))
+    int n_threads_new, n_threads_old;
+    if (!PyArg_ParseTuple(args, "i", &n_threads_new))
     return NULL;
-    nthreads_old = numexpr_set_nthreads(num_threads);
-    return Py_BuildValue("i", nthreads_old);
+    n_threads_old = numexpr_set_nthreads(n_threads_new);
+    return Py_BuildValue("i", n_threads_old);
 }
 
 static PyMethodDef module_methods[] = {
@@ -331,6 +339,7 @@ static PyMethodDef module_methods[] = {
     {NULL}
 };
 
+/* RAM: add_symbol was for opcodes and isn't used anymore.
 static int
 add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
 {
@@ -351,6 +360,7 @@ add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
     Py_XDECREF(o);
     return r;
 }
+*/
 
 #ifdef __cplusplus
 extern "C" {
@@ -358,16 +368,16 @@ extern "C" {
 
 #if PY_MAJOR_VERSION >= 3
 
-/* XXX: handle the "global_state" state via moduedef */
+// Handle the "global_state" state via moduedef 
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "interpreter",
         NULL,
-        -1,                 /* sizeof(struct global_state), */
+        -1,                 // sizeof(struct global_state), 
         module_methods,
         NULL,
-        NULL,               /* module_traverse, */
-        NULL,               /* module_clear, */
+        NULL,               // module_traverse, 
+        NULL,               // module_clear, 
         NULL
 };
 
@@ -402,45 +412,12 @@ initinterpreter()
 
     import_array();
 
-    // RAM: Let's export the block sizes to Python side for benchmarking comparisons
+    //Let's export the block sizes to Python side for benchmarking comparisons
     PyModule_AddIntConstant(m, "__BLOCK_SIZE1__", BLOCK_SIZE1 );
     PyModule_AddIntConstant(m, "__BLOCK_SIZE2__", BLOCK_SIZE2 );
 
     d = PyDict_New();
     if (!d) INITERROR;
-
-#define OPCODE(n, name, sname, ...)                              \
-    if (add_symbol(d, sname, name, "add_op") < 0) { INITERROR; }
-#include "opcodes.hpp"
-#undef OPCODE
-
-    if (PyModule_AddObject(m, "opcodes", d) < 0) INITERROR;
-
-    d = PyDict_New();
-    if (!d) INITERROR;
-
-#define add_func(name, sname)                           \
-    if (add_symbol(d, sname, name, "add_func") < 0) { INITERROR; }
-#define FUNC_F4F4(name, sname, ...)  add_func(name, sname);
-#define FUNC_F4F4F4(name, sname, ...) add_func(name, sname);
-#define FUNC_F8F8(name, sname, ...)  add_func(name, sname);
-#define FUNC_F8F8F9(name, sname, ...) add_func(name, sname);
-#define FUNC_C8C8(name, sname, ...)  add_func(name, sname);
-#define FUNC_C8C8C8(name, sname, ...) add_func(name, sname);
-#define FUNC_C16C16(name, sname, ...)  add_func(name, sname);
-#define FUNC_C16C16C16(name, sname, ...) add_func(name, sname);
-#include "functions.hpp"
-#undef FUNC_C16C16C16
-#undef FUNC_C16C16
-#undef FUNC_C8C8C8
-#undef FUNC_C8C8
-#undef FUNC_F8F8F8
-#undef FUNC_F8F8
-#undef FUNC_F4F4F4
-#undef FUNC_F4F4
-#undef add_func
-
-    if (PyModule_AddObject(m, "funccodes", d) < 0) INITERROR;
 
     if (PyModule_AddObject(m, "allaxes", PyLong_FromLong(255)) < 0) INITERROR;
     if (PyModule_AddObject(m, "maxdims", PyLong_FromLong(NPY_MAXDIMS)) < 0) INITERROR;

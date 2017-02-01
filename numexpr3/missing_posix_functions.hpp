@@ -4,7 +4,7 @@
 /*********************************************************************
   Numexpr - Fast numerical array expression evaluator for NumPy.
 
-      License: MIT
+      License: BSD
       Author:  See AUTHORS.txt
 
   See LICENSE.txt for details about copyright and rights to use.
