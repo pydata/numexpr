@@ -922,6 +922,32 @@ out = mid_result*b""" )
     #neObj = NumExpr( expr, lib=LIB_VML )
     #neObj.run( out, a, b )
 
+    ########################################################
+    ###### TESTING Self-vectorized mul with striding  ######
+    ########################################################
+    
+    da = a[::4]
+    db = b[::4]
+    out_stride1 = np.empty_like(da)
+    out_stride2 = np.empty_like(da)
+    t30 = time.time()
+    neObj = NumExpr( 'out_stride1 = da*db' )
+    neObj.run( out_stride1, da, db )
+    t31 = time.time()
+    neObj = NumExpr( 'out_stride2 = mul(da,db)' )
+    neObj.run( out_stride2, da, db )
+    t32 = time.time()
+    print( "---------------------" )
+    print( "Pointer-math vs. array indices comparison:" )
+    print( "Ne3 completed (strided) a*b: %.2e s"%(t31-t30) )
+    print( "Ne3 completed (strided) mul(n,a,b): %.2e s"%(t32-t31) )
+    
+    np.testing.assert_array_almost_equal( out_stride1, da*db )
+    np.testing.assert_array_almost_equal( out_stride2, da*db )
+    # Even with striding on, it's much faster to feed the compiler array indices
+    # rather than to do pointer math.
+    # This implies we should have some branching behavoir 
+    # and not use strides when unnecessary?  Or is just that pointer math is 
+    # not well-optimized by the compiler?
     
     
-

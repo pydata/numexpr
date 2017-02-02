@@ -10,5 +10,10 @@ numexpr3/*generated.py
 numexpr3/E/*
 numexpr3/interpreter*so
 code_generators/ex_include
+bext
+mkl
+nogen
+val
+valgrind-python.supp
 
 

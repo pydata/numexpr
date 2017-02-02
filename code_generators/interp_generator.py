@@ -244,8 +244,9 @@ VEC_ARGN = { 0: VEC_ARG0, 1: VEC_ARG1, 2: VEC_ARG2, 3: VEC_ARG3 }
 
 
 # The Intel VML calls, or any vectorized library that takes the BLOCK_SIZE as  
-# an argument, such as complex_functions.hpp
-def VEC_ARG1_VML(expr):
+# an argument, such as complex_functions.hpp, and doesn't allow for a 
+# stride
+def VEC_ARG1_ALIGNED(expr):
     return '''
     {
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -258,7 +259,7 @@ def VEC_ARG1_VML(expr):
     } break;
 '''.replace( 'EXPR', expr )
 
-def VEC_ARG2_VML(expr):
+def VEC_ARG2_ALIGNED(expr):
     return '''
     {
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -274,7 +275,7 @@ def VEC_ARG2_VML(expr):
     } break;
 '''.replace( 'EXPR', expr )
 
-def VEC_ARG3_VML(expr):
+def VEC_ARG3_ALIGNED(expr):
     return '''
     {
         BOUNDS_CHECK(store_in);
@@ -292,10 +293,76 @@ def VEC_ARG3_VML(expr):
         EXPR;
     } break;
 '''.replace( 'EXPR', expr )
-VEC_ARGN_VML = { 1: VEC_ARG1_VML, 2: VEC_ARG2_VML, 3: VEC_ARG3_VML }
+VEC_ARGN_ALIGNED = { 1: VEC_ARG1_ALIGNED, 2: VEC_ARG2_ALIGNED, 3: VEC_ARG3_ALIGNED }
 
-def EXPR( opNum, expr, 
-         retDtype, arg1Dtype=None, arg2Dtype=None, arg3Dtype=None, lib=LIB_STD ):
+# Strided expressions can iterate over non-unity steps, i.e. 2,4,3, 
+# which is significantly slower, so in general it's best if there's two
+# versions of each function: one for strided and one for aligned data.
+def VEC_ARG1_STRIDED(expr):
+    return '''
+    {
+        NE_REGISTER arg1 = params->program[pc].arg1;
+        BOUNDS_CHECK(store_in);
+        BOUNDS_CHECK(arg1);
+
+        char *dest = params->registers[store_in].mem;
+        char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
+        
+        EXPR;
+    } break;
+'''.replace( 'EXPR', expr )
+
+def VEC_ARG2_STRIDED(expr):
+    return '''
+    {
+        NE_REGISTER arg1 = params->program[pc].arg1;
+        NE_REGISTER arg2 = params->program[pc].arg2;
+        
+        BOUNDS_CHECK(store_in);
+        BOUNDS_CHECK(arg1);
+        BOUNDS_CHECK(arg2);
+        char *dest = params->registers[store_in].mem;
+        char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
+        char *x2 = params->registers[arg2].mem;
+        npy_intp sb2 = params->registers[arg2].stride;
+        
+        EXPR;
+    } break;
+'''.replace( 'EXPR', expr )
+
+def VEC_ARG3_STRIDED(expr):
+    return '''
+    {
+        BOUNDS_CHECK(store_in);
+        NE_REGISTER arg1 = params->program[pc].arg1;
+        NE_REGISTER arg2 = params->program[pc].arg2;
+        NE_REGISTER arg3 = params->program[pc].arg3;
+        BOUNDS_CHECK(arg1);
+        BOUNDS_CHECK(arg2);
+        BOUNDS_CHECK(arg3);
+
+        char *dest = params->registers[store_in].mem;
+        char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
+        char *x2 = params->registers[arg2].mem;
+        npy_intp sb2 = params->registers[arg2].stride;
+        char *x3 = params->registers[arg3].mem;
+        npy_intp sb3 = params->registers[arg3].stride;
+        
+        EXPR;
+    } break;
+'''.replace( 'EXPR', expr )
+VEC_ARGN_STRIDED = { 1: VEC_ARG1_STRIDED, 2: VEC_ARG2_STRIDED, 3: VEC_ARG3_STRIDED }
+
+
+TYPE_LOOP = 0
+TYPE_STRING = 1
+TYPE_ALIGNED = 2
+TYPE_STRIDED = 3
+def EXPR( opNum, expr, retDtype, 
+         arg1Dtype=None, arg2Dtype=None, arg3Dtype=None, vecType = TYPE_LOOP ):
     '''
     '''
     retChar = retDtype.char
@@ -318,12 +385,14 @@ def EXPR( opNum, expr,
         expr = expr.replace( '$ARG{}'.format(I+1), ARG( dchar, I+1 ) )
         expr = expr.replace( '$DTYPE{}'.format(I+1), DCHAR_TO_CTYPE[dchar]  )
         
-    if lib == LIB_STD:
+    if vecType == TYPE_LOOP:
         return 'case {0}: {2} {1}'.format( opNum, VEC_ARGN[len(argChars)](expr), docString )
-    elif lib == LIB_VML:
-        return 'case {0}: {2} {1}'.format( opNum, VEC_ARGN_VML[len(argChars)](expr), docString )
+    elif vecType == TYPE_ALIGNED:
+        return 'case {0}: {2} {1}'.format( opNum, VEC_ARGN_ALIGNED[len(argChars)](expr), docString )
+    elif vecType == TYPE_STRIDED:
+        return 'case {0}: {2} {1}'.format( opNum, VEC_ARGN_STRIDED[len(argChars)](expr), docString )
     else:
-        raise ValueError( "Unknown library enum: {}".format(lib) )
+        raise ValueError( "Unknown vectorization type: {}".format(vecType) )
 
 
 def STRING_EXPR( opNum, expr, retDtype, arg1Dtype=None, arg2Dtype=None, arg3Dtype=None ):
@@ -352,6 +421,8 @@ def REDUCE( dchar, outerLoop=False ):
     return '*({0} *)dest'.format( DCHAR_TO_CTYPE[dchar] )
 
 
+# The DtypeFamily is quite overbuilt now for what we use it for. Perhaps it 
+# goes in the trash.
 class DtypeFamily(dict):
     """
     A DtypeFamily is basically an encapsulation that we use so we can have 
@@ -925,7 +996,18 @@ def FunctionFactory( pythonTable, cTable, C11=True, mkl=False ):
     zFuncs += [ Operation( 'tan', 'nc_tan(BLOCK_SIZE, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD, ['F','D'], ['F','D'] ) ] 
     zFuncs += [ Operation( 'tanh', 'nc_tanh(BLOCK_SIZE, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, ['F','D'], ['F','D'] ) ]                          
+                          LIB_STD, ['F','D'], ['F','D'] ) ]    
+
+    ##################################################################
+    # Test of vectorized operations
+    ##################################################################
+    
+    # I'm curious how much of a difference including the striding in an operation
+    # is?  Perhaps we should have non-strided and strided versions of each
+    # major operation?
+    stridedFuncs = []
+    stridedFuncs += [ Operation( 'mul', 'ne_mul(BLOCK_SIZE, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest, sb1, sb2)', 
+                          LIB_STD, ['d'], ['d'], ['d'] ) ]       
      
                           
     ##################################################################
@@ -994,7 +1076,6 @@ def FunctionFactory( pythonTable, cTable, C11=True, mkl=False ):
     
     
     def buildComplexFuncs():
-        # TODO: lazy hack to use the VML vectorizations
          for func in zFuncs:
             for J in np.arange( len(func.retFam) ):
                 opNum = next(OP_COUNT)
@@ -1002,7 +1083,7 @@ def FunctionFactory( pythonTable, cTable, C11=True, mkl=False ):
                 if len( func.argFams ) == 1:
                     cTable[opNum] = EXPR( opNum, func.cTemplate, 
                                   np.dtype(func.retFam[J]), np.dtype(func.argFams[0][J]), 
-                                  lib=LIB_VML )
+                                  vecType=TYPE_ALIGNED )
                     pythonTable[(func.pyHandle, LIB_STD, func.retFam[J], func.argFams[0][J] )]  \
                                   = opNum
                 if len( func.argFams )== 2:   
@@ -1010,7 +1091,7 @@ def FunctionFactory( pythonTable, cTable, C11=True, mkl=False ):
                                   np.dtype(func.retFam[J]), 
                                   np.dtype(func.argFams[0][J]), 
                                   np.dtype(func.argFams[1][J]), 
-                                  lib=LIB_VML )
+                                  vecType=TYPE_ALIGNED )
                     pythonTable[(func.pyHandle, LIB_STD, func.retFam[J],
                                  func.argFams[0][J], func.argFams[1][J] )] \
                                   = opNum
@@ -1020,7 +1101,7 @@ def FunctionFactory( pythonTable, cTable, C11=True, mkl=False ):
                                   np.dtype(func.argFams[0][J]),
                                   np.dtype(func.argFams[1][J]), 
                                   np.dtype(func.argFams[2][J]),
-                                  lib=LIB_VML )
+                                  vecType=TYPE_ALIGNED )
                     pythonTable[(func.pyHandle, LIB_STD, func.retFam[J],
                                  func.argFams[0][J], func.argFams[1][J], func.argFams[2][J] )] \
                                   = opNum
@@ -1028,7 +1109,36 @@ def FunctionFactory( pythonTable, cTable, C11=True, mkl=False ):
                 #print( '##### %s #####' % opNum )
                 #print( cTable[opNum] )         
                 
-    
+    def buildStridedFuncs():
+         for func in stridedFuncs:
+            for J in np.arange( len(func.retFam) ):
+                opNum = next(OP_COUNT)
+   
+                if len( func.argFams ) == 1:
+                    cTable[opNum] = EXPR( opNum, func.cTemplate, 
+                                  np.dtype(func.retFam[J]), np.dtype(func.argFams[0][J]), 
+                                  vecType=TYPE_STRIDED )
+                    pythonTable[(func.pyHandle, LIB_STD, func.retFam[J], func.argFams[0][J] )]  \
+                                  = opNum
+                if len( func.argFams )== 2:   
+                    cTable[opNum] = EXPR( opNum, func.cTemplate, 
+                                  np.dtype(func.retFam[J]), 
+                                  np.dtype(func.argFams[0][J]), 
+                                  np.dtype(func.argFams[1][J]), 
+                                  vecType=TYPE_STRIDED )
+                    pythonTable[(func.pyHandle, LIB_STD, func.retFam[J],
+                                 func.argFams[0][J], func.argFams[1][J] )] \
+                                  = opNum
+                if len( func.argFams )== 3:   
+                    cTable[opNum] = EXPR( opNum, func.cTemplate,
+                                  np.dtype(func.retFam[J]), 
+                                  np.dtype(func.argFams[0][J]),
+                                  np.dtype(func.argFams[1][J]), 
+                                  np.dtype(func.argFams[2][J]),
+                                  vecType=TYPE_STRIDED )
+                    pythonTable[(func.pyHandle, LIB_STD, func.retFam[J],
+                                 func.argFams[0][J], func.argFams[1][J], func.argFams[2][J] )] \
+                                  = opNum
                       
     def buildVMLFuncs():
         # TODO: we could also make aliases so that VML funcs could be called 
@@ -1041,7 +1151,8 @@ def FunctionFactory( pythonTable, cTable, C11=True, mkl=False ):
                 
                 if len( func.argFams ) == 1:
                     cTable[opNum] = EXPR( opNum, pendedTemplate, \
-                                  np.dtype(func.retFam[J]), np.dtype(func.argFams[0][J]), lib=LIB_VML )
+                                  np.dtype(func.retFam[J]), np.dtype(func.argFams[0][J]), 
+                                  vecType=TYPE_ALIGNED )
                     pythonTable[(func.pyHandle, LIB_VML, func.retFam[J], func.argFams[0][J] )] \
                               = opNum
                 elif len( func.argFams ) == 2:
@@ -1049,7 +1160,7 @@ def FunctionFactory( pythonTable, cTable, C11=True, mkl=False ):
                                   np.dtype(func.retFam[J]),              \
                                            np.dtype(func.argFams[0][J]), \
                                            np.dtype(func.argFams[1][J]), \
-                                           lib=LIB_VML )
+                                           vecType=TYPE_ALIGNED )
                     pythonTable[(func.pyHandle, LIB_VML, func.retFam[J],   \
                                  func.argFams[0][J], func.argFams[1][J] )] \
                               = opNum
@@ -1061,6 +1172,7 @@ def FunctionFactory( pythonTable, cTable, C11=True, mkl=False ):
 
     buildCMathFuncs()
     buildComplexFuncs()
+    buildStridedFuncs()
     if bool(mkl):
         buildVMLFuncs()
     return
