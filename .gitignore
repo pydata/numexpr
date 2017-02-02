@@ -6,14 +6,13 @@ dist
 numexpr.egg-info
 numexpr/*generated.py
 numexpr3.egg-info
-numexpr3/*generated.py
+numexpr3/*GENERATED*
 numexpr3/E/*
 numexpr3/interpreter*so
+numexpr3/__version__.py
 code_generators/ex_include
 bext
 mkl
 nogen
-val
-valgrind-python.supp
 
 

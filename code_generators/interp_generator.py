@@ -96,17 +96,75 @@ DCHAR_TO_CTYPE = {
                    np.dtype('U1').char:         'NPY_UNICODE', 
                   }
 
+def STRING_EXPR( opNum, expr, retDtype, arg1Dtype=None, arg2Dtype=None, arg3Dtype=None ):
+    # More custom operations
+    # TODO
+    pass
+
+def DEST( index='J' ):
+    # Real return is the default
+    return 'dest[{0}]'.format( index )
+    
+def DEST_STR( dchar ):
+    # TODO: difference between npy_string and npy_unicode?
+    return '({0} *)dest + J*memsteps[store_in]'.format( DCHAR_TO_CTYPE[dchar] )
+
+def ARG_OLD( dchar, num, index='J' ):
+    return '(({0} *)( x{1} + J*sb{1} ))[{2}]'.format( DCHAR_TO_CTYPE[dchar], num, index )
+
+def ARG( num, index='J' ):
+    return 'x{0}[{1}]'.format( num, index )
+
+def ARG_STRIDE( num, index='J' ):
+    return 'x{0}[{1}*sb{0}]'.format( num, index )
+
+def ARG_STR( dchar, num ):
+    return '(({0} *)( x{1} + J*sb{1} ))'.format( DCHAR_TO_CTYPE[dchar], num )
+
+def REDUCE( dchar, outerLoop=False ):
+    if outerLoop:
+        return DEST( dchar )
+    # INNER LOOP
+    return '*({0} *)dest'.format( DCHAR_TO_CTYPE[dchar] )
+
 def VEC_LOOP( expr ):
-    return '''
+    expr = expr.replace( '$ARG3', ARG(3) )
+    expr = expr.replace( '$ARG2', ARG(2) )
+    expr = expr.replace( '$ARG1', ARG(1) )
+    return '''for(J = 0; J < BLOCK_SIZE; J++) { 
+            EXPR; 
+        }'''.replace( 'EXPR', expr ) 
+ 
+def STRIDED_LOOP( expr ):
+    expr = expr.replace( '$ARG3', ARG_STRIDE(3) )
+    expr = expr.replace( '$ARG2', ARG_STRIDE(2) )
+    expr = expr.replace( '$ARG1', ARG_STRIDE(1) )
+    if 'x3' in expr:
+        return '''sb1 /= sizeof($DTYPE1);
+        sb2 /= sizeof($DTYPE1);
+        sb3 /= sizeof($DTYPE1);
         for(J = 0; J < BLOCK_SIZE; J++) { 
             EXPR; 
-        }'''.replace( 'EXPR', expr ) # TODO: change BLOCK_SIZE based on expression size
-      
+        }'''.replace( 'EXPR', expr ) 
+    elif 'x2' in expr:
+        return '''sb1 /= sizeof($DTYPE1);
+        sb2 /= sizeof($DTYPE1);
+        for(J = 0; J < BLOCK_SIZE; J++) { 
+            EXPR; 
+        }'''.replace( 'EXPR', expr ) 
+    elif 'x1' in expr:
+        return '''sb1 /= sizeof($DTYPE1);
+        for(J = 0; J < BLOCK_SIZE; J++) { 
+            EXPR; 
+        }'''.replace( 'EXPR', expr ) 
+    else:
+        raise ValueError( "Unknown number of arguments for strided array" )
+
 def VEC_ARG0( expr ):
     return '''
     {
         BOUNDS_CHECK(store_in);
-        char *dest = params->registers[store_in].mem;
+        $DTYPE0 *dest = ($DTYPE0 *)params->registers[store_in].mem;
         VEC_LOOP(expr);
     } break;
 '''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) )
@@ -116,131 +174,144 @@ def VEC_ARG0( expr ):
 def VEC_ARG1(expr):
     return '''
     {   
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
 
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        npy_intp sb1 = params->registers[arg1].stride;
+    $DTYPE0 *dest = ($DTYPE0 *)params->registers[store_in].mem;
+    $DTYPE1 *x1 = ($DTYPE1 *)params->registers[arg1].mem;
+    npy_intp sb1 = params->registers[arg1].stride;
         
-        VEC_LOOP(expr);
+    if( sb1 == sizeof($DTYPE1) ) { // Aligned
+        VEC_LOOP(expr)
+    }
+    else { // Strided
+        STRIDED_LOOP(expr)
+    } 
     } break;
-'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) )
-
-
-def VEC_ARG1_STRING(expr):
-    # Version with itemsize is _only_ needed for strings
-    return '''
-    {   
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
-
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        npy_intp ss1 = params->registers[arg1].itemsize;
-        npy_intp sb1 = params->registers[arg1].stride;
-        
-        VEC_LOOP(expr);
-    } break;
-'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) )
+'''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
 
 def VEC_ARG2(expr):
     return '''
-    { 
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        NE_REGISTER arg2 = params->program[pc].arg2;
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
-        BOUNDS_CHECK(arg2);
-        
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        npy_intp sb1 = params->registers[arg1].stride;
-        char *x2 = params->registers[arg2].mem;
-        npy_intp sb2 = params->registers[arg2].stride;
-        
-        VEC_LOOP(expr);
+    {
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    
+    $DTYPE0 *dest = ($DTYPE0 *)params->registers[store_in].mem;
+    $DTYPE1 *x1 = ($DTYPE1 *)params->registers[arg1].mem;
+    npy_intp sb1 = params->registers[arg1].stride;
+    $DTYPE2 *x2 = ($DTYPE2 *)params->registers[arg2].mem;
+    npy_intp sb2 = params->registers[arg2].stride;
+                                    
+    if( sb1 == sizeof($DTYPE1) && sb2 == sizeof($DTYPE2) ) { // Aligned
+        VEC_LOOP(expr)
+    }
+    else { // Strided
+        STRIDED_LOOP(expr)
+    } 
     } break;
-'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) ) 
-
-
-def VEC_ARG2_STRING(expr):
-    # Version with itemsize is _only_ needed for strings
-    return '''
-    { 
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        NE_REGISTER arg2 = params->program[pc].arg2;
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
-        BOUNDS_CHECK(arg2);
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        npy_intp ss1 = params->registers[arg1].itemsize;
-        npy_intp sb1 = params->registers[arg1].stride;
-        char *x2 = params->registers[arg2].mem;
-        npy_intp ss2 = params->registers[arg2].itemsize;
-        npy_intp sb2 = params->registers[arg2].stride;
-        VEC_LOOP(expr);
-    } break;
-'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) ) 
+'''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
 
 
 def VEC_ARG3(expr):
     return '''
     {
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        NE_REGISTER arg2 = params->program[pc].arg2;
-        NE_REGISTER arg3 = params->program[pc].arg3;
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
-        BOUNDS_CHECK(arg2);
-        BOUNDS_CHECK(arg3);
-        
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        npy_intp sb1 = params->registers[arg1].stride;
-        char *x2 = params->registers[arg2].mem;
-        npy_intp sb2 = params->registers[arg2].stride;
-        char *x3 = params->registers[arg3].mem;
-        npy_intp sb3 = params->registers[arg3].stride;
-        
-        VEC_LOOP(expr);
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    NE_REGISTER arg3 = params->program[pc].arg3;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    BOUNDS_CHECK(arg3);
+    
+    $DTYPE0 *dest = ($DTYPE0 *)params->registers[store_in].mem;
+    $DTYPE1 *x1 = ($DTYPE1 *)params->registers[arg1].mem;
+    npy_intp sb1 = params->registers[arg1].stride;
+    $DTYPE2 *x2 = ($DTYPE2 *)params->registers[arg2].mem;
+    npy_intp sb2 = params->registers[arg2].stride;
+    $DTYPE3 *x3 = ($DTYPE3 *)params->registers[arg3].mem;
+    npy_intp sb3 = params->registers[arg3].stride;
+                                
+    if( sb1 == sizeof($DTYPE1) && sb2 == sizeof($DTYPE2) && sb3 == sizeof($DTYPE3) ) { // Aligned
+        VEC_LOOP(expr)
+    }
+    else { // Strided
+        STRIDED_LOOP(expr)
+    } 
     } break;
-'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) ) 
-
-
-def VEC_ARG3_STRING(expr):
-    # Version with itemsize is _only_ needed for strings
-    return '''
-    {
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        NE_REGISTER arg2 = params->program[pc].arg2;
-        NE_REGISTER arg3 = params->program[pc].arg3;
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
-        BOUNDS_CHECK(arg2);
-        BOUNDS_CHECK(arg3);
-        
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        npy_intp ss1 = params->registers[arg1].itemsize;
-        npy_intp sb1 = params->registers[arg1].stride;
-        char *x2 = params->registers[arg2].mem;
-        npy_intp ss2 = params->registers[arg2].itemsize;
-        npy_intp sb2 = params->registers[arg2].stride;
-        char *x3 = params->registers[arg3].mem;
-        npy_intp ss3 = params->registers[arg3].itemsize;
-        npy_intp sb3 = params->registers[arg3].stride;
-        
-        VEC_LOOP(expr);
-    } break;
-'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) ) 
-
+'''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
 
 # This is a function lookup helper dict
 VEC_ARGN = { 0: VEC_ARG0, 1: VEC_ARG1, 2: VEC_ARG2, 3: VEC_ARG3 }
+
+
+#def VEC_ARG1_STRING(expr):
+#    # Version with itemsize is _only_ needed for strings
+#    return '''
+#    {   
+#        NE_REGISTER arg1 = params->program[pc].arg1;
+#        BOUNDS_CHECK(store_in);
+#        BOUNDS_CHECK(arg1);
+#
+#        char *dest = params->registers[store_in].mem;
+#        char *x1 = params->registers[arg1].mem;
+#        npy_intp ss1 = params->registers[arg1].itemsize;
+#        npy_intp sb1 = params->registers[arg1].stride;
+#        
+#        VEC_LOOP(expr);
+#    } break;
+#'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) )
+
+#def VEC_ARG2_STRING(expr):
+#    # Version with itemsize is _only_ needed for strings
+#    return '''
+#    { 
+#        NE_REGISTER arg1 = params->program[pc].arg1;
+#        NE_REGISTER arg2 = params->program[pc].arg2;
+#        BOUNDS_CHECK(store_in);
+#        BOUNDS_CHECK(arg1);
+#        BOUNDS_CHECK(arg2);
+#        char *dest = params->registers[store_in].mem;
+#        char *x1 = params->registers[arg1].mem;
+#        npy_intp ss1 = params->registers[arg1].itemsize;
+#        npy_intp sb1 = params->registers[arg1].stride;
+#        char *x2 = params->registers[arg2].mem;
+#        npy_intp ss2 = params->registers[arg2].itemsize;
+#        npy_intp sb2 = params->registers[arg2].stride;
+#        VEC_LOOP(expr);
+#    } break;
+#'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) ) 
+
+#def VEC_ARG3_STRING(expr):
+#    # Version with itemsize is _only_ needed for strings
+#    return '''
+#    {
+#        NE_REGISTER arg1 = params->program[pc].arg1;
+#        NE_REGISTER arg2 = params->program[pc].arg2;
+#        NE_REGISTER arg3 = params->program[pc].arg3;
+#        BOUNDS_CHECK(store_in);
+#        BOUNDS_CHECK(arg1);
+#        BOUNDS_CHECK(arg2);
+#        BOUNDS_CHECK(arg3);
+#        
+#        char *dest = params->registers[store_in].mem;
+#        char *x1 = params->registers[arg1].mem;
+#        npy_intp ss1 = params->registers[arg1].itemsize;
+#        npy_intp sb1 = params->registers[arg1].stride;
+#        char *x2 = params->registers[arg2].mem;
+#        npy_intp ss2 = params->registers[arg2].itemsize;
+#        npy_intp sb2 = params->registers[arg2].stride;
+#        char *x3 = params->registers[arg3].mem;
+#        npy_intp ss3 = params->registers[arg3].itemsize;
+#        npy_intp sb3 = params->registers[arg3].stride;
+#        
+#        VEC_LOOP(expr);
+#    } break;
+#'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) ) 
+
 
 
 # The Intel VML calls, or any vectorized library that takes the BLOCK_SIZE as  
@@ -374,51 +445,32 @@ def EXPR( opNum, expr, retDtype,
         print( 'TODO: string: %s ' % expr )
         return STRING_EXPR( opNum, expr, retDtype, arg1Dtype, arg2Dtype, arg3Dtype )
 
-    # Replace
-    docString = '// {} ({}) :: {}'.format(retChar, argChars, expr)
-    expr = expr.replace( '$DEST', DEST( retChar ) )
-    expr = expr.replace( '$DTYPE0', DCHAR_TO_CTYPE[retChar] )
-    
-    # TODO: this should moreso be a C-define.
+    # Replace tokens
+    # TODO: this should moreso be a C-define, but perhaps BLOCK_SIZE1/2/4/8/16?
     expr = expr.replace( '$BLOCKSIZE', str(BLOCKSIZE) )
-    for I, dchar in enumerate(argChars):
-        expr = expr.replace( '$ARG{}'.format(I+1), ARG( dchar, I+1 ) )
-        expr = expr.replace( '$DTYPE{}'.format(I+1), DCHAR_TO_CTYPE[dchar]  )
+
         
+    # Build loop structure
+    docString = '// {} ({}) :: {}'.format(retChar, argChars, expr)
     if vecType == TYPE_LOOP:
-        return 'case {0}: {2} {1}'.format( opNum, VEC_ARGN[len(argChars)](expr), docString )
+        expr = 'case {0}: {2} {1}'.format( opNum, VEC_ARGN[len(argChars)](expr), docString )
     elif vecType == TYPE_ALIGNED:
-        return 'case {0}: {2} {1}'.format( opNum, VEC_ARGN_ALIGNED[len(argChars)](expr), docString )
+        expr =  'case {0}: {2} {1}'.format( opNum, VEC_ARGN_ALIGNED[len(argChars)](expr), docString )
     elif vecType == TYPE_STRIDED:
-        return 'case {0}: {2} {1}'.format( opNum, VEC_ARGN_STRIDED[len(argChars)](expr), docString )
+        expr = 'case {0}: {2} {1}'.format( opNum, VEC_ARGN_STRIDED[len(argChars)](expr), docString )
     else:
         raise ValueError( "Unknown vectorization type: {}".format(vecType) )
+        
+    expr = expr.replace( '$DEST', DEST() )
+    expr = expr.replace( '$DTYPE0', DCHAR_TO_CTYPE[retChar] )
+    for I, dchar in enumerate(argChars):
+        #expr = expr.replace( '$ARG{}'.format(I+1), ARG( dchar, I+1 ) )
+        expr = expr.replace( '$DTYPE{}'.format(I+1), DCHAR_TO_CTYPE[dchar]  )
+        
+    return expr
 
 
-def STRING_EXPR( opNum, expr, retDtype, arg1Dtype=None, arg2Dtype=None, arg3Dtype=None ):
-    # More custom operations
-    # TODO
-    pass
 
-def DEST( dchar, index='J' ):
-    # Real return is the default
-    return '(({0} *)dest)[{1}]'.format( DCHAR_TO_CTYPE[dchar], index )
-    
-def DEST_STR( dchar ):
-    # TODO: difference between npy_string and npy_unicode?
-    return '({0} *)dest + J*memsteps[store_in]'.format( DCHAR_TO_CTYPE[dchar] )
-
-def ARG( dchar, num, index=0 ):
-    return '(({0} *)( x{1} + J*sb{1} ))[{2}]'.format( DCHAR_TO_CTYPE[dchar], num, index )
-
-def ARG_STR( dchar, num ):
-    return '(({0} *)( x{1} + J*sb{1} ))'.format( DCHAR_TO_CTYPE[dchar], num )
-
-def REDUCE( dchar, outerLoop=False ):
-    if outerLoop:
-        return DEST( dchar )
-    # INNER LOOP
-    return '*({0} *)dest'.format( DCHAR_TO_CTYPE[dchar] )
 
 
 # The DtypeFamily is quite overbuilt now for what we use it for. Perhaps it 
