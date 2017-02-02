@@ -25,7 +25,7 @@ except: import pickle
 # https://waymoot.org/home/python_string/
 try: from cStringIO import StringIO as BytesIO
 except: from io import BytesIO
-# struct.pack is the quickest way to build 4-byte op words
+# struct.pack is the quickest way to build the program as structs
 # All important format characters: https://docs.python.org/2/library/struct.html
 from struct import pack, unpack, calcsize
 
@@ -783,7 +783,7 @@ if __name__ == "__main__":
     interpreter._set_num_threads(4)
     ne2.set_num_threads(4)
     
-    arrSize = int(2**17 - 42) # The minus is to make the last block a different size
+    arrSize = int(2**20 - 42) # The minus is to make the last block a different size
     
     print( "Array size: {:.2f}k".format(arrSize/1024 ))
     
@@ -798,13 +798,18 @@ if __name__ == "__main__":
     t0 = time.time()
     neObj = NumExpr( 'out=a*b' )
     neObj.run( b=b, a=a, out=out )
+    t1 = time.time()
+    neObj = NumExpr( 'out=mul(a,b)' )
+    neObj.run( b=b, a=a, out=out )
+    
     t3 = time.time()
     ne2.evaluate( 'a*b', out=out_ne2 )
     t4 = time.time()
     out_np = a*b
     t5 = time.time()
     print( "---------------------" )
-    print( "Ne3 completed simple-op a*b: %.2e s"%(t3-t0) )
+    print( "Ne3 completed simple-op a*b: %.2e s"%(t1-t0) )
+    print( "Ne3 completed simple-op mul(a,b): %.2e s"%(t3-t1) )
     print( "Ne2 completed simple-op a*b: %.2e s"%(t4-t3) )
     print( "numpy completed simple-op a*b: %.2e s"%(t5-t4) )
     
@@ -860,7 +865,6 @@ out = mid_result*b""" )
     #######################################
     ###### TESTING COMPLEX NUMBERS  #######
     #######################################
-    arrSize = 2**17-17
     pi2 = np.pi/2.0
     ncx = np.random.uniform( -pi2, pi2, arrSize ).astype('complex64') + 1j
     ncy = np.complex64(1) + 1j*np.random.uniform( -pi2, pi2, arrSize ).astype('complex64')
@@ -925,7 +929,9 @@ out = mid_result*b""" )
     ########################################################
     ###### TESTING Self-vectorized mul with striding  ######
     ########################################################
-    
+    #
+    # I replaced all the pointer math with array indices with 
+    # seperate branches for strides and aligned and it's 40 % faster now.
     da = a[::4]
     db = b[::4]
     out_stride1 = np.empty_like(da)
@@ -944,10 +950,9 @@ out = mid_result*b""" )
     
     np.testing.assert_array_almost_equal( out_stride1, da*db )
     np.testing.assert_array_almost_equal( out_stride2, da*db )
-    # Even with striding on, it's much faster to feed the compiler array indices
-    # rather than to do pointer math.
-    # This implies we should have some branching behavoir 
-    # and not use strides when unnecessary?  Or is just that pointer math is 
-    # not well-optimized by the compiler?
+    # Would it be faster to compile if we had a real_functions.hpp? 
+    # It looks like the functional form is still faster than the context 
+    # switch with array-like indexing... but only for strided-mode.
+    # So... back to interp_generator.py
     
     
