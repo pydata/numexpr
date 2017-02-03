@@ -21,3 +21,4 @@ Antonio Valentino contributed the port to Python 3.
 
 Google Inc. contributed bug fixes.
 
+Robert A. McLeod wrote NumExpr3.

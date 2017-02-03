@@ -25,11 +25,6 @@
 #define SIZE_MAX ((size_t)-1)
 #endif
 
-
-
-
-//#include "str-two-way.hpp"
-
 #ifdef DEBUG
 #define DEBUG_TEST 1
 #else
@@ -177,34 +172,6 @@ NumExprObject_copy_threadsafe( const NumExprObject *self )
     return copy;
 }
 
-// Make a copy of a NumExprObject's registers field for thread-safe operation.
-// This is going to give us pain with regards to memory deallocation?
-//NumExprReg*
-//copy_registers( const NumExprObject *self )
-//{
-//    NumExprReg *reg_copy;
-//    int R;
-//    
-//    reg_copy = PyMem_New(NumExprReg, n_reg);
-//    for( R = 0; R < self->n_reg; R++ ) {
-//        reg_copy[R] = self->registers[R];
-//    }
-//    return reg_copy;
-//}
-//    
-//npy_intp* 
-//copy_strides( const NumExprObject *self )
-//{
-//    // Make a copy of strides from every register for thread-safety.
-//    int R;
-//    npy_intp strides_copy = malloc( self->n_reg *sizeof(npy_intp) );
-//    for( R = 0; R < self->n_reg; R++ ) {
-//        strides_copy[R] = self->registers[R].stride;
-//    }
-//    return strides_copy;
-//}
-//
-
 // Serial/parallel task iterator version of the VM engine
 int vm_engine_iter_task(NpyIter *iter, 
                     const NumExprObject *params,
@@ -254,25 +221,37 @@ int vm_engine_iter_task(NpyIter *iter,
     // _bytes_ instead of _elements_
 
     block_size = *sizePtr;
-    while (block_size == BLOCK_SIZE1) {
-        //printf( "vm_iter_engine run block.\n" );
-#define REDUCTION_INNER_LOOP
-#define BLOCK_SIZE BLOCK_SIZE1
+    // RAM: let's try having a variable block size?
+    // Success, with auto-vectorization it doesn't need to be a fixed size, 
+    // compared to unrolling loops. Looks like we can cut-down the number of 
+    // includes which will shrink the machine code.
+    while( block_size > 0 ) {
+#define REDUCTION_INNER_LOOP            
 #include "interp_body_GENERATED.cpp"
-#undef BLOCK_SIZE
 #undef REDUCTION_INNER_LOOP
         iterNext(iter);
-        block_size = *sizePtr;
+        block_size = *sizePtr;   
     }
-
-    /* Then finish off the rest */
-    if (block_size > 0) do {
-#define REDUCTION_INNER_LOOP
-#define BLOCK_SIZE block_size
-#include "interp_body_GENERATED.cpp"
-#undef BLOCK_SIZE
-#undef REDUCTION_INNER_LOOP
-    } while (iterNext(iter));
+    
+//    while (block_size == BLOCK_SIZE1) {
+//        //printf( "vm_iter_engine run block.\n" );
+//#define REDUCTION_INNER_LOOP
+//#define BLOCK_SIZE BLOCK_SIZE1
+//#include "interp_body_GENERATED.cpp"
+//#undef BLOCK_SIZE
+//#undef REDUCTION_INNER_LOOP
+//        iterNext(iter);
+//        block_size = *sizePtr;
+//    }
+//
+//    /* Then finish off the rest */
+//    if (block_size > 0) do {
+//#define REDUCTION_INNER_LOOP
+//#define BLOCK_SIZE block_size
+//#include "interp_body_GENERATED.cpp"
+//#undef BLOCK_SIZE
+//#undef REDUCTION_INNER_LOOP
+//    } while (iterNext(iter));
 
     return 0;
 }
@@ -299,24 +278,33 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter,
      // First do all the blocks with a compile-time fixed size.
      // This makes a big difference (30-50% on some tests).
     block_size = *sizePtr;
-    while (block_size == BLOCK_SIZE1) {
-#define BLOCK_SIZE BLOCK_SIZE1
-#define NO_OUTPUT_BUFFERING // Because it's a reduction
+    while( block_size > 0 ) {
+#define NO_OUTPUT_BUFFERING          
 #include "interp_body_GENERATED.cpp"
 #undef NO_OUTPUT_BUFFERING
-#undef BLOCK_SIZE
         iterNext(iter);
-        block_size = *sizePtr;
+        block_size = *sizePtr;   
     }
-
-    // Then finish off the rest 
-    if (block_size > 0) do {
-#define BLOCK_SIZE block_size
-#define NO_OUTPUT_BUFFERING // Because it's a reduction
-#include "interp_body_GENERATED.cpp"
-#undef NO_OUTPUT_BUFFERING
-#undef BLOCK_SIZE
-    } while (iterNext(iter));
+    
+    
+//    while (block_size == BLOCK_SIZE1) {
+//#define BLOCK_SIZE BLOCK_SIZE1
+//#define NO_OUTPUT_BUFFERING // Because it's a reduction
+//#include "interp_body_GENERATED.cpp"
+//#undef NO_OUTPUT_BUFFERING
+//#undef BLOCK_SIZE
+//        iterNext(iter);
+//        block_size = *sizePtr;
+//    }
+//
+//    // Then finish off the rest 
+//    if (block_size > 0) do {
+//#define BLOCK_SIZE block_size
+//#define NO_OUTPUT_BUFFERING // Because it's a reduction
+//#include "interp_body_GENERATED.cpp"
+//#undef NO_OUTPUT_BUFFERING
+//#undef BLOCK_SIZE
+//    } while (iterNext(iter));
     
     return 0;
 }
@@ -363,28 +351,6 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *params,
             return -1;
         }
     }
-    //th_params.memsteps[0] = params.memsteps;
-    // Make one copy of memsteps for each additional thread
-    // TODO: better encapsulation
-    /*
-    for (i = 1; i < gs.n_thread; ++i) {
-        th_params.memsteps[i] = PyMem_New(npy_intp,
-                    1 + params.n_reg );
-        if (th_params.memsteps[i] == NULL) {
-            --i;
-            for (; i > 0; --i) {
-                PyMem_Del(th_params.memsteps[i]);
-            }
-            for (i = 0; i < gs.n_thread; ++i) {
-                NpyIter_Deallocate(th_params.iter[i]);
-            }
-            return -1;
-        }
-        memcpy(th_params.memsteps[i], th_params.memsteps[0],
-                sizeof(npy_intp) *
-                (1 + params.n_reg));
-    }
-    */
     
     Py_BEGIN_ALLOW_THREADS;
 
@@ -584,7 +550,7 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     //char **mem;
     //npy_intp *memsteps;
 
-    *pc_error = -1;
+    //*pc_error = -1;
     // RAM: program isn't bytes anymore.
 //    if (PyBytes_AsStringAndSize(self->program, (char **)&(params.program),
 //                                &plen) < 0) {
@@ -597,11 +563,11 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
     params = NumExprObject_copy_threadsafe( self );
     get_temps_space(params, 1);
 #define SINGLE_ITEM_CONST_LOOP
-#define BLOCK_SIZE 1
+#define block_size 1
 #define NO_OUTPUT_BUFFERING // Because it's constant
 #include "interp_body_GENERATED.cpp"
 #undef NO_OUTPUT_BUFFERING
-#undef BLOCK_SIZE
+#undef block_size
 #undef SINGLE_ITEM_CONST_LOOP
     free_temps_space(params);
     

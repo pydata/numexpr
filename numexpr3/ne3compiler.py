@@ -250,8 +250,10 @@ class NumExpr(object):
                   input arguments to run have the same names, just that they
                   be in the same order and dtypes.
     """
-    # The maximum arguments is due to NumPy, we have space for 255
-    MAX_ARGS = 32 
+    # The maximum arguments is 32 due to NumPy, we have space for 255
+    # One can recompile NumPy after changing NPY_MAXARGS and use the full 
+    # argument space.
+    MAX_ARGS = 255
 
     
     def __init__(self, expr, lib=LIB_STD, local_dict = None, global_dict = None, 
@@ -780,8 +782,8 @@ if __name__ == "__main__":
     import numexpr as ne2
 
     # Simple operation, comparison with Ne2 and NumPy for break-even point
-    interpreter._set_num_threads(8)
-    ne2.set_num_threads(8)
+    interpreter._set_num_threads(12)
+    ne2.set_num_threads(12)
     
     arrSize = int(2**20-42) # The minus is to make the last block a different size
     

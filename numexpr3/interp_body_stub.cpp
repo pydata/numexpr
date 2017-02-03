@@ -10,15 +10,12 @@
 {
     npy_intp pc;
 
-
     // set up pointers to next block of inputs and outputs
 #ifdef SINGLE_ITEM_CONST_LOOP
     //mem[0] = params->output;
-#else // SINGLE_ITEM_CONST_LOOP
+#else // not SINGLE_ITEM_CONST_LOOP
     npy_intp J;
     // use the iterator's inner loop data
-    // RAM: TODO, copy iterDataPtr into the params->registers[:].mem
-    //memcpy(mem, iterDataPtr, (1+params->n_ndarray)*sizeof(npy_intp));
     // TODO: this is getting expensive to set mems for each block...
     npy_intp arrayCnt = 0;
     for( J = 0; J < params->n_reg; J++ ) {
@@ -37,8 +34,7 @@
 //    }
 #  endif // NO_OUTPUT_BUFFERING
 
-
-#endif // SINGLE_ITEM_CONST_LOOP
+#endif // not SINGLE_ITEM_CONST_LOOP
 
     // WARNING: From now on, only do references to mem[arg[123]]
     // & memsteps[arg[123]] inside the VEC_ARG[123] macros,
@@ -67,7 +63,6 @@
         }
     }
 
-
 #ifndef NO_OUTPUT_BUFFERING
     // If output buffering was necessary, copy the buffer to the output
     //printf( "TODO: output buffering disabled.\n" );
@@ -75,7 +70,6 @@
 //        memcpy(iterDataPtr[0], params->outBuffer, GET_RETURN_REG(params).itemsize * BLOCK_SIZE);
 //    }
 #endif // NO_OUTPUT_BUFFERING
-
 }
 
 

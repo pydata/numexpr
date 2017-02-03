@@ -70,34 +70,7 @@ after the first *r has been overwritten.
 // pushing to &r.  Make a backup before you try it.   
 // http://www.gamasutra.com/view/feature/4248/designing_fast_crossplatform_simd_.php
 // He also advises _not_ overloading functions. It's probably _not_ 
-// the case for the Intel compiler, but for gcc?  
-
-
-//TEST A float-64 mult
-static void
-ne_mul( npy_intp n, npy_float64 *a, npy_float64 *b, npy_float64 *r,
-       npy_intp sb1, npy_intp sb2 )
-{
-    //printf( "sb1 = %p, sb2 = %p\n", sb1, sb2);
-    // Aligned, alternatively the npy_iter knows if the array is aligned.
-    if( (sb1 == sizeof(npy_float64)) and (sb2 == sizeof(npy_float64)) ){
-        for( npy_intp I = 0; I < n; I++ ) {
-            r[I] = a[I]*b[I];
-        }
-        return;
-    }
-    // Strided
-    sb1 /= sizeof(npy_float64);
-    sb2 /= sizeof(npy_float64);   
-    for( npy_intp I = 0; I < n; I++ ) {
-        r[I] = a[I*sb1]*b[I*sb2];
-    }
-    //((npy_int64 *)dest)[J] = ((npy_int64 *)( x1 + J*sb1 ))[0] * ((npy_int64 *)( x2 + J*sb2 ))[0]; 
-}
-
-
-
-
+// the case for the Intel compiler, but for modern gcc 5.4?  
 
 
 // abs() has beeen changed to return npy_float and npy_double, like NumPy

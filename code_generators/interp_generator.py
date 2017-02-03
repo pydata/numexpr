@@ -110,7 +110,7 @@ def VEC_LOOP( expr ):
     expr = expr.replace( '$ARG3', ARG(3) )
     expr = expr.replace( '$ARG2', ARG(2) )
     expr = expr.replace( '$ARG1', ARG(1) )
-    return '''for(npy_intp J = 0; J < blocksize; J++) { 
+    return '''for(npy_intp J = 0; J < block_size; J++) { 
     EXPR; 
 }'''.replace( 'EXPR', expr ) 
  
@@ -122,18 +122,18 @@ def STRIDED_LOOP( expr ):
         return '''sb1 /= sizeof($DTYPE1);
     sb2 /= sizeof($DTYPE1);
     sb3 /= sizeof($DTYPE1);
-    for(npy_intp J = 0; J < blocksize; J++) { 
+    for(npy_intp J = 0; J < block_size; J++) { 
         EXPR; 
     }'''.replace( 'EXPR', expr ) 
     elif 'x2' in expr:
         return '''sb1 /= sizeof($DTYPE1);
     sb2 /= sizeof($DTYPE1);
-    for(npy_intp J = 0; J < blocksize; J++) { 
+    for(npy_intp J = 0; J < block_size; J++) { 
         EXPR; 
     }'''.replace( 'EXPR', expr ) 
     elif 'x1' in expr:
         return '''sb1 /= sizeof($DTYPE1);
-    for(npy_intp J = 0; J < blocksize; J++) { 
+    for(npy_intp J = 0; J < block_size; J++) { 
         EXPR; 
     }'''.replace( 'EXPR', expr ) 
     else:
@@ -169,9 +169,9 @@ def VEC_ARG1(expr):
     if( sb1 == sizeof($DTYPE1) ) { // Aligned
         VEC_LOOP(expr)
         return 0;
-    } else { // Strided
-       STRIDED_LOOP(expr)
-    }
+    } 
+    // Strided
+    STRIDED_LOOP(expr)
     return 0;
     }
 '''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
@@ -195,9 +195,9 @@ def VEC_ARG2(expr):
     if( sb1 == sizeof($DTYPE1) && sb2 == sizeof($DTYPE2) ) { // Aligned
         VEC_LOOP(expr)
         return 0;
-    } else { // Strided
-       STRIDED_LOOP(expr)
     }
+    // Strided
+    STRIDED_LOOP(expr)
     return 0;
     }
 '''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
@@ -226,9 +226,9 @@ def VEC_ARG3(expr):
     if( sb1 == sizeof($DTYPE1) && sb2 == sizeof($DTYPE2) && sb3 == sizeof($DTYPE3) ) { // Aligned
         VEC_LOOP(expr)
         return 0;
-    } else { // Strided
-        STRIDED_LOOP(expr)
     }
+    // Strided
+    STRIDED_LOOP(expr)
     return 0;
     }
 '''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
@@ -606,12 +606,11 @@ class Operation(object):
                     funcName = self.py_Name
                     
                 # print( 'lib: %d, #%d: '%(lib,I) + str(funcName) + str(passedArgs) )
-                
                 # Bool's dchar '?' is illegal so we use '1' instead for function names
                 idArgs = [ arg.replace('?','1') for arg in passedArgs ]
                 funcNameUnique = ''.join( [funcName,'_',retChar.replace('?','1') ] + idArgs )
-                funcDec = 'static int\n' + funcNameUnique + '( npy_intp blocksize, npy_intp pc, const NumExprObject *params )'
-                funcCall = funcNameUnique + '( BLOCK_SIZE, pc, params );' 
+                funcDec = 'static int\n' + funcNameUnique + '( npy_intp block_size, npy_intp pc, const NumExprObject *params )'
+                funcCall = funcNameUnique + '( block_size, pc, params );' 
                 
                 self.c_FunctionDeclares.append(  funcDec + ';' )
                 self.c_OpTableEntrys.append( 'case {0}: {1} break;\n'.format( opNum, funcCall) )
@@ -671,9 +670,6 @@ def CastFactory( opsList, casting='safe' ):
             
             # castOp = Operation( 'cast', '$DEST = ($DTYPE0)($ARG1)', CAST_SAFE, castChar, dChar )
             opsList += [Operation( 'cast', '$DEST = ($DTYPE0)($ARG1)', CAST_SAFE, castChar, dChar )]
-#            cTable[ castOp.opNums[0] ] = castOp.c_OpTableEntrys[0]
-#            pythonTable[ castOp.py_TupleKeys[0] ] = castOp.opNums[0]
-#            cFuncs.append( castOp.c_FunctionImpls[0] )
     pass
 
 
@@ -768,12 +764,6 @@ def OpsFactory( opsList ):
     ###### Reductions ######
     # TODO
     
-    # Build operations
-#    for operation in opsList:
-#        for I, opNum in enumerate( operation.opNums ):
-#            cTable[opNum] = operation.c_OpTableEntrys[I]
-#            pythonTable[operation.py_TupleKeys[I]] = opNum
-#            cFuncs.append( operation.c_FunctionImpls[I] )
     return
 
 
@@ -920,7 +910,6 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
                        DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'remainder', '$DEST = remainder($ARG1, $ARG2)', LIB_STD,
                        DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
-            
         # Th int in remquo() is a return pointer that we don't support at present.
         #opsList += [ Operation( 'remquo', '$DEST = remquo($ARG1, $ARG2, $ARG3)', LIB_STD,
         #               DECIMAL,DECIMAL,DECIMAL, ['i','i'] ) ] 
@@ -935,76 +924,63 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
         opsList += [ Operation( 'trunc', '$DEST = trunc($ARG1)', LIB_STD,
                        DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]    
         
-    ##################################################################
-    # Test of vectorized operations
-    ##################################################################
-    # I'm curious how much of a difference including the striding in an operation
-    # is?  Perhaps we should have non-strided and strided versions of each
-    # major operation?
-    opsList += [ Operation( 'multest', 'ne_mul(blocksize, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest, sb1, sb2)', 
-                          LIB_STD, ['d'], ['d'], ['d'], vecType=TYPE_STRIDED ) ]   
-    
-
-        
-
-            
     ###############################################
     # Complex number functions (from complex.hpp) #
     ###############################################
-    opsList += [ Operation( 'abs', 'nc_abs(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'abs', 'nc_abs(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,DECIMAL,COMPLEX, vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( ast.Add, 'nc_add(blocksize, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( ast.Add, 'nc_add(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( ast.Sub, 'nc_sub(blocksize, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( ast.Sub, 'nc_sub(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( ast.Mult, 'nc_mul(blocksize, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( ast.Mult, 'nc_mul(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( ast.Div, 'nc_div(blocksize, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( ast.Div, 'nc_div(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'neg', 'nc_neg(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'neg', 'nc_neg(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'conj', 'nc_conj(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'conj', 'nc_conj(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'conj', 'fconj(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'conj', 'fconj(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,DECIMAL,DECIMAL, vecType=TYPE_ALIGNED ) ]           
-    opsList += [ Operation( 'sqrt', 'nc_sqrt(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'sqrt', 'nc_sqrt(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'log', 'nc_log(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'log', 'nc_log(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( 'log1p', 'nc_log1p(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'log1p', 'nc_log1p(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]                        
-    opsList += [ Operation( 'log10', 'nc_log10(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'log10', 'nc_log10(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]         
-    opsList += [ Operation( 'exp', 'nc_exp(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'exp', 'nc_exp(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]  
-    opsList += [ Operation( 'expm1', 'nc_expm1(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'expm1', 'nc_expm1(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ] 
     # TODO: add aliases for 'power'
-    opsList += [ Operation( ast.Pow, 'nc_pow(blocksize, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( ast.Pow, 'nc_pow(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]  
-    opsList += [ Operation( 'arccos', 'nc_acos(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'arccos', 'nc_acos(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'arccosh', 'nc_acosh(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'arccosh', 'nc_acosh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]    
-    opsList += [ Operation( 'arcsin', 'nc_asin(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'arcsin', 'nc_asin(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'arcsinh', 'nc_asinh(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'arcsinh', 'nc_asinh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]   
-    opsList += [ Operation( 'arctan', 'nc_atan(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'arctan', 'nc_atan(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'arctanh', 'nc_atanh(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'arctanh', 'nc_atanh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'cos', 'nc_cos(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'cos', 'nc_cos(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( 'cosh', 'nc_cosh(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'cosh', 'nc_cosh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]               
-    opsList += [ Operation( 'sin', 'nc_sin(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'sin', 'nc_sin(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( 'sinh', 'nc_sinh(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'sinh', 'nc_sinh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]       
-    opsList += [ Operation( 'tan', 'nc_tan(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'tan', 'nc_tan(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( 'tanh', 'nc_tanh(blocksize, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+    opsList += [ Operation( 'tanh', 'nc_tanh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]    
 
                
@@ -1014,37 +990,11 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
     if bool(mkl):
         # Let's try for just some hand-crafted functions to start.
         #vmlFuncs = []
-        #vmlFuncs += [ Operation('abs', 'Abs( (MKL_INT)BLOCK_SIZE, (double *)x1, (double *)dest)', LIB_VML,
+        #vmlFuncs += [ Operation('abs', 'Abs( (MKL_INT)block_size, (double *)x1, (double *)dest)', LIB_VML,
         #                [ 'd',], [ 'd',] ) ]
-        #vmlFuncs += [ Operation( ast.Add, 'Add( (MKL_INT)BLOCK_SIZE, (double *)x1, (double *)x2, (double *)dest)', LIB_VML,
+        #vmlFuncs += [ Operation( ast.Add, 'Add( (MKL_INT)block_size, (double *)x1, (double *)x2, (double *)dest)', LIB_VML,
         #                ['d',], ['d',], ['d',] ) ]
-    
-        # TODO: we could also make aliases so that VML funcs could be called 
-        # with the LIB_STD?  Such as,
-        # (sqrt_vml, LIB_STD, 'f', 'f')
-#        for func in vmlFuncs:
-#            for J in np.arange( len(func.retFam) ):
-#                opNum = next(OP_COUNT)
-#                pendedTemplate =  NUMPY_VML_PRE[func.argFams[0][J]] + func.c_Template
-#                
-#                if len( func.argFams ) == 1:
-#                    cTable[opNum] = EXPR( opNum, pendedTemplate, \
-#                                  func.retFam[J], func.argFams[0][J], 
-#                                  vecType=TYPE_ALIGNED )
-#                    pythonTable[(func.py_Name, LIB_VML, func.retFam[J], func.argFams[0][J] )] \
-#                              = opNum
-#                elif len( func.argFams ) == 2:
-#                    cTable[opNum] = EXPR( opNum, pendedTemplate,         \
-#                                          func.retFam[J],              \
-#                                          func.argFams[0][J], \
-#                                          func.argFams[1][J], \
-#                                           vecType=TYPE_ALIGNED )
-#                    pythonTable[(func.py_Name, LIB_VML, func.retFam[J],   \
-#                                 func.argFams[0][J], func.argFams[1][J] )] \
-#                              = opNum
-#                              
-                #print( '##### %s #####' % opNum )
-                #print( cTable[opNum] )
+
         pass
     return
 
@@ -1104,20 +1054,11 @@ def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.
     OP_END = next(OP_COUNT) -1
     INTERP_HEADER_DEFINES= "".join( [INTERP_HEADER_DEFINES,
         '#define OP_END {}\n'.format(OP_END) ] )
-    
-#    with open( os.path.join( NE_DIR, 'functions.hpp'), 'w' ) as f_header:
-#        for funcDec in cFuncs:
-#            f_header.write( funcDec + '\n' )
 
     ###### Write to functions_GENERATED.cpp ######        
     with open( os.path.join( NE_DIR, 'functions_GENERATED.cpp'), 'w' ) as f_body:
         f_body.write( '#include "numexpr_object.hpp"\n\n' )
         for funcBody in cFuncs:
-            #splitBody = funcBody.split('\n')
-            #funcBody = ''.join( [ sp + '\n' for sp in splitBody[:-2] ] ) + '}'
-            
-            #wholeFunc = funcDec[:-1] + '\n' + funcBody
-            
             f_body.write( funcBody + '\n\n' )
             
     ###### Write to interp_body_stub.cpp ######
@@ -1152,14 +1093,8 @@ def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.
     return pythonTable, cTable, cFuncs
 
 
-
 if __name__ == '__main__':
-    
     pythonTable, cTable, cFuncs = generate()
-
-    #for val in cTable.values(): print( val )
-        
-    for func in cFuncs: print( func )
     
         
         

@@ -223,8 +223,12 @@ def setup_package():
                             ],
                 'libraries': ['m'],
                 # TODO: compile detections of AVX2 and SSE2 using numpy.distutils
-                'extra_compile_args': ['-funroll-all-loops','-fdiagnostics-color=always' ],
-                #'extra_compile_args': ['-funroll-all-loops','-fdiagnostics-color=always', '-msse2', '-mavx2' ],
+                # Turned off funroll, doesn't seem to affect speed.
+                # https://gcc.gnu.org/onlinedocs/gcc-5.4.0/gcc/Optimize-Options.html
+                'extra_compile_args': [ # '-funroll-loops',
+                                       '-fdiagnostics-color=always', 
+                                       '-fopt-info-vec',
+                                       ],
             }
             dict_append(extension_config_data, **mkl_config_data)
             if 'library_dirs' in mkl_config_data:
