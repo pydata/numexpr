@@ -19,7 +19,7 @@
 #include "string_functions.hpp"
 #include "interp_header_GENERATED.hpp"
 #include "numexpr_object.hpp"
-
+#include "functions_GENERATED.cpp"
 
 #ifndef SIZE_MAX
 #define SIZE_MAX ((size_t)-1)

@@ -780,10 +780,10 @@ if __name__ == "__main__":
     import numexpr as ne2
 
     # Simple operation, comparison with Ne2 and NumPy for break-even point
-    interpreter._set_num_threads(4)
-    ne2.set_num_threads(4)
+    interpreter._set_num_threads(8)
+    ne2.set_num_threads(8)
     
-    arrSize = int(2**20 - 42) # The minus is to make the last block a different size
+    arrSize = int(2**20-42) # The minus is to make the last block a different size
     
     print( "Array size: {:.2f}k".format(arrSize/1024 ))
     
@@ -795,26 +795,28 @@ if __name__ == "__main__":
     out_ne2 = np.zeros( arrSize )
     out_int = np.zeros( arrSize, dtype='int32' )
     
-    t0 = time.time()
+    # Run once to start interpreter
+    neObj = NumExpr( 'out=a+b' )
+    neObj.run( b=b, a=a, out=out )
+    
+    
+#    t0 = time.time()
+#    neObj = NumExpr( 'out=multest(a,b)' )
+#    neObj.run( b=b, a=a, out=out )
+    t1 = time.time()
     neObj = NumExpr( 'out=a*b' )
     neObj.run( b=b, a=a, out=out )
-    t1 = time.time()
-    neObj = NumExpr( 'out=mul(a,b)' )
-    neObj.run( b=b, a=a, out=out )
-    
-    t3 = time.time()
+    t2 = time.time()
     ne2.evaluate( 'a*b', out=out_ne2 )
-    t4 = time.time()
+    t3 = time.time()
     out_np = a*b
-    t5 = time.time()
+    t4 = time.time()
     print( "---------------------" )
-    print( "Ne3 completed simple-op a*b: %.2e s"%(t1-t0) )
-    print( "Ne3 completed simple-op mul(a,b): %.2e s"%(t3-t1) )
-    print( "Ne2 completed simple-op a*b: %.2e s"%(t4-t3) )
-    print( "numpy completed simple-op a*b: %.2e s"%(t5-t4) )
+    print( "Ne3 completed simple-op a*b: %.2e s"%(t2-t1) )
+    print( "Ne2 completed simple-op a*b: %.2e s"%(t3-t2) )
+    print( "numpy completed simple-op a*b: %.2e s"%(t4-t3) )
     
     np.testing.assert_array_almost_equal( out_np, out )
-    
     # Multi-line with named temporary
     neObj = NumExpr( """mid_result = c + a
 out = mid_result*b""" )
@@ -935,24 +937,17 @@ out = mid_result*b""" )
     da = a[::4]
     db = b[::4]
     out_stride1 = np.empty_like(da)
-    out_stride2 = np.empty_like(da)
     t30 = time.time()
     neObj = NumExpr( 'out_stride1 = da*db' )
     neObj.run( out_stride1, da, db )
     t31 = time.time()
-    neObj = NumExpr( 'out_stride2 = mul(da,db)' )
-    neObj.run( out_stride2, da, db )
-    t32 = time.time()
     print( "---------------------" )
-    print( "Pointer-math vs. array indices comparison:" )
+    print( "Strided computation:" )
     print( "Ne3 completed (strided) a*b: %.2e s"%(t31-t30) )
-    print( "Ne3 completed (strided) mul(n,a,b): %.2e s"%(t32-t31) )
     
     np.testing.assert_array_almost_equal( out_stride1, da*db )
-    np.testing.assert_array_almost_equal( out_stride2, da*db )
     # Would it be faster to compile if we had a real_functions.hpp? 
     # It looks like the functional form is still faster than the context 
-    # switch with array-like indexing... but only for strided-mode.
-    # So... back to interp_generator.py
+    # switch with array-like indexing...
     
     

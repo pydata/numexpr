@@ -211,7 +211,7 @@ def setup_package():
                 'sources': ['numexpr3/interpreter.cpp',
                             'numexpr3/module.cpp',
                             'numexpr3/numexpr_object.cpp'] + pthread_win,
-                'depends': [
+                'depends': ['numexpr3/functions_GENERATED.cpp',
                             'numexpr3/interp_body_GENERATED.cpp',
                             'numexpr3/interp_header_GENERATED.hpp',
                             'numexpr3/module.hpp',
@@ -223,8 +223,8 @@ def setup_package():
                             ],
                 'libraries': ['m'],
                 # TODO: compile detections of AVX2 and SSE2 using numpy.distutils
-                #'extra_compile_args': ['-funroll-all-loops','-fdiagnostics-color=always', '-mavx2', '-msse2' ],
-                'extra_compile_args': ['-funroll-all-loops','-fdiagnostics-color=always', ],
+                'extra_compile_args': ['-funroll-all-loops','-fdiagnostics-color=always' ],
+                #'extra_compile_args': ['-funroll-all-loops','-fdiagnostics-color=always', '-msse2', '-mavx2' ],
             }
             dict_append(extension_config_data, **mkl_config_data)
             if 'library_dirs' in mkl_config_data:
