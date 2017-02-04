@@ -99,9 +99,10 @@ inline float atanhf(float x)
     return (float) atanh((double)x);
 }
 
-inline float hypotf( float x, float y)
-{
-    return (float) hypot( (double)x, (double)y );
-}
+// hypotf was in MSVC2005. which is earilier than Python 2.7
+//inline float hypotf( float x, float y)
+//{
+//    return (float) hypot( (double)x, (double)y );
+//}
 
 #endif // NUMEXPR_MISSING_POSIX_FUNCTIONS_HPP

@@ -503,6 +503,8 @@ def EXPR( opNum, expr, retChar,
 '''
 NumPy dtype.chars are used to identify the various types available for building
 functions as well as the tuples used as keys to ID the opcodes.
+
+On Linux:
 bool = '?'
 uint8 = 'B'
 int8 = 'b'
@@ -519,13 +521,20 @@ complex64 = 'F'
 complex128 = 'D'
 bytes = 'S'
 str/unicode = 'U'
+
+Windows has different characters.
 '''
 # These are some convience shortcuts for our operation hash-table below
-BOOL = ['?']
-SIGNED_INT = ['b','h','i','l']
-UNSIGNED_INT = ['B','H','I','L']
-DECIMAL  =  ['f','d']
-COMPLEX = ['F','D']
+BOOL = [ np.dtype('bool').char ]
+SIGNED_INT = [ np.dtype('int8').char,np.dtype('int16').char,
+              np.dtype('int32').char,np.dtype('int64').char]
+UNSIGNED_INT = [ np.dtype('uint8').char,np.dtype('uint16').char,
+              np.dtype('uint32').char,np.dtype('uint64').char]
+DECIMAL  =  [np.dtype('float32').char,np.dtype('float64').char]
+COMPLEX = [np.dtype('complex64').char,np.dtype('complex128').char]
+BOOLx2 = [np.dtype('bool').char] * 2
+INTx2 = [np.dtype('int32').char] * 2
+LONGx2 = [np.dtype('int64').char] * 2       
 STRINGS = ['S','U']
 ALL_INT = SIGNED_INT + UNSIGNED_INT
 REAL_NUM = BOOL + ALL_INT + DECIMAL
@@ -795,29 +804,29 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
     # TODO: need to find a copy of cmath for MSVC compiler.
     # TODO: extend msvc_function_stubs to add all the new functions as overloads.
     opsList += [ Operation( 'abs', '$DEST = abs($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'arccos', '$DEST = acos($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]       
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]       
     opsList += [ Operation( 'arcsin', '$DEST = asin($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]           
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]           
     opsList += [ Operation( 'arctan', '$DEST = atan($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
     opsList += [ Operation( 'arctan2', '$DEST = atan2($ARG1, $ARG2)', LIB_STD,
-                   DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                   DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
     opsList += [ Operation( 'ceil', '$DEST = ceil($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]            
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]            
     opsList += [ Operation( 'cos', '$DEST = cos($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]           
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]           
     opsList += [ Operation( 'cosh', '$DEST = cosh($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]       
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]       
     opsList += [ Operation( 'exp', '$DEST = exp($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]         
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]         
     opsList += [ Operation( 'fabs', '$DEST = fabs($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
     opsList += [ Operation( 'floor', '$DEST = floor($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
     opsList += [ Operation( 'fmod', '$DEST = fmod($ARG1, $ARG2)', LIB_STD,
-                   DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                   DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
     
     # These are tricky, frexp and ldexp are using ARG2 as return pointers... 
     # We don't support multiple returns at present.
@@ -826,162 +835,162 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
     #opsList += [ Operation( 'ldexp', '$DEST = ldexp($ARG1, $ARG2)', LIB_STD,
     #               DECIMAL,DECIMAL, ['i','i'] ) ]     
     opsList += [ Operation( 'log', '$DEST = log($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]    
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]    
     opsList += [ Operation( 'log10', '$DEST = log10($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
     # Here ints are supported, which is something we don't have in our ast.Pow operation...
     opsList += [ Operation( 'power', '$DEST = pow($ARG1, $ARG2)', LIB_STD,
-                    ['f','d','f','d'], ['f','d','f','d'], ['f','d','i','i'], vecType=TYPE_LOOP ) ] 
+                    DECIMAL+DECIMAL, DECIMAL+DECIMAL, DECIMAL+INTx2, vecType=TYPE_LOOP ) ] 
     opsList += [ Operation( 'sin', '$DEST = sin($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'sinh', '$DEST = sinh($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'sqrt', '$DEST = sqrt($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'tan', '$DEST = tan($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                   DECIMAL,  DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'tanh', '$DEST = tanh($ARG1)', LIB_STD,
-                   DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'fpclassify', '$DEST = fpclassify($ARG1)', LIB_STD,
-                    ['i', 'i'],DECIMAL, vecType=TYPE_LOOP ) ]
+                    INTx2, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'isfinite', '$DEST = isfinite($ARG1)', LIB_STD,
-                    ['?','?'],DECIMAL, vecType=TYPE_LOOP ) ]
+                    BOOLx2, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'isinf', '$DEST = isinf($ARG1)', LIB_STD,
-                    ['?','?'],DECIMAL, vecType=TYPE_LOOP ) ]
+                    BOOLx2, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'isnan', '$DEST = isnan($ARG1)', LIB_STD,
-                    ['?','?'],DECIMAL, vecType=TYPE_LOOP ) ]
+                    BOOLx2, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'isnormal', '$DEST = isnormal($ARG1)', LIB_STD,
-                    ['?','?'],DECIMAL, vecType=TYPE_LOOP ) ]
+                    BOOLx2, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'signbit', '$DEST = signbit($ARG1)', LIB_STD,
-                    ['?','?'],DECIMAL, vecType=TYPE_LOOP ) ]
+                    BOOLx2, DECIMAL, vecType=TYPE_LOOP ) ]
     
     ####################
     # C++/11 overloads #
     ####################
     if bool(C11):
         opsList += [ Operation( 'arccosh', '$DEST = acosh($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'arcsinh', '$DEST = asinh($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'arctanh', '$DEST = atanh($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'cbrt', '$DEST = cbrt($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'copysign', '$DEST = copysign($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]   
+                       DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]   
         opsList += [ Operation( 'erf', '$DEST = erf($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]  
+                       DECIMAL ,DECIMAL, vecType=TYPE_LOOP ) ]  
         opsList += [ Operation( 'erfc', '$DEST = erfc($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'exp2', '$DEST = exp2($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL ,DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'expm1', '$DEST = expm1($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'fdim', '$DEST = fdim($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                       DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'fma', '$DEST = fma($ARG1, $ARG2, $ARG3)', LIB_STD,
-                       DECIMAL,DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]     
+                       DECIMAL, DECIMAL, DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]     
         opsList += [ Operation( 'fmax', '$DEST = fmax($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]    
+                       DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]    
         opsList += [ Operation( 'fmin', '$DEST = fmin($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                       DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'hypot', '$DEST = hypot($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                       DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'ilogb', '$DEST = ilogb($ARG1)', LIB_STD,
-                        ['i','i'],DECIMAL, vecType=TYPE_LOOP ) ]
+                        INTx2, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'lgamma', '$DEST = lgamma($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         # We don't support long long funcs at present
         opsList += [ Operation( 'log1p', '$DEST = log1p($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'log2', '$DEST = log2($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'logb', '$DEST = logb($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'lrint', '$DEST = lrint($ARG1)', LIB_STD,
-                        ['l','l'],DECIMAL, vecType=TYPE_LOOP ) ]
+                        LONGx2, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'lround', '$DEST = lround($ARG1)', LIB_STD,
-                        ['l','l'],DECIMAL, vecType=TYPE_LOOP ) ]
+                        LONGx2, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'nearbyint', '$DEST = nearbyint($ARG1)', LIB_STD,
-                        ['l','l'],DECIMAL, vecType=TYPE_LOOP ) ]
+                        LONGx2, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'nextafter', '$DEST = nextafter($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                       DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'nexttoward', '$DEST = nexttoward($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                       DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'remainder', '$DEST = remainder($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL,DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ] 
+                       DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
         # Th int in remquo() is a return pointer that we don't support at present.
         #opsList += [ Operation( 'remquo', '$DEST = remquo($ARG1, $ARG2, $ARG3)', LIB_STD,
         #               DECIMAL,DECIMAL,DECIMAL, ['i','i'] ) ] 
         opsList += [ Operation( 'rint', '$DEST = rint($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'round', '$DEST = round($ARG1)', LIB_STD,
-                        ['i', 'i'],DECIMAL, vecType=TYPE_LOOP ) ]
+                        INTx2, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'scalbln', '$DEST = scalbln($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL,DECIMAL, ['l','l'], vecType=TYPE_LOOP ) ] 
+                       DECIMAL, DECIMAL, LONGx2, vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'tgamma', '$DEST = tgamma($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'trunc', '$DEST = trunc($ARG1)', LIB_STD,
-                       DECIMAL,DECIMAL, vecType=TYPE_LOOP ) ]    
+                       DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]    
         
     ###############################################
     # Complex number functions (from complex.hpp) #
     ###############################################
     opsList += [ Operation( 'abs', 'nc_abs(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,DECIMAL,COMPLEX, vecType=TYPE_ALIGNED ) ] 
+                          LIB_STD, DECIMAL, COMPLEX, vecType=TYPE_ALIGNED ) ] 
     opsList += [ Operation( ast.Add, 'nc_add(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( ast.Sub, 'nc_sub(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( ast.Mult, 'nc_mul(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( ast.Div, 'nc_div(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'neg', 'nc_neg(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'conj', 'nc_conj(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'conj', 'fconj(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,DECIMAL,DECIMAL, vecType=TYPE_ALIGNED ) ]           
+                          LIB_STD, DECIMAL, DECIMAL, vecType=TYPE_ALIGNED ) ]           
     opsList += [ Operation( 'sqrt', 'nc_sqrt(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'log', 'nc_log(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ] 
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ] 
     opsList += [ Operation( 'log1p', 'nc_log1p(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]                        
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]                        
     opsList += [ Operation( 'log10', 'nc_log10(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]         
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]         
     opsList += [ Operation( 'exp', 'nc_exp(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]  
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]  
     opsList += [ Operation( 'expm1', 'nc_expm1(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ] 
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ] 
     # TODO: add aliases for 'power'
     opsList += [ Operation( ast.Pow, 'nc_pow(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]  
+                          LIB_STD, COMPLEX, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]  
     opsList += [ Operation( 'arccos', 'nc_acos(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'arccosh', 'nc_acosh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]    
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]    
     opsList += [ Operation( 'arcsin', 'nc_asin(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'arcsinh', 'nc_asinh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]   
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]   
     opsList += [ Operation( 'arctan', 'nc_atan(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'arctanh', 'nc_atanh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'cos', 'nc_cos(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ] 
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ] 
     opsList += [ Operation( 'cosh', 'nc_cosh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]               
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]               
     opsList += [ Operation( 'sin', 'nc_sin(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ] 
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ] 
     opsList += [ Operation( 'sinh', 'nc_sinh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]       
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]       
     opsList += [ Operation( 'tan', 'nc_tan(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ] 
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ] 
     opsList += [ Operation( 'tanh', 'nc_tanh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD,COMPLEX,COMPLEX, vecType=TYPE_ALIGNED ) ]    
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]    
 
                
     ##################################################################

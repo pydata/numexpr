@@ -8,6 +8,7 @@ numexpr/*generated.py
 numexpr3.egg-info
 numexpr3/E/*
 numexpr3/interpreter*so
+numexpr3/interpreter*pyd
 numexpr3/__version__.py
 code_generators/ex_include
 bext

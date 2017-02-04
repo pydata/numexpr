@@ -696,7 +696,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         
         if( arrayCounter > n_input ) { goto fail; }
         if( self->registers[I].kind == KIND_SCALAR 
-           or self->registers[I].kind == KIND_TEMP ) {
+           || self->registers[I].kind == KIND_TEMP ) {
            continue;
         }
         
@@ -1106,7 +1106,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 PyErr_SetString(PyExc_RuntimeError,
                     "NumExpr_run(): an error occurred while running the program.");
             }
-        } else if (r == -2 or r== -3) {
+        } else if (r == -2 || r== -3) {
             PyErr_Format(PyExc_RuntimeError,
                 "NumExpr_run(): bad argument at pc = %d.", pc_error);
         } else {

@@ -82,7 +82,7 @@ cast_h1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_i1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_l1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -109,7 +109,7 @@ cast_i1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_l1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_q1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -190,7 +190,7 @@ cast_H1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_I1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_L1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -217,7 +217,7 @@ cast_I1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_L1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Q1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -352,7 +352,7 @@ cast_hb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_ib( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_lb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -379,7 +379,7 @@ cast_ib( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_lb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -487,7 +487,7 @@ cast_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_ih( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_lh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -514,7 +514,7 @@ cast_ih( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_lh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -595,7 +595,7 @@ cast_dh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -622,7 +622,7 @@ cast_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_li( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_ql( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -649,7 +649,7 @@ cast_li( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_di( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -676,7 +676,7 @@ cast_di( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -703,7 +703,7 @@ cast_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_dl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -757,7 +757,7 @@ cast_hB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_iB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_lB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -784,7 +784,7 @@ cast_iB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_lB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -865,7 +865,7 @@ cast_HB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_IB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_LB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -892,7 +892,7 @@ cast_IB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_LB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_QB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -973,7 +973,7 @@ cast_dB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_iH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_lH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1000,7 +1000,7 @@ cast_iH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_lH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1054,7 +1054,7 @@ cast_HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_IH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_LH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1081,7 +1081,7 @@ cast_IH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_LH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_QH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1162,7 +1162,7 @@ cast_dH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_lI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1189,7 +1189,7 @@ cast_lI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1216,7 +1216,7 @@ cast_II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_LI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_QL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1243,7 +1243,7 @@ cast_LI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_dI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1270,7 +1270,7 @@ cast_dI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_QQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1297,7 +1297,7 @@ cast_LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-cast_dL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1486,7 +1486,7 @@ copy_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-copy_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1513,7 +1513,7 @@ copy_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-copy_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_qq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1594,7 +1594,7 @@ copy_HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-copy_II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1621,7 +1621,7 @@ copy_II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-copy_LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_QQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1852,7 +1852,7 @@ add_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-add_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1884,7 +1884,7 @@ add_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-add_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1980,7 +1980,7 @@ add_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-add_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2012,7 +2012,7 @@ add_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-add_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2204,7 +2204,7 @@ sub_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-sub_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2236,7 +2236,7 @@ sub_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-sub_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2332,7 +2332,7 @@ sub_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-sub_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2364,7 +2364,7 @@ sub_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-sub_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2556,7 +2556,7 @@ mult_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-mult_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2588,7 +2588,7 @@ mult_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-mult_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2684,7 +2684,7 @@ mult_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-mult_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2716,7 +2716,7 @@ mult_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-mult_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2908,7 +2908,7 @@ div_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-div_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2940,7 +2940,7 @@ div_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-div_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3036,7 +3036,7 @@ div_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-div_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3068,7 +3068,7 @@ div_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-div_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3324,7 +3324,7 @@ mod_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-mod_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mod_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3356,7 +3356,7 @@ mod_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-mod_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mod_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3452,7 +3452,7 @@ mod_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-mod_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mod_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3484,7 +3484,7 @@ mod_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-mod_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mod_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3691,7 +3691,7 @@ where_h1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-where_i1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_l1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3728,7 +3728,7 @@ where_i1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-where_l1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_q1qq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3839,7 +3839,7 @@ where_H1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-where_I1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_L1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3876,7 +3876,7 @@ where_I1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-where_L1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_Q1QQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4032,7 +4032,7 @@ ones_like_h( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_i( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_l( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     BOUNDS_CHECK(store_in);
@@ -4047,7 +4047,7 @@ ones_like_i( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_l( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_q( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     BOUNDS_CHECK(store_in);
@@ -4092,7 +4092,7 @@ ones_like_H( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_I( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_L( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     BOUNDS_CHECK(store_in);
@@ -4107,7 +4107,7 @@ ones_like_I( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_L( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_Q( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     BOUNDS_CHECK(store_in);
@@ -4206,7 +4206,7 @@ neg_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-neg_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+neg_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4233,7 +4233,7 @@ neg_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-neg_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+neg_qq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4378,7 +4378,7 @@ lshift_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lshift_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4410,7 +4410,7 @@ lshift_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lshift_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4506,7 +4506,7 @@ lshift_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lshift_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4538,7 +4538,7 @@ lshift_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lshift_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4634,7 +4634,7 @@ rshift_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-rshift_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4666,7 +4666,7 @@ rshift_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-rshift_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4762,7 +4762,7 @@ rshift_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-rshift_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4794,7 +4794,7 @@ rshift_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-rshift_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4922,7 +4922,7 @@ bitand_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitand_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4954,7 +4954,7 @@ bitand_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitand_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5050,7 +5050,7 @@ bitand_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitand_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5082,7 +5082,7 @@ bitand_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitand_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5210,7 +5210,7 @@ bitor_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitor_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5242,7 +5242,7 @@ bitor_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitor_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5338,7 +5338,7 @@ bitor_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitor_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5370,7 +5370,7 @@ bitor_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitor_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5498,7 +5498,7 @@ bitxor_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitxor_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5530,7 +5530,7 @@ bitxor_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitxor_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5626,7 +5626,7 @@ bitxor_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitxor_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5658,7 +5658,7 @@ bitxor_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-bitxor_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5850,7 +5850,7 @@ gt_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-gt_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5882,7 +5882,7 @@ gt_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-gt_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5978,7 +5978,7 @@ gt_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-gt_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6010,7 +6010,7 @@ gt_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-gt_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6202,7 +6202,7 @@ gte_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-gte_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6234,7 +6234,7 @@ gte_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-gte_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6330,7 +6330,7 @@ gte_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-gte_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6362,7 +6362,7 @@ gte_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-gte_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6554,7 +6554,7 @@ lt_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lt_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6586,7 +6586,7 @@ lt_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lt_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6682,7 +6682,7 @@ lt_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lt_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6714,7 +6714,7 @@ lt_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lt_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6906,7 +6906,7 @@ lte_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lte_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6938,7 +6938,7 @@ lte_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lte_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7034,7 +7034,7 @@ lte_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lte_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7066,7 +7066,7 @@ lte_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lte_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7258,7 +7258,7 @@ eq_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-eq_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7290,7 +7290,7 @@ eq_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-eq_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7386,7 +7386,7 @@ eq_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-eq_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7418,7 +7418,7 @@ eq_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-eq_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7610,7 +7610,7 @@ noteq_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-noteq_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7642,7 +7642,7 @@ noteq_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-noteq_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_qqq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7738,7 +7738,7 @@ noteq_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-noteq_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7770,7 +7770,7 @@ noteq_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-noteq_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_QQQ( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8706,7 +8706,7 @@ power_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-power_ffi( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+power_ffl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8738,7 +8738,7 @@ power_ffi( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-power_ddi( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+power_ddl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9040,7 +9040,7 @@ tanh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-fpclassify_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fpclassify_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9067,7 +9067,7 @@ fpclassify_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-fpclassify_id( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fpclassify_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10190,7 +10190,7 @@ hypot_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ilogb_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ilogb_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10217,7 +10217,7 @@ ilogb_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ilogb_id( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ilogb_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10460,7 +10460,7 @@ logb_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lrint_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lrint_qf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10487,7 +10487,7 @@ lrint_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lrint_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lrint_qd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10514,7 +10514,7 @@ lrint_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lround_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lround_qf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10541,7 +10541,7 @@ lround_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-lround_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lround_qd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10568,7 +10568,7 @@ lround_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-nearbyint_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+nearbyint_qf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10595,7 +10595,7 @@ nearbyint_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-nearbyint_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+nearbyint_qd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10868,7 +10868,7 @@ rint_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-round_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+round_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10895,7 +10895,7 @@ round_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-round_id( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+round_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10922,7 +10922,7 @@ round_id( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-scalbln_ffl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+scalbln_ffq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10954,7 +10954,7 @@ scalbln_ffl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-scalbln_ddl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+scalbln_ddq( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
