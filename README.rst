@@ -190,6 +190,10 @@ Supported functions are listed below::
       Complex from real and imaginary parts.
   * contains(str, str): bool
       Returns True for every string in `op1` that contains `op2`.
+  * ceil(float|double): float|double
+      Round up towards positive infinity to the closest integer.
+  * floor(float|double): float|double
+      Round down towards negative infinity to the closest integer.
 
 .. Notes:
 
