@@ -8,7 +8,7 @@ Created on Thu Jan  5 12:46:25 2017
 
 """
 import numpy as np
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from itertools import count
 import struct
 
@@ -543,6 +543,30 @@ BITWISE_NUM = BOOL + ALL_INT
 ALL_NUM = BOOL + ALL_INT + DECIMAL + COMPLEX    
 ALL_FAM = ALL_NUM + STRINGS
 
+# Map NumpPy functions that don't exist for the testing submodule
+# Any function that doesn't have a NumPy equivalent returns None.
+AUTOTEST_DICT = defaultdict( bool, {
+             'sub': np.subtract,
+             'mult': np.multiply,
+             'div': np.divide,
+             'neg': np.negative,
+             'pow': np.power,
+             'lshift': np.left_shift,
+             'rshift': np.right_shift,
+             'bitand': np.bitwise_and,
+             'bitor': np.bitwise_or,
+             'bitxor': np.bitwise_xor,
+             'and':  np.logical_and,
+             'or': np.logical_or,
+             'gt': np.greater,
+             'gte':  np.greater_equal,
+             'lt': np.less,
+             'lte':  np.less_equal,
+             'eq': np.equal,
+             'noteq': np.not_equal,
+             } )
+
+
 # This is the red meat of the generator, where we give the code stubs and the
 # valid data type families.  Eventually the actual operation lists should be 
 # in a seperate file from the language rules that build the operation hash.
@@ -603,9 +627,14 @@ class Operation(object):
                         EXPR( opNum, self.c_Template, retChar, *passedArgs, 
                               vecType=self.vecType )
                         
-                # The format for the Python tuple is (name,{lib},returntype,arg1type,...)
-                self.py_TupleKeys.append( 
+                # The format for the Python tuple is (name,{lib},arg1type,...)
+                # or for casts, ('cast',{cast_mode},cast_dtype,original_dtype )
+                if self.py_Name == 'cast':
+                    self.py_TupleKeys.append( 
                         tuple( [self.py_Name, lib, retChar] + passedArgs) )
+                else:
+                    self.py_TupleKeys.append( 
+                        tuple( [self.py_Name, lib] + passedArgs) )
                 
                 # Make a unique name for the function, of the form 
                 # {function}_{retchar}{argchar1,...}
@@ -617,9 +646,15 @@ class Operation(object):
                 # print( 'lib: %d, #%d: '%(lib,I) + str(funcName) + str(passedArgs) )
                 # Bool's dchar '?' is illegal so we use '1' instead for function names
                 idArgs = [ arg.replace('?','1') for arg in passedArgs ]
+                
                 funcNameUnique = ''.join( [funcName,'_',retChar.replace('?','1') ] + idArgs )
-                funcDec = 'static int\n' + funcNameUnique + '( npy_intp block_size, npy_intp pc, const NumExprObject *params )'
-                funcCall = funcNameUnique + '( block_size, pc, params );' 
+                
+                funcDec = 'static int\n'    \
+                          + funcNameUnique \
+                          + '( npy_intp block_size, npy_intp pc, const NumExprObject *params )'
+                          
+                funcCall = funcNameUnique \
+                           + '( block_size, pc, params );' 
                 
                 self.c_FunctionDeclares.append(  funcDec + ';' )
                 self.c_OpTableEntrys.append( 'case {0}: {1} break;\n'.format( opNum, funcCall) )
@@ -628,6 +663,24 @@ class Operation(object):
                 # Debugging output
                 #print( '##### %s #####' % opNum )
                 #print( cTable[opNum] )
+       
+    @property
+    def test_Auto(self):
+        # Try to write a test function that compares our function to NumPy.
+        if type(self.py_Name) == type: # Ast  node
+            str_Name = self.py_Name.__name__.lower()
+        else: # Function name
+            str_Name = self.py_Name
+            
+        # So we will make a number of sample arrays in the autotest stub,
+        # A_x, B_x, and C_x where 'x' is the dchar.
+        if hasattr( np, str_Name ):
+            pass
+        else: # Try AUTOTEST_DICT
+            if AUTOTEST_DICT[str_Name]:
+                pass
+            else:
+                print( "test_Auto could not find NumPy function for: {}".format(str_Name) )
         
     def __repr__(self):
         return ''.join( [str(self.py_Name),'_',str(self.libs)] )
@@ -1056,7 +1109,7 @@ def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.
     for op in opsList:
         for I, opNum in enumerate( op.opNums ):
             cTable[opNum] = op.c_OpTableEntrys[I]
-            pythonTable[op.py_TupleKeys[I]] = opNum
+            pythonTable[op.py_TupleKeys[I]] = (struct.pack( NE_STRUCT, opNum ), op.retFam[I])
             cFuncs.append( op.c_FunctionImpls[I] )
     
     # Write #define OP_END 
@@ -1093,12 +1146,15 @@ def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.
         body.write( generatedHeader.encode('ascii') )
         
     ###### Save the lookup dict for Python ######
-    # First pre-pack all the values into bytes
-    for key, value in pythonTable.items():
-        pythonTable[key] = struct.pack( NE_STRUCT, value )
     with open( os.path.join(NE_DIR, 'lookup.pkl' ), 'wb' ) as lookup:
         cPickle.dump( pythonTable, lookup )
-    
+        
+    ###### Write autotest_GENERATED.py ######
+    with open( os.path.join( NE_DIR, 'tests/autotest_GENERATED.cpp'), 'w' ) as f_test:
+        for op in opsList:
+            #for I, opNum in enumerate( op.opNums ):
+            op.test_Auto
+            
     return pythonTable, cTable, cFuncs
 
 

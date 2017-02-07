@@ -194,41 +194,38 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     program = (NumExprOperation*)PyMem_New( NumExprOperation, program_len );
     memcpy( program, PyBytes_AsString( bytes_prog ), program_len*sizeof(NumExprOperation) );
 
-    
     // Build registers
     registers = PyMem_New(NumExprReg, n_reg);
     arrays = PyMem_New(PyObject*, n_reg);
     for( I = 0; I < n_reg; I++ ) {
         // Get reference and check format of register
         iter_reg = PyTuple_GET_ITEM( reg_tuple, I );
-        
+
         // Fill in the registers
         // Note: in NE2 the array handles are only set in NumExpr_Run() because
         // NumPy iterators are used.
         arrays[I] = (PyObject *)PyTuple_GET_ITEM( iter_reg, 1 );
-        
+
         // Python does error checking here for us.
         registers[I].dchar = (char)PyUnicode_AsUTF8( PyTuple_GetItem( iter_reg, 2 ) )[0];
         registers[I].kind = (npy_uint8)PyLong_AsUnsignedLong( PyTuple_GetItem( iter_reg, 3 ) );
-        
+
         // PyArray_ITEMSIZE gives a wrong result for scalars (and strings), so 
         // a lookup table is needed.
         registers[I].itemsize = (npy_intp)ssize_from_dchar(registers[I].dchar);
         // The stride is always one element for scalars and temps but it will 
         // potentially be different for numpy.ndarrays.
         registers[I].stride = registers[I].itemsize;
-        
+
         if( arrays[I] == Py_None ) {
             registers[I].elements = 0;
             registers[I].mem = NULL;
         }
         else if ( PyArray_Check( arrays[I] ) ) {
             // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html#c.PyArrayObject
-            // Apparently the documented way to access the data pointer is depricated in 1.7...
             registers[I].elements = PyArray_Size(arrays[I]);
             registers[I].mem = NULL;
         }
-
         
         switch( registers[I].kind ) {
             case KIND_ARRAY:
@@ -238,7 +235,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
                 break;
             case KIND_SCALAR:
                 //printf( "Found scalar at register %d, dtype %c with itemsize %lu\n", 
-                //        I, registers[I].dchar, registers[I].itemsize );
+                //       I, registers[I].dchar, registers[I].itemsize );
                 n_scalar++;
                 // TODO: build a BLOCK_SIZE1 ones array
                 total_scalar_itemsize += registers[I].itemsize;
@@ -305,7 +302,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
      Py_XDECREF(temp);}
     #define INCREF_REPLACE_OBJ(argument) {Py_INCREF(argument); REPLACE_OBJ(argument);}
     #define REPLACE_MEM(argument) {PyMem_Del(self->argument); self->argument=argument;}
-    
+
     //PyMem_Del(iter_reg);
     //PyMem_Del(iter_arr);
     

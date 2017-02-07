@@ -30,7 +30,9 @@ except: from io import BytesIO
 from struct import pack, unpack, calcsize
 
 # interpreter.so:
+#from . import interpreter
 import interpreter
+
 # Import opTable
 __neDir = os.path.dirname(os.path.abspath( inspect.getfile(inspect.currentframe()) ))
 with open( os.path.join( __neDir, 'lookup.pkl' ), 'rb' ) as lookup:
@@ -89,42 +91,7 @@ class __WisdomBankSingleton(dict):
 wisdomBank = __WisdomBankSingleton()
 
 
-def disassemble( progBytes ):
-    global _PACK_REG, _PACK_OP, _NULL_REG
-    
-    structFormat = "".join( (_PACK_OP, _PACK_REG, _PACK_REG, _PACK_REG, _PACK_REG) ).encode('ascii')
-    blockLen = calcsize(_PACK_OP) + 4*calcsize(_PACK_REG)
-    if len(progBytes) % blockLen != 0:
-        raise ValueError( 
-                'disassemble: len(progBytes)={} is not divisible by {}'.format(len(progBytes,blockLen)) )
-        
-    # Reverse the opTable
-    reverseOps = {op: key for key, op in OPTABLE.items()}
-    
-    progBlocks = [progBytes[I:I+blockLen] for I in range(0,len(progBytes), blockLen)]
-    
-    # TODO: print out namesReg as well?
-    
-    #       0, op:      cast_di in ret:  3 <- args(  1::  -::  -)
-    print( "=======================================================" )
-    print( "DISASSEMBLED PROGRAM: " )
-    for J, block in enumerate(progBlocks):
-        opCode, ret, arg1, arg2, arg3 = unpack( structFormat, block )
-        if arg3 == ord(_NULL_REG): arg3 = '-'
-        if arg2 == ord(_NULL_REG): arg2 = '-'
-        if arg1 == ord(_NULL_REG): arg1 = '-'
-        
-        opTuple = reverseOps[ pack(_PACK_OP, opCode) ]
 
-        # For the ast.Nodes we want a 'pretty' name in the output
-        # give 
-        if hasattr( opTuple[0], '__name__' ):
-            opString = opTuple[0].__name__ + "_" + "".join( [str(dchar) for dchar in opTuple[2:] ] )
-        else:
-            opString = str(opTuple[0]) + "_" + "".join( [str(dchar) for dchar in opTuple[2:] ] )
-        print( '#{:2}, op: {:>12} in ret:{:3} <- args({:>3}::{:>3}::{:>3})'.format(
-                J, opString, ret, arg1, arg2, arg3 ) )
-    print( "=======================================================" )
 
 
 # TODO: implement non-default casting, optimization, library, checks
@@ -261,7 +228,6 @@ class NumExpr(object):
         
         self.expr = expr
         self._regCount = np.nditer( np.arange(NumExpr.MAX_ARGS) )
-        self._output_buffering = False
         
         self.program = b''
         self.lib = lib
@@ -275,6 +241,9 @@ class NumExpr(object):
         
         self.__compiled_exec = None    # Handle to the C-api NumExprObject
         self.__outputs = []
+        
+        self.__lastOp = False             # sentinel
+        self.__unallocatedOutput = False  # sentinel
     
         # Public
         self.inputNames = []
@@ -287,12 +256,12 @@ class NumExpr(object):
         
         # TODO: Is it faster to have a global versus building the function 
         # dict?
-        self._ASTAssembler = defaultdict( self.unsupported, 
-                  { ast.Assign:self.assign, ast.Expr:self.expression, \
-                    ast.Name:self.name, ast.Num:self.const, \
-                    ast.Attribute:self.attribute, ast.BinOp:self.binop, \
-                    ast.BoolOp:self.binop,
-                    ast.Call:self.call, ast.Compare:self.compare, \
+        self._ASTAssembler = defaultdict( self.__unsupported, 
+                  { ast.Assign:self.__assign, ast.Expr:self.__expression, \
+                    ast.Name:self.__name, ast.Num:self.__const, \
+                    ast.Attribute:self.__attribute, ast.BinOp:self.__binop, \
+                    ast.BoolOp:self.__binop,
+                    ast.Call:self.__call, ast.Compare:self.__compare, \
                      } )
     
         self.assemble()
@@ -314,45 +283,110 @@ class NumExpr(object):
         self.global_dict = global_dict
         
         forest = ast.parse( self.expr ) 
-        #next( self._regCount )  # Reserve register #0 for the output/return value.  
-        #self.namesReg['$out'] = (None)
-        
+        # Reserve register #0 for the output/return value.
+        # next( self._regCount )  
+        # Add the return as a 'named temporary'; TODO: only for non-reductions
+        # self._freeTemporaries.add( pack(_PACK_REG,0) )
             
+        N_forest_m1 = len(forest.body) - 1
         for I, bodyItem in enumerate( forest.body ):
             bodyType = type(bodyItem)
+            if I == N_forest_m1:
+                # print( "Setting lastOp sentinel" )
+                self.__lastOp = True 
+                # Add the last assignment name as the outputTarget so it can be 
+                # promoted up the frame later
+                self.outputTarget = bodyItem.targets[0].id
+                                            
             if bodyType == ast.Assign:
-                self._ASTAssembler[bodyType]( bodyItem, terminalAssign=True )
+                self._ASTAssembler[bodyType]( bodyItem )
             elif bodyType == ast.Expr:
                 # Probably the easiest thing to do is generate the array in the exact
                 # same way as Assign but return it rather than promotting it up
                 # the frame.
-                raise NotImplementedError( 'Backwards support for Expr not in yet.' )
+                if not self.__lastOp:
+                    raise SyntaxError( "Expressions may only be single statements." )
+                    
+                # Just an unallocated output case
+                self._ASTAssembler[ast.Assign]( bodyItem )
+                # raise NotImplementedError( 'Backwards support for Expr not in yet.' )
+                
             else:
                 raise NotImplementedError( 'Unknown ast body: {}'.format(bodyType) )
+
                 
-        # Add the last assignment name as the outputTarget so it can be 
-        # promoted up the frame later
-        self.outputTarget = bodyItem.targets[0].id
+                
+        
                                             
+        if self.__unallocatedOutput:
+            # print( "self.outputTarget = {}".format(self.outputTarget) )
+
+            # We need either output buffering or we need to know the size of the 
+            # array to allocate?
+            self.namesReg.pop(self.__unallocatedOutput[4])
+            self.namesReg[self.outputTarget] = self.__unallocatedOutput = \
+                         (self.__unallocatedOutput[0], None, self.__unallocatedOutput[2], 
+                          _REGKIND_ARRAY, self.outputTarget )
+                                            
+        
+        # What's the output from the last program?
+        # Don't allocate output array here, it might be different in the run() call
+        # outTuple = (pack(_PACK_REG,0), None, assignReturn[2], _REGKIND_ARRAY, self.outputTarget)
+        #regsToInterpreter = tuple( [outTuple] + [reg for reg in self.namesReg.values()] )
+        
+        # The OrderedDict for namesReg isn't needed if we sort the tuples, 
+        # which we need to do such that the magic output isn't out-of-order.
+        regsToInterpreter = tuple( sorted(self.namesReg.values() ) )
+        
+        #print( "Regs fed to interpreter as:" )
+        #for reg in regsToInterpreter:
+        #    print( reg )
         # Collate the inputNames as well as the the required outputs
         self.program = self.codeStream.getvalue()
         self.__compiled_exec = interpreter.NumExpr( program=self.program, 
-                                             registers=tuple(self.namesReg.values()) )
-        
-        #print( 'Messages/warnings: ')
-        #for message in self._messages:
-        #    print( '  ' + message )
-        #print( '   Occupied temps: %d, Free temps: %d' %(len(self._occupiedTemporaries), len(self._freeTemporaries)) )
-        #print( "======== NumExpr3 benchmarks ========" )
-        #print( "Frame call time: %e s" %(t2-t0) )
-        #print( "AST construction time: %e s" % (t3-t2) )
-        #print( "Function setup time: %e s" % (t_funcsetup1-t_funcsetup0) )
-        #print( "Time to build NumExpr3 program from AST: %e s" % (t7-t6) )
-        #print( "Total NumExpr3 time: %e s" % (t7-t0) )
-        
-        #disassemble( self.program )
-        
+                                             registers=regsToInterpreter )
 
+        
+    
+    def disassemble( self ):
+        global _PACK_REG, _PACK_OP, _NULL_REG
+        
+        structFormat = "".join( (_PACK_OP, _PACK_REG, _PACK_REG, _PACK_REG, _PACK_REG) ).encode('ascii')
+        blockLen = calcsize(_PACK_OP) + 4*calcsize(_PACK_REG)
+        if len(self.program) % blockLen != 0:
+            raise ValueError( 
+                    'disassemble: len(progBytes)={} is not divisible by {}'.format(len(self.program,blockLen)) )
+        # Reverse the opTable
+        reverseOps = {op[0] : key for key, op in OPTABLE.items()}
+        
+        progBlocks = [self.program[I:I+blockLen] for I in range(0,len(self.program), blockLen)]
+        
+        print( "=======================================================" )
+        print( "REGISTERS: " )
+        TYPENAME = { 0:'reg', 1:'scalar', 2:'temp', 3:'return' }
+        for reg in sorted(self.namesReg.values()):
+            print( "{} : name {:6} : dtype {:1} : type {:5}".format(ord(reg[0]), reg[4], reg[2], TYPENAME[reg[3]] ) )
+            
+            
+        print( "DISASSEMBLED PROGRAM: " )
+        for J, block in enumerate(progBlocks):
+            opCode, ret, arg1, arg2, arg3 = unpack( structFormat, block )
+            if arg3 == ord(_NULL_REG): arg3 = '-'
+            if arg2 == ord(_NULL_REG): arg2 = '-'
+            if arg1 == ord(_NULL_REG): arg1 = '-'
+            
+            opTuple = reverseOps[ pack(_PACK_OP, opCode) ]
+    
+            # For the ast.Nodes we want a 'pretty' name in the output
+            # give 
+            if hasattr( opTuple[0], '__name__' ):
+                opString = opTuple[0].__name__ + "_" + "".join( [str(dchar) for dchar in opTuple[2:] ] ).lower()
+            else:
+                opString = str(opTuple[0]) + "_" + "".join( [str(dchar) for dchar in opTuple[2:] ] )
+            print( '#{:2}, op: {:>12} in ret:{:3} <- args({:>3}::{:>3}::{:>3})'.format(
+                    J, opString, ret, arg1, arg2, arg3 ) )
+        print( "=======================================================" )
+    
     def print_names(self):
         for val in neObj.namesReg.values(): print( '{}:{}'.format( val[4], val[3])  )
         
@@ -368,7 +402,8 @@ class NumExpr(object):
         where {a,b,out} were the original names in the expression.
         '''
         # Get references to frames
-        # This is fairly expensive...
+        # This is fairly expensive...  We need a flag for "check_inputs"
+        
         call_frame = sys._getframe( stackDepth ) 
         if local_dict is None:
             local_dict = call_frame.f_locals
@@ -392,19 +427,55 @@ class NumExpr(object):
         promoteResult = (not self.outputTarget in kwargs) \
                         and ( (not self.outputTarget in self.local_dict) and 
                               (not self.outputTarget in self.global_dict) )
-                        
-        result = self.__compiled_exec( *args, ex_uses_vml=ex_uses_vml, **kwargs )
+        # Allocate output?
+        if bool(self.__unallocatedOutput):
+            print( "ALLOCATE -> {}".format(self.outputTarget) )
+            #print( self.__unallocatedOutput )
+            #print( 'args = ' + str(args) )
+            # Get the last operation from the program, and use np.broadcast 
+            # to determine the output size?  What if there's a temp?  
+            
+            # If we have to go down the tree until we get to 
+            # Maybe we should track the broadcast all the way through?
+            # But what if the user changes the shape of the input arrays?
+            # print( "TODO: track broadcasting throughout AST" )
+            unalloc = np.zeros_like(args[-1])
+            
+            # Sometimes the return is in the middle of the args because 
+            # the set.pop() from __occupiedTemps is not deterministic.
+            # Using a list as a stack instead doesn't really help things.
+            # TODO: re-write this args insertion mess
+            arrayCnt = 0
+            outId = ord(self.__unallocatedOutput[0])
+            for reg in self.namesReg.values():
+                regId = ord(reg[0])
+                if regId >= outId:
+                    args = args[:arrayCnt] + [unalloc] + args[arrayCnt:]
+                    break
+                if reg[3] == _REGKIND_ARRAY:
+                    arrayCnt += 1
+                #print( "reg: %d, out: %d : n_array %d" % (regId,outId,arrayCnt) )
+                
+            
+            #print( "TEST: {}".format([ (reg[0],reg[4]) for reg in self.namesReg.values() ]) )
+            #print( "1: Unalloc points to: %s"%hex(unalloc.__array_interface__['data'][0]) )
+            
+        else:
+            unalloc = None
+            
+        self.__compiled_exec( *args, ex_uses_vml=ex_uses_vml, **kwargs )
         
         if promoteResult:
             # Insert result into higher frames
-            # print( "run(): Promoting result {} to calling frame".format(self.outputTarget) )
-            self.local_dict[ self.outputTarget ] = result
+            # Sometimes this fails for an unknown reason...
+            #print( "run(): Promoting result {} to calling frame".format(self.outputTarget) )
+            self.local_dict[ self.outputTarget ] = unalloc
         
-        return result
+        return unalloc
     
 
     
-    def assign(self, node, terminalAssign=False ):
+    def __assign(self, node ):
         #print( 'ast.Assign' )
         
         # node.targets is a list;  It must have a len=1 for NumExpr3
@@ -414,21 +485,13 @@ class NumExpr(object):
         
         # _messages.append( "Assign node: %s op assigned to %s" % ( node.value, node.targets[0]) )
         # Call function on target and value
-        
+
         targetTup = self._ASTAssembler[type(node.targets[0])](node.targets[0])
         valueTup = self._ASTAssembler[type(node.value)]( node.value, targetTup )
         
-        # Now we know the dtype of valueTup, so we can check for special cases
-        # for the assignment target
-        if not bool(targetTup) and terminalAssign:
-            # Make a return array, OR we can order output buffering.
-            # Here set a flag to self.use_output_buffering in the future
-            self.need_output_buffering = True
-            regToken = pack( _PACK_REG, next( self._regCount ) )
-            targetTup = ( regToken, None, valueTup[2], _REGKIND_RETURN, '$ret' )
         if not bool(targetTup):
-            # It's an intermediate temporary if terminalAssign == False
-            targetTup = self.newTemp_INLINE( valueTup[2] )
+            #print( "assign targetTup is None (SHOULD NOT GET HERE ANYMORE)" )
+            targetTup = self.__newTemp_INLINE( valueTup[2] )
 
         
         #TODO: assign needs to know if it's the last operation (in which case it should make an output array)
@@ -437,19 +500,23 @@ class NumExpr(object):
         return valueTup
         
         
-    def expression(self, node ):
+    def __expression(self, node ):
         #print( 'ast.Expr' )
         #_messages.append( "Expression node: %s op expression" % ( node.value ) )
         self._ASTAssembler[type(node.value)](node.value)
         # TODO: how to apply to 
         
                     
-    def name(self, node ):
+    def __name(self, node ):
         #print( 'ast.Name' )
         # node.ctx is probably not something we care for.
         global local_dict, global_dict
         
         node_id = node.id
+#        if targetReg != None:
+#            print( "targeted register: " + str(targetReg) )
+#            print( self.namesReg[targetReg] )
+            
         if node_id in self.namesReg:
             regTup = self.namesReg[node_id]
             regToken = regTup[0]
@@ -473,7 +540,7 @@ class NumExpr(object):
             else:
                 # print( "Name not found: " + node_id )
                 # It's probably supposed to be a temporary with a name, i.e. an assignment target
-                regTup = self.newTemp_INLINE( None, name = node_id )
+                regTup = self.__newTemp_INLINE( None, name = node_id )
             
         # codeView.append( "reg%d_%s_%s|" % (ord(regToken),node.id,regTup[1].dtype.descr[0][1] ) )
 
@@ -481,7 +548,7 @@ class NumExpr(object):
 
             
     
-    def const(self, node ):
+    def __const(self, node ):
         #print( 'ast.Const' )
         # Do we need a seperate constants registry or can we just use one and
         # assign it a random illegal name like $1 or something?
@@ -494,6 +561,8 @@ class NumExpr(object):
         # Later we should try and force consts to be of the correct dtype in 
         # Python.
     
+        # TODO: we should, if in a binary op or compare or call, try and match 
+        # the const to its partners and avoid an extra cast operation.
         if np.mod( node.n, 1) == 0: # int
             # Always try and used unsigned ints, but only up to half the 
             # bit-width?
@@ -540,7 +609,7 @@ class NumExpr(object):
         #codeView.append( "const%d_%s|" % (ord(regKey), constArr.dtype.descr[0][1])  )
         return regTup
         
-    def attribute(self, node ):
+    def __attribute(self, node ):
         #print( 'ast.Attr' )
         # An attribute has a .value node which is a Name, and .value.id is the 
         # module/class reference.  Then .attr is the attribute reference that 
@@ -582,182 +651,78 @@ class NumExpr(object):
         #      (attrName, ord(regToken), regTup[2].descr[0][1]) )
         return regTup
         
-
+    def __magic_output( self, retChar, outputTup ):
+        if outputTup is None:
+            outputTup = self.__newTemp_INLINE( retChar )
+        elif outputTup[2] == None: 
+            self.namesReg[outputTup[4]] = outputTup = \
+                                 (outputTup[0], outputTup[1], retChar, outputTup[3], outputTup[4] )
+            if self.__lastOp:
+                self.__unallocatedOutput = outputTup
+        return outputTup
         
-    def binop(self, node, outputTup=None ):
+    def __binop(self, node, outputTup=None ):
         #print( 'ast.Binop' )
         # (left,op,right)
-        # How to get precidence ordering right here?
-        # Probably I have to return the dtype.
-
         leftTup = self._ASTAssembler[type(node.left)](node.left)
         rightTup = self._ASTAssembler[type(node.right)](node.right)
         
         # Check to see if a cast is required
-        leftTup, rightTup = self.cast2( leftTup, rightTup )
+        leftTup, rightTup = self.__cast2( leftTup, rightTup )
           
+        # Format: (opCode, lib, left_register, right_register)
+        opWord, retChar = OPTABLE[  (type(node.op), self.lib, leftTup[2], rightTup[2] ) ] 
+        
         # Make/reuse a temporary for output
-        if not outputTup:
-            outputTup = self.newTemp_INLINE( leftTup[2] )
-            #outputKey = lockTemp_INLINE()
-            #namesReg[b'$'+outputKey] = outputTup = ( outputKey, None, leftTup[2], REGTYPE_TEMP )
+        outputTup = self.__magic_output( retChar, outputTup )
             
-        # Named intermediate with unknown dtype
-        if outputTup[2] == None: 
-            # Ergh how to find the name...
-            #for key, value in namesReg.items():
-            #    print( str(key) + " :: " + str(value) )
-            #raise NotImplementedError( 'Urgh...' )
-            # List instead of tuple?
-            # Slow work-around of searching dict by value?
-            for testKey, testTup in self.namesReg.items():
-                if testTup == outputTup:
-                    #print( "Assigning dtype to named temporary" )
-                    self.namesReg[testKey] = outputTup = \
-                                 (outputTup[0], outputTup[1], leftTup[2], outputTup[3], outputTup[4] )
-                    #print( "namesReg[{}] = {}".format(testKey, self.namesReg[testKey]) )
-                    break
-            pass
-                
-        # Format: op(4-bytes), return_register, left_register, right_register
-        opWord = OPTABLE[  (type(node.op), self.lib, outputTup[2], leftTup[2], rightTup[2] ) ] 
-     
         #_messages.append( 'BinOp: %s %s %s' %( node.left, type(node.op), node.right ) )
         self.codeStream.write( b"".join( (opWord, outputTup[0], leftTup[0], rightTup[0], _NULL_REG ))  )
         
-        # Pop off the leftTup and rightTup if they are temporaries
-        if leftTup[3] == _REGKIND_TEMP: self.releaseTemp_INLINE(leftTup[0])
-        if rightTup[3] == _REGKIND_TEMP: self.releaseTemp_INLINE(rightTup[0])
+        # Release the leftTup and rightTup if they are temporaries and weren't reused.
+        if leftTup[3] == _REGKIND_TEMP and leftTup[0] != outputTup[0]: 
+            self.__releaseTemp_INLINE(leftTup[0])
+        if rightTup[3] == _REGKIND_TEMP and rightTup[0] != outputTup[0]: 
+            self.__releaseTemp_INLINE(rightTup[0])
         return outputTup
         
-    def boolop(self, node, outputTup=None ):
-        # Functionally from the NumExpr perspective there's no difference 
-        # between boolean binary operations and binary operations
-        # Note that we never get here, binop is called instead by the lookup
-        # dict.
-        self.binop( node, outputTup )
-        
-    def newTemp_INLINE(self, dtype, name = None ):
-        if len(self._freeTemporaries) > 0:
-            # The maximum dtype.itemsize that goes into a temporary array is 
-            # tracked in the C-extension
-            regId = self._freeTemporaries.pop()
-            #print( 'Re-using temporary: %s' % regId )
-            tempTup = ( regId, None, dtype, _REGKIND_TEMP, '${}'.format(ord(regId)) )
-        else:
-            #print( 'new Temp: ' + str(name) )
-            tempNo = next( self._regCount )
-            
-            regId = pack( _PACK_REG, tempNo )
-            if name == None:
-                name = regId
-            self.namesReg[name] = tempTup = ( 
-                    regId, None, dtype, _REGKIND_TEMP, '${}'.format(tempNo) )
-        #tempReg.append( newTempTup )
-        #print( "Creating new temporary: %s" % newTempKey )
-        self._occupiedTemporaries.add( regId )
-        
-        return tempTup
-        
 
-
-    # Free a temporary
-    def releaseTemp_INLINE(self, regId ):
-        #print( "Releasing temporary: %s" % regId )
-        self._occupiedTemporaries.remove( regId )
-        self._freeTemporaries.add( regId )
-            
         
-    def compare(self, node, outputTup=None ):
-        # print( 'ast.Compare' )
-        # "Awkward... this ast.Compare node is," said Yoga disparagingly.  
-        # (left,ops,comparators)
-        # NumExpr3 does not handle [Is, IsNot, In, NotIn]
-        
-        if len(node.ops) > 1:
-            raise NotImplementedError( 
-                    'compare(): NumExpr3 only supports binary comparisons (between two elements)' )
-        leftTup = self._ASTAssembler[type(node.left)](node.left)
-        rightTup = self._ASTAssembler[type(node.comparators[0])](node.comparators[0])
-        
-        # Check to see if we need to cast
-        leftTup,rightTup = self.cast2( leftTup, rightTup )
-          
-        # Make a new temporary
-        if not outputTup:
-            outputTup = self.newTemp_INLINE( leftTup[2] )
-        
-        # Format: op(4-bytes), return_register, left_register, right_register
-        self.codeStream.write( b"".join( (OPTABLE[type(node.ops[0])], outputTup[0], 
-                                             leftTup[0], rightTup[0], _NULL_REG ))  )
-        
-        # Pop off the leftTup and rightTup if they are temporaries
-        if leftTup[3] == _REGKIND_TEMP: self.releaseTemp_INLINE(leftTup[0])
-        if rightTup[3] == _REGKIND_TEMP: self.releaseTemp_INLINE(rightTup[0])
-
-        return outputTup
-        
-    def cast2(self, leftTup, rightTup ):
-
-            
-        leftD = leftTup[2]; rightD = rightTup[2]
-        if leftD == rightD:
-            return leftTup, rightTup
-        elif np.can_cast( leftD, rightD ):
-            # Make a new temporary
-            castTup = self.newTemp_INLINE( rightD )
-            
-            self.codeStream.write( b"".join( (OPTABLE[('cast',self.lib,rightD,leftD)], castTup[0], leftTup[0], _NULL_REG, _NULL_REG)  ) )
-            return castTup, rightTup
-        elif np.can_cast( rightD, leftD ):
-            # Make a new temporary
-            castTup = self.newTemp_INLINE( leftD )
-                        
-            self.codeStream.write( b"".join( 
-                    (OPTABLE[('cast',self.lib,leftD,rightD)], castTup[0], rightTup[0], _NULL_REG, _NULL_REG) ) )
-            return leftTup, castTup
-        else:
-            raise TypeError( 'cast2(): Cannot cast %s to %s by rule <TODO>' 
-                            %(np.dtype(leftD), np.dtype(rightD) ) ) 
-                
-        
-    def cast3(self, leftTup, midTup, rightTup ):
-        # This isn't called by where/tenary so why do we need three element 
-        # casts at present?
-        self._messages.append( 'TODO: implement 3-argument casting' )
-        return leftTup, midTup, rightTup
-
-
-    def call(self, node, outputTup=None ):
+    def __call(self, node, outputTup=None ):
         #print( 'ast.Call: {}'.format(node.func.id) )
         # ast.Call has the following fields:
         # ('func', 'args', 'keywords', 'starargs', 'kwargs')
         
         argTups = [self._ASTAssembler[type(arg)](arg) for arg in node.args]
-        # Make a new temporary
-        if not outputTup:
-            # For where(bool,value1,value2) the dtype is not encapsulated in 
-            # first argument's dchar (which is bool), so pick the last one.
-            outputTup = self.newTemp_INLINE( argTups[-1][2] )
-        
+        # Would be nice to have a prettier way to fill out the program 
+        # than if-else block?
         if len(argTups) == 1:
-            opCode = OPTABLE[ (node.func.id, self.lib, outputTup[2],
+            opCode, retChar = OPTABLE[ (node.func.id, self.lib,
                                argTups[0][2]) ]
+            outputTup = self.__magic_output( retChar, outputTup )
+            
+
             self.codeStream.write( b"".join( (opCode, outputTup[0], 
                                 argTups[0][0], _NULL_REG, _NULL_REG)  )  )
             
         elif len(argTups) == 2:
-            argTups = self.cast2( *argTups )
-            opCode = OPTABLE[ (node.func.id, self.lib, outputTup[2],
+            argTups = self.__cast2( *argTups )
+            opCode, retChar = OPTABLE[ (node.func.id, self.lib,
                                argTups[0][2], argTups[1][2]) ]
+            outputTup = self.__magic_output( retChar, outputTup )
+                    
+
             self.codeStream.write( b"".join( (opCode, outputTup[0], 
                                argTups[0][0], argTups[1][0], _NULL_REG)  )  )
             
         elif len(argTups) == 3: 
-            # The where() ternary operator function
-            argTups[1], argTups[2] = self.cast2( argTups[1], argTups[2] )
-            opCode = OPTABLE[ (node.func.id, self.lib, outputTup[2],
+            # The where() ternary operator function is currently the _only_
+            # 3 argument function
+            argTups[1], argTups[2] = self.__cast2( argTups[1], argTups[2] )
+            opCode, retChar = OPTABLE[ (node.func.id, self.lib,
                                argTups[0][2], argTups[1][2], argTups[2][2]) ]
+            outputTup = self.__magic_output( retChar, outputTup )
+                    
             self.codeStream.write( b"".join( (opCode, outputTup[0], 
                                argTups[0][0], argTups[1][0], argTups[2][0])  )  )
             
@@ -765,11 +730,93 @@ class NumExpr(object):
             raise ValueError( "call(): function calls are 1-3 arguments" )
         
         for arg in argTups:
-            if arg[3] == _REGKIND_TEMP: self.releaseTemp_INLINE( arg[0] )
+            if arg[3] == _REGKIND_TEMP: self.__releaseTemp_INLINE( arg[0] )
             
         return outputTup
+    
+    def __newTemp_INLINE(self, dchar, name = None ):
+        if len(self._freeTemporaries) > 0:
+            # The maximum dtype.itemsize that goes into a temporary array is 
+            # tracked in the C-extension
+            regId = self._freeTemporaries.pop()
+            #print( 'Re-using temporary: %s' % regId )
+            tempTup = ( regId, None, dchar, _REGKIND_TEMP, '${}'.format(ord(regId)) )
+        else:
+            
+            tempNo = next( self._regCount )
+            
+            #print( 'new Temp: {} assigned to reg#{}'.format(name, tempNo) )
+            
+            regId = pack( _PACK_REG, tempNo )
+            if name == None:
+                name = '${}'.format(tempNo)
+                
+            self.namesReg[name] = tempTup = ( 
+                regId, None, dchar, _REGKIND_TEMP, name )
+        self._occupiedTemporaries.add( regId )
+        return tempTup
+        
+    # Free a temporary
+    def __releaseTemp_INLINE(self, regId ):
+        #print( "Releasing temporary: %s" % regId )
+        self._occupiedTemporaries.remove( regId )
+        self._freeTemporaries.add( regId )
+            
+        
+    def __compare(self, node, outputTup=None ):
+        # print( 'ast.Compare' )
+        # "Awkward... this ast.Compare node is," said Yoga disparagingly.  
+        # (left,ops,comparators)
+        # NumExpr3 does not handle [Is, IsNot, In, NotIn]
+        
+        if len(node.ops) > 1:
+            raise NotImplementedError( 
+                    'NumExpr3 only supports binary comparisons (between two elements); try inserting brackets' )
+        node.right = node.comparators[0]
+        node.op = node.ops[0]
+        return self.__binop(node)
+   
+    def __boolop(self, node, outputTup=None ):
+        # Functionally from the NumExpr perspective there's no difference 
+        # between boolean binary operations and binary operations
+        # Note that we never get here, binop is called instead by the lookup
+        # dict.
+        self.binop( node, outputTup )
+        
+    def __cast2(self, leftTup, rightTup ):
 
-    def unsupported(self, node, outputTuple=None ):
+            
+        leftD = leftTup[2]; rightD = rightTup[2]
+        if leftD == rightD:
+            return leftTup, rightTup
+        elif np.can_cast( leftD, rightD ):
+            # Make a new temporary
+            castTup = self.__newTemp_INLINE( rightD )
+            
+            self.codeStream.write( b"".join( (OPTABLE[('cast',self.lib,rightD,leftD)][0], castTup[0], leftTup[0], _NULL_REG, _NULL_REG)  ) )
+            return castTup, rightTup
+        elif np.can_cast( rightD, leftD ):
+            # Make a new temporary
+            castTup = self.__newTemp_INLINE( leftD )
+                        
+            self.codeStream.write( b"".join( 
+                    (OPTABLE[('cast',self.lib,leftD,rightD)][0], castTup[0], rightTup[0], _NULL_REG, _NULL_REG) ) )
+            return leftTup, castTup
+        else:
+            raise TypeError( 'cast2(): Cannot cast %s to %s by rule <TODO>' 
+                            %(np.dtype(leftD), np.dtype(rightD) ) ) 
+                
+        
+    def __cast3(self, leftTup, midTup, rightTup ):
+        # This isn't called by where/tenary so why do we need three element 
+        # casts at present?
+        self._messages.append( 'TODO: implement 3-argument casting' )
+        return leftTup, midTup, rightTup
+
+
+
+
+    def __unsupported(self, node, outputTuple=None ):
         raise KeyError( 'unimplmented ASTNode' + type(node) )
         
 
@@ -783,50 +830,121 @@ if __name__ == "__main__":
     import numexpr as ne2
 
     # Simple operation, comparison with Ne2 and NumPy for break-even point
-    interpreter._set_num_threads(4)
-    ne2.set_num_threads(4)
+    interpreter._set_num_threads(12)
+    ne2.set_num_threads(12)
     
     arrSize = int(2**20-42) # The minus is to make the last block a different size
     
     print( "Array size: {:.2f}k".format(arrSize/1024 ))
     
+    
     a = np.pi*np.ones( arrSize )
     b = 0.5*np.ones( arrSize )
     c = 42*np.ones( arrSize )
     yesno = np.random.uniform( size=arrSize ) > 0.5
-    out = np.empty( arrSize )
+    out = np.zeros( arrSize )
     out_ne2 = np.zeros( arrSize )
     out_int = np.zeros( arrSize, dtype='int32' )
     
-    # Run once to start interpreter
-    neObj = NumExpr( 'out=a+b' )
+    
+    # Magic output on __call()
+    neObj = NumExpr( 'out_magic1 = sqrt(a)' )
+    neObj.run( a=a )
+    
+    np.testing.assert_array_almost_equal( np.sqrt(a), out_magic1 )
+
+    # Initialize threads with un-tracked calls
+    ne2.evaluate( 'a+b+1' )
+    neObj = NumExpr( 'out = a + b + 1' )
     neObj.run( b=b, a=a, out=out )
     
+    # For some reason NE3 is significantly faster if we do not call NE2 
+    # in-between.  I wonder if there's something funny with Python handling 
+    # of the two modules.
     
-#    t0 = time.time()
-#    neObj = NumExpr( 'out=multest(a,b)' )
-#    neObj.run( b=b, a=a, out=out )
-    t1 = time.time()
+    
+    t0 = time.time()
     neObj = NumExpr( 'out=a*b' )
     neObj.run( b=b, a=a, out=out )
+    t1 = time.time()
+    
     t2 = time.time()
     ne2.evaluate( 'a*b', out=out_ne2 )
     t3 = time.time()
     out_np = a*b
     t4 = time.time()
     print( "---------------------" )
-    print( "Ne3 completed simple-op a*b: %.2e s"%(t2-t1) )
+    print( "Ne3 completed simple-op a*b: %.2e s"%(t1-t0) )
     print( "Ne2 completed simple-op a*b: %.2e s"%(t3-t2) )
     print( "numpy completed simple-op a*b: %.2e s"%(t4-t3) )
     
     np.testing.assert_array_almost_equal( out_np, out )
-    # Multi-line with named temporary
-    neObj = NumExpr( """mid_result = c + a
-out = mid_result*b""" )
-    #neObj.print_names()
-    neObj.run( c=c, a=a, out=out, b=b )
-    np.testing.assert_array_almost_equal( (c+a)*b, out )
 
+
+    # In-place op
+    # Not such a huge gap, only ~ 200 %
+    neObj = NumExpr( 'out=a+b' )
+    neObj.run( b=b, a=a, out=out )
+    
+    t50 = time.time()
+    inplace = NumExpr( 'a = a*a' )
+    inplace.run( a=a )
+    t51 = time.time()
+    inplace_ne2 = ne2.evaluate( 'a*a', out=a )
+    t52 = time.time()
+    print( "---------------------" )
+    print( "Ne3 in-place op: %.2e s"%(t51-t50) )
+    print( "Ne2 in-place op: %.2e s"%(t52-t51) )
+    del inplace
+    
+    
+    ##############################################
+    ###### Multi-line with named temporary  ######
+    ##############################################
+    # Are there fewer temporaries in the ne2 program?
+    # 
+    
+    #    # Run once for each of NE2 and NE3 to start interpreters
+    print( "\n\n====== MULTILINE OP ========\n" )
+
+    t40 = time.time()
+    neObj = NumExpr( 'temp = a*a + b*c - a; out_magic = c / sqrt(temp)' )
+    result = neObj.run( b=b, a=a, c=c )
+    t41 = time.time()
+    temp = ne2.evaluate( 'a*a + b*c - a' )
+    out_ne2 = ne2.evaluate( 'c / sqrt(temp)' )
+    t42 = time.time()
+    
+    # So
+    print( "---------------------" )
+    print( "Ne3 completed extended: %.2e s"%(t41-t40) )
+    print( "Ne2 completed extended: %.2e s"%(t42-t41) )
+    
+    #print( "Address of a: %s"%hex(a.__array_interface__['data'][0]) )
+    #print( "Address of b: %s"%hex(b.__array_interface__['data'][0]) )
+    #print( "Address of c: %s"%hex(c.__array_interface__['data'][0]) )
+    #print( "Address of out_magic: %s"%hex(out_magic.__array_interface__['data'][0]) )
+    # Why do you only work some of the time?  How bizzare.
+    # You work if result is assigned to neObj.run(), but not otherwise...
+    # It's like the interpreter is exiting before it's actually finished 
+    # writing all the arrays....
+    
+    
+    # So somehow it's writing to 'c' sometimes rather than out_magic. 
+    # Why is it not deterministic?
+    # neObj.disassemble()
+    
+    np.testing.assert_array_almost_equal( c / np.sqrt(a*a + b*c - a), out_magic )
+
+    # Comparing NE3 versus NE2 optimizations:
+    # 1.) So we have extra casts, we should make sure scalars are the right 
+    # dtype in Python or in C?  
+    # 2.) ne2 has a power optimization and I don't yet.  Also I could vectorize sqrt()
+    # 3.) We have twice as many temporaries, due to the casts.
+    # 4.) Can we do in-place operations with temporaries to further optimize?
+    # 5.) ne2 drops the first b*b into the zeroth register.
+    
+    
     # Where/Ternary
     expr = 'out = where(yesno,a,b)'
     neObj = NumExpr( expr )
@@ -835,10 +953,11 @@ out = mid_result*b""" )
     np.testing.assert_array_almost_equal( np.where(yesno,a,b), out )
     
     # Try a std::cmath function
-    expr = "out = arccos(b)"
+    expr = "out = sqrt(b)"
     neObj = NumExpr( expr )
+#    STOP
     neObj.run( b=b, out=out )
-    np.testing.assert_array_almost_equal( np.arccos(b), out )
+    np.testing.assert_array_almost_equal( np.sqrt(b), out )
     
     # Try a C++/11 cmath function
     # Note behavoir here is different from NumPy... which returns double.
@@ -907,26 +1026,7 @@ out = mid_result*b""" )
     neObj.run( out_c=out_c, ncx=ncx )
     np.testing.assert_array_almost_equal( np.cosh(ncx), out_c )
     
-    #############################################
-    ###### TESTING Unallocated Assignment  ######
-    #############################################
-    print( "---------------------" )
-    neObj = NumExpr( 'out_unalloc=2*a + b' )
-    test = neObj.run( b=b, a=a )
-    # So the promotion works but the zeroth array is not the output 
-    # but 'a' in this case.  So you need to reserve register #0 as was 
-    # done originally (in assemble() ). Then turn on 
-    # output_buffering, or figure out how to pre-allocate with np.broadcast().
-    # However in the 'magic' preallocation case you also need to account for 
-    # future reductions.
-    try:
-        np.testing.assert_array_almost_equal( out_unalloc, 2*a+b )
-    except AssertionError:
-        print( "Magic output returned incorrect array" )
-    except NameError:
-        print( 'Did not successfully promote output array to calling frame' )
-        raise
-    
+
     ########################################
     ###### TESTING COMPLEX Intel VML  ######
     ########################################
@@ -941,21 +1041,36 @@ out = mid_result*b""" )
     ########################################################
     #
     # I replaced all the pointer math with array indices with 
-    # seperate branches for strides and aligned and it's 40 % faster now.
+    # seperate branches for strides and aligned and it's 40 % faster now 
+    # on aligned arrays.
+    
+    # DEBUG: why do calls to NE2 slow down NE3?  Maybe the interpreter 
+    # is doing some extra work in the background?
+    neObj = NumExpr( 'out=a+b' )
+    neObj.run( out, a, b )
+    
     da = a[::4]
     db = b[::4]
     out_stride1 = np.empty_like(da)
+    out_stride2 = np.empty_like(da)
     t30 = time.time()
     neObj = NumExpr( 'out_stride1 = da*db' )
     neObj.run( out_stride1, da, db )
     t31 = time.time()
+    ne2.evaluate( 'da*db', out=out_stride2 )
+    t32 = time.time()
     print( "---------------------" )
     print( "Strided computation:" )
     print( "Ne3 completed (strided) a*b: %.2e s"%(t31-t30) )
-    
+    print( "Ne2 completed (strided) a*b: %.2e s"%(t32-t31) )
+   
     np.testing.assert_array_almost_equal( out_stride1, da*db )
-    # Would it be faster to compile if we had a real_functions.hpp? 
-    # It looks like the functional form is still faster than the context 
-    # switch with array-like indexing...
-    
-    
+
+
+    ####################
+    #### COMPARISON ####
+    ####################
+    out_bool = np.zeros_like(a, dtype='bool')
+    neObj = NumExpr( 'out_bool = b > a' )
+    neObj.run( b=b, a=a, out_bool=out_bool )
+

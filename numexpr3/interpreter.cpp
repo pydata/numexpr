@@ -198,7 +198,7 @@ int vm_engine_iter_task(NpyIter *iter,
     iterDataPtr = NpyIter_GetDataPtrArray(iter);
     iterStrides = NpyIter_GetInnerStrideArray(iter);
             
-//    //DEBUG
+    //DEBUG
 //    for( int I = 0; I < params->program_len; I++ ) {                                         
 //        printf( "params[%d]:: r:%d a1:%d a1:%d a2:%d a3:%d \n", I,
 //            (int)params->program[I].op, (int)params->program[I].ret, (int)params->program[I].arg1, 

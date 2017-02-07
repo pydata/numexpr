@@ -37,7 +37,7 @@ else:
 
 import os, os.path
 import platform
-from numexpr3.necompiler import NumExpr, disassemble, evaluate
+from numexpr3.ne3compiler import NumExpr, disassemble, evaluate
 from numexpr3.tests import test, print_versions
 from numexpr3.utils import (
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
@@ -63,9 +63,9 @@ else:
 # The default for VML is 1 thread (see #39)
 set_vml_num_threads(1)
 
-import version
+from . import __version__
 
 dirname = os.path.dirname(__file__)
 
-__version__ = version.version
+__version__ = __version__.__version__
 
