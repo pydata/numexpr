@@ -54,7 +54,6 @@ struct NumExprOperation
 // processing.
 struct NumExprReg 
 {
-    // NE_REGISTER  regNo;   //Superfluous to track register index
     char          *mem;        // Pointer to array data for scalars and temps (npy_iter used for arrays)
     char           dchar;      // numpy.dtype.char
     npy_uint8      kind;       // 0 = array, 1 = scalar, 2 = temp
@@ -91,6 +90,8 @@ struct thread_data {
     npy_intp start;
     npy_intp vlen;
     npy_intp block_size;
+    // RAM: we could make params not-a-pointer so it's not being 
+    // allocated and de-allocated.
     NumExprObject *params;
     int ret_code;
     int *pc_error;

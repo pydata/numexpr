@@ -19,7 +19,15 @@
 static void
 NumExpr_dealloc(NumExprObject *self)
 {
-    // TODO: valgrind doesn't like this deallocation.
+    // Where are threads.params dealloc'd?
+    
+    // Free temporaries
+    for ( NE_REGISTER R = 0; R < self->n_reg; R++) {
+        if( self->registers[R].kind == KIND_TEMP ) {
+            PyMem_Free( self->registers[R].mem  );
+        }
+    }
+    
     PyMem_Del( self->program );
     PyMem_Del( self->registers );
     PyMem_Del( self->scalar_mem );
@@ -44,7 +52,7 @@ NumExpr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         self->n_reg = 0;
         self->n_scalar = 0;
         self->n_temp = 0;
-
+        self->program_len = 0;
 #undef INIT_WITH
     }
     return (PyObject *)self;
@@ -182,7 +190,8 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     // which works because we use struct.pack() in Python.
     
     // We have to copy bytes_prog or Python garbage collects it
-    program = (NumExprOperation*)PyMem_New(NumExprOperation, program_len);
+    //program = (NumExprOperation*)PyMem_Malloc( program_len*sizeof(NumExprOperation) );
+    program = (NumExprOperation*)PyMem_New( NumExprOperation, program_len );
     memcpy( program, PyBytes_AsString( bytes_prog ), program_len*sizeof(NumExprOperation) );
 
     

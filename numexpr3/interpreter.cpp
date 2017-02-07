@@ -80,8 +80,11 @@ NPYENUM_from_dchar(char c)
 char
 get_return_sig(NumExprObject *self)
 {
-    int last_reg = self->program[self->n_reg - 1].ret;
+    NE_REGISTER last_reg = self->program[self->program_len - 1].ret;
     return self->registers[last_reg].dchar;
+//    char ttt = self->registers[ self->program[self->n_reg - 1].ret ].dchar;
+//    printf( "get_return_sig: %c", ttt);
+//    return ttt;
 }
 
 
@@ -145,15 +148,13 @@ NumExprObject_copy_threadsafe( const NumExprObject *self )
     // NumExprObject is a Python object, althought perhaps it shouldn't be.  
     // If we removed the array references in registers?
     NumExprObject *copy = PyMem_New( NumExprObject, 1 );
-    // PyMem_New pops a nasty warning.  Probably I can't use memcpy with PyObjects?
-    // program is immutable, but registers is not (especially the mem pointers)                
+
+            
     memcpy( copy, self, sizeof(NumExprObject) );
-    //*copy = *self;
     
-    // RAM: is 
+    // program is immutable, but registers is not (especially the mem pointers)
     copy->registers = (NumExprReg *)PyMem_Malloc( self->n_reg*sizeof(NumExprReg) );
     
-    //copy->registers = PyMem_New( NumExprReg, self->n_reg );
     for( R = 0; R < self->n_reg; R++ ) {
         copy->registers[R] = self->registers[R];
         //printf( "self.mem: %p, copy.mem: %p\n", self->registers[R].mem, copy->registers[R].mem );
@@ -275,8 +276,9 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter,
     iterStrides = NpyIter_GetInnerStrideArray(iter);
 
 
-     // First do all the blocks with a compile-time fixed size.
-     // This makes a big difference (30-50% on some tests).
+    // First do all the blocks with a compile-time fixed size.
+    // This makes a big difference (30-50% on some tests).
+    // RAM: Not-so-much with vectorized loops
     block_size = *sizePtr;
     while( block_size > 0 ) {
 #define NO_OUTPUT_BUFFERING          
@@ -381,12 +383,14 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *params,
     // Deallocate all the iterator and memsteps copies
     for (i = 1; i < gs.n_thread; ++i) {
         NpyIter_Deallocate(th_params.iter[i]);
-        //PyMem_Del(th_params.memsteps[i]);
+        
     }
-    
+    // TODO: re-use thread_params
+    // I think we can only delete the registers, the rest isn't copied?
+    // This should be a function then?
+    PyMem_Del(th_params.params);
+             
     return th_params.ret_code;
-    
-    return 0;
 }
 
 static int
@@ -444,8 +448,9 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
 
             //printf( "run_interpreter() #2\n" ); 
 
-            safeParams = NumExprObject_copy_threadsafe( self );
-                                                      
+            //safeParams = NumExprObject_copy_threadsafe( self );
+            safeParams = self;
+                                       
             //printf( "run_interpreter() #3\n" ); 
                       
 //            if( need_output_buffering ) {
@@ -475,7 +480,9 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                     return -1;
                 }
                 
-                safeParams = NumExprObject_copy_threadsafe( self );                                    
+                //safeParams = NumExprObject_copy_threadsafe( self );
+                safeParams = self;
+                                    
                 get_temps_space( safeParams, BLOCK_SIZE1);
                 Py_BEGIN_ALLOW_THREADS;
                 do {
@@ -502,7 +509,9 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                     return -1;
                 }
 
-                safeParams = NumExprObject_copy_threadsafe( self );                                    
+                //safeParams = NumExprObject_copy_threadsafe( self );
+                safeParams = self;
+                                    
                 get_temps_space(safeParams, BLOCK_SIZE1);
                 Py_BEGIN_ALLOW_THREADS;
                 do {
@@ -616,7 +625,6 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     // Check whether there's a reduction as the final step
     // RAM: this is clumsy and we'll remove it later, probably by adding 
     // flags to the front of the program.
-   
     is_reduction = LAST_OP(self) >= OP_REDUCTION;
 
     n_input = (int)PyTuple_Size(args);
