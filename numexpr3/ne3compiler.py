@@ -293,22 +293,23 @@ class NumExpr(object):
             bodyType = type(bodyItem)
             if I == N_forest_m1:
                 # print( "Setting lastOp sentinel" )
-                self.__lastOp = True 
+                self.__lastOp = True
                 # Add the last assignment name as the outputTarget so it can be 
                 # promoted up the frame later
-                self.outputTarget = bodyItem.targets[0].id
-                                            
+                if bodyType == ast.Assign:
+                    self.outputTarget = bodyItem.targets[0].id
+                # Do we need something else for ast.Expr?
+                                        
             if bodyType == ast.Assign:
                 self._ASTAssembler[bodyType]( bodyItem )
             elif bodyType == ast.Expr:
-                # Probably the easiest thing to do is generate the array in the exact
-                # same way as Assign but return it rather than promotting it up
-                # the frame.
+                # Probably the easiest thing to do is generate magic output 
+                # as with Assign but return rather than promote it.
                 if not self.__lastOp:
                     raise SyntaxError( "Expressions may only be single statements." )
                     
                 # Just an unallocated output case
-                self._ASTAssembler[ast.Assign]( bodyItem )
+                self._ASTAssembler[ast.Expr]( bodyItem )
                 # raise NotImplementedError( 'Backwards support for Expr not in yet.' )
                 
             else:
@@ -444,7 +445,8 @@ class NumExpr(object):
             # Sometimes the return is in the middle of the args because 
             # the set.pop() from __occupiedTemps is not deterministic.
             # Using a list as a stack instead doesn't really help things.
-            # TODO: re-write this args insertion mess
+            # TODO: re-write this args insertion mess, it can go inside 
+            # the if len(args)==0 loop above.
             arrayCnt = 0
             outId = ord(self.__unallocatedOutput[0])
             for reg in self.namesReg.values():
@@ -465,64 +467,49 @@ class NumExpr(object):
             
         self.__compiled_exec( *args, ex_uses_vml=ex_uses_vml, **kwargs )
         
-        if promoteResult:
+        if promoteResult and self.outputTarget is not None:
             # Insert result into higher frames
             # Sometimes this fails for an unknown reason...
             #print( "run(): Promoting result {} to calling frame".format(self.outputTarget) )
             self.local_dict[ self.outputTarget ] = unalloc
-        
-        return unalloc
+                           
+        if self.outputTarget is None:
+            return unalloc
+        return None
     
 
     
     def __assign(self, node ):
-        #print( 'ast.Assign' )
-        
         # node.targets is a list;  It must have a len=1 for NumExpr3
+        # node.value is likely a BinOp, Call, Comparison, or BoolOp
         if len(node.targets) != 1:
             raise ValueError( 'NumExpr3 supports only singleton returns in assignments.' )
-        # node.value is likely a BinOp
         
         # _messages.append( "Assign node: %s op assigned to %s" % ( node.value, node.targets[0]) )
-        # Call function on target and value
-
+        # Call function on target and value nodes
         targetTup = self._ASTAssembler[type(node.targets[0])](node.targets[0])
         valueTup = self._ASTAssembler[type(node.value)]( node.value, targetTup )
-        
-        if not bool(targetTup):
-            #print( "assign targetTup is None (SHOULD NOT GET HERE ANYMORE)" )
-            targetTup = self.__newTemp_INLINE( valueTup[2] )
-
-        
-        #TODO: assign needs to know if it's the last operation (in which case it should make an output array)
-        # This 'a*b'program should be writing to register 00...
-
         return valueTup
         
         
     def __expression(self, node ):
-        #print( 'ast.Expr' )
-        #_messages.append( "Expression node: %s op expression" % ( node.value ) )
-        self._ASTAssembler[type(node.value)](node.value)
-        # TODO: how to apply to 
+        # For expressions we have to return the value instead of promoting it.
+        
+        valueTup = self._ASTAssembler[type(node.value)](node.value)
+        self.__unallocatedOutput = valueTup
+        return valueTup
+        
         
                     
     def __name(self, node ):
         #print( 'ast.Name' )
         # node.ctx is probably not something we care for.
-        global local_dict, global_dict
-        
         node_id = node.id
-#        if targetReg != None:
-#            print( "targeted register: " + str(targetReg) )
-#            print( self.namesReg[targetReg] )
             
         if node_id in self.namesReg:
             regTup = self.namesReg[node_id]
             regToken = regTup[0]
-        else:
-            
-            # Get address
+        else: # Get address so we can find the dtype
             arr = None
             if node_id in self.local_dict:
                 arr = self.local_dict[node_id]
@@ -541,28 +528,22 @@ class NumExpr(object):
                 # print( "Name not found: " + node_id )
                 # It's probably supposed to be a temporary with a name, i.e. an assignment target
                 regTup = self.__newTemp_INLINE( None, name = node_id )
-            
-        # codeView.append( "reg%d_%s_%s|" % (ord(regToken),node.id,regTup[1].dtype.descr[0][1] ) )
-
+                
         return regTup
 
             
     
     def __const(self, node ):
-        #print( 'ast.Const' )
-        # Do we need a seperate constants registry or can we just use one and
-        # assign it a random illegal name like $1 or something?
         constNo = next( self._regCount )
         regKey = pack( _PACK_REG, constNo )
         token = '${}'.format(constNo)
         
-        # It's easier to just use ndim==0 numpy arrays, since PyArrayScalar isn't in the API anymore.
+        # It's easier to just use ndim==0 numpy arrays, since PyArrayScalar 
+        # isn't in the API anymore.
         # Use the _minimum _ dtype available so that we don't accidently upcast.
-        # Later we should try and force consts to be of the correct dtype in 
-        # Python.
-    
-        # TODO: we should, if in a binary op or compare or call, try and match 
-        # the const to its partners and avoid an extra cast operation.
+        # TODO: we should try and force consts to be of the correct dtype in 
+        # Python, to avoid extraneous cast operations in the interpreter.
+
         if np.mod( node.n, 1) == 0: # int
             # Always try and used unsigned ints, but only up to half the 
             # bit-width?
@@ -599,20 +580,14 @@ class NumExpr(object):
             constArr = np.complex64(node.n)
         else: # float
             constArr = np.asarray(node.n, dtype='float32' )
-            
-        #print( "DEBUG: const pointer for {} @ {}".format(node.n, hex(constArr.__array_interface__['data'][0])) )
-            
+    
         self.namesReg[token] = regTup = ( regKey, constArr, 
                      constArr.dtype.char, _REGKIND_SCALAR, node.n.__str__() )
-        #constReg.append( regTup )
-        
-        #codeView.append( "const%d_%s|" % (ord(regKey), constArr.dtype.descr[0][1])  )
         return regTup
         
     def __attribute(self, node ):
-        #print( 'ast.Attr' )
         # An attribute has a .value node which is a Name, and .value.id is the 
-        # module/class reference.  Then .attr is the attribute reference that 
+        # module/class reference. Then .attr is the attribute reference that 
         # we need to resolve.
         # WE CAN ONLY DEREFERENCE ONE LEVEL ('.')
         className = node.value.id
@@ -627,16 +602,16 @@ class NumExpr(object):
             
             # Is there any tricky way to retrieve the local_dict as is rather than
             # forcing the system to make a dict?
-            if className in local_dict:
-                classRef = local_dict[className]
+            if className in self.local_dict:
+                classRef = self.local_dict[className]
                 if node.attr in classRef.__dict__:
-                    arr = local_dict[className].__dict__[node.attr]
+                    arr = self.local_dict[className].__dict__[node.attr]
             # Globals is, as usual, slower than the locals, so we prefer not to 
             # search it.  
-            elif className in global_dict:
-                classRef = local_dict[className]
+            elif className in self.global_dict:
+                classRef = self.local_dict[className]
                 if node.attr in classRef.__dict__:
-                    arr = global_dict[className].__dict__[node.attr]
+                    arr =self.global_dict[className].__dict__[node.attr]
             #print( "Found attribute = %s" % arg )
             
             if arr is not None and not hasattr(arr,'dtype'):
@@ -652,6 +627,7 @@ class NumExpr(object):
         return regTup
         
     def __magic_output( self, retChar, outputTup ):
+        # 
         if outputTup is None:
             outputTup = self.__newTemp_INLINE( retChar )
         elif outputTup[2] == None: 
@@ -689,11 +665,10 @@ class NumExpr(object):
 
         
     def __call(self, node, outputTup=None ):
-        #print( 'ast.Call: {}'.format(node.func.id) )
         # ast.Call has the following fields:
         # ('func', 'args', 'keywords', 'starargs', 'kwargs')
-        
         argTups = [self._ASTAssembler[type(arg)](arg) for arg in node.args]
+        
         # Would be nice to have a prettier way to fill out the program 
         # than if-else block?
         if len(argTups) == 1:
@@ -736,17 +711,13 @@ class NumExpr(object):
     
     def __newTemp_INLINE(self, dchar, name = None ):
         if len(self._freeTemporaries) > 0:
-            # The maximum dtype.itemsize that goes into a temporary array is 
-            # tracked in the C-extension
             regId = self._freeTemporaries.pop()
             #print( 'Re-using temporary: %s' % regId )
             tempTup = ( regId, None, dchar, _REGKIND_TEMP, '${}'.format(ord(regId)) )
         else:
-            
             tempNo = next( self._regCount )
             
             #print( 'new Temp: {} assigned to reg#{}'.format(name, tempNo) )
-            
             regId = pack( _PACK_REG, tempNo )
             if name == None:
                 name = '${}'.format(tempNo)
@@ -768,10 +739,10 @@ class NumExpr(object):
         # "Awkward... this ast.Compare node is," said Yoga disparagingly.  
         # (left,ops,comparators)
         # NumExpr3 does not handle [Is, IsNot, In, NotIn]
-        
         if len(node.ops) > 1:
             raise NotImplementedError( 
                     'NumExpr3 only supports binary comparisons (between two elements); try inserting brackets' )
+        # Force the node into something the __binop machinery can handle
         node.right = node.comparators[0]
         node.op = node.ops[0]
         return self.__binop(node)
@@ -808,13 +779,10 @@ class NumExpr(object):
                 
         
     def __cast3(self, leftTup, midTup, rightTup ):
-        # This isn't called by where/tenary so why do we need three element 
-        # casts at present?
+        # This isn't called by where/tenary so no need for an implementation
+        # at present.
         self._messages.append( 'TODO: implement 3-argument casting' )
         return leftTup, midTup, rightTup
-
-
-
 
     def __unsupported(self, node, outputTuple=None ):
         raise KeyError( 'unimplmented ASTNode' + type(node) )
@@ -822,7 +790,6 @@ class NumExpr(object):
 
 
 if __name__ == "__main__":
-    
 
     ######################
     ###### TESTING  ######
@@ -847,11 +814,25 @@ if __name__ == "__main__":
     out_int = np.zeros( arrSize, dtype='int32' )
     
     
-    # Magic output on __call()
-    neObj = NumExpr( 'out_magic1 = sqrt(a)' )
-    neObj.run( a=a )
-    
-    np.testing.assert_array_almost_equal( np.sqrt(a), out_magic1 )
+    # Old-school expression with no assignment, just a return.
+    neExpr = NumExpr( "a*b" )
+    expr_out = neExpr.run( a=a, b=b )
+    np.testing.assert_array_almost_equal( a*b, expr_out )
+
+    # Try a std::cmath function
+    # Not very fast for NE3 here, evidently the GNU cmath isn't being 
+    # vectorized.
+    t60 = time.time()
+    expr = "out = sqrt(b)"
+    neObj = NumExpr( expr )
+    neObj.run( b=b, out=out )
+    t61 = time.time()
+    ne2.evaluate( 'sqrt(b)' )
+    t62 = time.time()
+    np.testing.assert_array_almost_equal( np.sqrt(b), out )
+    print( "---------------------" )
+    print( "Ne3 completed single call: %.2e s"%(t61-t60) )
+    print( "Ne2 completed single call: %.2e s"%(t62-t61) )
 
     # Initialize threads with un-tracked calls
     ne2.evaluate( 'a+b+1' )
@@ -861,7 +842,6 @@ if __name__ == "__main__":
     # For some reason NE3 is significantly faster if we do not call NE2 
     # in-between.  I wonder if there's something funny with Python handling 
     # of the two modules.
-    
     
     t0 = time.time()
     neObj = NumExpr( 'out=a*b' )
@@ -877,7 +857,6 @@ if __name__ == "__main__":
     print( "Ne3 completed simple-op a*b: %.2e s"%(t1-t0) )
     print( "Ne2 completed simple-op a*b: %.2e s"%(t3-t2) )
     print( "numpy completed simple-op a*b: %.2e s"%(t4-t3) )
-    
     np.testing.assert_array_almost_equal( out_np, out )
 
 
@@ -903,9 +882,7 @@ if __name__ == "__main__":
     ##############################################
     # Are there fewer temporaries in the ne2 program?
     # 
-    
     #    # Run once for each of NE2 and NE3 to start interpreters
-    print( "\n\n====== MULTILINE OP ========\n" )
 
     t40 = time.time()
     neObj = NumExpr( 'temp = a*a + b*c - a; out_magic = c / sqrt(temp)' )
@@ -914,36 +891,29 @@ if __name__ == "__main__":
     temp = ne2.evaluate( 'a*a + b*c - a' )
     out_ne2 = ne2.evaluate( 'c / sqrt(temp)' )
     t42 = time.time()
-    
-    # So
     print( "---------------------" )
-    print( "Ne3 completed extended: %.2e s"%(t41-t40) )
-    print( "Ne2 completed extended: %.2e s"%(t42-t41) )
-    
-    #print( "Address of a: %s"%hex(a.__array_interface__['data'][0]) )
-    #print( "Address of b: %s"%hex(b.__array_interface__['data'][0]) )
-    #print( "Address of c: %s"%hex(c.__array_interface__['data'][0]) )
-    #print( "Address of out_magic: %s"%hex(out_magic.__array_interface__['data'][0]) )
-    # Why do you only work some of the time?  How bizzare.
-    # You work if result is assigned to neObj.run(), but not otherwise...
-    # It's like the interpreter is exiting before it's actually finished 
-    # writing all the arrays....
-    
-    
-    # So somehow it's writing to 'c' sometimes rather than out_magic. 
-    # Why is it not deterministic?
-    # neObj.disassemble()
-    
+    print( "Ne3 completed multiline: %.2e s"%(t41-t40) )
+    print( "Ne2 completed multiline: %.2e s"%(t42-t41) )
     np.testing.assert_array_almost_equal( c / np.sqrt(a*a + b*c - a), out_magic )
 
-    # Comparing NE3 versus NE2 optimizations:
-    # 1.) So we have extra casts, we should make sure scalars are the right 
-    # dtype in Python or in C?  
-    # 2.) ne2 has a power optimization and I don't yet.  Also I could vectorize sqrt()
-    # 3.) We have twice as many temporaries, due to the casts.
-    # 4.) Can we do in-place operations with temporaries to further optimize?
-    # 5.) ne2 drops the first b*b into the zeroth register.
+    # Magic output on __call() rather than __binop
+    neObj = NumExpr( 'out_magic1 = sqrt(a)' )
+    neObj.run( a=a )
+    np.testing.assert_array_almost_equal( np.sqrt(a), out_magic1 )
     
+    '''
+     Comparing NE3 versus NE2 optimizations:
+     1.) So we have extra casts, we should make sure scalars are the right 
+          dtype in Python or in C?  
+     2.) ne2 has a power optimization and I don't yet.  I would prefer the 
+         pow optimization be at the function level in the C-interpreter.
+     3.) We have more temporaries sometimes still?
+     4.) Can we do in-place operations with temporaries to further optimize?
+         In-place operations are faster in NE2 than binops, and about the same 
+         speed in NE3.
+     5.) ne2 drops the first b*b into the zeroth register. We would need more 
+         logic for when the output is valid as a temporary.
+    '''
     
     # Where/Ternary
     expr = 'out = where(yesno,a,b)'
@@ -952,20 +922,14 @@ if __name__ == "__main__":
     #neObj.print_names()
     np.testing.assert_array_almost_equal( np.where(yesno,a,b), out )
     
-    # Try a std::cmath function
-    expr = "out = sqrt(b)"
-    neObj = NumExpr( expr )
-#    STOP
-    neObj.run( b=b, out=out )
-    np.testing.assert_array_almost_equal( np.sqrt(b), out )
+
     
     # Try a C++/11 cmath function
     # Note behavoir here is different from NumPy... which returns double.
-    
     expr = "out_int = round(a)"
     neObj = NumExpr( expr )
     neObj.run( out_int=out_int, a=a )
-    # Doesn't work on Windows?
+    # round() doesn't work on Windows?
     try:
         np.testing.assert_array_almost_equal( np.round(a).astype('int32'), out_int )
     except AssertionError as e:
@@ -981,9 +945,7 @@ if __name__ == "__main__":
     t12 = time.time()
     out_np = a*b+c
     t13 = time.time()
-    # FMA doesn't scale well with large arrays, probably because of function 
-    # call overhead.
-    
+    # FMA doesn't scale well with large arrays.
     np.testing.assert_array_almost_equal( out_np, out )
     print( "---------------------" )
     print( "Ne3 completed fused multiply-add: %.2e s"%(t11-t10) )
@@ -1036,14 +998,9 @@ if __name__ == "__main__":
     #neObj = NumExpr( expr, lib=LIB_VML )
     #neObj.run( out, a, b )
 
-    ########################################################
-    ###### TESTING Self-vectorized mul with striding  ######
-    ########################################################
-    #
-    # I replaced all the pointer math with array indices with 
-    # seperate branches for strides and aligned and it's 40 % faster now 
-    # on aligned arrays.
-    
+    #################################
+    ###### TEST with striding  ######
+    #################################
     # DEBUG: why do calls to NE2 slow down NE3?  Maybe the interpreter 
     # is doing some extra work in the background?
     neObj = NumExpr( 'out=a+b' )
