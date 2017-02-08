@@ -15,5 +15,6 @@ code_generators/ex_include
 bext
 mkl
 nogen
+bench/*.png
 
 
