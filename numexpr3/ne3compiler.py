@@ -1,35 +1,44 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Dec  8 21:15:20 2016
-
+NumExpr3 expression compiler
 @author: Robert A. McLeod
+
+Compared to NumExpr2 the compiler has been rebuilt to use the CPython library
+`ast` to build the Abstract Syntax Tree (AST) representation of the statements,
+instead of the NE AST syntax in the old expressions.py.
+
+AST documentation is hosted externally:
+    
+https://greentreesnakes.readthedocs.io
+
+The goal is to only parse the AST tree once to reduce the amount of time spent
+in pure Python compared to NE2.
 """
 import __future__
 import os, inspect, sys, time
 import ast
 import numpy as np
 from collections import defaultdict, OrderedDict
-from operator import itemgetter # Fastest way to pull from names from Python stackspace?
-from itertools import count
 
 # Cythonization
-# Initial try of Cython was slower than Python
+# Initial try of Cython was slower than Python, but it wasn't a strong effort
 #import pyximport; pyximport.install()
 # It might be useful to look at cytoolz as a template on how to properly 
 # Cythonize the Python-side code.
 
-# We pickle the operation hash table. 
+# The operations are pickled
+# TODO: the .pkl file needs to be copied to the module directory by setup.py
 try: import cPickle as pickle
 except: import pickle
-# Fast bytes construction for passing to virtual machine:
-# https://waymoot.org/home/python_string/
+
+# For appending long strings, using a buffer is faster than ''.join()
 try: from cStringIO import StringIO as BytesIO
 except: from io import BytesIO
 # struct.pack is the quickest way to build the program as structs
 # All important format characters: https://docs.python.org/2/library/struct.html
 from struct import pack, unpack, calcsize
 
-# interpreter.so:
+# interpreter.so/pyd:
 #from . import interpreter
 import interpreter
 
@@ -44,15 +53,16 @@ _PACK_REG = 'B'
 _PACK_OP =  'H'
     
 # Context for casting
-# TODO: maybe we should stick with numpy here, otherwise each np.can_cast() 
-# needs a conversion.
 CAST_SAFE = 0
 CAST_NO = 1
 CAST_EQUIV = 2
 CAST_SAME_KIND = 3
 CAST_UNSAFE = 4
-_NE_TO_NP_CAST = { CAST_NO:'no', CAST_EQUIV:'equiv', CAST_SAFE:'safe', 
-                   CAST_SAME_KIND:'same_kind', CAST_UNSAFE:'unsafe'}
+__CAST_TRANSLATIONS = { CAST_SAFE:CAST_SAFE, 'safe':CAST_SAFE, 
+                        CAST_NO:CAST_NO, 'no':CAST_NO, 
+                        CAST_EQUIV:CAST_EQUIV, 'equiv':CAST_EQUIV, 
+                        CAST_SAME_KIND:CAST_SAME_KIND, 'same_kind':CAST_SAME_KIND,
+                        CAST_UNSAFE:CAST_UNSAFE, 'unsafe':CAST_UNSAFE }
 
 # Context for optimization effort
 OPT_NONE = 0
@@ -67,17 +77,12 @@ LIB_VML = 1    # Intel Vector Math library
 CHECK_ALL = 0  # Normal operation in checking dtypes
 CHECK_NONE = 1 # Disable all checks for dtypes if expr is in cache
 
-# Note: int(np.isscalar( np.float32(0.0) )) is used to set REGKIND, so ARRAY == 0 and SCALAR == 1
+# Note: int(np.isscalar( np.float32(0.0) )) is used to set REGKIND, 
+# so ARRAY == 0 and SCALAR == 1
 _REGKIND_ARRAY = 0
 _REGKIND_SCALAR = 1
 _REGKIND_TEMP = 2
 _REGKIND_RETURN = 3
-#_REG_LOOKUP = { np.ndarray: REGKIND_ARRAY, \
-#             np.int8: REGKIND_SCALAR, np.int16: REGKIND_SCALAR, \
-#             np.int32: REGKIND_SCALAR, np.int64: REGKIND_SCALAR, \
-#             np.float32: REGKIND_SCALAR, np.float64: REGKIND_SCALAR, \
-#             np.complex64: REGKIND_SCALAR, np.complex128: REGKIND_SCALAR, \
-#             np.str_: REGKIND_ARRAY, }
 
 # The wisdomBank connects strings to their NumExpr objects, so if the same 
 # expression pattern is called, it  will be retrieved from the bank.
@@ -92,12 +97,11 @@ wisdomBank = __WisdomBankSingleton()
 
 
 
-
-
 # TODO: implement non-default casting, optimization, library, checks
 # TODO: do we need name with the object-oriented interface?
 # TODO: deprecate out
-def evaluate( expr, name=None, local_dict=None, global_dict=None, out=None,
+def evaluate( expr, name=None, lib=LIB_STD, 
+             local_dict=None, global_dict=None, out=None,
              order='K', casting=CAST_SAFE, optimization=OPT_AGGRESSIVE, 
              library=LIB_STD, checks=CHECK_ALL ):
     """
@@ -123,9 +127,10 @@ def evaluate( expr, name=None, local_dict=None, global_dict=None, out=None,
 
     global_dict : dictionary, optional
         A dictionary that replaces the global operands in current frame.
+        Setting to {} can speed operations if you do not call globals.
         
     out : DEPRECATED
-        use assignment in expr instead.
+        use assignment in expr (i.e. 'out=a*b') instead.
 
     order : {'C', 'F', 'A', or 'K'}, optional
         Controls the iteration order for operands. 'C' means C order, 'F'
@@ -135,8 +140,9 @@ def evaluate( expr, name=None, local_dict=None, global_dict=None, out=None,
         efficient computations, typically 'K'eep order (the default) is
         desired.
 
-    casting : {CAST_NO, CAST_EQUIV, CAST_SAFE, CAST_SAME_KIND, CAST_UNSAFE}, 
-               optional
+    casting : {CAST_SAFE, CAST_NO, CAST_EQUIV, CAST_SAME_KIND, CAST_UNSAFE}, 
+               optional 
+               (NumPy string repr also accepted)
         Controls what kind of data casting may occur when making a copy or
         buffering.  Setting this to 'unsafe' is not recommended, as it can
         adversely affect accumulations.
@@ -169,27 +175,33 @@ def evaluate( expr, name=None, local_dict=None, global_dict=None, out=None,
         Falls-back to LIB_STD if the other library is not available.  
     """
     if sys.version_info[0] < 3 and not isinstance(expr, (str,unicode) ):
-        raise ValueError( "expr must be specified as a string or unicode" )
+        raise ValueError( "expr must be specified as a string or unicode." )
     elif not isinstance(expr, (str,bytes)):
-        raise ValueError( "expr must be specified as a string or bytes" )
+        raise ValueError( "expr must be specified as a string or bytes." )
         
     if out != None:
-        raise ValueError( "out is depricated, use an assignment expr such as 'out=a*x+2' instead" )
-    
-    # Context is simply all the keyword arguments in a standard order.
-    # context = (order, casting, optimization)
-    # Signature is the union of the string expression and the context
-    # In NumExpr2 the key has additional features
-    # Maybe we should use the AST tree instead then...
-    # We could use cForest.co_code
-    # 
+        raise ValueError( "out is depricated, use an assignment expr such as 'out=a*x+2' instead." )
+    if name != None:
+        raise ValueError( "name is depricated, TODO: replace functionality." )    
+        
+
+    casting = __CAST_TRANSLATIONS[casting]
+    if casting != CAST_SAFE:
+        raise NotImplementedError( "only 'safe' casting has been implemented at present." )  
+        
+    if lib != LIB_STD:
+        raise NotImplementedError( "only 'LIB_STD casting has been implemented at present." )  
+
     # numexpr_key = ('a**b', (('optimization', 'aggressive'), ('truediv', False)), 
     #           (('a', <class 'numpy.float64'>), ('b', <class 'numpy.float64'>)))
     signature = (expr, order, casting, optimization)
     if signature in wisdomBank:
-        reassemble( wisdomBank[signature], local_dict, global_dict, out )
+        raise NotImplementedError('TODO: wisdom bank')
     else:
-        assemble( signature, local_dict, global_dict, out )
+        neObj = NumExpr( expr, lib=lib, 
+                        local_dict=local_dict, global_dict=global_dict )
+        # Assemble called on creation
+        neObj.run( check_arrays=False )
     
 
 
@@ -231,7 +243,6 @@ class NumExpr(object):
         
         self.program = b''
         self.lib = lib
-        self.bench = {} # for minimization of time inside 
         
         self._stackDepth = stackDepth # How many frames 'up' to promote outputs
         
@@ -240,13 +251,13 @@ class NumExpr(object):
         self._messages = []            # For debugging
         
         self.__compiled_exec = None    # Handle to the C-api NumExprObject
-        self.__outputs = []
+        self.__outputs = []  # Not used at present
         
         self.__lastOp = False             # sentinel
         self.__unallocatedOutput = False  # sentinel
     
         # Public
-        self.inputNames = []
+        self.inputNames = []  # Not used at present
         self.outputTarget = None
         self.namesReg = OrderedDict()
         self.codeStream = BytesIO()
@@ -254,8 +265,8 @@ class NumExpr(object):
         self.local_dict = None
         self.global_dict = None
         
-        # TODO: Is it faster to have a global versus building the function 
-        # dict?
+        # TODO: Is it faster to have a global lookup dict versus building 
+        # the function dict per-object?
         self._ASTAssembler = defaultdict( self.__unsupported, 
                   { ast.Assign:self.__assign, ast.Expr:self.__expression, \
                     ast.Name:self.__name, ast.Num:self.__const, \
@@ -283,12 +294,8 @@ class NumExpr(object):
         self.global_dict = global_dict
         
         forest = ast.parse( self.expr ) 
-        # Reserve register #0 for the output/return value.
-        # next( self._regCount )  
-        # Add the return as a 'named temporary'; TODO: only for non-reductions
-        # self._freeTemporaries.add( pack(_PACK_REG,0) )
-            
         N_forest_m1 = len(forest.body) - 1
+                         
         for I, bodyItem in enumerate( forest.body ):
             bodyType = type(bodyItem)
             if I == N_forest_m1:
@@ -310,38 +317,23 @@ class NumExpr(object):
                     
                 # Just an unallocated output case
                 self._ASTAssembler[ast.Expr]( bodyItem )
-                # raise NotImplementedError( 'Backwards support for Expr not in yet.' )
                 
             else:
                 raise NotImplementedError( 'Unknown ast body: {}'.format(bodyType) )
 
-                
-                
-        
-                                            
+                                  
         if self.__unallocatedOutput:
-            # print( "self.outputTarget = {}".format(self.outputTarget) )
-
             # We need either output buffering or we need to know the size of the 
-            # array to allocate?
+            # array to allocate.
             self.namesReg.pop(self.__unallocatedOutput[4])
             self.namesReg[self.outputTarget] = self.__unallocatedOutput = \
                          (self.__unallocatedOutput[0], None, self.__unallocatedOutput[2], 
                           _REGKIND_ARRAY, self.outputTarget )
                                             
-        
-        # What's the output from the last program?
-        # Don't allocate output array here, it might be different in the run() call
-        # outTuple = (pack(_PACK_REG,0), None, assignReturn[2], _REGKIND_ARRAY, self.outputTarget)
-        #regsToInterpreter = tuple( [outTuple] + [reg for reg in self.namesReg.values()] )
-        
         # The OrderedDict for namesReg isn't needed if we sort the tuples, 
         # which we need to do such that the magic output isn't out-of-order.
         regsToInterpreter = tuple( sorted(self.namesReg.values() ) )
         
-        #print( "Regs fed to interpreter as:" )
-        #for reg in regsToInterpreter:
-        #    print( reg )
         # Collate the inputNames as well as the the required outputs
         self.program = self.codeStream.getvalue()
         self.__compiled_exec = interpreter.NumExpr( program=self.program, 
@@ -359,7 +351,6 @@ class NumExpr(object):
                     'disassemble: len(progBytes)={} is not divisible by {}'.format(len(self.program,blockLen)) )
         # Reverse the opTable
         reverseOps = {op[0] : key for key, op in OPTABLE.items()}
-        
         progBlocks = [self.program[I:I+blockLen] for I in range(0,len(self.program), blockLen)]
         
         print( "=======================================================" )
@@ -387,12 +378,14 @@ class NumExpr(object):
             print( '#{:2}, op: {:>12} in ret:{:3} <- args({:>3}::{:>3}::{:>3})'.format(
                     J, opString, ret, arg1, arg2, arg3 ) )
         print( "=======================================================" )
+        
     
     def print_names(self):
         for val in neObj.namesReg.values(): print( '{}:{}'.format( val[4], val[3])  )
         
+        
     def run(self, *args, stackDepth=1, local_dict=None, global_dict=None,
-            ex_uses_vml=False, **kwargs ):
+            check_arrays=True, ex_uses_vml=False, **kwargs ):
         '''
         It is preferred to call run() with keyword arguments as the order of 
         args is based on the Abstract Syntax Tree parse and may be 
@@ -401,50 +394,54 @@ class NumExpr(object):
             e.g. self.run( a=a1, b=b1, out=out_new )
         
         where {a,b,out} were the original names in the expression.
+        
+            check_arrays: {True} Resamples the calling frame to grab arrays. 
+              There is some overhead associated with grabbing the frames so 
+              if inside a loop and using run on the same arrays repeatedly 
+              then try `False`. 
         '''
         # Get references to frames
         # This is fairly expensive...  We need a flag for "check_inputs"
         
-        call_frame = sys._getframe( stackDepth ) 
-        if local_dict is None:
-            local_dict = call_frame.f_locals
-        self.local_dict = local_dict
-        if global_dict is None:
-            global_dict = call_frame.f_globals
-        self.global_dict = global_dict
+        if check_arrays:
+            call_frame = sys._getframe( stackDepth ) 
+            if local_dict is None:
+                local_dict = call_frame.f_locals
+            self.local_dict = local_dict
+            if global_dict is None:
+                global_dict = call_frame.f_globals
+            self.global_dict = global_dict
+            
+            # Build args if it was passed in as names
+            # TODO: a smoother function interface.
+            if len(args) == 0:
+                # Build args from kwargs and the list of known names
+                args = []
+                for I, regKey in enumerate(self.namesReg):     
+                    if regKey in kwargs:
+                        args.append( kwargs[regKey] )
+                        kwargs.pop( regKey )
+        else:
+            args = [reg[1] for reg in self.namesReg.values() if reg[1] is not None]
         
-        # Build args if it was passed in as names
-        # TODO: make NumExpr an attrdict instead.  Much easier that all this 
-        # tomfoolery.
-        if len(args) == 0:
-            # Build args from kwargs and the list of known names
-            args = []
-            for I, regKey in enumerate(self.namesReg):     
-                if regKey in kwargs:
-                    args.append( kwargs[regKey] )
-                    kwargs.pop( regKey )
-                    
-        # Add outputs?
+        # Check if the result needs to be added to the calling frame's locals
         promoteResult = (not self.outputTarget in kwargs) \
                         and ( (not self.outputTarget in self.local_dict) and 
                               (not self.outputTarget in self.global_dict) )
-        # Allocate output?
+        
         if bool(self.__unallocatedOutput):
             print( "ALLOCATE -> {}".format(self.outputTarget) )
-            #print( self.__unallocatedOutput )
-            #print( 'args = ' + str(args) )
             # Get the last operation from the program, and use np.broadcast 
             # to determine the output size?  What if there's a temp?  
             
             # If we have to go down the tree until we get to 
             # Maybe we should track the broadcast all the way through?
             # But what if the user changes the shape of the input arrays?
-            # print( "TODO: track broadcasting throughout AST" )
             unalloc = np.zeros_like(args[-1])
             
             # Sometimes the return is in the middle of the args because 
             # the set.pop() from __occupiedTemps is not deterministic.
-            # Using a list as a stack instead doesn't really help things.
+
             # TODO: re-write this args insertion mess, it can go inside 
             # the if len(args)==0 loop above.
             arrayCnt = 0
@@ -456,21 +453,14 @@ class NumExpr(object):
                     break
                 if reg[3] == _REGKIND_ARRAY:
                     arrayCnt += 1
-                #print( "reg: %d, out: %d : n_array %d" % (regId,outId,arrayCnt) )
-                
-            
-            #print( "TEST: {}".format([ (reg[0],reg[4]) for reg in self.namesReg.values() ]) )
-            #print( "1: Unalloc points to: %s"%hex(unalloc.__array_interface__['data'][0]) )
-            
+
         else:
             unalloc = None
             
         self.__compiled_exec( *args, ex_uses_vml=ex_uses_vml, **kwargs )
         
         if promoteResult and self.outputTarget is not None:
-            # Insert result into higher frames
-            # Sometimes this fails for an unknown reason...
-            #print( "run(): Promoting result {} to calling frame".format(self.outputTarget) )
+            # Insert result into calling frame
             self.local_dict[ self.outputTarget ] = unalloc
                            
         if self.outputTarget is None:
@@ -478,9 +468,8 @@ class NumExpr(object):
         return None
     
 
-    
     def __assign(self, node ):
-        # node.targets is a list;  It must have a len=1 for NumExpr3
+        # node.targets is a list; It must have a len=1 for NumExpr3
         # node.value is likely a BinOp, Call, Comparison, or BoolOp
         if len(node.targets) != 1:
             raise ValueError( 'NumExpr3 supports only singleton returns in assignments.' )
@@ -494,13 +483,11 @@ class NumExpr(object):
         
     def __expression(self, node ):
         # For expressions we have to return the value instead of promoting it.
-        
         valueTup = self._ASTAssembler[type(node.value)](node.value)
         self.__unallocatedOutput = valueTup
         return valueTup
         
-        
-                    
+           
     def __name(self, node ):
         #print( 'ast.Name' )
         # node.ctx is probably not something we care for.
@@ -532,7 +519,6 @@ class NumExpr(object):
         return regTup
 
             
-    
     def __const(self, node ):
         constNo = next( self._regCount )
         regKey = pack( _PACK_REG, constNo )
@@ -612,7 +598,6 @@ class NumExpr(object):
                 classRef = self.local_dict[className]
                 if node.attr in classRef.__dict__:
                     arr =self.global_dict[className].__dict__[node.attr]
-            #print( "Found attribute = %s" % arg )
             
             if arr is not None and not hasattr(arr,'dtype'):
                 # Force lists and native arrays to be numpy.ndarrays
@@ -621,9 +606,6 @@ class NumExpr(object):
             # Build tuple and add to the namesReg
             self.namesReg[attrName] = regTup = \
                          (regToken, arr, arr.dtype.char, int(np.isscalar(arr)), attrName )
-            
-        #print( "Found attribute: %s, registry location %d, dtype %s" % 
-        #      (attrName, ord(regToken), regTup[2].descr[0][1]) )
         return regTup
         
     def __magic_output( self, retChar, outputTup ):
@@ -637,6 +619,7 @@ class NumExpr(object):
                 self.__unallocatedOutput = outputTup
         return outputTup
         
+    
     def __binop(self, node, outputTup=None ):
         #print( 'ast.Binop' )
         # (left,op,right)
@@ -709,6 +692,7 @@ class NumExpr(object):
             
         return outputTup
     
+    
     def __newTemp_INLINE(self, dchar, name = None ):
         if len(self._freeTemporaries) > 0:
             regId = self._freeTemporaries.pop()
@@ -727,6 +711,7 @@ class NumExpr(object):
         self._occupiedTemporaries.add( regId )
         return tempTup
         
+    
     # Free a temporary
     def __releaseTemp_INLINE(self, regId ):
         #print( "Releasing temporary: %s" % regId )
@@ -754,9 +739,7 @@ class NumExpr(object):
         # dict.
         self.binop( node, outputTup )
         
-    def __cast2(self, leftTup, rightTup ):
-
-            
+    def __cast2(self, leftTup, rightTup ): 
         leftD = leftTup[2]; rightD = rightTup[2]
         if leftD == rightD:
             return leftTup, rightTup
@@ -867,7 +850,7 @@ if __name__ == "__main__":
     
     t50 = time.time()
     inplace = NumExpr( 'a = a*a' )
-    inplace.run( a=a )
+    inplace.run( check_arrays=False )
     t51 = time.time()
     inplace_ne2 = ne2.evaluate( 'a*a', out=a )
     t52 = time.time()
@@ -898,7 +881,7 @@ if __name__ == "__main__":
 
     # Magic output on __call() rather than __binop
     neObj = NumExpr( 'out_magic1 = sqrt(a)' )
-    neObj.run( a=a )
+    neObj.run( check_arrays=False )
     np.testing.assert_array_almost_equal( np.sqrt(a), out_magic1 )
     
     '''
@@ -1029,5 +1012,7 @@ if __name__ == "__main__":
     ####################
     out_bool = np.zeros_like(a, dtype='bool')
     neObj = NumExpr( 'out_bool = b > a' )
-    neObj.run( b=b, a=a, out_bool=out_bool )
+    # No check of inputs
+    neObj.run( check_arrays=False )
+    
 
