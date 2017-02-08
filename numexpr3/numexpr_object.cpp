@@ -83,56 +83,6 @@ ssize_from_dchar(char c)
             return -1;
     }
 }
-    
-//static int
-//NPYENUM_from_dchar(char c)
-//{
-//    switch (c) {
-//        case '?': return NPY_BOOL;
-//        case 'b': return NPY_INT8;
-//        case 'B': return NPY_UINT8;
-//        case 'h': return NPY_INT16;
-//        case 'H': return NPY_UINT16;
-//        case 'i': return NPY_INT32;
-//        case 'I': return NPY_UINT32;
-//        case 'l': return NPY_INT64;
-//        case 'L': return NPY_UINT64;
-//        case 'f': return NPY_FLOAT32;
-//        case 'F': return NPY_COMPLEX64;
-//        case 'd': return NPY_FLOAT64;
-//        case 'D': return NPY_COMPLEX128;
-//        case 'S': return NPY_STRING;
-//        case 'U': return NPY_UNICODE;
-//        default:
-//            PyErr_SetString(PyExc_TypeError, "signature char not in '?bBhHiIlLdDfFSU'");
-//            return -1;
-//    }
-//}
-
-//static int
-//ssize_from_NPYENUM(int e)
-//{
-//    switch (e) {
-//        case NPY_BOOL:       return sizeof(npy_bool);
-//        case NPY_INT8:       return sizeof(npy_int8);
-//        case NPY_UINT8:      return sizeof(npy_uint8);
-//        case NPY_INT16:      return sizeof(npy_int16);
-//        case NPY_UINT16:     return sizeof(npy_uint16);
-//        case NPY_INT32:      return sizeof(npy_int32);
-//        case NPY_UINT32:     return sizeof(npy_uint32);
-//        case NPY_INT64:      return sizeof(npy_int64);
-//        case NPY_UINT64:     return sizeof(npy_uint64);
-//        case NPY_FLOAT32:    return sizeof(npy_float32);
-//        case NPY_FLOAT64:    return sizeof(npy_float64);
-//        case NPY_COMPLEX64:  return sizeof(npy_complex64);
-//        case NPY_COMPLEX128: return sizeof(npy_complex128);  
-//        case NPY_UNICODE:    return 0;  // strings are ok but size must be computed
-//        case NPY_STRING:     return 0;  // strings are ok but size must be computed
-//        default:
-//            PyErr_SetString(PyExc_TypeError, "signature value not in NPY_ENUMs");
-//            return -1;
-//    }
-//}
 
 static int
 NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)

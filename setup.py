@@ -16,7 +16,7 @@ import os.path as op
 from distutils.command.clean import clean
 import time
 
-"""
+'''
  NOTES FOR WINDOWS:
  For Python 2.7, you must have the x64 environment variables set correctly...
 
@@ -51,13 +51,13 @@ replace /x64 by /x86 to build for 32-bit python instead of 64-bit python.
 Ignore the "Missing compiler_cxx fix for MSVCCompiler" error message.
 
 You also need the .NET Framework 3.5 SP1 installed for Python 2.7
-"""
+'''
 
 if sys.version_info < (2, 7):
-    raise RuntimeError( "NumExpr3 requires Python 2.7 or greater." )
+    raise RuntimeError( 'NumExpr3 requires Python 2.7 or greater.' )
     
 if sys.version_info.major == 3 and sys.version_info.minor < 3:
-    raise RuntimeError( "NumExpr requires Python 3.3 or greater." )
+    raise RuntimeError( 'NumExpr requires Python 3.3 or greater.' )
     
 import setuptools
 
@@ -67,11 +67,11 @@ major_ver = 3
 minor_ver = 0
 nano_ver = 0
 branch = 'a0'
-version = "%d.%d.%d%s" % (major_ver, minor_ver, nano_ver, branch)
+version = '%d.%d.%d%s' % (major_ver, minor_ver, nano_ver, branch)
 
 # Write __version__.py
-with open( "numexpr3/__version__.py", 'w' ) as fh:
-    fh.write( "__version__ = '" + version + "'\n" )
+with open( 'numexpr3/__version__.py', 'w' ) as fh:
+    fh.write( "__version__ = '{}'\n".format(version) )
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()    
@@ -92,7 +92,7 @@ with open('requirements.txt') as f:
 
 def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     from code_generators import interp_generator
-    print( "=====GENERATING INTERPRETER CODE=====" )
+    print( '=====GENERATING INTERPRETER CODE=====' )
     # Try to auto-detect MKL and C++/11 here.
     # mkl=True 
     
@@ -134,19 +134,19 @@ def setup_package():
 
         try:  # Python 3
             # Code taken form numpy/distutils/command/build_py.py
-            from distutils.command.build_py import build_py_2to3 as old_build_py
+            from distutils.command.build_py import build_by as du_build_py
             from numpy.distutils.misc_util import is_string
 
-            class build_py(old_build_py):
+            class build_py(du_build_py):
 
                 def run(self):
                     build_src = self.get_finalized_command('build_src')
                     if build_src.py_modules_dict and self.packages is None:
                         self.packages = list(build_src.py_modules_dict.keys())
-                    old_build_py.run(self)
+                    du_build_py.run(self)
 
                 def find_package_modules(self, package, package_dir):
-                    modules = old_build_py.find_package_modules(self, package, package_dir)
+                    modules = du_build_py.find_package_modules(self, package, package_dir)
 
                     # Find build_src generated *.py files.
                     build_src = self.get_finalized_command('build_src')
@@ -158,7 +158,7 @@ def setup_package():
                     old_py_modules = self.py_modules[:]
                     new_py_modules = list(filter(is_string, self.py_modules))
                     self.py_modules[:] = new_py_modules
-                    modules = old_build_py.find_modules(self)
+                    modules = du_build_py.find_modules(self)
                     self.py_modules[:] = old_py_modules
 
                     return modules
@@ -173,7 +173,7 @@ def setup_package():
 
         def debug(instring):
             if DEBUG:
-                print(" DEBUG: " + instring)
+                print(' DEBUG: ' + instring)
 
 
         def configuration():
@@ -211,7 +211,7 @@ def setup_package():
             else:
                 mkl_config_data = {}
                 
-            print( "DEBUG: mkl_config_data: {}".format(mkl_config_data) )
+            print( 'DEBUG: mkl_config_data: {}'.format(mkl_config_data) )
 
             #setup information for C extension
             if os.name == 'nt':
@@ -245,12 +245,14 @@ def setup_package():
             if 'library_dirs' in mkl_config_data:
                 library_dirs = ':'.join(mkl_config_data['library_dirs'])
             config.add_extension('interpreter', **extension_config_data)
+            
+            config.add_data_files( ('','numexpr3/lookup.pkl') )
 
             config.make_config_py()
             config.add_subpackage('tests', 'numexpr3/tests')
 
-            #version handling
-            config.get_version('numexpr3/version.py')
+            # Version handling
+            config.get_version('numexpr3/__version__.py')
             return config
 
 
@@ -258,13 +260,13 @@ def setup_package():
 
             def run(self):
                 # Recursive deletion of build/ directory
-                path = localpath("build")
+                path = localpath('build')
                 try:
                     shutil.rmtree(path)
                 except Exception:
-                    debug("Failed to remove directory %s" % path)
+                    debug('Failed to remove directory %s' % path)
                 else:
-                    debug("Cleaned up %s" % path)
+                    debug('Cleaned up %s' % path)
 
                 # Now, the extension and other files
                 try:
@@ -272,24 +274,24 @@ def setup_package():
                 except ImportError:
                     if os.name == 'posix':
                         # RAM: with Python 3 the lib is now versioned.
-                        paths = [localpath("numexpr/interpreter.so")]
+                        paths = [localpath('numexpr/interpreter.so')]
                     else:
-                        paths = [localpath("numexpr/interpreter.pyd")]
+                        paths = [localpath('numexpr/interpreter.pyd')]
                 else:
                     paths = []
                     for suffix, _, _ in imp.get_suffixes():
                         if suffix == '.py':
                             continue
-                        paths.append(localpath("numexpr3", "interpreter" + suffix))
-                paths.append(localpath("numexpr3/__config__.py"))
-                paths.append(localpath("numexpr3/__config__.pyc"))
+                        paths.append(localpath('numexpr3', 'interpreter' + suffix))
+                paths.append(localpath('numexpr3/__config__.py'))
+                paths.append(localpath('numexpr3/__config__.pyc'))
                 for path in paths:
                     try:
                         os.remove(path)
                     except Exception:
-                        debug("Failed to clean up file %s" % path)
+                        debug('Failed to clean up file %s' % path)
                     else:
-                        debug("Cleaning up %s" % path)
+                        debug('Cleaning up %s' % path)
 
                 clean.run(self)
 
@@ -342,4 +344,4 @@ if __name__ == '__main__':
     t0 = time.time()
     sp = setup_package()
     t1 = time.time()
-    print( "Build success: " + sys.argv[1] +  " in time (s): " + str(t1-t0) )
+    print( 'Build success: ' + sys.argv[1] +  ' in time (s): ' + str(t1-t0) )

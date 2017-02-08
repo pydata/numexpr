@@ -3,7 +3,7 @@
 NumExpr3 expression compiler
 @author: Robert A. McLeod
 
-Compared to NumExpr2 the compiler has been rebuilt to use the CPython library
+Compared to NumExpr2 the compiler has been rebuilt to use the CPython module
 `ast` to build the Abstract Syntax Tree (AST) representation of the statements,
 instead of the NE AST syntax in the old expressions.py.
 
@@ -15,22 +15,15 @@ The goal is to only parse the AST tree once to reduce the amount of time spent
 in pure Python compared to NE2.
 """
 import __future__
-import os, inspect, sys, time
+import os, inspect, sys
+from time import time
 import ast
 import numpy as np
 from collections import defaultdict, OrderedDict
 
-# Cythonization
-# Initial try of Cython was slower than Python, but it wasn't a strong effort
-#import pyximport; pyximport.install()
-# It might be useful to look at cytoolz as a template on how to properly 
-# Cythonize the Python-side code.
-
 # The operations are pickled
-# TODO: the .pkl file needs to be copied to the module directory by setup.py
 try: import cPickle as pickle
 except: import pickle
-
 # For appending long strings, using a buffer is faster than ''.join()
 try: from cStringIO import StringIO as BytesIO
 except: from io import BytesIO
@@ -39,8 +32,10 @@ except: from io import BytesIO
 from struct import pack, unpack, calcsize
 
 # interpreter.so/pyd:
-#from . import interpreter
-import interpreter
+try: 
+    import interpreter # For debugging, release should import from .
+except ImportError:
+    from . import interpreter
 
 # Import opTable
 __neDir = os.path.dirname(os.path.abspath( inspect.getfile(inspect.currentframe()) ))
@@ -65,17 +60,16 @@ __CAST_TRANSLATIONS = { CAST_SAFE:CAST_SAFE, 'safe':CAST_SAFE,
                         CAST_UNSAFE:CAST_UNSAFE, 'unsafe':CAST_UNSAFE }
 
 # Context for optimization effort
-OPT_NONE = 0
-OPT_MODERATE = 1
-OPT_AGGRESSIVE = 2
+OPT_MODERATE = 0
+#OPT_AGGRESSIVE = 1
 
 # Defaults to LIB_STD
-LIB_STD = 0    # C++ standard library
-LIB_VML = 1    # Intel Vector Math library
+LIB_STD = 0    # C++ cmath standard library
+#LIB_VML = 1    # Intel Vector Math library
 #LIB_SIMD = 2  # x86 SIMD extensions
 
 CHECK_ALL = 0  # Normal operation in checking dtypes
-CHECK_NONE = 1 # Disable all checks for dtypes if expr is in cache
+#CHECK_NONE = 1 # Disable all checks for dtypes if expr is in cache
 
 # Note: int(np.isscalar( np.float32(0.0) )) is used to set REGKIND, 
 # so ARRAY == 0 and SCALAR == 1
@@ -102,8 +96,8 @@ wisdomBank = __WisdomBankSingleton()
 # TODO: deprecate out
 def evaluate( expr, name=None, lib=LIB_STD, 
              local_dict=None, global_dict=None, out=None,
-             order='K', casting=CAST_SAFE, optimization=OPT_AGGRESSIVE, 
-             library=LIB_STD, checks=CHECK_ALL ):
+             order='K', casting=CAST_SAFE, optimization=OPT_MODERATE, 
+             library=LIB_STD, checks=CHECK_ALL, stackDepth=2 ):
     """
     Evaluate a mutliline expression element-wise, using the a NumPy.iter
 
@@ -154,14 +148,13 @@ def evaluate( expr, name=None, lib=LIB_STD,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
           
-    optimization: {OPT_NONE, OPT_MODERATE, OPT_AGGRESSIVE}, optional
+    optimization: {OPT_MODERATE, OPT_AGGRESSIVE}, optional
         Controls what level of optimization the compiler will attempt to 
         perform on the expression to speed its execution.  This optimization
         is performed both by python.compile and numexpr3
         
-          * OPT_NONE means no optimizations will be performed.
-          * OPT_MODERATE performs simple optimizations, such as switching 
-            simple divides to multiplies.
+          * OPT_MODERATE performs simple optimizations, such as minimizing 
+            the number of temporary arrays
           * OPT_AGGRESSIVE performs aggressive optimizations, such as replacing 
             powers with mutliplies.
             
@@ -192,16 +185,21 @@ def evaluate( expr, name=None, lib=LIB_STD,
     if lib != LIB_STD:
         raise NotImplementedError( "only 'LIB_STD casting has been implemented at present." )  
 
+    # Signature from NE2:
     # numexpr_key = ('a**b', (('optimization', 'aggressive'), ('truediv', False)), 
     #           (('a', <class 'numpy.float64'>), ('b', <class 'numpy.float64'>)))
     signature = (expr, order, casting, optimization)
     if signature in wisdomBank:
         raise NotImplementedError('TODO: wisdom bank')
     else:
-        neObj = NumExpr( expr, lib=lib, 
+        # stackDepth is 2 here because the NumExpr object involves another 
+        # layer.
+        neObj = NumExpr( expr, lib=lib, casting=casting, stackDepth=stackDepth,
                         local_dict=local_dict, global_dict=global_dict )
-        # Assemble called on creation
-        neObj.run( check_arrays=False )
+        # neObj.assemble() called on __init__()
+        
+        # Hrm, frame promotion not working in this context
+        return neObj.run( check_arrays=False )
     
 
 
@@ -235,14 +233,15 @@ class NumExpr(object):
     MAX_ARGS = 255
 
     
-    def __init__(self, expr, lib=LIB_STD, local_dict = None, global_dict = None, 
-                 stackDepth = 1 ):
+    def __init__(self, expr, lib=LIB_STD, casting=CAST_SAFE, local_dict = None, global_dict = None, 
+                 stackDepth=1 ):
         
         self.expr = expr
         self._regCount = np.nditer( np.arange(NumExpr.MAX_ARGS) )
         
         self.program = b''
         self.lib = lib
+        self.casting = casting
         
         self._stackDepth = stackDepth # How many frames 'up' to promote outputs
         
@@ -279,13 +278,13 @@ class NumExpr(object):
 
     
     
-    def assemble(self, stackDepth=1, local_dict=None, global_dict=None ):
+    def assemble(self, local_dict=None, global_dict=None ):
         ''' 
         NumExpr.assemble() can be used in the context of having a pool of 
         NumExpr objects; it is also always called by __init__().
         '''
         # Get references to frames
-        call_frame = sys._getframe( stackDepth ) 
+        call_frame = sys._getframe( self._stackDepth ) 
         if local_dict is None:
             local_dict = call_frame.f_locals
         self.local_dict = local_dict 
@@ -384,7 +383,7 @@ class NumExpr(object):
         for val in neObj.namesReg.values(): print( '{}:{}'.format( val[4], val[3])  )
         
         
-    def run(self, *args, stackDepth=1, local_dict=None, global_dict=None,
+    def run(self, *args, local_dict=None, global_dict=None,
             check_arrays=True, ex_uses_vml=False, **kwargs ):
         '''
         It is preferred to call run() with keyword arguments as the order of 
@@ -400,11 +399,11 @@ class NumExpr(object):
               if inside a loop and using run on the same arrays repeatedly 
               then try `False`. 
         '''
-        # Get references to frames
-        # This is fairly expensive...  We need a flag for "check_inputs"
         
+
         if check_arrays:
-            call_frame = sys._getframe( stackDepth ) 
+            # Renew references to frames
+            call_frame = sys._getframe( self._stackDepth ) 
             if local_dict is None:
                 local_dict = call_frame.f_locals
             self.local_dict = local_dict
@@ -461,11 +460,15 @@ class NumExpr(object):
         
         if promoteResult and self.outputTarget is not None:
             # Insert result into calling frame
-            self.local_dict[ self.outputTarget ] = unalloc
+            if local_dict is None:
+                sys._getframe( self._stackDepth ).f_locals[self.outputTarget] = unalloc
+                return
+            self.local_dict[self.outputTarget] = unalloc
+            return 
                            
         if self.outputTarget is None:
             return unalloc
-        return None
+        return
     
 
     def __assign(self, node ):
@@ -514,7 +517,7 @@ class NumExpr(object):
             else:
                 # print( "Name not found: " + node_id )
                 # It's probably supposed to be a temporary with a name, i.e. an assignment target
-                regTup = self.__newTemp_INLINE( None, name = node_id )
+                regTup = self.__newTemp( None, name = node_id )
                 
         return regTup
 
@@ -611,7 +614,7 @@ class NumExpr(object):
     def __magic_output( self, retChar, outputTup ):
         # 
         if outputTup is None:
-            outputTup = self.__newTemp_INLINE( retChar )
+            outputTup = self.__newTemp( retChar )
         elif outputTup[2] == None: 
             self.namesReg[outputTup[4]] = outputTup = \
                                  (outputTup[0], outputTup[1], retChar, outputTup[3], outputTup[4] )
@@ -640,9 +643,9 @@ class NumExpr(object):
         
         # Release the leftTup and rightTup if they are temporaries and weren't reused.
         if leftTup[3] == _REGKIND_TEMP and leftTup[0] != outputTup[0]: 
-            self.__releaseTemp_INLINE(leftTup[0])
+            self.__releaseTemp(leftTup[0])
         if rightTup[3] == _REGKIND_TEMP and rightTup[0] != outputTup[0]: 
-            self.__releaseTemp_INLINE(rightTup[0])
+            self.__releaseTemp(rightTup[0])
         return outputTup
         
 
@@ -688,12 +691,12 @@ class NumExpr(object):
             raise ValueError( "call(): function calls are 1-3 arguments" )
         
         for arg in argTups:
-            if arg[3] == _REGKIND_TEMP: self.__releaseTemp_INLINE( arg[0] )
+            if arg[3] == _REGKIND_TEMP: self.__releaseTemp( arg[0] )
             
         return outputTup
     
     
-    def __newTemp_INLINE(self, dchar, name = None ):
+    def __newTemp(self, dchar, name = None ):
         if len(self._freeTemporaries) > 0:
             regId = self._freeTemporaries.pop()
             #print( 'Re-using temporary: %s' % regId )
@@ -713,7 +716,7 @@ class NumExpr(object):
         
     
     # Free a temporary
-    def __releaseTemp_INLINE(self, regId ):
+    def __releaseTemp(self, regId ):
         #print( "Releasing temporary: %s" % regId )
         self._occupiedTemporaries.remove( regId )
         self._freeTemporaries.add( regId )
@@ -745,16 +748,19 @@ class NumExpr(object):
             return leftTup, rightTup
         elif np.can_cast( leftD, rightD ):
             # Make a new temporary
-            castTup = self.__newTemp_INLINE( rightD )
+            castTup = self.__newTemp( rightD )
             
-            self.codeStream.write( b"".join( (OPTABLE[('cast',self.lib,rightD,leftD)][0], castTup[0], leftTup[0], _NULL_REG, _NULL_REG)  ) )
+            self.codeStream.write( b"".join( 
+                    (OPTABLE[('cast',self.casting,rightD,leftD)][0], castTup[0], 
+                             leftTup[0], _NULL_REG, _NULL_REG)  ) )
             return castTup, rightTup
         elif np.can_cast( rightD, leftD ):
             # Make a new temporary
-            castTup = self.__newTemp_INLINE( leftD )
+            castTup = self.__newTemp( leftD )
                         
             self.codeStream.write( b"".join( 
-                    (OPTABLE[('cast',self.lib,leftD,rightD)][0], castTup[0], rightTup[0], _NULL_REG, _NULL_REG) ) )
+                    (OPTABLE[('cast',self.casting,leftD,rightD)][0], castTup[0], 
+                             rightTup[0], _NULL_REG, _NULL_REG) ) )
             return leftTup, castTup
         else:
             raise TypeError( 'cast2(): Cannot cast %s to %s by rule <TODO>' 
@@ -796,46 +802,42 @@ if __name__ == "__main__":
     out_ne2 = np.zeros( arrSize )
     out_int = np.zeros( arrSize, dtype='int32' )
     
+    # Initialize threads with un-tracked calls
+    ne2.evaluate( 'a+b+1' )
+    neObj = NumExpr( 'out = a + b + 1' )
+    neObj.run( b=b, a=a, out=out )
+    
+    # Try a std::cmath function
+    # Not very fast for NE3 here, evidently the GNU cmath isn't being 
+    # vectorized.
+    t60 = time()
+    evaluate( 'out_magic1 = sqrt(b)' )
+    t61 = time()
+    ne2.evaluate( 'sqrt(b)' )
+    t62 = time()
+    np.testing.assert_array_almost_equal( np.sqrt(b), out_magic1 )
+    print( "---------------------" )
+    print( "Ne3 completed single call: %.2e s"%(t61-t60) )
+    print( "Ne2 completed single call: %.2e s"%(t62-t61) )
     
     # Old-school expression with no assignment, just a return.
     neExpr = NumExpr( "a*b" )
     expr_out = neExpr.run( a=a, b=b )
     np.testing.assert_array_almost_equal( a*b, expr_out )
 
-    # Try a std::cmath function
-    # Not very fast for NE3 here, evidently the GNU cmath isn't being 
-    # vectorized.
-    t60 = time.time()
-    expr = "out = sqrt(b)"
-    neObj = NumExpr( expr )
-    neObj.run( b=b, out=out )
-    t61 = time.time()
-    ne2.evaluate( 'sqrt(b)' )
-    t62 = time.time()
-    np.testing.assert_array_almost_equal( np.sqrt(b), out )
-    print( "---------------------" )
-    print( "Ne3 completed single call: %.2e s"%(t61-t60) )
-    print( "Ne2 completed single call: %.2e s"%(t62-t61) )
-
-    # Initialize threads with un-tracked calls
-    ne2.evaluate( 'a+b+1' )
-    neObj = NumExpr( 'out = a + b + 1' )
-    neObj.run( b=b, a=a, out=out )
-    
     # For some reason NE3 is significantly faster if we do not call NE2 
     # in-between.  I wonder if there's something funny with Python handling 
     # of the two modules.
-    
-    t0 = time.time()
+    t0 = time()
     neObj = NumExpr( 'out=a*b' )
     neObj.run( b=b, a=a, out=out )
-    t1 = time.time()
+    t1 = time()
     
-    t2 = time.time()
+    t2 = time()
     ne2.evaluate( 'a*b', out=out_ne2 )
-    t3 = time.time()
+    t3 = time()
     out_np = a*b
-    t4 = time.time()
+    t4 = time()
     print( "---------------------" )
     print( "Ne3 completed simple-op a*b: %.2e s"%(t1-t0) )
     print( "Ne2 completed simple-op a*b: %.2e s"%(t3-t2) )
@@ -848,12 +850,12 @@ if __name__ == "__main__":
     neObj = NumExpr( 'out=a+b' )
     neObj.run( b=b, a=a, out=out )
     
-    t50 = time.time()
+    t50 = time()
     inplace = NumExpr( 'a = a*a' )
     inplace.run( check_arrays=False )
-    t51 = time.time()
+    t51 = time()
     inplace_ne2 = ne2.evaluate( 'a*a', out=a )
-    t52 = time.time()
+    t52 = time()
     print( "---------------------" )
     print( "Ne3 in-place op: %.2e s"%(t51-t50) )
     print( "Ne2 in-place op: %.2e s"%(t52-t51) )
@@ -867,22 +869,23 @@ if __name__ == "__main__":
     # 
     #    # Run once for each of NE2 and NE3 to start interpreters
 
-    t40 = time.time()
+    t40 = time()
     neObj = NumExpr( 'temp = a*a + b*c - a; out_magic = c / sqrt(temp)' )
     result = neObj.run( b=b, a=a, c=c )
-    t41 = time.time()
+    t41 = time()
     temp = ne2.evaluate( 'a*a + b*c - a' )
     out_ne2 = ne2.evaluate( 'c / sqrt(temp)' )
-    t42 = time.time()
+    t42 = time()
     print( "---------------------" )
     print( "Ne3 completed multiline: %.2e s"%(t41-t40) )
     print( "Ne2 completed multiline: %.2e s"%(t42-t41) )
     np.testing.assert_array_almost_equal( c / np.sqrt(a*a + b*c - a), out_magic )
 
     # Magic output on __call() rather than __binop
-    neObj = NumExpr( 'out_magic1 = sqrt(a)' )
-    neObj.run( check_arrays=False )
+    test = evaluate( 'out_magic1=sqrt(a)' )
     np.testing.assert_array_almost_equal( np.sqrt(a), out_magic1 )
+    
+   
     
     '''
      Comparing NE3 versus NE2 optimizations:
@@ -894,8 +897,8 @@ if __name__ == "__main__":
      4.) Can we do in-place operations with temporaries to further optimize?
          In-place operations are faster in NE2 than binops, and about the same 
          speed in NE3.
-     5.) ne2 drops the first b*b into the zeroth register. We would need more 
-         logic for when the output is valid as a temporary.
+     5.) ne2 drops the first b*b into the zeroth (return) register. We would 
+         need more logic for when the output is valid as a temporary.
     '''
     
     # Where/Ternary
@@ -904,8 +907,6 @@ if __name__ == "__main__":
     neObj.run( out=out, yesno=yesno, a=a, b=b )
     #neObj.print_names()
     np.testing.assert_array_almost_equal( np.where(yesno,a,b), out )
-    
-
     
     # Try a C++/11 cmath function
     # Note behavoir here is different from NumPy... which returns double.
@@ -919,15 +920,15 @@ if __name__ == "__main__":
         print( e )
     
     # Try C++/11 FMA function
-    t10 = time.time()
+    t10 = time()
     expr = "out = fma(a,b,c)"
     neObj = NumExpr( expr )
     neObj.run( out=out, a=a, b=b, c=c  )
-    t11 = time.time()
+    t11 = time()
     ne2.evaluate( "a*b+c", out=out_ne2 )
-    t12 = time.time()
+    t12 = time()
     out_np = a*b+c
-    t13 = time.time()
+    t13 = time()
     # FMA doesn't scale well with large arrays.
     np.testing.assert_array_almost_equal( out_np, out )
     print( "---------------------" )
@@ -945,14 +946,14 @@ if __name__ == "__main__":
     out_c = np.zeros( arrSize, dtype='complex64' )
     out_c_ne2 = np.zeros( arrSize, dtype='complex128' )
     
-    t20 = time.time()
+    t20 = time()
     neObj = NumExpr( 'out_c = ncx*ncy'  )
     neObj.run( out_c=out_c, ncx=ncx, ncy=ncy )
-    t21 = time.time()
+    t21 = time()
     ne2.evaluate( 'ncx*ncy', out=out_c_ne2 )
-    t22 = time.time()
+    t22 = time()
     out_c_np = ncx*ncy
-    t23 = time.time()
+    t23 = time()
     
     np.testing.assert_array_almost_equal( out_c_np, out_c )
     
@@ -993,12 +994,12 @@ if __name__ == "__main__":
     db = b[::4]
     out_stride1 = np.empty_like(da)
     out_stride2 = np.empty_like(da)
-    t30 = time.time()
+    t30 = time()
     neObj = NumExpr( 'out_stride1 = da*db' )
     neObj.run( out_stride1, da, db )
-    t31 = time.time()
+    t31 = time()
     ne2.evaluate( 'da*db', out=out_stride2 )
-    t32 = time.time()
+    t32 = time()
     print( "---------------------" )
     print( "Strided computation:" )
     print( "Ne3 completed (strided) a*b: %.2e s"%(t31-t30) )
@@ -1015,4 +1016,22 @@ if __name__ == "__main__":
     # No check of inputs
     neObj.run( check_arrays=False )
     
-
+    
+    ###################################################
+    # Uint8                                           #
+    # A case where NumExpr2 returns the wrong result. #
+    ###################################################
+    
+    lena = np.random.randint( 0, 255, [3600,3200] ).astype('uint8')
+    paul = np.random.randint( 0, 255, [3600,3200] ).astype('uint8')
+    
+    t70 = time()
+    evaluate( 'sum_image = lena - paul' )
+    t71 = time()
+    sum_ne2 = ne2.evaluate( 'lena - paul' )
+    t72 = time()
+    
+    np.testing.assert_array_almost_equal( sum_image, lena-paul )
+    print( "uint8 image processing:" )
+    print( "Ne3 completed lena - paul: %.2e s"%(t71-t70) )
+    print( "Ne2 completed lena - paul: %.2e s"%(t72-t71) )

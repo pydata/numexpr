@@ -82,9 +82,6 @@ get_return_sig(NumExprObject *self)
 {
     NE_REGISTER last_reg = self->program[self->program_len - 1].ret;
     return self->registers[last_reg].dchar;
-//    char ttt = self->registers[ self->program[self->n_reg - 1].ret ].dchar;
-//    printf( "get_return_sig: %c", ttt);
-//    return ttt;
 }
 
 
@@ -1086,7 +1083,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     // 1 thread per BLOCK_SIZE1 in the iterator?
     // Also this is still on an element rather than bytesize basis.
     if (NpyIter_GetIterSize(iter) < 2*BLOCK_SIZE1) {
-        //printf( "NumExpr_run() FORCING SERIAL MODE\n" ); 
+        printf( "NumExpr_run() FORCING SERIAL MODE\n" ); 
 
         gs.force_serial = 1;
     }

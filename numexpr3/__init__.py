@@ -37,14 +37,14 @@ else:
 
 import os, os.path
 import platform
-from numexpr3.ne3compiler import NumExpr, disassemble, evaluate
+from numexpr3.ne3compiler import NumExpr, evaluate, OPTABLE
 from numexpr3.tests import test, print_versions
 from numexpr3.utils import (
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
     set_num_threads, detect_number_of_cores, detect_number_of_threads)
 
 # Detect the number of cores
-# RAM: the functions in util don't update numexpr.ncores or numexpr.nthreads, 
+# RAM: the functions in util doesn't update numexpr.ncores or numexpr.nthreads, 
 ncores = detect_number_of_cores()
 nthreads = detect_number_of_threads()
 
@@ -64,8 +64,5 @@ else:
 set_vml_num_threads(1)
 
 from . import __version__
-
-dirname = os.path.dirname(__file__)
-
 __version__ = __version__.__version__
 

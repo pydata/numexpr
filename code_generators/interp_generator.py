@@ -1099,6 +1099,8 @@ def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.
         '#define BOUNDS_CHECK(arg)\n',] )
     
     pythonTable = OrderedDict()
+    # NO_OP
+    pythonTable[('',LIB_STD,'')] = (struct.pack(NE_STRUCT, 0), '')
     cTable = OrderedDict()
     cFuncs = []
     opsList = []
