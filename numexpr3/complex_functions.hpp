@@ -74,22 +74,57 @@ after the first *r has been overwritten.
 
 
 // abs() has beeen changed to return npy_float and npy_double, like NumPy
+
 static void
-nc_abs( npy_intp n, npy_complex64 *x, npy_float32 *r )
+nc_real( npy_intp n, npy_complex64 *x, npy_float32 *r)
 {
     for( npy_intp I = 0; I < n; I++ ) {
-        r[I] = sqrtf(x[I].real*x[I].real + x[I].imag*x[I].imag);
+        r[I] = x[I].real;
     }
 }
 
 static void
-nc_abs( npy_intp n, npy_complex128 *x, npy_float64 *r )
+nc_real( npy_intp n, npy_complex128 *x, npy_float64 *r)
 {
     for( npy_intp I = 0; I < n; I++ ) {
-        r[I] = sqrt(x[I].real*x[I].real + x[I].imag*x[I].imag);
+        r[I] = x[I].real;
+    }
+}
+    
+static void
+nc_imag( npy_intp n, npy_complex64 *x, npy_float32 *r)
+{
+    for( npy_intp I = 0; I < n; I++ ) {
+        r[I] = x[I].imag;
     }
 }
 
+static void
+nc_imag( npy_intp n, npy_complex128 *x, npy_float64 *r)
+{
+    for( npy_intp I = 0; I < n; I++ ) {
+        r[I] = x[I].imag;
+    }
+}
+    
+static void
+nc_complex( npy_intp n, npy_float32 *a, npy_float32 *b, npy_complex64 *r )
+{
+    for( npy_intp I = 0; I < n; I++ ) {
+        r[I].real = a[I];
+        r[I].imag = b[I];
+    }
+}
+  
+static void
+nc_complex( npy_intp n, npy_float64 *a, npy_float64 *b, npy_complex128 *r )
+{
+    for( npy_intp I = 0; I < n; I++ ) {
+        r[I].real = a[I];
+        r[I].imag = b[I];
+    }
+}
+    
 static inline void
 _inline_add( npy_complex64 a, npy_complex64 b, npy_complex64 &r )
 {
@@ -199,6 +234,8 @@ nc_conj( npy_intp n,npy_complex128 *a, npy_complex128 *r)
         r[I].imag = -a[I].imag;
     }
 }
+    
+
     
 // Needed for allowing the internal casting in numexpr machinery for
 // conjugate operations
@@ -390,6 +427,39 @@ nc_sqrt( npy_intp n, npy_complex128 *x, npy_complex128 *r)
     }
 }
 
+// TODO: vectorize ABS, it's calling cmath
+static void
+nc_abs( npy_intp n, npy_complex64 *x, npy_float32 *r )
+{
+    for( npy_intp I = 0; I < n; I++ ) {
+        r[I] = sqrtf( x[I].real*x[I].real + x[I].imag*x[I].imag);
+    }
+}
+
+static void
+nc_abs( npy_intp n, npy_complex128 *x, npy_float64 *r )
+{
+    for( npy_intp I = 0; I < n; I++ ) {
+        r[I] = sqrt( x[I].real*x[I].real + x[I].imag*x[I].imag);
+    }
+}
+    
+static void
+nc_abs2( npy_intp n, npy_complex64 *x, npy_float32 *r )
+{
+    for( npy_intp I = 0; I < n; I++ ) {
+        r[I] = x[I].real*x[I].real + x[I].imag*x[I].imag;
+    }
+}
+
+static void
+nc_abs2( npy_intp n, npy_complex128 *x, npy_float64 *r )
+{
+    for( npy_intp I = 0; I < n; I++ ) {
+        r[I] = x[I].real*x[I].real + x[I].imag*x[I].imag;
+    }
+}
+    
 static inline void
 _inline_log( npy_complex64 x, npy_complex64 &r )
 {

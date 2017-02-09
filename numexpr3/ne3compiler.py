@@ -97,7 +97,7 @@ wisdomBank = __WisdomBankSingleton()
 def evaluate( expr, name=None, lib=LIB_STD, 
              local_dict=None, global_dict=None, out=None,
              order='K', casting=CAST_SAFE, optimization=OPT_MODERATE, 
-             library=LIB_STD, checks=CHECK_ALL, stackDepth=2 ):
+             library=LIB_STD, checks=CHECK_ALL, stackDepth=3 ):
     """
     Evaluate a mutliline expression element-wise, using the a NumPy.iter
 
@@ -234,7 +234,7 @@ class NumExpr(object):
 
     
     def __init__(self, expr, lib=LIB_STD, casting=CAST_SAFE, local_dict = None, global_dict = None, 
-                 stackDepth=1 ):
+                 stackDepth=2 ):
         
         self.expr = expr
         self._regCount = np.nditer( np.arange(NumExpr.MAX_ARGS) )
@@ -380,7 +380,7 @@ class NumExpr(object):
         
     
     def print_names(self):
-        for val in neObj.namesReg.values(): print( '{}:{}'.format( val[4], val[3])  )
+        for val in self.namesReg.values(): print( '{}:{}'.format( val[4], val[3])  )
         
         
     def run(self, *args, local_dict=None, global_dict=None,
@@ -416,12 +416,12 @@ class NumExpr(object):
             if len(args) == 0:
                 # Build args from kwargs and the list of known names
                 args = []
-                for I, regKey in enumerate(self.namesReg):     
+                for regKey in self.namesReg:     
                     if regKey in kwargs:
                         args.append( kwargs[regKey] )
                         kwargs.pop( regKey )
         else:
-            args = [reg[1] for reg in self.namesReg.values() if reg[1] is not None]
+            args = [reg[1] for reg in self.namesReg.values() if reg[3] == _REGKIND_ARRAY]
         
         # Check if the result needs to be added to the calling frame's locals
         promoteResult = (not self.outputTarget in kwargs) \
@@ -733,7 +733,7 @@ class NumExpr(object):
         # Force the node into something the __binop machinery can handle
         node.right = node.comparators[0]
         node.op = node.ops[0]
-        return self.__binop(node)
+        return self.__binop(node, outputTup)
    
     def __boolop(self, node, outputTup=None ):
         # Functionally from the NumExpr perspective there's no difference 
@@ -804,14 +804,14 @@ if __name__ == "__main__":
     
     # Initialize threads with un-tracked calls
     ne2.evaluate( 'a+b+1' )
-    neObj = NumExpr( 'out = a + b + 1' )
+    neObj = NumExpr( 'out = a + b + 1', stackDepth=1 )
     neObj.run( b=b, a=a, out=out )
     
     # Try a std::cmath function
     # Not very fast for NE3 here, evidently the GNU cmath isn't being 
     # vectorized.
     t60 = time()
-    evaluate( 'out_magic1 = sqrt(b)' )
+    evaluate( 'out_magic1 = sqrt(b)', stackDepth=1 )
     t61 = time()
     ne2.evaluate( 'sqrt(b)' )
     t62 = time()
@@ -821,7 +821,7 @@ if __name__ == "__main__":
     print( "Ne2 completed single call: %.2e s"%(t62-t61) )
     
     # Old-school expression with no assignment, just a return.
-    neExpr = NumExpr( "a*b" )
+    neExpr = NumExpr( "a*b", stackDepth=1 )
     expr_out = neExpr.run( a=a, b=b )
     np.testing.assert_array_almost_equal( a*b, expr_out )
 
@@ -829,7 +829,7 @@ if __name__ == "__main__":
     # in-between.  I wonder if there's something funny with Python handling 
     # of the two modules.
     t0 = time()
-    neObj = NumExpr( 'out=a*b' )
+    neObj = NumExpr( 'out=a*b', stackDepth=1 )
     neObj.run( b=b, a=a, out=out )
     t1 = time()
     
@@ -847,7 +847,7 @@ if __name__ == "__main__":
 
     # In-place op
     # Not such a huge gap, only ~ 200 %
-    neObj = NumExpr( 'out=a+b' )
+    neObj = NumExpr( 'out=a+b', stackDepth=1 )
     neObj.run( b=b, a=a, out=out )
     
     t50 = time()
@@ -870,7 +870,7 @@ if __name__ == "__main__":
     #    # Run once for each of NE2 and NE3 to start interpreters
 
     t40 = time()
-    neObj = NumExpr( 'temp = a*a + b*c - a; out_magic = c / sqrt(temp)' )
+    neObj = NumExpr( 'temp = a*a + b*c - a; out_magic = c / sqrt(temp)', stackDepth=1 )
     result = neObj.run( b=b, a=a, c=c )
     t41 = time()
     temp = ne2.evaluate( 'a*a + b*c - a' )
@@ -882,7 +882,7 @@ if __name__ == "__main__":
     np.testing.assert_array_almost_equal( c / np.sqrt(a*a + b*c - a), out_magic )
 
     # Magic output on __call() rather than __binop
-    test = evaluate( 'out_magic1=sqrt(a)' )
+    test = evaluate( 'out_magic1=sqrt(a)', stackDepth=1 )
     np.testing.assert_array_almost_equal( np.sqrt(a), out_magic1 )
     
    

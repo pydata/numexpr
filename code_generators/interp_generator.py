@@ -720,18 +720,37 @@ def CastFactory( opsList, casting='safe' ):
     
     for dChar in ALL_FAM:
         for castChar in ALL_FAM:
+            if dChar == castChar:
+                continue
             if not np.can_cast( dChar, castChar, casting=casting ):
                 continue
-            # Remove any unwanted types here
-            if 'F' in [dChar,castChar] or 'D' in [dChar,castChar]:
-                # TODO: we need some .real magic in the cast definitions
-                continue
+
             # TEMPORARY: remove strings
             if 'S' in [dChar,castChar] or 'U' in [dChar,castChar]:
                 continue
             
-            # castOp = Operation( 'cast', '$DEST = ($DTYPE0)($ARG1)', CAST_SAFE, castChar, dChar )
-            opsList += [Operation( 'cast', '$DEST = ($DTYPE0)($ARG1)', CAST_SAFE, castChar, dChar )]
+            # NumPy doesn't provide casts for real types to complex types so 
+            # there are a number of special cases.
+            elif castChar=='D' and dChar=='F':
+                # 'F' -> 'D' is a special case, casting complex64 -> complex128
+                opsList += [Operation( 'cast', 
+                            '$DEST.real = (npy_float64)($ARG1).real; $DEST.imag=(npy_float64)($ARG1).imag', 
+                            CAST_SAFE, castChar, dChar )]
+            elif castChar=='F':
+                # In 'safe' casting one can only cast to complex and not backward
+                # and this always is allocated as = dValue + 1i*0.0
+                opsList += [Operation( 'cast', 
+                            '$DEST.real = (npy_float32)($ARG1); $DEST.imag=0.0', 
+                            CAST_SAFE, castChar, dChar )]
+            elif castChar=='D':
+                opsList += [Operation( 'cast', 
+                            '$DEST.real = (npy_float64)($ARG1); $DEST.imag=0.0', 
+                            CAST_SAFE, castChar, dChar )]
+            else:
+                # castOp = Operation( 'cast', '$DEST = ($DTYPE0)($ARG1)', CAST_SAFE, castChar, dChar )
+                opsList += [Operation( 'cast', 
+                            '$DEST = ($DTYPE0)($ARG1)', 
+                            CAST_SAFE, castChar, dChar )]
     pass
 
 
@@ -775,7 +794,7 @@ def OpsFactory( opsList ):
                       REAL_NUM, REAL_NUM, REAL_NUM )]
 
     opsList += [Operation( 'where', '$DEST = $ARG1 ? $ARG2 : $ARG3', (LIB_STD,),
-                      REAL_NUM, ['?']*len(REAL_NUM), REAL_NUM, REAL_NUM  )]
+                      ALL_NUM, ['?']*len(ALL_NUM), ALL_NUM, ALL_NUM )]
     
     opsList += [Operation( 'ones_like', '$DEST = 1', (LIB_STD,),
                      REAL_NUM )]
@@ -798,22 +817,22 @@ def OpsFactory( opsList ):
     
     ###### Logical Operations ######
     opsList += [Operation( ast.And, '$DEST = ($ARG1 && $ARG2)', (LIB_STD,),
-                      BOOL, BITWISE_NUM, BITWISE_NUM )]
+                      BOOL, BOOL, BOOL )]
     opsList += [Operation( ast.Or, '$DEST = ($ARG1 || $ARG2)', (LIB_STD,),
-                      BOOL, BITWISE_NUM, BITWISE_NUM )]
+                      BOOL, BOOL, BOOL )]
     # TODO: complex and string comparisons
     opsList += [Operation( ast.Gt, '$DEST = ($ARG1 > $ARG2)', (LIB_STD,), 
-                     REAL_NUM, REAL_NUM, REAL_NUM )]
+                     ['?']*len(REAL_NUM), REAL_NUM, REAL_NUM )]
     opsList += [Operation( ast.GtE, '$DEST = ($ARG1 >= $ARG2)', (LIB_STD,), 
-                     REAL_NUM, REAL_NUM, REAL_NUM )]
+                     ['?']*len(REAL_NUM), REAL_NUM, REAL_NUM )]
     opsList += [Operation( ast.Lt, '$DEST = ($ARG1 < $ARG2)', (LIB_STD,), 
-                     REAL_NUM, REAL_NUM, REAL_NUM )]
+                     ['?']*len(REAL_NUM), REAL_NUM, REAL_NUM )]
     opsList += [Operation( ast.LtE, '$DEST = ($ARG1 <= $ARG2)', (LIB_STD,), 
-                     REAL_NUM, REAL_NUM, REAL_NUM )]
+                     ['?']*len(REAL_NUM), REAL_NUM, REAL_NUM )]
     opsList += [Operation( ast.Eq, '$DEST = ($ARG1 == $ARG2)', (LIB_STD,), 
-                     REAL_NUM, REAL_NUM, REAL_NUM )]
+                     ['?']*len(REAL_NUM), REAL_NUM, REAL_NUM )]
     opsList += [Operation( ast.NotEq, '$DEST = ($ARG1 != $ARG2)', (LIB_STD,), 
-                     REAL_NUM, REAL_NUM, REAL_NUM )]
+                     ['?']*len(REAL_NUM), REAL_NUM, REAL_NUM )]
     
     ###### Complex operations ######
     # All all in function format
@@ -989,7 +1008,16 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
     ###############################################
     # Complex number functions (from complex.hpp) #
     ###############################################
+    opsList += [ Operation( 'complex', 'nc_complex(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, DECIMAL, DECIMAL, vecType=TYPE_ALIGNED ) ]
+    opsList += [ Operation( 'real', 'nc_real(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+                          LIB_STD, DECIMAL, COMPLEX, vecType=TYPE_ALIGNED ) ]
+    opsList += [ Operation( 'imag', 'nc_imag(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+                          LIB_STD, DECIMAL, COMPLEX, vecType=TYPE_ALIGNED ) ]
+    
     opsList += [ Operation( 'abs', 'nc_abs(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+                          LIB_STD, DECIMAL, COMPLEX, vecType=TYPE_ALIGNED ) ] 
+    opsList += [ Operation( 'abs2', 'nc_abs2(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD, DECIMAL, COMPLEX, vecType=TYPE_ALIGNED ) ] 
     opsList += [ Operation( ast.Add, 'nc_add(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
@@ -1003,8 +1031,10 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
                           LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'conj', 'nc_conj(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
+
     opsList += [ Operation( 'conj', 'fconj(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, DECIMAL, DECIMAL, vecType=TYPE_ALIGNED ) ]           
+                          LIB_STD, DECIMAL, DECIMAL, vecType=TYPE_ALIGNED ) ]  
+         
     opsList += [ Operation( 'sqrt', 'nc_sqrt(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'log', 'nc_log(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
@@ -1043,7 +1073,7 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
     opsList += [ Operation( 'tan', 'nc_tan(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ] 
     opsList += [ Operation( 'tanh', 'nc_tanh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]    
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
 
                
     ##################################################################
