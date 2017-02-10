@@ -191,6 +191,7 @@ int vm_engine_iter_task(NpyIter *iter,
     // and strides->registers[arrayCount].mem = iterDataPtr[I]???
     // This is turning into more overhead than arranging everything beforehand 
     // in Python so registers are ordered 
+    
     sizePtr = NpyIter_GetInnerLoopSizePtr(iter);
     iterDataPtr = NpyIter_GetDataPtrArray(iter);
     iterStrides = NpyIter_GetInnerStrideArray(iter);
@@ -230,7 +231,6 @@ int vm_engine_iter_task(NpyIter *iter,
         iterNext(iter);
         block_size = *sizePtr;   
     }
-    
 //    while (block_size == BLOCK_SIZE1) {
 //        //printf( "vm_iter_engine run block.\n" );
 //#define REDUCTION_INNER_LOOP
@@ -441,26 +441,26 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
 //            vector<char> out_buffer(need_output_buffering ?
 //                                (self->memsizes[0] * BLOCK_SIZE1) : 0);
 //            params.out_buffer = need_output_buffering ? &out_buffer[0] : NULL;
-                                      
 
-            //printf( "run_interpreter() #2\n" ); 
 
             //safeParams = NumExprObject_copy_threadsafe( self );
             safeParams = self;
-                                       
-            //printf( "run_interpreter() #3\n" ); 
+
                       
 //            if( need_output_buffering ) {
             vector<char> out_buffer(need_output_buffering ?
                                 (GET_RETURN_REG(self).itemsize * BLOCK_SIZE1) : 0);
             safeParams->outBuffer = (char *)(need_output_buffering ? &out_buffer[0] : NULL );
+ 
+                  
 //            }
             // Reset the iterator to allocate its buffers
             if(NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
                 return -1;
             }
-            
+
             get_temps_space( safeParams, BLOCK_SIZE1);
+
             Py_BEGIN_ALLOW_THREADS;     
             returnValue = vm_engine_iter_task(iter, safeParams, pc_error, &errorMessage);
             Py_END_ALLOW_THREADS;
@@ -476,7 +476,6 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                 if (iterNext == NULL) {
                     return -1;
                 }
-                
                 //safeParams = NumExprObject_copy_threadsafe( self );
                 safeParams = self;
                                     
@@ -505,11 +504,10 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                 if (iterNext == NULL) {
                     return -1;
                 }
-
                 //safeParams = NumExprObject_copy_threadsafe( self );
                 safeParams = self;
-                                    
-                get_temps_space(safeParams, BLOCK_SIZE1);
+                                   
+                get_temps_space(safeParams, BLOCK_SIZE1); 
                 Py_BEGIN_ALLOW_THREADS;
                 do {
                     returnValue = NpyIter_ResetBasePointers(reduce_iter, dataPtr,
@@ -528,7 +526,6 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
         }
     }
     else {
-        
         if (reduce_iter == NULL) {
             // Here the parallel engine will make save copies of the NumExprObject
             returnValue = vm_engine_iter_parallel(iter, self, need_output_buffering,
@@ -539,7 +536,6 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
             returnValue = -1;
         }
     }
-
     if (returnValue < 0 && errorMessage != NULL) {
         PyErr_SetString(PyExc_RuntimeError, errorMessage);
     }
@@ -707,6 +703,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         
         objectRef = PyTuple_GET_ITEM(args, arrayCounter); // borrowed ref
 
+        
         //char c = PyBytes_AS_STRING(self->signature)[i];
         int typecode = NPYENUM_from_dchar( self->registers[I].dchar );
         // Convert it if it's not an array
@@ -718,10 +715,13 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             Py_INCREF(objectRef);
             arrayRef = objectRef;
         }
-        //printf( "Found array #%d at register %d\n", arrayCounter, I );
+        
         operands[arrayCounter] = (PyArrayObject *)arrayRef;
         dtypes[arrayCounter] = PyArray_DescrFromType(typecode);
-
+        //printf( "Found array #%d at register %d with dtype:%c pointing to: %p\n", arrayCounter, I,
+        //       dtypes[arrayCounter]->type, PyArray_DATA(operands[arrayCounter]) );
+              
+              
         if (operands[arrayCounter] == NULL || dtypes[arrayCounter] == NULL) { goto fail; }
         
         // RAM: I think this is still ok..., but we should not compare [0] to [0]
@@ -733,7 +733,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             // TODO: Probably should deal with the general overlap case,
             //       but NumPy ufuncs don't do that yet either.
             if (PyArray_DATA(operands[0]) == PyArray_DATA(operands[arrayCounter])) {
-                printf("DEBUG: output buffering requested.\n");
+                printf("DEBUG: output buffering requested. Should not happen in NE3.\n");
                 need_output_buffering = true;
             }
         }
@@ -873,7 +873,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                       NPY_ITER_NO_BROADCAST;
     }
     */
-    //printf( "NumExpr_run() #7\n" ); 
+    // printf "NumExpr_run() #7\n" ); 
                       
     // Check for empty arrays in expression
     if (n_input > 0) {
@@ -903,7 +903,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    //printf( "NumExpr_run() #8\n" ); 
+    // printf "NumExpr_run() #8\n" ); 
     // A case with a single constant output
     if (n_input == 0) {
         char retsig = get_return_sig(self);
@@ -942,7 +942,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         goto cleanup_and_exit;
     }
 
-    //printf( "NumExpr_run() #9\n" ); 
+    // printf "NumExpr_run() #9\n" ); 
     // Allocate the iterator or nested iterators
     if (reduction_size == 1) {
         //printf( "NumExpr_run() #9A, arrayCounter = %d\n", arrayCounter ); 
@@ -1049,7 +1049,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
         }
     }
-    //printf( "NumExpr_run() #10\n" ); 
+    // printf "NumExpr_run() #10\n" ); 
     // Initialize the output to the reduction unit
     //printf( "TODO: Output size should be appropriate for reductions.\n" );
 //    if (is_reduction) {

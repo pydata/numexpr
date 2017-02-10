@@ -10,11 +10,10 @@
 ####################################################################
 
 import shutil
-import os
-import sys
-import os.path as op
+import os, os.path, sys, glob
 from distutils.command.clean import clean
 import time
+import setuptools
 
 '''
  NOTES FOR WINDOWS:
@@ -59,8 +58,6 @@ if sys.version_info < (2, 7):
 if sys.version_info.major == 3 and sys.version_info.minor < 3:
     raise RuntimeError( 'NumExpr requires Python 3.3 or greater.' )
     
-import setuptools
-
 
 # Increment version for each PyPi release.
 major_ver = 3
@@ -90,7 +87,19 @@ with open('requirements.txt') as f:
 #}
 
 
+
 def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
+    # Do not generate new files if the GENERATED files are all newer than
+    # interp_generator.py.  This saves recompiling if its not needed.
+    GENERATED_files = glob.glob( 'numexpr3/*GENERATED*' ) + glob.glob( 'numexpr3/tests/*GENERATED*' )
+    generator_time  = os.path.getmtime( 'code_generators/interp_generator.py' )
+    if all( [generator_time < os.path.getmtime(GEN_file) for GEN_file in GENERATED_files] ):
+        return
+    # This no-generated could cause problems if people clone from GitHub and 
+    # we insert configuration tricks into the code_generator directory.
+    # TODO: It also needs to see if the stubs have been incremented.
+    
+    
     from code_generators import interp_generator
     print( '=====GENERATING INTERPRETER CODE=====' )
     # Try to auto-detect MKL and C++/11 here.
@@ -169,7 +178,7 @@ def setup_package():
         DEBUG = False
 
         def localpath(*args):
-            return op.abspath(op.join(*((op.dirname(__file__),) + args)))
+            return os.path.abspath(os.pathjoin(*((os.path.dirname(__file__),) + args)))
 
         def debug(instring):
             if DEBUG:
@@ -183,7 +192,7 @@ def setup_package():
             config = Configuration('numexpr3')
 
             #try to find configuration for MKL, either from environment or site.cfg
-            if op.exists('site.cfg'):
+            if os.path.exists('site.cfg'):
                 # RAM: argh, distutils...
                 # Probably here we should build custom build_mkl or build_icc 
                 # commands instead?

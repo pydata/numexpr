@@ -198,6 +198,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
             case KIND_RETURN:
                 //printf( "Found return at register %d\n", I );
                 // This is handled by NumExpr_run() as the array pointer can change.
+                n_ndarray++;
                 break;
             default:
                 PyErr_Format(PyExc_RuntimeError,
