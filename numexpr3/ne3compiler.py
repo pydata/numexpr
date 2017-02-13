@@ -82,6 +82,7 @@ _REGKIND_ARRAY = 0
 _REGKIND_SCALAR = 1
 _REGKIND_TEMP = 2
 _REGKIND_RETURN = 3
+# _REGKIND_ITER = 4 # Like a scalar, but expected to change with each run()
 
 # The wisdomBank connects strings to their NumExpr objects, so if the same 
 # expression pattern is called, it  will be retrieved from the bank.
@@ -293,7 +294,7 @@ class NumExpr(object):
                   { ast.Assign:self._assign, ast.Expr:self._expression, \
                     ast.Name:self._name, ast.Num:self._const, \
                     ast.Attribute:self._attribute, ast.BinOp:self._binop, \
-                    ast.BoolOp:self._binop,
+                    ast.BoolOp:self._boolop, ast.UnaryOp:self._unaryop, \
                     ast.Call:self._call, ast.Compare:self._compare, \
                      } )
     
@@ -775,10 +776,34 @@ class NumExpr(object):
     def _boolop(self, node, outputTup=None ):
         # Functionally from the NumExpr perspective there's no difference 
         # between boolean binary operations and binary operations
-        # Note that we never get here, binop is called instead by the lookup
-        # dict.
-        self.binop( node, outputTup )
+        if len(node.values) != 2:
+            raise ValueError( "NumExpr3 supports binary logical operations only, please seperate operations with ()." )
+        node.left = node.values[0]
+        node.right = node.values[1]
+        self._binop( node, outputTup )
         
+    def _unaryop(self, node, outputTup=None ):
+        # Currently only ast.USub is supported, and the node.operand is the 
+        # value acted upon.
+        operandTup = self._ASTAssembler[type(node.operand)](node.operand)
+        outputTup = self._magic_output( outputTup )
+        
+        try:
+            opWord, self._retChar = OPTABLE[  (type(node.op), self.lib, operandTup[2] ) ]
+        except KeyError as e:
+            if operandTup[2] == None :
+                raise ValueError( 
+                        'Unary did not find operand array {}. Possibly a stack depth issue'.format(
+                                operandTup[4]) )
+            else:
+                raise e
+        self.codeStream.write( b"".join( (opWord, outputTup[0], operandTup[0], _NULL_REG, _NULL_REG ))  )  
+         
+        # Release the operandTup if it was a temporary
+        if operandTup[3] == _REGKIND_TEMP and operandTup[0] != outputTup[0]: 
+            self._releaseTemp(operandTup[0])
+        return outputTup
+                
     def _cast2(self, leftTup, rightTup ): 
         leftD = leftTup[2]; rightD = rightTup[2]
         if leftD == rightD:
@@ -800,7 +825,7 @@ class NumExpr(object):
                              rightTup[0], _NULL_REG, _NULL_REG) ) )
             return leftTup, castTup
         else:
-            raise TypeError( 'cast2(): Cannot cast %s to %s by rule <TODO>' 
+            raise TypeError( "cast2(): Cannot cast %s to %s by rule 'safe'"
                             %(np.dtype(leftD), np.dtype(rightD) ) ) 
                 
         
@@ -813,5 +838,9 @@ class NumExpr(object):
     def _unsupported(self, node, outputTuple=None ):
         raise KeyError( 'unimplmented ASTNode' + type(node) )
         
+    
+if __name__ == '__main__':
+    a = np.ones( 5 )
+    out = evaluate( '-a' )
     
     

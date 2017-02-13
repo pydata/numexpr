@@ -14,7 +14,7 @@
 #define BLOCK_SIZE1 4096
 #define BLOCK_SIZE2 32
 #define BOUNDS_CHECK(arg) if ((arg) >= params->n_reg) { return -2; }
-#define OP_END 429
+#define OP_END 436
 // End of GENERATED CODE BLOCK
 
 

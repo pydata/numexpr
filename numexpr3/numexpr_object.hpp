@@ -14,6 +14,7 @@
 #define KIND_SCALAR 1
 #define KIND_TEMP   2
 #define KIND_RETURN 3
+//#define KIND_ITER 4 // A scalar that's expected to change with each NumExpr_run()
 
 // self is a struct NumExprObject
 #define GET_RETURN_REG(self) self->registers[ self->program[self->n_reg-1].ret ]

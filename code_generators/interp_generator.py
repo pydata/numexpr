@@ -28,6 +28,7 @@ INTERP_HEADER_DEFINES = ''
 # These tokens are used for finding the text block where the header and 
 # body text should be replaced
 INSERT_POINT = '//GENERATOR_INSERT_POINT'
+PY_INSERT_POINT = '#GENERATOR_INSERT_POINT'
 WARNING_EDIT = """// WARNING: THIS FILE IS AUTO-GENERATED PRIOR TO COMPILATION.
 // Editing should be done on the associated stub file instead.
 """
@@ -118,26 +119,15 @@ def STRIDED_LOOP( expr ):
     expr = expr.replace( '$ARG3', ARG_STRIDE(3) )
     expr = expr.replace( '$ARG2', ARG_STRIDE(2) )
     expr = expr.replace( '$ARG1', ARG_STRIDE(1) )
-    if 'x3' in expr:
-        return '''sb1 /= sizeof($DTYPE1);
-    sb2 /= sizeof($DTYPE1);
-    sb3 /= sizeof($DTYPE1);
-    for(npy_intp J = 0; J < block_size; J++) { 
+    retStr = ''
+    if 'x3' in expr: retStr += '    sb3 /= sizeof($DTYPE3);\n';
+    if 'x2' in expr: retStr += '    sb2 /= sizeof($DTYPE2);\n';
+    if 'x1' in expr: retStr += '    sb1 /= sizeof($DTYPE1);\n';
+    retStr += '''for(npy_intp J = 0; J < block_size; J++) { 
         EXPR; 
     }'''.replace( 'EXPR', expr ) 
-    elif 'x2' in expr:
-        return '''sb1 /= sizeof($DTYPE1);
-    sb2 /= sizeof($DTYPE1);
-    for(npy_intp J = 0; J < block_size; J++) { 
-        EXPR; 
-    }'''.replace( 'EXPR', expr ) 
-    elif 'x1' in expr:
-        return '''sb1 /= sizeof($DTYPE1);
-    for(npy_intp J = 0; J < block_size; J++) { 
-        EXPR; 
-    }'''.replace( 'EXPR', expr ) 
-    else:
-        raise ValueError( "Unknown number of arguments for strided array" )
+    return retStr
+
 
 def VEC_ARG0( expr ):
     return '''
@@ -546,24 +536,26 @@ ALL_FAM = ALL_NUM + STRINGS
 # Map NumpPy functions that don't exist for the testing submodule
 # Any function that doesn't have a NumPy equivalent returns None.
 AUTOTEST_DICT = defaultdict( bool, {
-             'sub': np.subtract,
-             'mult': np.multiply,
-             'div': np.divide,
-             'neg': np.negative,
-             'pow': np.power,
-             'lshift': np.left_shift,
-             'rshift': np.right_shift,
-             'bitand': np.bitwise_and,
-             'bitor': np.bitwise_or,
-             'bitxor': np.bitwise_xor,
-             'and':  np.logical_and,
-             'or': np.logical_or,
-             'gt': np.greater,
-             'gte':  np.greater_equal,
-             'lt': np.less,
-             'lte':  np.less_equal,
-             'eq': np.equal,
-             'noteq': np.not_equal,
+             'add': 'A_$DTYPE1 + B_$DTYPE2',
+             'sub': 'A_$DTYPE1 - B_$DTYPE2',
+             'mult': 'A_$DTYPE1 * B_$DTYPE2',
+             'div': 'A_$DTYPE1 / B_$DTYPE2',
+             'neg': '-A_$DTYPE1',
+             'mod': 'A_$DTYPE1 % B_$DTYPE2',
+             'pow': 'A_$DTYPE1 ** B_$DTYPE2',
+             'lshift': 'A_$DTYPE1 << B_$DTYPE2',
+             'rshift': 'A_$DTYPE1 >> B_$DTYPE2',
+             'bitand': 'A_$DTYPE1 & B_$DTYPE2',
+             'bitor': 'A_$DTYPE1 | B_$DTYPE2',
+             'bitxor': 'A_$DTYPE1 ^ B_$DTYPE2',
+             'gt': 'A_$DTYPE1 > B_$DTYPE2',
+             'gte':  'A_$DTYPE1 >= B_$DTYPE2',
+             'lt': 'A_$DTYPE1 < B_$DTYPE2',
+             'lte':  'A_$DTYPE1 <= B_$DTYPE2',
+             'eq': 'A_$DTYPE1 == B_$DTYPE2',
+             'noteq': 'A_$DTYPE1 != B_$DTYPE2',
+             # There's no equivalent for ne's complex() array builder in NumPy
+             'complex': '',
              } )
 
 
@@ -585,7 +577,8 @@ class Operation(object):
            $ARG3, $DTYPE3
     '''
     
-    def __init__(self, py_Name, c_Template, libs, retFam, *argFams, vecType=TYPE_LOOP ):
+    def __init__(self, py_Name, c_Template, libs, retFam, *argFams, 
+                 vecType=TYPE_LOOP, alias=None ):
         # py_Name is either an ast.Node or a string such as 'sqrt'
         self.py_Name = py_Name
         # c_Template is the
@@ -605,6 +598,7 @@ class Operation(object):
         # List of lists of valid argument character identifiers
         self.argFams = argFams
         
+        self.alias = alias
         self.opNums = []
         self.c_FunctionDeclares = []
         self.py_TupleKeys = []
@@ -635,6 +629,11 @@ class Operation(object):
                 else:
                     self.py_TupleKeys.append( 
                         tuple( [self.py_Name, lib] + passedArgs) )
+                    if bool(self.alias):
+                        self.py_TupleKeys.append( 
+                                tuple( [self.alias, lib] + passedArgs) ) 
+                        
+                            
                 
                 # Make a unique name for the function, of the form 
                 # {function}_{retchar}{argchar1,...}
@@ -668,20 +667,78 @@ class Operation(object):
     def test_Auto(self):
         # Try to write a test function that compares our function to NumPy.
         if type(self.py_Name) == type: # Ast  node
-            str_Name = self.py_Name.__name__.lower()
+            funcName = self.py_Name.__name__.lower()
         else: # Function name
-            str_Name = self.py_Name
+            funcName = self.py_Name
             
-        # So we will make a number of sample arrays in the autotest stub,
+        testCode = ['']
+        evalFunc = None
+        # There are a number of sample arrays in the autotest stub,
         # A_x, B_x, and C_x where 'x' is the dchar.
-        if hasattr( np, str_Name ):
-            pass
-        else: # Try AUTOTEST_DICT
-            if AUTOTEST_DICT[str_Name]:
-                pass
-            else:
-                print( "test_Auto could not find NumPy function for: {}".format(str_Name) )
         
+        for lib in self.libs:
+            for I, retChar in enumerate( self.retFam ):
+                passedArgs = [ arg[I] for arg in self.argFams ]
+                idArgs = [ arg.replace('?','1') for arg in passedArgs ]
+                
+                # TODO: implement cast/copy testing
+                if funcName == 'cast' or funcName == 'copy':
+                    return ''
+                    
+                
+                if AUTOTEST_DICT[funcName]:
+                    evalFunc = AUTOTEST_DICT[funcName]
+                elif not hasattr( np, funcName ):
+                    print( "test_Auto could not find NumPy function for: {}".format(funcName) )
+                    return ''
+                
+                funcNameUnique = ''.join( [funcName,'_',retChar.replace('?','1') ] + idArgs )
+                # I wonder if it would be easier to build the program by hand
+                # and not parse anything?  Or maybe I should put aliases 
+                # in the OPTABLE?
+                if evalFunc == None:
+                    if len(idArgs) == 0:
+                       evalFunc = '{0}()'.format(funcName)
+                    elif len(idArgs) == 1:
+                       evalFunc = '{0}( A_{1} )'.format(funcName, idArgs[0] )
+                    elif len(idArgs) == 2:
+                       evalFunc = '{0}( A_{1}, B_{2} )'.format(funcName, idArgs[0], idArgs[1] )     
+                    elif len(idArgs) == 3:
+                       evalFunc = '{0}( A_{1}, B_{2}, C_{3} )'.format(funcName, idArgs[0], idArgs[1], idArgs[2] )
+                    numpyFunc = 'np.' + evalFunc
+                else:
+                    try: evalFunc = evalFunc.replace( '$DTYPE1', idArgs[0] )
+                    except: pass
+                    try: evalFunc = evalFunc.replace( '$DTYPE2', idArgs[1] )
+                    except: pass
+                    # Check if evalFunc is a call or a binop/boolop/comparison.
+                    # In the case of a call we need to prepend a 'np.'
+                    numpyFunc = evalFunc
+                    #if '(' in numpyFunc:
+                        # Probably it's better just to make the AUTOTEST_DICT 
+                        # values into tuples, one for each syntax.  
+                        # Or import the exceptions direclty into the 
+                        # autotest namespace? 
+                        #numpyFunc = 'np.' + numpyFunc
+                
+                ##### SPECIAL CASES #####
+                if funcName == 'complex':
+                    evalFunc = 'complex( A_{}, B_{} )'.format(idArgs[0], idArgs[1] ) 
+                    numpyFunc = 'A_{} + 1j*B_{}'.format(idArgs[0], idArgs[1] ) 
+                
+                testCode.append( "    def test_{}(self):\n".format(
+                        funcNameUnique) )
+                testCode.append( "        print('Test: out={0}')\n".format( 
+                        evalFunc ) )
+                testCode.append( "        out = np.empty_like( A_d, dtype='{}' )\n".format(retChar) )
+                testCode.append( "        ne.evaluate('out={0}')\n".format(
+                        evalFunc ) )
+                testCode.append( "        np.testing.assert_array_almost_equal(out,{})\n".format( 
+                        numpyFunc ) )
+                evalFunc = None
+                
+        return ''.join(testCode)
+    
     def __repr__(self):
         return ''.join( [str(self.py_Name),'_',str(self.libs)] )
     
@@ -764,10 +821,8 @@ def OpsFactory( opsList ):
     #    Operation( python_name template, [libs], [return_dchars], 
     #              [arg1_dchars], {[arg2_dchars], ... } )
     
-    ###### Comparison ######
-    # TODO: Probably array assignment is faster than memcpy x loop in the strided case.
-    opsList += [ Operation( 'copy', 'memcpy(&$DEST, ((char *)x1+J*sb1), sizeof($DTYPE1))', (LIB_STD,),
-                         ALL_NUM, ALL_NUM ) ]
+    ###### Copy ######
+    opsList += [ Operation( 'copy', '$DEST = $ARG1', (LIB_STD,), ALL_NUM, ALL_NUM ) ]
     # Casts are built in CastFactory().
 
     ###### Standard arithmatic operations ######
@@ -776,13 +831,20 @@ def OpsFactory( opsList ):
             
     # For complex functions, complex_functions.hpp was vectorized.
     opsList += [Operation( ast.Sub, '$DEST = $ARG1 - $ARG2', (LIB_STD,),
-                      REAL_NUM, REAL_NUM, REAL_NUM )]
+                      ALL_INT+DECIMAL, ALL_INT+DECIMAL, ALL_INT+DECIMAL )]
     
     opsList += [Operation( ast.Mult ,'$DEST = $ARG1 * $ARG2', (LIB_STD,),
                       REAL_NUM, REAL_NUM, REAL_NUM )]
     
-    opsList +=[Operation( ast.Div, '$DEST = $ARG2 ? ($ARG1 / $ARG2) : 0', (LIB_STD,),
-                      REAL_NUM, REAL_NUM, REAL_NUM )]
+    # Division in NumPy typically returns float64 for integers.
+    # floordivide() is available for integer division.
+    # * In NE2 division tried to out-smart the compiler with a ternary
+    #   operation but it's easier to let the compiler determine when a 
+    #   INFINITY or NAN result is generated.
+    opsList +=[Operation( ast.Div, '$DEST = (npy_float64)$ARG1 / (npy_float64)$ARG2',
+                          (LIB_STD,), ['d']*len(BOOL+ALL_INT), BOOL+ALL_INT, BOOL+ALL_INT )]
+    opsList +=[Operation( ast.Div, '$DEST = $ARG1 / $ARG2', (LIB_STD,),
+                      DECIMAL, DECIMAL, DECIMAL )]
     
     ###### Mathematical functions ######
     # TODO: How to handle integer pow in a 'nice' way? We don't want to do it 
@@ -790,16 +852,20 @@ def OpsFactory( opsList ):
     opsList += [Operation( ast.Pow, '$DEST = pow($ARG1, $ARG2)', (LIB_STD,),
                       DECIMAL, DECIMAL, DECIMAL)]
     
+    # The fancy method for floating-point modulo does not work nicely for 
+    # integers.  In fact even the C-standard 'x1 % x2' is faulting.
+    #opsList += [Operation( ast.Mod, '$DEST = $ARG1 % $ARG2', (LIB_STD,),
+    #                  ALL_INT, ALL_INT, ALL_INT )]
     opsList += [Operation( ast.Mod, '$DEST = $ARG1 - floor($ARG1/$ARG2) * $ARG2', (LIB_STD,),
-                      REAL_NUM, REAL_NUM, REAL_NUM )]
+                      DECIMAL, DECIMAL, DECIMAL )]
 
     opsList += [Operation( 'where', '$DEST = $ARG1 ? $ARG2 : $ARG3', (LIB_STD,),
                       ALL_NUM, ['?']*len(ALL_NUM), ALL_NUM, ALL_NUM )]
     
     opsList += [Operation( 'ones_like', '$DEST = 1', (LIB_STD,),
-                     REAL_NUM )]
+                     REAL_NUM, REAL_NUM )]
     
-    opsList += [Operation( 'neg', '$DEST = -$ARG1', (LIB_STD,),
+    opsList += [Operation( ast.USub, '$DEST = -$ARG1', (LIB_STD,),
                      SIGNED_NUM, SIGNED_NUM)]
     
     ###### Bitwise Operations ######
@@ -816,10 +882,10 @@ def OpsFactory( opsList ):
                       BITWISE_NUM, BITWISE_NUM, BITWISE_NUM  )]
     
     ###### Logical Operations ######
-    opsList += [Operation( ast.And, '$DEST = ($ARG1 && $ARG2)', (LIB_STD,),
-                      BOOL, BOOL, BOOL )]
-    opsList += [Operation( ast.Or, '$DEST = ($ARG1 || $ARG2)', (LIB_STD,),
-                      BOOL, BOOL, BOOL )]
+    opsList += [Operation( 'logical_and', '$DEST = ($ARG1 && $ARG2)', (LIB_STD,),
+                      BOOL, BOOL, BOOL, alias=ast.And )]
+    opsList += [Operation( 'logical_or', '$DEST = ($ARG1 || $ARG2)', (LIB_STD,),
+                      BOOL, BOOL, BOOL, alias=ast.Or )]
     # TODO: complex and string comparisons
     opsList += [Operation( ast.Gt, '$DEST = ($ARG1 > $ARG2)', (LIB_STD,), 
                      ['?']*len(REAL_NUM), REAL_NUM, REAL_NUM )]
@@ -875,8 +941,8 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
     ####################
     # TODO: need to find a copy of cmath for MSVC compiler.
     # TODO: extend msvc_function_stubs to add all the new functions as overloads.
-    opsList += [ Operation( 'abs', '$DEST = abs($ARG1)', LIB_STD,
-                   DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
+    opsList += [ Operation( 'abs', '$DEST = $ARG1 < 0 ? -$ARG1 : $ARG1', LIB_STD,
+                   SIGNED_NUM, SIGNED_NUM, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'arccos', '$DEST = acos($ARG1)', LIB_STD,
                    DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]       
     opsList += [ Operation( 'arcsin', '$DEST = asin($ARG1)', LIB_STD,
@@ -911,8 +977,9 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
     opsList += [ Operation( 'log10', '$DEST = log10($ARG1)', LIB_STD,
                    DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
     # Here ints are supported, which is something we don't have in our ast.Pow operation...
-    opsList += [ Operation( 'power', '$DEST = pow($ARG1, $ARG2)', LIB_STD,
-                    DECIMAL+DECIMAL, DECIMAL+DECIMAL, DECIMAL+INTx2, vecType=TYPE_LOOP ) ] 
+    #opsList += [ Operation( 'power', '$DEST = pow($ARG1, $ARG2)', LIB_STD,
+    #                DECIMAL+DECIMAL, DECIMAL+DECIMAL, DECIMAL+INTx2, vecType=TYPE_LOOP ) ] 
+    
     opsList += [ Operation( 'sin', '$DEST = sin($ARG1)', LIB_STD,
                    DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'sinh', '$DEST = sinh($ARG1)', LIB_STD,
@@ -989,11 +1056,15 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
                        DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'nexttoward', '$DEST = nexttoward($ARG1, $ARG2)', LIB_STD,
                        DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
-        opsList += [ Operation( 'remainder', '$DEST = remainder($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
+        # The NumPy remainder is mod(), whereas C99's remainder is fmod(), so 
+        # don't include it as both are already provided and it just creates 
+        # confusion.
+        #opsList += [ Operation( 'remainder', '$DEST = remainder($ARG1, $ARG2)', LIB_STD,
+        #               DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
         # Th int in remquo() is a return pointer that we don't support at present.
         #opsList += [ Operation( 'remquo', '$DEST = remquo($ARG1, $ARG2, $ARG3)', LIB_STD,
         #               DECIMAL,DECIMAL,DECIMAL, ['i','i'] ) ] 
+    
         opsList += [ Operation( 'rint', '$DEST = rint($ARG1)', LIB_STD,
                        DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'round', '$DEST = round($ARG1)', LIB_STD,
@@ -1027,6 +1098,8 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
                           LIB_STD, COMPLEX, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( ast.Div, 'nc_div(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
+    opsList += [ Operation( ast.USub, 'nc_neg(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'neg', 'nc_neg(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, COMPLEX, vecType=TYPE_ALIGNED ) ]
     opsList += [ Operation( 'conj', 'nc_conj(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
@@ -1182,10 +1255,16 @@ def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.
         cPickle.dump( pythonTable, lookup )
         
     ###### Write autotest_GENERATED.py ######
-    with open( os.path.join( NE_DIR, 'tests/autotest_GENERATED.cpp'), 'w' ) as f_test:
+    with open( os.path.join( NE_DIR, 'tests/autotest_stub.py'), 'r' ) as f_test:
+        autotestHead, autotestTail = f_test.read().split( PY_INSERT_POINT )
+        
+    with open( os.path.join( NE_DIR, 'tests/autotest_GENERATED.py'), 'w' ) as f_test:
+        f_test.write( autotestHead )
         for op in opsList:
             #for I, opNum in enumerate( op.opNums ):
-            op.test_Auto
+            f_test.write( op.test_Auto )
+            
+        f_test.write( autotestTail )
             
     return pythonTable, cTable, cFuncs
 

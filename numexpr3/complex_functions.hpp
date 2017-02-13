@@ -305,42 +305,47 @@ nc_mul( npy_intp n, npy_complex128 *a, npy_complex128 *b, npy_complex128 *r)
     }
 }
 
-// TODO: there's no divide by zero-protection in this function.
+// The naive complex division function here is not very accurate and 
+// sometimes fails the autotest assert.
+// Probably there's something better...
+// https://arxiv.org/pdf/1210.4539.pdf
+//  or
+// https://arxiv.org/pdf/1608.07596.pdf
+// Most complex division algorithms seem to have a branch however, which
+// would take a bit of work to avoid.
 static inline void
 _inline_div( npy_complex64 a, npy_complex64 b, npy_complex64 &r)
 {
-    npy_float32 d = b.real*b.real + b.imag*b.imag;
-    r.real = (a.real*b.real + a.imag*b.imag)/d;
-    r.imag = (a.imag*b.real - a.real*b.imag)/d;
+    npy_float32 d = 1.0/(b.real*b.real + b.imag*b.imag);
+    r.real = (a.real*b.real + a.imag*b.imag)*d;
+    r.imag = (a.imag*b.real - a.real*b.imag)*d;
+ 
 }
-// TODO: there's no divide by zero-protection in this function.
 static inline void
 _inline_div( npy_complex128 a, npy_complex128 b, npy_complex128 &r)
 {
-    npy_float64 d = b.real*b.real + b.imag*b.imag;
-    r.real = (a.real*b.real + a.imag*b.imag)/d;
-    r.imag = (a.imag*b.real - a.real*b.imag)/d;
+    npy_float64 d = 1.0/(b.real*b.real + b.imag*b.imag);
+    r.real = (a.real*b.real + a.imag*b.imag)*d;
+    r.imag = (a.imag*b.real - a.real*b.imag)*d;
 }
-// TODO: there's no divide by zero-protection in this function.
-//_return_ variants are for use inside ternary operator
+
 static inline npy_complex64
 _return_div( npy_complex64 a, npy_complex64 b )
 {
     npy_complex64 r;
-    npy_float32 d = b.real*b.real + b.imag*b.imag;
-    r.real = (a.real*b.real + a.imag*b.imag)/d;
-    r.imag = (a.imag*b.real - a.real*b.imag)/d;
+    npy_float32 d = 1.0 / (b.real*b.real + b.imag*b.imag);
+    r.real = (a.real*b.real + a.imag*b.imag)*d;
+    r.imag = (a.imag*b.real - a.real*b.imag)*d;
     return r;
 }
-// TODO: there's no divide by zero-protection in this function.
-//_return_ variants are for use inside ternary operator
+
 static inline npy_complex128
 _return_div( npy_complex128 a, npy_complex128 b )
 {
     npy_complex128 r;
-    npy_float64 d = b.real*b.real + b.imag*b.imag;
-    r.real = (a.real*b.real + a.imag*b.imag)/d;
-    r.imag = (a.imag*b.real - a.real*b.imag)/d;
+    npy_float64 d = 1.0 / (b.real*b.real + b.imag*b.imag);
+    r.real = (a.real*b.real + a.imag*b.imag)*d;
+    r.imag = (a.imag*b.real - a.real*b.imag)*d;
     return r;
 }
 
@@ -470,8 +475,8 @@ _inline_log( npy_complex64 x, npy_complex64 &r )
 static inline void
 _inline_log( npy_complex128 x, npy_complex128 &r )
 {
-    r.imag = atan2f(x.imag, x.real);
-    r.real = logf( hypotf(x.real,x.imag) );
+    r.imag = atan2(x.imag, x.real);
+    r.real = log( hypot(x.real,x.imag) );
 }
 
 static void
@@ -550,8 +555,11 @@ nc_exp( npy_intp n, npy_complex128 *x, npy_complex128 *r)
 static void
 nc_expm1( npy_intp n, npy_complex64 *x, npy_complex64 *r)
 {
+    npy_float32 a;
     for( npy_intp I = 0; I < n; I++ ) {
-        _inline_exp( x[I], r[I] );
+        a = exp(x[I].real);
+        r[I].real = a*cos(x[I].imag) - 1.0;
+        r[I].imag = a*sin(x[I].imag);
     }
 }
 
@@ -916,8 +924,8 @@ nc_log10( npy_intp n, npy_complex64 *x, npy_complex64 *r)
 {
     for( npy_intp I = 0; I < n; I++ ) {
         _inline_log( x[I], r[I] );
-        r[I].real = M_LOG10_E;          
-        r[I].imag = M_LOG10_E;
+        r[I].real *= M_LOG10_E;          
+        r[I].imag *= M_LOG10_E;
     }
 }
 
