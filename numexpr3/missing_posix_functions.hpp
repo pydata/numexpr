@@ -4,7 +4,7 @@
 /*********************************************************************
   Numexpr - Fast numerical array expression evaluator for NumPy.
 
-      License: MIT
+      License: BSD
       Author:  See AUTHORS.txt
 
   See LICENSE.txt for details about copyright and rights to use.
@@ -14,7 +14,7 @@
   like MSVC 7.1  */
 
 
-/* Double precision versions */
+// Double precision versions
 
 inline double log1p(double x)
 {
@@ -72,7 +72,7 @@ inline double atanh(double x)
 }
 
 
-/* Single precision versions */
+// Single precision versions 
 
 inline float log1pf(float x)
 {
@@ -98,5 +98,11 @@ inline float atanhf(float x)
 {
     return (float) atanh((double)x);
 }
+
+// hypotf was in MSVC2005. which is earilier than Python 2.7
+//inline float hypotf( float x, float y)
+//{
+//    return (float) hypot( (double)x, (double)y );
+//}
 
 #endif // NUMEXPR_MISSING_POSIX_FUNCTIONS_HPP

@@ -374,7 +374,25 @@ class test_evaluate(TestCase):
         x = (a + 2 * b) / (1 + a + 4 * b * b)
         y = evaluate("(a + 2*b) / (1 + a + 4*b*b)")
         assert_array_almost_equal(x, y)
+		
+    def test_complex64_expr(self):
+        def complex64_func(a, b):
+            c = zeros(a.shape, dtype=complex64)
+            c.real = a
+            c.imag = b
+            return c
 
+        a = arange(1e4, dtype='float32' )
+        b = (arange(1e4) ** 1e-5).astype('float32')
+        z = ( a + 1j * b ).astype( 'complex64' ) # RAM this is complex128 by default numpy rules
+        x = z.imag
+        x = sin(complex64_func(a,b)).real + z.imag
+
+        # RAM: this check cannot pass because we don't have a function to do this 
+        # complex64(a,b) in the function list
+        y = evaluate("sin(complex64(a, b)).real + z.imag")
+        assert_array_almost_equal(x, y)
+		
     def test_complex_expr(self):
         def complex(a, b):
             c = zeros(a.shape, dtype=complex_)

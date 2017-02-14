@@ -4,7 +4,7 @@
 /*********************************************************************
   Numexpr - Fast numerical array expression evaluator for NumPy.
 
-      License: MIT
+      License: BSD
       Author:  See AUTHORS.txt
 
   See LICENSE.txt for details about copyright and rights to use.
@@ -38,15 +38,22 @@
 #define fabsf(x)    ((float)fabs((double)(x)))
 #define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
+#define hypotf(x, y)    ((float)hypot((double)(x), (double)(y)))
 
-/* The next are directly called from interp_body.cpp */
+/* The next are directly called from interp_body_GENERATED.cpp */
 #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
 #define floorf(x)    ((float)floor((double)(x)))
 
 #endif  // _MSC_VER < 1400
 
 
+
 /* Now the actual stubs */
+
+// RAM: hypotf was also missing
+inline float hypotf2(float x, float y) {
+    return hypotf(x, y);
+}
 
 inline float sqrtf2(float x) {
     return sqrtf(x);

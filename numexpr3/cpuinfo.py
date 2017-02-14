@@ -99,7 +99,11 @@ class CPUInfoBase(object):
                     return lambda func=self._try_call, attr=attr: func(attr)
             else:
                 return lambda: None
+<<<<<<< HEAD:numexpr/cpuinfo.py
         raise AttributeError(name)
+=======
+        raise AttributeError( name )
+>>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348:numexpr3/cpuinfo.py
 
     def _getNCPUs(self):
         return 1
