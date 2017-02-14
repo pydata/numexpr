@@ -1,29 +1,4 @@
-<<<<<<< HEAD
-======================================================
-Numexpr: Fast numerical expression evaluator for NumPy
-======================================================
-
-:Author: David M. Cooke, Francesc Alted and others
-:Contact: faltet@gmail.com
-:URL: https://github.com/pydata/numexpr
-:Travis CI: |travis|
-:Appveyor: |appveyor|
-:PyPi: |version| |pypi|
-
-.. |travis| image:: https://travis-ci.org/pydata/numexpr.png?branch=master
-        :target: https://travis-ci.org/pydata/numexpr
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/pydata/numexpr
-        :target: https://ci.appveyor.com/project/pydata/numexpr
-.. |pypi| image:: https://img.shields.io/pypi/dm/numexpr.png
-        :target: https://pypi.python.org/pypi/numexpr
-.. |version| image:: https://img.shields.io/pypi/v/numexpr.png
-        :target: https://pypi.python.org/pypi/numexpr
-
-
-What it is Numexpr?
-=======
 What it is Numexpr3?
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
 ===================
 
 Numexpr3 is a fast numerical expression evaluator for NumPy.  With it,
@@ -31,42 +6,13 @@ expressions that operate on arrays (like "3*a+4*b") are accelerated
 and use less memory than doing the same calculation in Python.
 
 In addition, its multi-threaded capabilities can make use of all your
-cores -- which may accelerate computations, most specially if they are
+cores, which may accelerate computations, most specially if they are
 not memory-bounded (e.g. those using transcendental functions).
 
 Compared to NumExpr 2.6, functions have been re-written in a fashion
 such that `gcc` can auto-vectorize them with SIMD instruction sets 
 such as SSE2 or AVX2, if your processor supports them. Use of a newer
 version of `gcc` such as 5.4 is strongly recommended.
-
-
-How Numexpr achieves high performance
-=====================================
-
-The main reason why Numexpr achieves better performance than NumPy is
-that it avoids allocating memory for intermediate results. This
-results in better cache utilization and reduces memory access in
-general. Due to this, Numexpr works best with large arrays.
-
-Numexpr parses expressions into its own op-codes that are then used by
-an integrated computing virtual machine. The array operands are split
-into small chunks that easily fit in the cache of the CPU and passed
-to the virtual machine. The virtual machine then applies the
-operations on each chunk. It's worth noting that all temporaries and
-constants in the expression are also chunked.
-
-The result is that Numexpr can get the most of your machine computing
-capabilities for array-wise computations. Common speed-ups with regard
-to NumPy are usually between 0.95x (for very simple expressions like
-’a + 1’) and 4x (for relatively complex ones like 'a*b-4.1*a >
-2.5*b'), although much higher speed-ups can be achieved (up to 15x in
-some cases).
-
-Numexpr performs best on matrices that do not fit in CPU cache.  In
-order to get a better idea on the different speed-ups that can be
-achieved on your platform, run the provided benchmarks.
-
-See more info about how Numexpr works in the `wiki <https://github.com/pydata/numexpr/wiki>`_.
 
 
 Examples of use
@@ -111,30 +57,10 @@ Datatypes supported internally
 Numexpr operates internally with the following types::
 
     * 8-bit boolean (bool)
-<<<<<<< HEAD
-    * 32-bit signed integer (int or int32)
-    * 64-bit signed integer (long or int64)
-    * 32-bit single-precision floating point number (float or float32)
-    * 64-bit, double-precision floating point number (double or float64)
-    * 2x64-bit, double-precision complex number (complex or complex128)
-    * Raw string of bytes (str)
-
-If the arrays in the expression does not match any of these types,
-they will be upcasted to one of the above types (following the usual
-type inference rules, see below).  Have this in mind when doing
-estimations about the memory consumption during the computation of
-your expressions.
-
-Also, the types in Numexpr conditions are somewhat more restrictive
-than those of Python.  For instance, the only valid constants for
-booleans are `True` and `False`, and they are never automatically cast
-to integers.
-=======
     * 8/16/32/64-bit unsigned integer (uint)
     * 8/16/32/64-bit signed integer (int)
     * 32/64-bit floating point numbers (float32, float64)
     * 64/128-bit, complex number (complex64, complex128)
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
 
 Unicode/bytes string support is planned for the future.
 
@@ -159,11 +85,7 @@ Numexpr supports the following set of operators::
 Supported functions
 ===================
 
-<<<<<<< HEAD
-Supported functions are listed below::
-=======
 The following are the currently supported set::
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
 
   * where(bool, all1, all2): all
       all1 if the bool condition is true, allr2 otherwise.
@@ -206,41 +128,10 @@ The following are the currently supported set::
       Real or imaginary part of complex.
   * complex(float, float): complex
       Complex from real and imaginary parts.
-<<<<<<< HEAD
-  * contains(str, str): bool
-      Returns True for every string in `op1` that contains `op2`.
 
-.. Notes:
-
-  + `abs()` for complex inputs returns a ``complex`` output too.  This
-  is a departure from NumPy where a ``float`` is returned instead.
-  However, Numexpr is not flexible enough yet so as to allow this to
-  happen.  Meanwhile, if you want to mimic NumPy behaviour, you may
-  want to select the real part via the ``real`` function
-  (e.g. "real(abs(cplx))") or via the ``real`` selector
-  (e.g. "abs(cplx).real").
-
-  + `contains()` only works with bytes strings, not unicode strings.
-
-You may add additional functions as needed.
-
-
-Supported reduction operations
-==============================
-
-The following reduction operations are currently supported::
-=======
-
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
 
 More functions can be added if you need them.  There is
 space for 64k operators at present.
-
-  * min(number, axis=None): Minimum of array elements over a given
-    axis.  Negative axis are not supported.
-
-  * max(number, axis=None): Maximum of array elements over a given
-    axis.  Negative axis are not supported.
 
 
 General routines
@@ -253,19 +144,10 @@ General routines
     Evaluate a simple array expression element-wise.  See docstrings
     for more info on parameters.  Also, see examples above.
 
-<<<<<<< HEAD
-  * re_evaluate(local_dict=None):
-    Re-evaluate the previous executed array expression without any
-    check.  This is meant for accelerating loops that are
-    re-evaluating the same expression repeatedly without changing
-    anything else than the operands.  If unsure, use evaluate() which
-    is safer.
-=======
   * NumExpr(): an object oriented version of evaluate().  
     * run( check_arrays=True, **kwargs):
        kwargs should have references to the same names called
     * disassemble(): See the program as generated by the compiler.
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
 
   * test():  Run all the tests in the test suite.
 
@@ -280,53 +162,11 @@ General routines
     the number of detected cores in the system (see
     `detect_number_of_cores()`).
 
-<<<<<<< HEAD
-    If you are using Intel's VML, you may want to use
-    `set_vml_num_threads(nthreads)` to perform the parallel job with
-    VML instead.  However, you should get very similar performance
-    with VML-optimized functions, and VML's parallelizer cannot deal
-    with common expressions like `(x+1)*(x-2)`, while Numexpr's one
-    can.
-
-  * detect_number_of_cores(): Detects the number of cores in the
-    system.
-
-
-Intel's VML specific support routines
-=====================================
-
-When compiled with Intel's VML (Vector Math Library), you will be able
-to use some additional functions for controlling its use. These are outlined below::
-
-  * set_vml_accuracy_mode(mode):  Set the accuracy for VML operations.
-
-The `mode` parameter can take the values:
-  - 'low': Equivalent to VML_LA - low accuracy VML functions are called
-  - 'high': Equivalent to VML_HA - high accuracy VML functions are called
-  - 'fast': Equivalent to VML_EP - enhanced performance VML functions are called
-
-It returns the previous mode.
-
-This call is equivalent to the `vmlSetMode()` in the VML library.
-
-::
-
-  * set_vml_num_threads(nthreads): Suggests a maximum number of
-    threads to be used in VML operations.
-
-This function is equivalent to the call
-`mkl_domain_set_num_threads(nthreads, MKL_DOMAIN_VML)` in the MKL library.
-
-See the Intel documentation on `VM Service Functions <https://software.intel.com/en-us/node/521831>`_ for more information.
-=======
   * detect_number_of_cores(): Detects the number of virtual cores in 
     the system.
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
 
 
 
-<<<<<<< HEAD
-=======
 How Numexpr can achieve such a high performance?
 ================================================
 
@@ -374,7 +214,6 @@ See more info about how Numexpr works in:
 https://github.com/pydata/numexpr/wiki
 
 
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
 Authors
 =======
 
@@ -384,11 +223,7 @@ See AUTHORS.txt
 License
 =======
 
-<<<<<<< HEAD
-Numexpr is distributed under the MIT license.
-=======
 Numexpr3 is distributed under the BSD license (see LICENSE.txt file).
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
 
 
 

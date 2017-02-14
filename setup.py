@@ -123,10 +123,8 @@ def setup_package():
                       install_requires=requirements,
                       setup_requires=requirements
     )
-    if (len(sys.argv) >= 2 and
-        ('--help' in sys.argv[1:] or
-         (sys.argv[1] in (
-             '--help-commands', 'egg_info', '--version', 'clean', '--name')))):
+    if (len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
+    in ('--help-commands', 'egg_info', '--version', 'clean'))):
 
         # For these actions, NumPy is not required.
         #
@@ -157,12 +155,7 @@ def setup_package():
                     du_build_py.run(self)
 
                 def find_package_modules(self, package, package_dir):
-<<<<<<< HEAD
-                    modules = old_build_py.find_package_modules(
-                        self, package, package_dir)
-=======
                     modules = du_build_py.find_package_modules(self, package, package_dir)
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
 
                     # Find build_src generated *.py files.
                     build_src = self.get_finalized_command('build_src')
@@ -199,13 +192,6 @@ def setup_package():
             config = Configuration('numexpr3')
 
             #try to find configuration for MKL, either from environment or site.cfg
-<<<<<<< HEAD
-            if op.exists('site.cfg'):
-                mkl_config_data = config.get_info('mkl')
-                # Some version of MKL needs to be linked with libgfortran.
-                # For this, use entries of DEFAULT section in site.cfg.
-                default_config = system_info()
-=======
             if os.path.exists('site.cfg'):
                 # RAM: argh, distutils...
                 # Probably here we should build custom build_mkl or build_icc 
@@ -227,7 +213,6 @@ def setup_package():
 #                            libraries=default_config.get_libraries(),
 #                            library_dirs=default_config.get_lib_dirs())
                 # RAM: mkl_info() doesn't see to populate get_libraries()...
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
                 dict_append(mkl_config_data,
                             include_dirs=mkl_config.get_include_dirs(), 
                             libraries=mkl_config.get_libraries(),
@@ -237,7 +222,7 @@ def setup_package():
                 
             print( 'DEBUG: mkl_config_data: {}'.format(mkl_config_data) )
 
-            # setup information for C extension
+            #setup information for C extension
             if os.name == 'nt':
                 pthread_win = ['numexpr3/win32/pthread.c']
             else:
@@ -269,12 +254,8 @@ def setup_package():
             if 'library_dirs' in mkl_config_data:
                 library_dirs = ':'.join(mkl_config_data['library_dirs'])
             config.add_extension('interpreter', **extension_config_data)
-<<<<<<< HEAD
-            config.set_options(quiet=True)
-=======
             
             config.add_data_files( ('','numexpr3/lookup.pkl') )
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348
 
             config.make_config_py()
             config.add_subpackage('tests', 'numexpr3/tests')
@@ -346,7 +327,7 @@ def setup_package():
                 run_generator()
                     
                 # at this point we know what the C compiler is.
-                if self.compiler.compiler_type == 'msvc' or self.compiler.compiler_type == 'intelemw':
+                if self.compiler.compiler_type == 'msvc':
                     ext.extra_compile_args = []
                     # also remove extra linker arguments msvc doesn't understand
                     ext.extra_link_args = []
