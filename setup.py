@@ -93,8 +93,9 @@ def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     # interp_generator.py.  This saves recompiling if its not needed.
     GENERATED_files = glob.glob( 'numexpr3/*GENERATED*' ) + glob.glob( 'numexpr3/tests/*GENERATED*' )
     generator_time  = os.path.getmtime( 'code_generators/interp_generator.py' )
-    if all( [generator_time < os.path.getmtime(GEN_file) for GEN_file in GENERATED_files] ) and \
-        os.path.isfile('numexpr3/lookup.pkl'):
+    if all( [generator_time < os.path.getmtime(GEN_file) for GEN_file in GENERATED_files] ) \
+        and os.path.isfile('numexpr3/lookup.pkl'):
+        print( "=Generation not required=" )
         return
     # This no-generated could cause problems if people clone from GitHub and 
     # we insert configuration tricks into the code_generator directory.
@@ -110,9 +111,8 @@ def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     # example ICC might be another one...
     interp_generator.generate( blocksize=blocksize, mkl=mkl, C11=C11 )
     
-#def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.hpp', 
-#             blocksize=(4096,32), bounds_check=True, mkl=False ):
-    
+
+   
 def setup_package():
     metadata = dict(
                       description='Fast numerical expression evaluator for NumPy',
@@ -351,6 +351,11 @@ def setup_package():
     return metadata
 
 if __name__ == '__main__':
+    # On cloning from GitHub the lookup dict doesn't exist so we always must run the generator.
+    # Otherwise the numpy.distutils check for the file occurs before generation.
+    if not os.path.isfile('numexpr3/lookup.pkl'):
+        run_generator()
+
     t0 = time.time()
     sp = setup_package()
     t1 = time.time()
