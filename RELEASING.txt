@@ -20,6 +20,7 @@ Preliminaries
 - Do a commit and a push:
 
   $ git commit -a -m"Getting ready for release X.Y.Z"
+  $ git push
 
 Testing
 -------
@@ -59,20 +60,17 @@ Uploading
 - Upload it in the PyPi repository:
 
   $ python setup.py sdist upload
-
-Build wheels
-------------
-
-Matthew Brett has a nice wheels repository for hosting wheels at
-http://wheels.scipy.org/).  For triggering a build do:
-
-  $ git commit --allow-empty -m"Triggering a build for X.Y.Z release"
+  $ python setup.py register
 
 Announcing
 ----------
 
-- Send an announcement to the NumPy list, PyData and python-announce
-  list.  Use the ``ANNOUNCE.rst`` file as skeleton (or possibly as the
+- Update the release notes in the numexpr site:
+
+  https://github.com/pydata/numexpr/wiki/Release-Notes
+
+- Send an announcement to the NumPy list and python-announce list.
+  Use the ``ANNOUNCE.rst`` file as skeleton (or possibly as the
   definitive version).
 
 
@@ -83,7 +81,8 @@ Post-release actions
   (i.e. X.Y.Z --> X.Y.(Z+1).dev0).
 
 - Create new headers for adding new features in ``RELEASE_NOTES.txt``
-  and add this place-holder:
+  and empty the release-specific information in ``ANNOUNCE.txt`` and
+  add this place-holder instead:
 
   #XXX version-specific blurb XXX#
 
@@ -92,7 +91,6 @@ Post-release actions
 - Commit your changes:
 
   $ git commit -a -m"Post X.Y.Z release actions done"
-  $ git push
 
 
 That's all folks!

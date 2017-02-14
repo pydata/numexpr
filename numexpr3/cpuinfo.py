@@ -99,11 +99,7 @@ class CPUInfoBase(object):
                     return lambda func=self._try_call, attr=attr: func(attr)
             else:
                 return lambda: None
-<<<<<<< HEAD:numexpr/cpuinfo.py
-        raise AttributeError(name)
-=======
         raise AttributeError( name )
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348:numexpr3/cpuinfo.py
 
     def _getNCPUs(self):
         return 1
@@ -279,27 +275,6 @@ class LinuxCPUInfo(CPUInfoBase):
                         self.info[0]['model name'], re.IGNORECASE) is not None
 
     _is_Xeon = _is_XEON
-
-    # Power
-    def _is_Power(self):
-        return re.match(r'.*POWER.*',
-                       self.info[0]['cpu']) is not None
-
-    def _is_Power7(self):
-        return re.match(r'.*POWER7.*',
-                       self.info[0]['cpu']) is not None
-
-    def _is_Power8(self):
-        return re.match(r'.*POWER8.*',
-                       self.info[0]['cpu']) is not None
-
-    def _is_Power9(self):
-        return re.match(r'.*POWER9.*',
-                       self.info[0]['cpu']) is not None
-
-    def _has_Altivec(self):
-        return re.match(r'.*altivec\ supported.*',
-                       self.info[0]['cpu']) is not None
 
     # Varia
 
@@ -523,32 +498,6 @@ class DarwinCPUInfo(CPUInfoBase):
 
     def _is_ppc860(self): return self.__machine(860)
 
-class NetBSDCPUInfo(CPUInfoBase):
-	info = None
-
-	def __init__(self):
-		if self.info is not None:
-			return
-		info = {}
-		info['sysctl_hw'] = key_value_from_command(['sysctl', 'hw'], sep='=')
-		info['arch'] = info['sysctl_hw'].get('hw.machine_arch', 1)
-		info['machine'] = info['sysctl_hw'].get('hw.machine', 1)
-		self.__class__.info = info
-
-	def _not_impl(self): pass
-
-	def _getNCPUs(self):
-		return int(self.info['sysctl_hw'].get('hw.ncpu', 1))
-
-	def _is_Intel(self):
-		if self.info['sysctl_hw'].get('hw.model', "")[0:5] == 'Intel':
-			return True
-		return False
-
-	def _is_AMD(self):
-		if self.info['sysctl_hw'].get('hw.model', "")[0:3] == 'AMD':
-			return True
-		return False
 
 class SunOSCPUInfo(CPUInfoBase):
     info = None
@@ -558,11 +507,11 @@ class SunOSCPUInfo(CPUInfoBase):
             return
         info = command_info(arch='arch',
                             mach='mach',
-                            uname_i=['uname', '-i'],
+                            uname_i='uname_i',
                             isainfo_b=['isainfo', '-b'],
                             isainfo_n=['isainfo', '-n'],
         )
-        info['uname_X'] = key_value_from_command(['uname', '-X'], sep='=')
+        info['uname_X'] = key_value_from_command('uname -X', sep='=')
         for line in command_by_line(['psrinfo', '-v', '0']):
             m = re.match(r'\s*The (?P<p>[\w\d]+) processor operates at', line)
             if m:
@@ -651,16 +600,12 @@ class Win32CPUInfo(CPUInfoBase):
     # mean?
 
     def __init__(self):
-        try:
-            import _winreg
-        except ImportError:  # Python 3
-            import winreg as _winreg
-
         if self.info is not None:
             return
         info = []
         try:
             #XXX: Bad style to use so long `try:...except:...`. Fix it!
+            import _winreg
 
             prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)" \
                               "\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
@@ -691,7 +636,8 @@ class Win32CPUInfo(CPUInfoBase):
                                     info[-1]["Model"] = int(srch.group("MDL"))
                                     info[-1]["Stepping"] = int(srch.group("STP"))
         except:
-            print(sys.exc_value, '(ignoring)')
+            print
+            sys.exc_value, '(ignoring)'
         self.__class__.info = info
 
     def _not_impl(self):
@@ -832,8 +778,6 @@ elif sys.platform.startswith('irix'):
     cpuinfo = IRIXCPUInfo
 elif sys.platform == 'darwin':
     cpuinfo = DarwinCPUInfo
-elif sys.platform[0:6] == 'netbsd':
-    cpuinfo = NetBSDCPUInfo
 elif sys.platform.startswith('sunos'):
     cpuinfo = SunOSCPUInfo
 elif sys.platform.startswith('win32'):
@@ -852,13 +796,16 @@ if __name__ == "__main__":
     cpu.is_Intel()
     cpu.is_Alpha()
 
-    info = []
+    print
+    'CPU information:',
     for name in dir(cpuinfo):
         if name[0] == '_' and name[1] != '_':
             r = getattr(cpu, name[1:])()
             if r:
                 if r != 1:
-                    info.append('%s=%s' % (name[1:], r))
+                    print
+                    '%s=%s' % (name[1:], r),
                 else:
-                    info.append(name[1:])
-    print('CPU information: ' + ' '.join(info))
+                    print
+                    name[1:],
+    print

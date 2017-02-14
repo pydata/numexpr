@@ -45,16 +45,10 @@ void *th_worker(void *tidptr)
     vector<char> out_buffer;
 
     while (1) {
-<<<<<<< HEAD:numexpr/module.cpp
-
-        /* Sentinels have to be initialised yet */
-        gs.init_sentinels_done = 0;
-=======
         
         if (tid==0) {
             gs.init_sentinels_done = 0; // sentinels have to be initialised yet
         }
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348:numexpr3/module.cpp
 
         // Meeting point for all threads (wait for initialization)
         pthread_mutex_lock(&gs.count_threads_mutex);
@@ -201,7 +195,6 @@ int init_threads(void)
 
     // Initialize mutex and condition variable objects
     pthread_mutex_init(&gs.count_mutex, NULL);
-    pthread_mutex_init(&gs.parallel_mutex, NULL);
 
     // Barrier initialization
     pthread_mutex_init(&gs.count_threads_mutex, NULL);
@@ -375,11 +368,7 @@ extern "C" {
 
 #if PY_MAJOR_VERSION >= 3
 
-<<<<<<< HEAD:numexpr/module.cpp
-/* XXX: handle the "global_state" state via moduledef */
-=======
 // Handle the "global_state" state via moduedef 
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348:numexpr3/module.cpp
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "interpreter",

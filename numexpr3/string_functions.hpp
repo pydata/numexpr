@@ -43,16 +43,10 @@
 */
 
 #ifdef _MSC_VER
-<<<<<<< HEAD:numexpr/str-two-way.hpp
-  #if _MSC_VER <= 1500
-    #include "win32/stdint.h"
-  #endif
-=======
 #if _MSC_VER <= 1500
 #include "win32/stdint.h"
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348:numexpr3/string_functions.hpp
 #else
-  #include <stdint.h>
+#include <stdint.h>
 #endif
 #endif
 

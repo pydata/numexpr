@@ -272,13 +272,13 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter,
     iterDataPtr = NpyIter_GetDataPtrArray(iter);
     iterStrides = NpyIter_GetInnerStrideArray(iter);
 
-
+    block_size = *sizePtr;
     // First do all the blocks with a compile-time fixed size.
     // This makes a big difference (30-50% on some tests).
     // RAM: Not-so-much with vectorized loops
-    block_size = *sizePtr;
+    
     while( block_size > 0 ) {
-#define NO_OUTPUT_BUFFERING          
+#define NO_OUTPUT_BUFFERING
 #include "interp_body_GENERATED.cpp"
 #undef NO_OUTPUT_BUFFERING
         iterNext(iter);

@@ -24,24 +24,9 @@ from __config__ import show as _show_config
 from __config__ import get_info as _get_info
 
 
-<<<<<<< HEAD:numexpr/__init__.py
-if cpu.is_AMD() or cpu.is_Intel():
-    is_cpu_amd_intel = True
-else:
-    is_cpu_amd_intel = False
-
-import os, os.path
-import platform
-from numexpr.expressions import E
-from numexpr.necompiler import NumExpr, disassemble, evaluate, re_evaluate
-from numexpr.tests import test, print_versions
-from numexpr.utils import (
-    get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
-=======
 from numexpr3.ne3compiler import NumExpr, evaluate, OPTABLE, wisdom
 from numexpr3.utils import (
     print_info, 
->>>>>>> 3b5260be1d8bdf82b50269b47799b508c6715348:numexpr3/__init__.py
     set_num_threads, detect_number_of_cores, detect_number_of_threads)
 try: # VML functions are no longer created if NumExpr was not compiled with VML
     from numexpr.utils import ( 
