@@ -29,7 +29,7 @@ def mandelbrot_ne3(c, maxiter):
         # as a const if we use 'where(notdone, it, output)'
         # What we really need is an iter( ops, range ) function inside 
         # ne3.  This is an interesting case, since really here we see a 
-        # majority limitation in NumExpr working inside a loop.
+        # major limitation in NumExpr working inside a loop.
         neObj1.run( check_arrays=False )
         output[notdone] = it
         neObj2.run( check_arrays=False )

@@ -73,7 +73,7 @@ for I, arrSize in enumerate( arraySizes ):
         t0 = time()
         ne3.evaluate( 'out_d=A_d*B_d + C_d')
         times_ne3[I] = np.minimum( time() - t0, times_ne3[I] )
-
+        ne3.wisdom.clear()
 
 for I, arrSize in enumerate( arraySizes ):
     np.random.seed(42)
@@ -87,8 +87,8 @@ for I, arrSize in enumerate( arraySizes ):
         ne2.evaluate( 'A_d*B_d + C_d', out=out_d )
         times_ne2[I] = np.minimum( time() - t0, times_ne2[I] )
         # Turn off the CacheDict as it defeats the purpose of benchmarking here
-        ne2._names_cache.clear()
-        ne2._numexpr_cache.clear()
+        ne2.necompiler._names_cache.clear()
+        ne2.necompiler._numexpr_cache.clear()
         
               
     
@@ -143,7 +143,7 @@ for I, arrSize in enumerate( arraySizes ):
         t0 = time()
         ne3.evaluate( 'out_F=A_F*B_F + C_F' )
         times_ne3_F[I] = np.minimum( time() - t0, times_ne3_F[I] )
-
+        ne3.wisdom.clear()
 
 for I, arrSize in enumerate( arraySizes ):
     np.random.seed(42)
@@ -156,8 +156,8 @@ for I, arrSize in enumerate( arraySizes ):
         ne2.evaluate( 'A_F*B_F + C_F', out=out_D )
         times_ne2_F[I] = np.minimum( time() - t0, times_ne2_F[I] )
         # Turn off the CacheDict as it defeats the purpose of benchmarking here
-        ne2._names_cache.clear()
-        ne2._numexpr_cache.clear()
+        ne2.necompiler._names_cache.clear()
+        ne2.necompiler._numexpr_cache.clear()
         
               
 # TODO: also make NumPy 'best-of' rather than a mean

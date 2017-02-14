@@ -21,7 +21,7 @@ import ast
 import numpy as np
 from collections import defaultdict, OrderedDict
 
-# The operations are pickled
+# The operations are saved on disk as a pickled dict
 try: import cPickle as pickle
 except: import pickle
 # For appending long strings, using a buffer is faster than ''.join()
@@ -33,7 +33,7 @@ from struct import pack, unpack, calcsize
 
 # Python 2 to 3 handling
 if sys.version_info[0] >= 3:
-    unicode = str # To suppress warnings only.
+    unicode = str # To suppress warnings only
 
 # interpreter.so/pyd:
 try: 
@@ -83,61 +83,6 @@ _REGKIND_SCALAR = 1
 _REGKIND_TEMP = 2
 _REGKIND_RETURN = 3
 # _REGKIND_ITER = 4 # Like a scalar, but expected to change with each run()
-
-# The wisdomBank connects strings to their NumExpr objects, so if the same 
-# expression pattern is called, it will be retrieved from the bank.
-# Also this permits serialization via pickle.
-class _WisdomBankSingleton(dict):
-    
-    def __init__(self, wisdomFile="", maxEntries=256 ):
-        self.__wisdomFile = wisdomFile
-        self.maxEntries = maxEntries
-        pass
-    
-    
-    @property 
-    def wisdomFile(self):
-        if not bool(self.__wisdomFile):
-            if not os.access( 'ne3_wisdom.pkl', os.W_OK ):
-                raise OSError( 'insufficient permissions to write to {}'.format('ne3_wisdom.pkl') )
-            self.__wisdomFile = 'ne3_wisdom.pkl'
-        return self.__wisdomFile
-    
-    @wisdomFile.setter
-    def wisdomFile(self, newName):
-        '''Check to see if the user has write permisions on the file.'''
-        dirName = os.path.dirname(newName)
-        if not os.access( dirName, os.W_OK ):
-            raise OSError('do not have write perimission for directory {}'.format(dirName))
-        self.__wisdomFile = newName
-    
-    def __setitem__(self, key, value):
-        # Protection against growing the cache too much
-        if len(self) > self.maxentries:
-            # Remove a 10% of random elements from the cache
-            entries_to_remove = self.maxentries // 10
-            for k in self.keys()[:entries_to_remove]:
-                self.__dict__.__delitem__(k)
-        self.__dict__.__setitem__(key, value)
-        
-    def load( self, wisdomFile=None ):
-        if wisdomFile == None:
-            wisdomFile = self.wisdomFile
-            
-        with open( wisdomFile, 'rb' ) as fh:
-            pickle.dump( self.__dict__, fh )
-
-    def dump( self, wisdomFile=None ):
-        if wisdomFile == None:
-            wisdomFile = self.wisdomFile
-            
-        with open( wisdomFile, 'wb' ) as fh:
-            self.__dict__ = pickle.load( fh )
-
-    
-
-wisdom = _WisdomBankSingleton()
-
 
 
 # TODO: implement non-default casting, optimization, library, checks
@@ -251,14 +196,18 @@ def evaluate( expr, name=None, lib=LIB_STD,
     # Signature from NE2:
     # numexpr_key = ('a**b', (('optimization', 'aggressive'), ('truediv', False)), 
     #           (('a', <class 'numpy.float64'>), ('b', <class 'numpy.float64'>)))
-    signature = (expr, order, casting, optimization)
-    if signature in wisdomBank:
-        raise NotImplementedError('TODO: wisdom bank')
+    # TODO: the signature should also include the dtypes of the arrays.  That
+    # cannot change, most other things can.
+    # We used to have self.dtypes but how to discover the dtypes without calling the 
+    # ast parser?  Maybe this is just an advantage of using the NumExpr object.
+    signature = (expr, lib, casting)
+    if signature in wisdom:
+        return wisdom[signature].run( local_dict=local_dict, stackDepth=stackDepth+1)
     else:
         neObj = NumExpr( expr, lib=lib, casting=casting, stackDepth=stackDepth,
                         local_dict=local_dict, _global_dict=_global_dict )
         # neObj.assemble() called on __init__()
-        return neObj.run( check_arrays=False, stackDepth=neObj._stackDepth+1 )
+        return neObj.run( check_arrays=False, stackDepth=stackDepth+1 )
     
 
 
@@ -294,35 +243,33 @@ class NumExpr(object):
     def __init__(self, expr, lib=LIB_STD, casting=CAST_SAFE, local_dict=None, 
                  _global_dict=None, stackDepth=1 ):
         
+        # Public
         self.expr = expr
-        self._regCount = np.nditer( np.arange(NumExpr.MAX_ARGS) )
-        
         self.program = b''
         self.lib = lib
         self.casting = casting
-        
-        self._stackDepth = stackDepth # How many frames 'up' to promote outputs
-        
-        self._occupiedTemporaries = set()
-        self._freeTemporaries = set()
-        self._messages = []            # For debugging
-        
-        self._compiled_exec = None    # Handle to the C-api NumExprObject
-        self._outputs = []  # Not used at present
-        
-        self._lastOp = False             # sentinel
-        self._unallocatedOutput = False  # sentinel
-        self._retChar = ''
-        self._broadCast = None
-    
-        # Public
-        self.inputNames = []  # Not used at present
         self.outputTarget = None
         self.namesReg = OrderedDict()
-        self.codeStream = BytesIO()
+        self.unallocatedOutput = False  # sentinel
+        self.retChar = ''
         
+        # Protected
+        # 'protected' variables are not needed for serialization
+        self._regCount = np.nditer( np.arange(NumExpr.MAX_ARGS) )
+        self._stackDepth = stackDepth # How many frames 'up' to promote outputs
+        
+        self._codeStream = BytesIO()
+        self._occupiedTemporaries = set()
+        self._freeTemporaries = set()
+        self._messages = []           # For debugging
+        # It would be great if the _compiled_exec could be pickled, but that 
+        # seems difficult. Is there a C-API interface that we could implement?
+        # And just write out the structs arrays as bytes?
+        self._compiled_exec = None    # Handle to the C-api NumExprObject
+        self._lastOp = False          # sentinel
+        self._broadCast = None
+
         # Get references to frames
-        
         call_frame = sys._getframe( self._stackDepth ) 
         if local_dict is None:
             self.local_dict = call_frame.f_locals
@@ -350,6 +297,7 @@ class NumExpr(object):
         NumExpr.assemble() can be used in the context of having a pool of 
         NumExpr objects; it is always called by __init__().
         '''
+        global wisdom
         # Here we assume the local/global_dicts have been populated with 
         # __init__.  
         # Otherwise we have issues with stackDepth being different depending 
@@ -383,11 +331,11 @@ class NumExpr(object):
             else:
                 raise NotImplementedError( 'Unknown ast body: {}'.format(bodyType) )
                                   
-        if self._unallocatedOutput:
+        if self.unallocatedOutput:
             # Discover the expected dtype and shape of the output
-            self.namesReg.pop(self._unallocatedOutput[4])
-            self.namesReg[self.outputTarget] = self._unallocatedOutput = \
-                         (self._unallocatedOutput[0], None, self._retChar, 
+            self.namesReg.pop(self.unallocatedOutput[4])
+            self.namesReg[self.outputTarget] = self.unallocatedOutput = \
+                         (self.unallocatedOutput[0], None, self.retChar, 
                           _REGKIND_RETURN, self.outputTarget )
                                             
         # The OrderedDict for namesReg isn't needed if we sort the tuples, 
@@ -395,11 +343,15 @@ class NumExpr(object):
         regsToInterpreter = tuple( sorted(self.namesReg.values() ) )
         
         # Collate the inputNames as well as the the required outputs
-        self.program = self.codeStream.getvalue()
+        self.program = self._codeStream.getvalue()
+        
+        # Add self to the wisdom
+        wisdom[(self.expr, self.lib, self.casting)] = self
+        # Maybe we should have a set as well?
         # print( "assemble: regsToInterpreter: " + str(regsToInterpreter))
         self._compiled_exec = interpreter.NumExpr( program=self.program, 
                                              registers=regsToInterpreter )
-
+        
         
     
     def disassemble( self ):
@@ -463,7 +415,11 @@ class NumExpr(object):
         if stackDepth == None:
             stackDepth = self._stackDepth
 
-        if check_arrays:
+        if local_dict is not None:
+            # RAM: It occurs to me we don't need to keep the 4th register around if
+            # we zip the keys to the back of values
+            args = [local_dict[reg[4]] for reg in self.namesReg.values() if reg[3] == _REGKIND_ARRAY]
+        elif check_arrays:
             # Renew references to frames
             call_frame = sys._getframe( stackDepth ) 
             if local_dict is None:
@@ -494,7 +450,7 @@ class NumExpr(object):
                               (not self.outputTarget in self._global_dict) )
         
         #print( "args2: " + str(args) )
-        if bool(self._unallocatedOutput):
+        if bool(self.unallocatedOutput):
             op, retN, *argNs = unpack( _UNPACK, self.program[-6:] )
             #print( "Broadcast for op: {}, ret: {}, a1: {}, a2: {}, a3: {}".format(
             #        op, retN, argNs[0], argNs[1], argNs[2] ) )
@@ -507,7 +463,7 @@ class NumExpr(object):
             # such as inside the AST parse with _lastOp?
             arraysOrdered = [reg[1] for reg in sorted( self.namesReg.values() )]
             self._broadCast = np.broadcast( *[arraysOrdered[N] for N in argNs if arraysOrdered[N] is not None] )
-            unalloc = np.empty( self._broadCast.shape, dtype=self._retChar )
+            unalloc = np.empty( self._broadCast.shape, dtype=self.retChar )
             
             print( 'Unallocated output: {} broadcast shape: {}, dtype: {}'.format(self.outputTarget, unalloc.shape, unalloc.dtype) )
             
@@ -516,7 +472,7 @@ class NumExpr(object):
             # TODO: re-write this args insertion mess, it can go inside 
             # the if len(args)==0 loop above.
             arrayCnt = 0
-            outId = ord(self._unallocatedOutput[0])
+            outId = ord(self.unallocatedOutput[0])
             for reg in self.namesReg.values():
                 regId = ord(reg[0])
                 if regId >= outId:
@@ -528,6 +484,7 @@ class NumExpr(object):
         else:
             unalloc = None
 
+            
         self._compiled_exec( *args, ex_uses_vml=ex_uses_vml, **kwargs )
         
         if promoteResult and self.outputTarget is not None:
@@ -542,7 +499,6 @@ class NumExpr(object):
             return unalloc
         return
     
-
     def _assign(self, node ):
         # node.targets is a list; It must have a len=1 for NumExpr3
         # node.value is likely a BinOp, Call, Comparison, or BoolOp
@@ -559,7 +515,7 @@ class NumExpr(object):
     def _expression(self, node ):
         # For expressions we have to return the value instead of promoting it.
         valueTup = self._ASTAssembler[type(node.value)](node.value)
-        self._unallocatedOutput = valueTup
+        self.unallocatedOutput = valueTup
         return valueTup
         
            
@@ -686,12 +642,12 @@ class NumExpr(object):
     def _magic_output( self, outputTup ):
         # 
         if outputTup is None:
-            outputTup = self._newTemp( self._retChar )
+            outputTup = self._newTemp( self.retChar )
         elif outputTup[2] == None: 
             self.namesReg[outputTup[4]] = outputTup = \
-                                 (outputTup[0], outputTup[1], self._retChar, outputTup[3], outputTup[4] )
+                                 (outputTup[0], outputTup[1], self.retChar, outputTup[3], outputTup[4] )
             if self._lastOp:
-                self._unallocatedOutput = outputTup
+                self.unallocatedOutput = outputTup
         return outputTup
         
     
@@ -706,7 +662,7 @@ class NumExpr(object):
           
         # Format: (opCode, lib, left_register, right_register)
         try:
-            opWord, self._retChar = OPTABLE[  (type(node.op), self.lib, leftTup[2], rightTup[2] ) ]
+            opWord, self.retChar = OPTABLE[  (type(node.op), self.lib, leftTup[2], rightTup[2] ) ]
         except KeyError as e:
             if leftTup[2] == None or rightTup[2] == None:
                 raise ValueError( 
@@ -719,7 +675,7 @@ class NumExpr(object):
         outputTup = self._magic_output( outputTup )
             
         #_messages.append( 'BinOp: %s %s %s' %( node.left, type(node.op), node.right ) )
-        self.codeStream.write( b"".join( (opWord, outputTup[0], leftTup[0], rightTup[0], _NULL_REG ))  )
+        self._codeStream.write( b"".join( (opWord, outputTup[0], leftTup[0], rightTup[0], _NULL_REG ))  )
         
         # Release the leftTup and rightTup if they are temporaries and weren't reused.
         if leftTup[3] == _REGKIND_TEMP and leftTup[0] != outputTup[0]: 
@@ -738,33 +694,33 @@ class NumExpr(object):
         # Would be nice to have a prettier way to fill out the program 
         # than if-else block?
         if len(argTups) == 1:
-            opCode, self._retChar = OPTABLE[ (node.func.id, self.lib,
+            opCode, self.retChar = OPTABLE[ (node.func.id, self.lib,
                                argTups[0][2]) ]
             outputTup = self._magic_output( outputTup )
             
 
-            self.codeStream.write( b"".join( (opCode, outputTup[0], 
+            self._codeStream.write( b"".join( (opCode, outputTup[0], 
                                 argTups[0][0], _NULL_REG, _NULL_REG)  )  )
             
         elif len(argTups) == 2:
             argTups = self._cast2( *argTups )
-            opCode, self._retChar = OPTABLE[ (node.func.id, self.lib,
+            opCode, self.retChar = OPTABLE[ (node.func.id, self.lib,
                                argTups[0][2], argTups[1][2]) ]
             outputTup = self._magic_output( outputTup )
                     
 
-            self.codeStream.write( b"".join( (opCode, outputTup[0], 
+            self._codeStream.write( b"".join( (opCode, outputTup[0], 
                                argTups[0][0], argTups[1][0], _NULL_REG)  )  )
             
         elif len(argTups) == 3: 
             # The where() ternary operator function is currently the _only_
             # 3 argument function
             argTups[1], argTups[2] = self._cast2( argTups[1], argTups[2] )
-            opCode, self._retChar = OPTABLE[ (node.func.id, self.lib,
+            opCode, self.retChar = OPTABLE[ (node.func.id, self.lib,
                                argTups[0][2], argTups[1][2], argTups[2][2]) ]
             outputTup = self._magic_output( outputTup )
                     
-            self.codeStream.write( b"".join( (opCode, outputTup[0], 
+            self._codeStream.write( b"".join( (opCode, outputTup[0], 
                                argTups[0][0], argTups[1][0], argTups[2][0])  )  )
             
         else:
@@ -831,7 +787,7 @@ class NumExpr(object):
         outputTup = self._magic_output( outputTup )
         
         try:
-            opWord, self._retChar = OPTABLE[  (type(node.op), self.lib, operandTup[2] ) ]
+            opWord, self.retChar = OPTABLE[  (type(node.op), self.lib, operandTup[2] ) ]
         except KeyError as e:
             if operandTup[2] == None :
                 raise ValueError( 
@@ -839,7 +795,7 @@ class NumExpr(object):
                                 operandTup[4]) )
             else:
                 raise e
-        self.codeStream.write( b"".join( (opWord, outputTup[0], operandTup[0], _NULL_REG, _NULL_REG ))  )  
+        self._codeStream.write( b"".join( (opWord, outputTup[0], operandTup[0], _NULL_REG, _NULL_REG ))  )  
          
         # Release the operandTup if it was a temporary
         if operandTup[3] == _REGKIND_TEMP and operandTup[0] != outputTup[0]: 
@@ -854,7 +810,7 @@ class NumExpr(object):
             # Make a new temporary
             castTup = self._newTemp( rightD )
             
-            self.codeStream.write( b"".join( 
+            self._codeStream.write( b"".join( 
                     (OPTABLE[('cast',self.casting,rightD,leftD)][0], castTup[0], 
                              leftTup[0], _NULL_REG, _NULL_REG)  ) )
             return castTup, rightTup
@@ -862,7 +818,7 @@ class NumExpr(object):
             # Make a new temporary
             castTup = self._newTemp( leftD )
                         
-            self.codeStream.write( b"".join( 
+            self._codeStream.write( b"".join( 
                     (OPTABLE[('cast',self.casting,leftD,rightD)][0], castTup[0], 
                              rightTup[0], _NULL_REG, _NULL_REG) ) )
             return leftTup, castTup
@@ -881,4 +837,63 @@ class NumExpr(object):
         raise KeyError( 'unimplmented ASTNode' + type(node) )
         
     
+# The wisdomBank connects strings to their NumExpr objects, so if the same 
+# expression pattern is called, it will be retrieved from the bank.
+# Also this permits serialization via pickle.
+class _WisdomBankSingleton(dict):
     
+    def __init__(self, wisdomFile="", maxEntries=256 ):
+        # Call super
+        super(_WisdomBankSingleton, self).__init__( self )
+        # attribute dictionary breaks a lot of things in the intepreter
+        # dict.__init__(self)
+        self.__wisdomFile = wisdomFile
+        self.maxEntries = maxEntries
+        pass
+    
+    @property 
+    def wisdomFile(self):
+        if not bool(self.__wisdomFile):
+            if not os.access( 'ne3_wisdom.pkl', os.W_OK ):
+                raise OSError( 'insufficient permissions to write to {}'.format('ne3_wisdom.pkl') )
+            self.__wisdomFile = 'ne3_wisdom.pkl'
+        return self.__wisdomFile
+    
+    @wisdomFile.setter
+    def wisdomFile(self, newName):
+        '''Check to see if the user has write permisions on the file.'''
+        dirName = os.path.dirname(newName)
+        if not os.access( dirName, os.W_OK ):
+            raise OSError('do not have write perimission for directory {}'.format(dirName))
+        self.__wisdomFile = newName
+    
+    def __setitem__(self, key, value):
+        # Protection against growing the cache too much
+        if len(self) > self.maxEntries:
+            # Remove a 10% of random elements from the cache
+            entries_to_remove = self.maxEntries // 10
+            for cull in self.keys()[:entries_to_remove]:
+                super(_WisdomBankSingleton, self).__delitem__(cull)
+                #self.__dict__.__delitem__(cull)
+        #self.__dict__[key] = value
+        super(_WisdomBankSingleton, self).__setitem__(key, value)
+         
+# Pickling cannot work as desired because the C-api numexpr.NumExpr object 
+# isn't a Python object.  So probably it's necessary to build things from 
+# JSON? Would that actually be faster?  Or we can define the state functions.
+# Would have to define __getstate__ and __setstate__ in module.cpp
+#    def load( self, wisdomFile=None ):
+#        if wisdomFile == None:
+#            wisdomFile = self.wisdomFile
+#            
+#        with open( wisdomFile, 'rb' ) as fh:
+#            self = pickle.load(fh)
+#
+#    def dump( self, wisdomFile=None ):
+#        if wisdomFile == None:
+#            wisdomFile = self.wisdomFile
+#        print( "DEBUG" )    
+#        with open( wisdomFile, 'wb' ) as fh:
+#            pickle.dump(self, fh)
+
+wisdom = _WisdomBankSingleton()

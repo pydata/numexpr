@@ -27,8 +27,11 @@ from __config__ import get_info as _get_info
 from numexpr3.ne3compiler import NumExpr, evaluate, OPTABLE, wisdom
 from numexpr3.utils import (
     print_info, 
-    get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
     set_num_threads, detect_number_of_cores, detect_number_of_threads)
+try: # VML functions are no longer created if NumExpr was not compiled with VML
+    from numexpr.utils import ( 
+            get_vml_version, set_vml_accuracy_mode, set_vml_num_threads )
+except ImportError: pass
 
 # Detect the number of cores
 # RAM: the functions in util doesn't update numexpr.ncores or numexpr.nthreads, 
