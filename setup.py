@@ -93,7 +93,8 @@ def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     # interp_generator.py.  This saves recompiling if its not needed.
     GENERATED_files = glob.glob( 'numexpr3/*GENERATED*' ) + glob.glob( 'numexpr3/tests/*GENERATED*' )
     generator_time  = os.path.getmtime( 'code_generators/interp_generator.py' )
-    if all( [generator_time < os.path.getmtime(GEN_file) for GEN_file in GENERATED_files] ):
+    if all( [generator_time < os.path.getmtime(GEN_file) for GEN_file in GENERATED_files] ) and \
+        os.path.isfile('numexpr3/lookup.pkl'):
         return
     # This no-generated could cause problems if people clone from GitHub and 
     # we insert configuration tricks into the code_generator directory.
