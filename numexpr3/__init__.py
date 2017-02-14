@@ -18,28 +18,15 @@ See:
 https://github.com/pydata/numexpr
 
 for more info about it.
-
 """
 
-from __config__ import show as show_config, get_info
+from __config__ import show as _show_config
+from __config__ import get_info as _get_info
 
-if get_info('mkl'):
-    use_vml = True
-else:
-    use_vml = False
 
-from .cpuinfo import cpu
-
-if cpu.is_AMD() or cpu.is_Intel():
-    is_cpu_amd_intel = True
-else:
-    is_cpu_amd_intel = False
-
-import os, os.path
-import platform
-from numexpr3.ne3compiler import NumExpr, evaluate, OPTABLE
-from numexpr3.tests import test, print_versions
+from numexpr3.ne3compiler import NumExpr, evaluate, OPTABLE, wisdom
 from numexpr3.utils import (
+    print_info, 
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
     set_num_threads, detect_number_of_cores, detect_number_of_threads)
 
@@ -49,10 +36,11 @@ ncores = detect_number_of_cores()
 nthreads = detect_number_of_threads()
 
 # Initialize the number of threads to be used
-if 'sparc' in platform.machine():
-    import warnings
+import platform as __platform
+if 'sparc' in __platform.machine():
+    import warnings as __warnings
 
-    warnings.warn('The number of threads have been set to 1 because problems related '
+    __warnings.warn('The number of threads have been set to 1 because problems related '
                   'to threading have been reported on some sparc machine. '
                   'The number of threads can be changed using the "set_num_threads" '
                   'function.')

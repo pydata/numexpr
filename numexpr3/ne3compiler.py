@@ -85,15 +85,58 @@ _REGKIND_RETURN = 3
 # _REGKIND_ITER = 4 # Like a scalar, but expected to change with each run()
 
 # The wisdomBank connects strings to their NumExpr objects, so if the same 
-# expression pattern is called, it  will be retrieved from the bank.
-# Also this permits serialization.
+# expression pattern is called, it will be retrieved from the bank.
+# Also this permits serialization via pickle.
 class _WisdomBankSingleton(dict):
     
-    def __init__(self, wisdomName="default_wisdom.pkl" ):
+    def __init__(self, wisdomFile="", maxEntries=256 ):
+        self.__wisdomFile = wisdomFile
+        self.maxEntries = maxEntries
         pass
     
-# TODO: add load and dump functionality.
-wisdomBank = _WisdomBankSingleton()
+    
+    @property 
+    def wisdomFile(self):
+        if not bool(self.__wisdomFile):
+            if not os.access( 'ne3_wisdom.pkl', os.W_OK ):
+                raise OSError( 'insufficient permissions to write to {}'.format('ne3_wisdom.pkl') )
+            self.__wisdomFile = 'ne3_wisdom.pkl'
+        return self.__wisdomFile
+    
+    @wisdomFile.setter
+    def wisdomFile(self, newName):
+        '''Check to see if the user has write permisions on the file.'''
+        dirName = os.path.dirname(newName)
+        if not os.access( dirName, os.W_OK ):
+            raise OSError('do not have write perimission for directory {}'.format(dirName))
+        self.__wisdomFile = newName
+    
+    def __setitem__(self, key, value):
+        # Protection against growing the cache too much
+        if len(self) > self.maxentries:
+            # Remove a 10% of random elements from the cache
+            entries_to_remove = self.maxentries // 10
+            for k in self.keys()[:entries_to_remove]:
+                self.__dict__.__delitem__(k)
+        self.__dict__.__setitem__(key, value)
+        
+    def load( self, wisdomFile=None ):
+        if wisdomFile == None:
+            wisdomFile = self.wisdomFile
+            
+        with open( wisdomFile, 'rb' ) as fh:
+            pickle.dump( self.__dict__, fh )
+
+    def dump( self, wisdomFile=None ):
+        if wisdomFile == None:
+            wisdomFile = self.wisdomFile
+            
+        with open( wisdomFile, 'wb' ) as fh:
+            self.__dict__ = pickle.load( fh )
+
+    
+
+wisdom = _WisdomBankSingleton()
 
 
 
@@ -339,7 +382,6 @@ class NumExpr(object):
                 
             else:
                 raise NotImplementedError( 'Unknown ast body: {}'.format(bodyType) )
-
                                   
         if self._unallocatedOutput:
             # Discover the expected dtype and shape of the output
@@ -830,7 +872,7 @@ class NumExpr(object):
                 
         
     def _cast3(self, leftTup, midTup, rightTup ):
-        # This isn't called by where/tenary so no need for an implementation
+        # _cast3 isn't called by where/tenary so no need for an implementation
         # at present.
         self._messages.append( 'TODO: implement 3-argument casting' )
         return leftTup, midTup, rightTup
@@ -838,9 +880,5 @@ class NumExpr(object):
     def _unsupported(self, node, outputTuple=None ):
         raise KeyError( 'unimplmented ASTNode' + type(node) )
         
-    
-if __name__ == '__main__':
-    a = np.ones( 5 )
-    out = evaluate( '-a' )
     
     
