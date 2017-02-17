@@ -396,8 +396,7 @@ class NumExpr(object):
         for val in self.namesReg.values(): print( '{}:{}'.format( val[4], val[3])  )
         
         
-    def run(self, *args, stackDepth=None, local_dict=None,
-            check_arrays=True, ex_uses_vml=False, **kwargs ):
+    def run(self, **kwargs):
         '''
         It is preferred to call run() with keyword arguments as the order of 
         args is based on the Abstract Syntax Tree parse and may be 
@@ -407,19 +406,45 @@ class NumExpr(object):
         
         where {a,b,out} were the original names in the expression.
         
-            check_arrays: {True} Resamples the calling frame to grab arrays. 
+        Keyword arguments are:
+            
+            stackDepth {None}: Generally not needed, tells the function how 
+            many stacks up it was called from.
+            
+            local_dict {None}: A optional dict containing all of the arrays 
+            required for calculation.  Saves the Python interpreter some time 
+            in looking them up from the calling namespace. 
+            Note that this is somewhat superfluous as its functionality is 
+            mimiced by kwargs.  
+        
+            check_arrays {True}: Resamples the calling frame to grab arrays. 
               There is some overhead associated with grabbing the frames so 
               if inside a loop and using run on the same arrays repeatedly 
               then try `False`. 
+              
+            ex_uses_vml {False}: Not currently used.  Present for backward 
+              compatibility with NumExpr 2.6.
         '''
-        if stackDepth == None:
+        # For Python 2.7 compatibility, mixing proper keyword arguments and 
+        # **kwargs does not work so well, so check for the keys in kwargs
+        # instead.
+        if not 'stackDepth' in kwargs:
             stackDepth = self._stackDepth
+        else: 
+            stackDepth = kwargs['stackDepth']
+            
 
-        if local_dict is not None:
+        if not 'ex_uses_vml' in kwargs:
+            ex_uses_vml = False
+
+        local_dict = None
+        if 'local_dict' in kwargs and bool(kwargs['local_dict']):
             # RAM: It occurs to me we don't need to keep the 4th register around if
             # we zip the keys to the back of values
+            local_dict = kwargs['local_dict']
+
             args = [local_dict[reg[4]] for reg in self.namesReg.values() if reg[3] == _REGKIND_ARRAY]
-        elif check_arrays:
+        elif 'check_arrays' in kwargs and bool(kwargs['check_arrays']):
             # Renew references to frames
             call_frame = sys._getframe( stackDepth ) 
             if local_dict is None:
@@ -429,16 +454,13 @@ class NumExpr(object):
                 self.local_dict = local_dict
                 #self._global_dict = [None]
                 
-            
-            # Build args if it was passed in as names
             # TODO: a smoother function interface.
-            if len(args) == 0:
-                # Build args from kwargs and the list of known names
-                args = []
-                for regKey in self.namesReg:     
-                    if regKey in kwargs:
-                        args.append( kwargs[regKey] )
-                        kwargs.pop( regKey )
+            # Build args from kwargs and the list of known names
+            args = []
+            for regKey in self.namesReg:     
+                if regKey in kwargs:
+                    args.append( kwargs[regKey] )
+                    kwargs.pop( regKey )
         else:
             args = [reg[1] for reg in self.namesReg.values() if reg[3] == _REGKIND_ARRAY]
             if len(args) == 0:
@@ -451,10 +473,12 @@ class NumExpr(object):
         
         #print( "args2: " + str(args) )
         if bool(self.unallocatedOutput):
-            op, retN, *argNs = unpack( _UNPACK, self.program[-6:] )
+            # Can't *assign in Python 2.7
+            # op, retN, *argNs = unpack( _UNPACK, self.program[-6:] )
+            op, retN, arg1, arg2, arg3 = unpack( _UNPACK, self.program[-6:] )
             #print( "Broadcast for op: {}, ret: {}, a1: {}, a2: {}, a3: {}".format(
             #        op, retN, argNs[0], argNs[1], argNs[2] ) )
-            argNs = [N for N in argNs if N != ord(_NULL_REG)]
+            argNs = [N for N in (arg1,arg2,arg3) if N != ord(_NULL_REG)]
             
             if retN != ord(self.namesReg[self.outputTarget][0]):
                 raise ValueError( 'Last program set destination to other than output' )
@@ -872,9 +896,14 @@ class _WisdomBankSingleton(dict):
         if len(self) > self.maxEntries:
             # Remove a 10% of random elements from the cache
             entries_to_remove = self.maxEntries // 10
-            for cull in self.keys()[:entries_to_remove]:
-                super(_WisdomBankSingleton, self).__delitem__(cull)
-                #self.__dict__.__delitem__(cull)
+            # This code doesn't work in Python 3.
+            keysView = list(self.keys())
+            for I, cull in enumerate(keysView):
+                # super(_WisdomBankSingleton, self).__delitem__(cull)
+                self.pop(cull)
+                if I >= entries_to_remove: 
+                    break
+                
         #self.__dict__[key] = value
         super(_WisdomBankSingleton, self).__setitem__(key, value)
          

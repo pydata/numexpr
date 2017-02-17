@@ -157,7 +157,13 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
         arrays[I] = (PyObject *)PyTuple_GET_ITEM( iter_reg, 1 );
 
         // Python does error checking here for us.
+        // PyUnicode_AsUTF8 doesn't exist in 2.7
+        // We can use PyString_AsString
+#if PY_MAJOR_VERSION >= 3        
         registers[I].dchar = (char)PyUnicode_AsUTF8( PyTuple_GetItem( iter_reg, 2 ) )[0];
+#else        
+        registers[I].dchar = (char)PyString_AsString( PyTuple_GetItem( iter_reg, 2 ) )[0];  
+#endif
         registers[I].kind = (npy_uint8)PyLong_AsUnsignedLong( PyTuple_GetItem( iter_reg, 3 ) );
 
         // PyArray_ITEMSIZE gives a wrong result for scalars (and strings), so 

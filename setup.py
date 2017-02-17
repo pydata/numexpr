@@ -10,7 +10,7 @@
 ####################################################################
 
 import shutil
-import os, os.path, sys, glob
+import os, os.path, sys, glob, inspect
 from distutils.command.clean import clean
 import time
 import setuptools
@@ -97,12 +97,16 @@ def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
         and os.path.isfile('numexpr3/lookup.pkl'):
         print( "=Generation not required=" )
         return
+    # Python 2.7 cannot do relative imports here so we need to use inspect to 
+    # modify the PYTHONPATH.
+    setup_fileName = inspect.getfile(inspect.currentframe())
+    GEN_dir = os.path.join( os.path.abspath( os.path.dirname(setup_fileName)), 'code_generators' )
+    sys.path.insert(0,GEN_dir) 
+    
     # This no-generated could cause problems if people clone from GitHub and 
     # we insert configuration tricks into the code_generator directory.
     # TODO: It also needs to see if the stubs have been incremented.
-    
-    
-    from code_generators import interp_generator
+    import interp_generator
     print( '=====GENERATING INTERPRETER CODE=====' )
     # Try to auto-detect MKL and C++/11 here.
     # mkl=True 

@@ -218,7 +218,7 @@ np.testing.assert_array_almost_equal( np.cosh(ncx), out_c )
 # DEBUG: why do calls to NE2 slow down NE3?  Maybe the interpreter 
 # is doing some extra work in the background?
 neObj = ne3.NumExpr( 'out=a+b' )
-neObj.run( out, a, b )
+neObj.run( out=out, a=a, b=b )
 
 da = a[::4]
 db = b[::4]
@@ -226,7 +226,7 @@ out_stride1 = np.empty_like(da)
 out_stride2 = np.empty_like(da)
 t30 = time()
 neObj = ne3.NumExpr( 'out_stride1 = da*db' )
-neObj.run( out_stride1, da, db )
+neObj.run( da=da, db=db )
 t31 = time()
 ne2.evaluate( 'da*db', out=out_stride2 )
 t32 = time()

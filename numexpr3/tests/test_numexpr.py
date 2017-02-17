@@ -962,7 +962,8 @@ def suite():
 
 
 if __name__ == '__main__':
-    print_versions()
-    unittest.main(defaultTest='suite')
+    print( "The NumExpr2 test suite is deprecated and will be replaced shortly." )
+    print( "autotest_GENERATED.py and handtests_ne3.py are the current tests" )
+    #unittest.main(defaultTest='suite')
 #    suite = suite()
 #    unittest.TextTestRunner(verbosity=2).run(suite)
