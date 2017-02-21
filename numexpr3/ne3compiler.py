@@ -30,6 +30,14 @@ except: from io import BytesIO
 # struct.pack is the quickest way to build the program as structs
 # All important format characters: https://docs.python.org/2/library/struct.html
 from struct import pack, unpack, calcsize
+# Due to global state in the C-API, we need to restrict the module to running 
+# one expression per Python process.
+# Rather than use a threading.Lock(), use a queue.Queue() as it has a timeout 
+# in Py2.7
+from queue import Queue
+_NE_RUN_LOCK = Queue( maxsize=1 )
+_NE_RUN_TIMEOUT = 60
+_NE_RUN_LOCK.put(1, block=False)
 
 # Python 2 to 3 handling
 if sys.version_info[0] >= 3:
@@ -209,7 +217,6 @@ def evaluate( expr, name=None, lib=LIB_STD,
         # neObj.assemble() called on __init__()
         return neObj.run( check_arrays=False, stackDepth=stackDepth+1 )
     
-
 
 class NumExpr(object):
     """
@@ -508,8 +515,9 @@ class NumExpr(object):
         else:
             unalloc = None
 
-            
+        _NE_RUN_LOCK.get(block=True, timeout=_NE_RUN_TIMEOUT)
         self._compiled_exec( *args, ex_uses_vml=ex_uses_vml, **kwargs )
+        _NE_RUN_LOCK.put(1, block=False)
         
         if promoteResult and self.outputTarget is not None:
             # Insert result into calling frame
