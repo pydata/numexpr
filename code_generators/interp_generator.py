@@ -846,10 +846,19 @@ def OpsFactory( opsList ):
     # * In NE2 division tried to out-smart the compiler with a ternary
     #   operation but it's easier to let the compiler determine when a 
     #   INFINITY or NAN result is generated.
-    opsList +=[Operation( ast.Div, '$DEST = (npy_float64)$ARG1 / (npy_float64)$ARG2',
-                          (LIB_STD,), ['d']*len(BOOL+ALL_INT), [BOOL+ALL_INT, BOOL+ALL_INT] )]
-    opsList +=[Operation( ast.Div, '$DEST = $ARG1 / $ARG2', (LIB_STD,),
-                      DECIMAL, [DECIMAL, DECIMAL] )]
+    if sys.version_info.major >= 3:
+        opsList +=[Operation( ast.Div, '$DEST = (npy_float64)$ARG1 / (npy_float64)$ARG2',
+                              (LIB_STD,), ['d']*len(BOOL+ALL_INT), [BOOL+ALL_INT, BOOL+ALL_INT] )]
+        opsList +=[Operation( ast.Div, '$DEST = $ARG1 / $ARG2', (LIB_STD,),
+                          DECIMAL, [DECIMAL, DECIMAL] )]
+        # Floor division
+        opsList += [Operation(ast.FloorDiv, '$DEST = $ARG1/$ARG2',
+                               (LIB_STD,), ALL_INT, [ALL_INT,ALL_INT] )]
+    else: # Python 2.7
+        opsList +=[Operation( ast.Div, '$DEST = $ARG1 / $ARG2', (LIB_STD,),
+                          ALL_NUM, [ALL_NUM, ALL_NUM] )]
+        opsList +=[Operation( 'truediv', '$DEST = (npy_float64)$ARG1 / (npy_float64)$ARG2',
+                              (LIB_STD,), ['d']*len(BOOL+ALL_INT), [BOOL+ALL_INT, BOOL+ALL_INT] )]
     
     ###### Mathematical functions ######
     # TODO: How to handle integer pow in a 'nice' way? We don't want to do it 
