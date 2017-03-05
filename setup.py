@@ -62,7 +62,7 @@ if sys.version_info.major == 3 and sys.version_info.minor < 3:
 # Increment version for each PyPi release.
 major_ver = 3
 minor_ver = 0
-nano_ver = 0
+nano_ver = 1
 branch = 'a0'
 version = '%d.%d.%d%s' % (major_ver, minor_ver, nano_ver, branch)
 
@@ -250,10 +250,10 @@ def setup_package():
                             ],
                 'libraries': ['m'],
                 # Now how to get setuptools to actually pass arguments to MSVC?
-                'extra_compile_args': [ # '-funroll-loops',
-                    '-fdiagnostics-color=always', 
-                     '-fopt-info-vec',
-                    ],
+#                'extra_compile_args': [ # '-funroll-loops',
+#                    '-fdiagnostics-color=always', 
+#                     '-fopt-info-vec',
+#                    ],
             }
             dict_append(extension_config_data, **mkl_config_data)
             if 'library_dirs' in mkl_config_data:

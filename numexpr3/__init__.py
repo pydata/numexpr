@@ -20,8 +20,10 @@ https://github.com/pydata/numexpr
 for more info about it.
 """
 
-from __config__ import show as _show_config
-from __config__ import get_info as _get_info
+from __future__ import absolute_import
+
+from .__config__ import show as _show_config
+from .__config__ import get_info as _get_info
 
 
 from numexpr3.ne3compiler import NumExpr, evaluate, OPTABLE, wisdom
