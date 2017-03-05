@@ -399,7 +399,7 @@ _inline_sqrt( npy_complex128 x, npy_complex128 &r )
     if (x.real == 0. && x.imag == 0.)
         r = x;
     else {
-        s = sqrtf((fabsf(x.real) + hypotf(x.real,x.imag))/2);
+        s = sqrt((fabs(x.real) + hypotf(x.real,x.imag))/2);
         d = x.imag/(2*s);
         if (x.real > 0.) {
             r.real = s;
