@@ -34,7 +34,11 @@ from struct import pack, unpack, calcsize
 # one expression per Python process.
 # Rather than use a threading.Lock(), use a queue.Queue() as it has a timeout 
 # in Py2.7
-from queue import Queue
+if sys.version_info[0] >= 3:
+    from queue import Queue
+else:
+    from Queue import Queue
+
 _NE_RUN_LOCK = Queue( maxsize=1 )
 _NE_RUN_TIMEOUT = 60
 _NE_RUN_LOCK.put(1, block=False)
