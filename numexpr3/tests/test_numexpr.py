@@ -28,7 +28,7 @@ from numpy.testing import (assert_equal, assert_array_equal,
 from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 
 import numexpr
-from numexpr import E, NumExpr, evaluate, re_evaluate, disassemble, use_vml
+from numexpr import E, NumExpr, evaluate, disassemble, use_vml
 
 import unittest
 
@@ -93,29 +93,21 @@ class test_numexpr(TestCase):
                       (b'add_ddd', b't3', b't3', b'c2[2.0]'),
                       (b'prod_ddn', b'r0', b't3', 2)])
         # Check that full reductions work.
-        x = zeros(100000) + .01  # checks issue #41
+        x = zeros(1e5) + .01  # checks issue #41
         assert_allclose(evaluate("sum(x+2,axis=None)"), sum(x + 2, axis=None))
         assert_allclose(evaluate("sum(x+2,axis=0)"), sum(x + 2, axis=0))
         assert_allclose(evaluate("prod(x,axis=0)"), prod(x, axis=0))
-        assert_allclose(evaluate("min(x)"), np.min(x))
-        assert_allclose(evaluate("max(x,axis=0)"), np.max(x, axis=0))
 
         x = arange(10.0)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))
-        assert_allclose(evaluate("min(x**2+2,axis=0)"), np.min(x ** 2 + 2, axis=0))
-        assert_allclose(evaluate("max(x**2+2,axis=0)"), np.max(x ** 2 + 2, axis=0))
 
         x = arange(100.0)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x - 1, axis=0))
-        assert_allclose(evaluate("min(x-1,axis=0)"), np.min(x - 1, axis=0))
-        assert_allclose(evaluate("max(x-1,axis=0)"), np.max(x - 1, axis=0))
         x = linspace(0.1, 1.0, 2000)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x - 1, axis=0))
-        assert_allclose(evaluate("min(x-1,axis=0)"), np.min(x - 1, axis=0))
-        assert_allclose(evaluate("max(x-1,axis=0)"), np.max(x - 1, axis=0))
 
         # Check that reductions along an axis work
         y = arange(9.0).reshape(3, 3)
@@ -125,25 +117,15 @@ class test_numexpr(TestCase):
         assert_allclose(evaluate("prod(y**2, axis=1)"), prod(y ** 2, axis=1))
         assert_allclose(evaluate("prod(y**2, axis=0)"), prod(y ** 2, axis=0))
         assert_allclose(evaluate("prod(y**2, axis=None)"), prod(y ** 2, axis=None))
-        assert_allclose(evaluate("min(y**2, axis=1)"), np.min(y ** 2, axis=1))
-        assert_allclose(evaluate("min(y**2, axis=0)"), np.min(y ** 2, axis=0))
-        assert_allclose(evaluate("min(y**2, axis=None)"), np.min(y ** 2, axis=None))
-        assert_allclose(evaluate("max(y**2, axis=1)"), np.max(y ** 2, axis=1))
-        assert_allclose(evaluate("max(y**2, axis=0)"), np.max(y ** 2, axis=0))
-        assert_allclose(evaluate("max(y**2, axis=None)"), np.max(y ** 2, axis=None))
         # Check integers
         x = arange(10.)
         x = x.astype(int)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))
-        assert_allclose(evaluate("min(x**2+2,axis=0)"), np.min(x ** 2 + 2, axis=0))
-        assert_allclose(evaluate("max(x**2+2,axis=0)"), np.max(x ** 2 + 2, axis=0))
         # Check longs
         x = x.astype(long)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))
-        assert_allclose(evaluate("min(x**2+2,axis=0)"), np.min(x ** 2 + 2, axis=0))
-        assert_allclose(evaluate("max(x**2+2,axis=0)"), np.max(x ** 2 + 2, axis=0))
         # Check complex
         x = x + .1j
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
@@ -284,12 +266,6 @@ class test_numexpr(TestCase):
         res = evaluate('contains(withemptystr, b"")')
         assert_equal(res, [True, True, True])
 
-    def test_str_contains_long_needle(self):
-        a = b'1' + b'a' * 40
-        b = b'a' * 40
-        res = evaluate('contains(a, b)')
-        assert_equal(res, True)
-
 
 class test_numexpr2(test_numexpr):
     """Testing with 2 threads"""
@@ -313,22 +289,6 @@ class test_evaluate(TestCase):
         x = arange(1e6)
         y = evaluate("x")
         assert_array_equal(x, y)
-
-    def test_re_evaluate(self):
-        a = array([1., 2., 3.])
-        b = array([4., 5., 6.])
-        c = array([7., 8., 9.])
-        x = evaluate("2*a + 3*b*c")
-        x = re_evaluate()
-        assert_array_equal(x, array([86., 124., 168.]))
-
-    def test_re_evaluate_dict(self):
-        a = array([1., 2., 3.])
-        b = array([4., 5., 6.])
-        c = array([7., 8., 9.])
-        x = evaluate("2*a + 3*b*c", local_dict={'a': a, 'b': b, 'c': c})
-        x = re_evaluate()
-        assert_array_equal(x, array([86., 124., 168.]))
 
     # Test for issue #37
     if sys.version_info[0] < 3:
@@ -374,7 +334,25 @@ class test_evaluate(TestCase):
         x = (a + 2 * b) / (1 + a + 4 * b * b)
         y = evaluate("(a + 2*b) / (1 + a + 4*b*b)")
         assert_array_almost_equal(x, y)
+		
+    def test_complex64_expr(self):
+        def complex64_func(a, b):
+            c = zeros(a.shape, dtype=complex64)
+            c.real = a
+            c.imag = b
+            return c
 
+        a = arange(1e4, dtype='float32' )
+        b = (arange(1e4) ** 1e-5).astype('float32')
+        z = ( a + 1j * b ).astype( 'complex64' ) # RAM this is complex128 by default numpy rules
+        x = z.imag
+        x = sin(complex64_func(a,b)).real + z.imag
+
+        # RAM: this check cannot pass because we don't have a function to do this 
+        # complex64(a,b) in the function list
+        y = evaluate("sin(complex64(a, b)).real + z.imag")
+        assert_array_almost_equal(x, y)
+		
     def test_complex_expr(self):
         def complex(a, b):
             c = zeros(a.shape, dtype=complex_)
@@ -401,16 +379,6 @@ class test_evaluate(TestCase):
         a0 = a[0]
         assert_array_equal(evaluate("c1"), c1)
         assert_array_equal(evaluate("a0+c1"), a0 + c1)
-
-    def test_recarray_strides(self):
-        a = arange(100)
-        b = arange(100,200)
-        recarr = np.rec.array(None, formats='f4,f4', shape=(100,))
-        recarr['f0'] = a
-        recarr['f1'] = b
-        c = recarr['f1']
-        assert_array_almost_equal(evaluate("sqrt(c) > 1."), sqrt(c) > 1.)
-        assert_array_almost_equal(evaluate("log10(c)"), log10(c))
 
     def test_broadcasting(self):
         a = arange(100).reshape(10, 10)[::2]
@@ -442,16 +410,6 @@ class test_evaluate(TestCase):
             pass
         else:
             self.fail()
-
-    def test_ex_uses_vml(self):
-        vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
-                      "sinh", "cosh", "tanh", "arcsinh", "arccosh", "arctanh",
-                      "log", "log1p","log10", "exp", "expm1", "abs", "conj",
-                      "arctan2", "fmod"]
-        for func in vml_funcs:
-            strexpr = func+'(a)'
-            _, ex_uses_vml = numexpr.necompiler.getExprNames(strexpr, {})
-            assert_equal(ex_uses_vml, use_vml, strexpr)
 
     if 'sparc' not in platform.machine():
         # Execution order set here so as to not use too many threads
@@ -572,50 +530,29 @@ def test_expressions():
         this_locals = locals()
 
         def method():
-            try:
-                # We don't want to listen at RuntimeWarnings like
-                # "overflows" or "divide by zero" in plain eval().
-                warnings.simplefilter("ignore")
-                npval = eval(expr, globals(), this_locals)
-                warnings.simplefilter("always")
-                npval = eval(expr, globals(), this_locals)
-            except Exception as ex:
-                # just store the exception in a variable
-                # compatibility with numpy v1.12
-                # see also https://github.com/pydata/numexpr/issues/239
-                np_exception = ex
-                npval = None
-            else:
-                np_exception = None
-
+            # We don't want to listen at RuntimeWarnings like
+            # "overflows" or "divide by zero" in plain eval().
+            warnings.simplefilter("ignore")
+            npval = eval(expr, globals(), this_locals)
+            warnings.simplefilter("always")
+            npval = eval(expr, globals(), this_locals)
             try:
                 neval = evaluate(expr, local_dict=this_locals,
                                  optimization=optimization)
-            except AssertionError:
-                raise
-            except NotImplementedError:
-                print('%r not implemented for %s (scalar=%d, opt=%s)'
-                      % (expr, dtype.__name__, test_scalar, optimization))
-            except Exception as ne_exception:
-                same_exc_type = issubclass(type(ne_exception),
-                                           type(np_exception))
-                if np_exception is None or not same_exc_type:
-                    print('numexpr error for expression %r' % (expr,))
-                    raise
-            except:
-                print('numexpr error for expression %r' % (expr,))
-                raise
-            else:
-                msg = ('expected numexpr error not raised for expression '
-                       '%r' % (expr,))
-                assert np_exception is None, msg
-
                 assert equal(npval, neval, exact), """%r
 (test_scalar=%r, dtype=%r, optimization=%r, exact=%r,
  npval=%r (%r - %r)\n neval=%r (%r - %r))""" % (expr, test_scalar, dtype.__name__,
                                                 optimization, exact,
                                                 npval, type(npval), shape(npval),
                                                 neval, type(neval), shape(neval))
+            except AssertionError:
+                raise
+            except NotImplementedError:
+                print('%r not implemented for %s (scalar=%d, opt=%s)'
+                      % (expr, dtype.__name__, test_scalar, optimization))
+            except:
+                print('numexpr error for expression %r' % (expr,))
+                raise
 
         method.description = ('test_expressions(%s, test_scalar=%r, '
                               'dtype=%r, optimization=%r, exact=%r)') \
@@ -802,19 +739,19 @@ class test_strings(TestCase):
         self.assert_missing_op('add_sss', expr, locals())
 
     def test_empty_string1(self):
-        a = np.array([b"", b"pepe"])
-        b = np.array([b"pepe2", b""])
-        res = evaluate("(a == b'') & (b == b'pepe2')")
+        a = np.array(["", "pepe"])
+        b = np.array(["pepe2", ""])
+        res = evaluate("(a == '') & (b == 'pepe2')")
         assert_array_equal(res, np.array([True, False]))
-        res2 = evaluate("(a == b'pepe') & (b == b'')")
+        res2 = evaluate("(a == 'pepe') & (b == '')")
         assert_array_equal(res2, np.array([False, True]))
 
     def test_empty_string2(self):
-        a = np.array([b"p", b"pepe"])
-        b = np.array([b"pepe2", b""])
-        res = evaluate("(a == b'') & (b == b'pepe2')")
+        a = np.array(["p", "pepe"])
+        b = np.array(["pepe2", ""])
+        res = evaluate("(a == '') & (b == 'pepe2')")
         assert_array_equal(res, np.array([False, False]))
-        res2 = evaluate("(a == b'pepe') & (b == b'')")
+        res2 = evaluate("(a == 'pepe') & (b == '')")
         assert_array_equal(res, np.array([False, False]))
 
     def test_add_numeric_array(self):
@@ -922,7 +859,6 @@ class test_threading_config(TestCase):
 
 # Case test for threads
 class test_threading(TestCase):
-
     def test_thread(self):
         import threading
 
@@ -933,25 +869,6 @@ class test_threading(TestCase):
 
         test = ThreadTest()
         test.start()
-        test.join()
-
-    def test_multithread(self):
-        import threading
-
-        # Running evaluate() from multiple threads shouldn't crash
-        def work(n):
-            a = arange(n)
-            evaluate('a+a')
-
-        work(10)  # warm compilation cache
-
-        nthreads = 30
-        threads = [threading.Thread(target=work, args=(1e5,))
-                   for i in range(nthreads)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
 
 # The worker function for the subprocess (needs to be here because Windows
@@ -985,38 +902,12 @@ class test_subprocess(TestCase):
         #print result
 
 
-def print_versions():
-    """Print the versions of software that numexpr relies on."""
-    from pkg_resources import parse_version
-    if parse_version(np.__version__) < parse_version(minimum_numpy_version):
-        print("*Warning*: NumPy version is lower than recommended: %s < %s" % \
-              (np.__version__, minimum_numpy_version))
-    print('-=' * 38)
-    print("Numexpr version:   %s" % numexpr.__version__)
-    print("NumPy version:     %s" % np.__version__)
-    print('Python version:    %s' % sys.version)
-    if os.name == 'posix':
-        (sysname, nodename, release, version, machine) = os.uname()
-        print('Platform:          %s-%s' % (sys.platform, machine))
-    print("AMD/Intel CPU?     %s" % numexpr.is_cpu_amd_intel)
-    print("VML available?     %s" % use_vml)
-    if use_vml:
-        print("VML/MKL version:   %s" % numexpr.get_vml_version())
-    print("Number of threads used by default: %d "
-          "(out of %d detected cores)" % (numexpr.nthreads, numexpr.ncores))
-    print('-=' * 38)
-
-
 def test():
     """
     Run all the tests in the test suite.
     """
 
     print_versions()
-    # For some reason, NumPy issues all kinds of warnings when using Python3.
-    # Ignoring them in tests should be ok, as all results are checked out.
-    # See https://github.com/pydata/numexpr/issues/183 for details.
-    np.seterr(divide='ignore', invalid='ignore', over='ignore', under='ignore')
     return unittest.TextTestRunner().run(suite())
 
 
@@ -1071,7 +962,8 @@ def suite():
 
 
 if __name__ == '__main__':
-    print_versions()
-    unittest.main(defaultTest='suite')
+    print( "The NumExpr2 test suite is deprecated and will be replaced shortly." )
+    print( "autotest_GENERATED.py and handtests_ne3.py are the current tests" )
+    #unittest.main(defaultTest='suite')
 #    suite = suite()
 #    unittest.TextTestRunner(verbosity=2).run(suite)

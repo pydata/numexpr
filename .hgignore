@@ -1,9 +1,0 @@
-syntax: glob
-
-build/
-build-cmake/
-dist/
-numexpr.egg-info/
-*.pyc
-*.swp
-*~

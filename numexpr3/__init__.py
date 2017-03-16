@@ -1,7 +1,7 @@
 ###################################################################
 #  Numexpr - Fast numerical array expression evaluator for NumPy.
 #
-#      License: MIT
+#      License: BSD
 #      Author:  See AUTHORS.txt
 #
 #  See LICENSE.txt and LICENSES/*.txt for details about copyright and
@@ -18,41 +18,34 @@ See:
 https://github.com/pydata/numexpr
 
 for more info about it.
-
 """
 
-from __config__ import show as show_config, get_info
+from __future__ import absolute_import
 
-if get_info('mkl'):
-    use_vml = True
-else:
-    use_vml = False
+from .__config__ import show as _show_config
+from .__config__ import get_info as _get_info
 
-from cpuinfo import cpu
 
-if cpu.is_AMD() or cpu.is_Intel():
-    is_cpu_amd_intel = True
-else:
-    is_cpu_amd_intel = False
-
-import os, os.path
-import platform
-from numexpr.expressions import E
-from numexpr.necompiler import NumExpr, disassemble, evaluate, re_evaluate
-from numexpr.tests import test, print_versions
-from numexpr.utils import (
-    get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
+from numexpr3.ne3compiler import NumExpr, evaluate, OPTABLE, wisdom
+from numexpr3.utils import (
+    print_info, 
     set_num_threads, detect_number_of_cores, detect_number_of_threads)
+try: # VML functions are no longer created if NumExpr was not compiled with VML
+    from numexpr.utils import ( 
+            get_vml_version, set_vml_accuracy_mode, set_vml_num_threads )
+except ImportError: pass
 
 # Detect the number of cores
+# RAM: the functions in util doesn't update numexpr.ncores or numexpr.nthreads, 
 ncores = detect_number_of_cores()
 nthreads = detect_number_of_threads()
 
 # Initialize the number of threads to be used
-if 'sparc' in platform.machine():
-    import warnings
+import platform as __platform
+if 'sparc' in __platform.machine():
+    import warnings as __warnings
 
-    warnings.warn('The number of threads have been set to 1 because problems related '
+    __warnings.warn('The number of threads have been set to 1 because problems related '
                   'to threading have been reported on some sparc machine. '
                   'The number of threads can be changed using the "set_num_threads" '
                   'function.')
@@ -63,9 +56,6 @@ else:
 # The default for VML is 1 thread (see #39)
 set_vml_num_threads(1)
 
-import version
-
-dirname = os.path.dirname(__file__)
-
-__version__ = version.version
+from . import __version__
+__version__ = __version__.__version__
 

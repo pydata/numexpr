@@ -1,24 +1,6 @@
 =========================
- Announcing Numexpr 2.6.2
+ Announcing Numexpr 2.4.4
 =========================
-
-What's new
-==========
-
-This is a maintenance release that fixes several issues, with special
-emphasis in keeping compatibility with newer NumPy versions.  Also,
-initial support for POWER processors is here.  Thanks to Oleksandr
-Pavlyk, Alexander Shadchin, Breno Leitao, Fernando Seiti Furusato and
-Antonio Valentino.
-
-In case you want to know more in detail what has changed in this
-version, see:
-
-https://github.com/pydata/numexpr/blob/master/RELEASE_NOTES.rst
-
-
-What's Numexpr
-==============
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
@@ -26,7 +8,7 @@ and use less memory than doing the same calculation in Python.
 
 It wears multi-threaded capabilities, as well as support for Intel's
 MKL (Math Kernel Library), which allows an extremely fast evaluation
-of transcendental functions (sin, cos, tan, exp, log...) while
+of transcendental functions (sin, cos, tan, exp, log...)  while
 squeezing the last drop of performance out of your multi-core
 processors.  Look here for a some benchmarks of numexpr using MKL:
 
@@ -35,6 +17,18 @@ https://github.com/pydata/numexpr/wiki/NumexprMKL
 Its only dependency is NumPy (MKL is optional), so it works well as an
 easy-to-deploy, easy-to-use, computational engine for projects that
 don't want to adopt other solutions requiring more heavy dependencies.
+
+What's new
+==========
+
+#XXX version-specific blurb XXX#
+
+In case you want to know more in detail what has changed in this
+version, see:
+
+https://github.com/pydata/numexpr/wiki/Release-Notes
+
+or have a look at RELEASE_NOTES.txt in the tarball.
 
 Where I can find Numexpr?
 =========================
