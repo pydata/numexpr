@@ -841,8 +841,7 @@ def OpsFactory( opsList ):
     opsList += [Operation( ast.Mult ,'$DEST = $ARG1 * $ARG2', (LIB_STD,),
                       REAL_NUM, [REAL_NUM, REAL_NUM] )]
     
-    # Division in NumPy typically returns float64 for integers.
-    # floordivide() is available for integer division.
+    # Division in NumPy (Py3+) typically returns float64 for integers.
     # * In NE2 division tried to out-smart the compiler with a ternary
     #   operation but it's easier to let the compiler determine when a 
     #   INFINITY or NAN result is generated.
@@ -852,7 +851,9 @@ def OpsFactory( opsList ):
         opsList +=[Operation( ast.Div, '$DEST = $ARG1 / $ARG2', (LIB_STD,),
                           DECIMAL, [DECIMAL, DECIMAL] )]
         # Floor division
-        opsList += [Operation(ast.FloorDiv, '$DEST = $ARG1/$ARG2',
+        # Now C++ integer division is truncation and Python is floor, so 
+        # probably this does need to be floordiv instead...
+        opsList += [Operation(ast.FloorDiv, '$DEST = $ARG2 ? ($ARG1 / $ARG2) : 0',
                                (LIB_STD,), ALL_INT, [ALL_INT,ALL_INT] )]
     else: # Python 2.7
         # Divide-by-zero is fine for float but not for integer division
