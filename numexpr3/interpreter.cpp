@@ -206,7 +206,7 @@ int vm_engine_iter_task(NpyIter *iter,
 //        printf( "regs[%d]:: kind:%d, mem:%p, \n", I, params->registers[I].kind, params->registers[I].mem  );
 //        
 //    }
-//    // Seems like this iterDataPtr array isn't fully allocated most of the time?
+//
 //    for( int I = 0; I < params->n_reg; I++ ) {
 //        if( params->registers[I].kind == KIND_ARRAY ) {
 //            printf( "iterDataPtr[%d]:: %p, iterStrides[%d]:: %p \n", I, iterDataPtr[I], I, (void *)iterStrides[I] );
@@ -322,6 +322,7 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *params,
         return -1;
     }
 
+//    printf( "vm_engine_iter_parallel #1\n" );
     // Populate parameters for worker threads 
     NpyIter_GetIterIndexRange(iter, &th_params.start, &th_params.vlen);
     
@@ -333,6 +334,7 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *params,
                             taskfactor;
     th_params.block_size = numblocks * BLOCK_SIZE1;
 
+//    printf( "vm_engine_iter_parallel #2\n" );
     th_params.params = NumExprObject_copy_threadsafe(params);
     th_params.need_output_buffering = need_output_buffering;
     th_params.ret_code = 0;
@@ -350,31 +352,58 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *params,
             return -1;
         }
     }
+//    printf( "vm_engine_iter_parallel #2B\n" );
+//    printf( "&gs: %p\n", gs );
+    // Somehow gs.count_threads_mutex is going negative?
+    // Ugh, why was this not a problem before?
+    // http://stackoverflow.com/questions/7408710/under-what-circumstances-might-a-windows-critical-section-have-a-negative-lock-c
+    
+//    printf( "&gs.count_threads_mutex: %d\n", &gs.count_threads_mutex );
     
     Py_BEGIN_ALLOW_THREADS;
 
     // Synchronization point for all threads (wait for initialization)
     pthread_mutex_lock(&gs.count_threads_mutex);
+//    printf( "vm_engine_iter_parallel #2C, n_thread=%d, count_threads=%d\n", gs.n_thread, gs.count_threads );
     if (gs.count_threads < gs.n_thread) {
         gs.count_threads++;
+//        printf( "vm_engine_iter_parallel #2D\n" );
+        // Crash occurs here:
         pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
     }
     else {
+//        printf( "vm_engine_iter_parallel #2E\n" );    
         pthread_cond_broadcast(&gs.count_threads_cv);
     }
+//    printf( "gs.count_threads = %d\n", gs.count_threads );
+//    printf( "vm_engine_iter_parallel #2F\n" );
     pthread_mutex_unlock(&gs.count_threads_mutex);
 
+//    printf( "&gs: %p\n", gs );
+    // Somehow gs.count_threads_mutex is going negative?
+//    printf( "&gs.count_threads_mutex: %d\n", &gs.count_threads_mutex );
+    
+//    printf( "vm_engine_iter_parallel #3\n" );
     // Synchronization point for all threads (wait for finalization)
+    // Crashing here on Windows on _some_ machines and MSVC14.0. For 
+    // some reason EnterCriticalSection is crashing?  Why?
+
     pthread_mutex_lock(&gs.count_threads_mutex);
+//    printf( "vm_engine_iter_parallel #3A\n" );
     if (gs.count_threads > 0) {
         gs.count_threads--;
+//        printf( "vm_engine_iter_parallel #3B\n" );
         pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
     }
     else {
+//        printf( "vm_engine_iter_parallel #3C\n" );
         pthread_cond_broadcast(&gs.count_threads_cv);
     }
+//    printf( "gs.count_threads after = %d\n", gs.count_threads );
+//    printf( "&gs.count_threads_mutex: %d\n", &gs.count_threads_mutex );
+//    printf( "vm_engine_iter_parallel #3D\n" );
     pthread_mutex_unlock(&gs.count_threads_mutex);
-
+//    printf( "vm_engine_iter_parallel #4\n" );
     Py_END_ALLOW_THREADS;
 
     // Deallocate all the iterator and memsteps copies
@@ -385,6 +414,7 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *params,
     // TODO: re-use thread_params
     // I think we can only delete the registers, the rest isn't copied?
     // This should be a function then?
+//    printf( "vm_engine_iter_parallel #5\n" );
     PyMem_Del(th_params.params);
              
     return th_params.ret_code;
@@ -433,41 +463,48 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     //params.r_end = (int)PyBytes_Size(self->fullsig);
     //params.outBuffer = NULL;
     
-                      
+//    printf( "run_interpreter #1\n" );
     if ((gs.n_thread == 1) || gs.force_serial) {
         // Can do it as one "task"
         if (reduce_iter == NULL) {
             // Allocate memory for output buffering if needed
-//            vector<char> out_buffer(need_output_buffering ?
-//                                (self->memsizes[0] * BLOCK_SIZE1) : 0);
-//            params.out_buffer = need_output_buffering ? &out_buffer[0] : NULL;
+            //vector<char> out_buffer(need_output_buffering ?
+            //                    (self->memsizes[0] * BLOCK_SIZE1) : 0);
+            //params.out_buffer = need_output_buffering ? &out_buffer[0] : NULL;
 
 
             //safeParams = NumExprObject_copy_threadsafe( self );
             safeParams = self;
 
-                      
+//             printf( "run_interpreter #1A\n" );         
 //            if( need_output_buffering ) {
-            vector<char> out_buffer(need_output_buffering ?
-                                (GET_RETURN_REG(self).itemsize * BLOCK_SIZE1) : 0);
-            safeParams->outBuffer = (char *)(need_output_buffering ? &out_buffer[0] : NULL );
+
+            //vector<char> out_buffer(need_output_buffering ?
+            //                    (GET_RETURN_REG(self).itemsize * BLOCK_SIZE1) : 0);
+            //safeParams->outBuffer = (char *)(need_output_buffering ? &out_buffer[0] : NULL );
  
                   
 //            }
+//            printf( "run_interpreter #2\n" );
             // Reset the iterator to allocate its buffers
             if(NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
                 return -1;
             }
 
             get_temps_space( safeParams, BLOCK_SIZE1);
-
-            Py_BEGIN_ALLOW_THREADS;     
+//            printf( "run_interpreter #3\n" );
+            Py_BEGIN_ALLOW_THREADS;    
+//            printf( "run_interpreter #4\n" );
             returnValue = vm_engine_iter_task(iter, safeParams, pc_error, &errorMessage);
+//            printf( "run_interpreter #4A\n" );                              
             Py_END_ALLOW_THREADS;
+//            printf( "run_interpreter #5\n" );
             free_temps_space(safeParams);
         }
         else {
+//            printf( "run_interpreter branch else\n" );    
             if (reduction_outer_loop) {
+//                printf( "run_interpreter branch reduction_outer_loop\n" );    
                 char **dataPtr;
                 NpyIter_IterNextFunc *iterNext;
 
@@ -496,6 +533,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                 free_temps_space(safeParams);
             }
             else {
+//                printf( "run_interpreter branch not reduction\n" );    
                 char **dataPtr;
                 NpyIter_IterNextFunc *iterNext;
 
@@ -526,6 +564,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
         }
     }
     else {
+//        printf( "run_interpreter parallel branch\n" );    
         if (reduce_iter == NULL) {
             // Here the parallel engine will make save copies of the NumExprObject
             returnValue = vm_engine_iter_parallel(iter, self, need_output_buffering,
@@ -624,7 +663,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     // RAM: Ok, here we have to check how many arguments we need, which is 
     // n_reg - n_temp - n_scalar
     
-    //printf( "NumExpr_run() #3\n" );
+//    printf( "NumExpr_run() #3\n" );
                       
     if ( self->n_ndarray != n_input) {
         return PyErr_Format(PyExc_ValueError,
@@ -636,7 +675,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                         "NumExpr_run(): too many inputs");
     }
     
-    //printf( "NumExpr_run() #4\n" ); 
+//    printf( "NumExpr_run() #4\n" ); 
     memset(operands, 0, sizeof(operands));
     memset(dtypes, 0, sizeof(dtypes));
 
@@ -689,7 +728,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 //            }
 //       }
     }
-    //printf( "NumExpr_run() #5\n" ); 
+//    printf( "NumExpr_run() #5\n" ); 
                       
     // Run through all the registers and match the input arguments to that
     // parsed by NumExpr_init
@@ -718,8 +757,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         
         operands[arrayCounter] = (PyArrayObject *)arrayRef;
         dtypes[arrayCounter] = PyArray_DescrFromType(typecode);
-        //printf( "Found array #%d at register %d with dtype:%c pointing to: %p\n", arrayCounter, I,
-        //       dtypes[arrayCounter]->type, PyArray_DATA(operands[arrayCounter]) );
+//        printf( "Found array #%d at register %d with dtype:%c pointing to: %p\n", arrayCounter, I,
+//               dtypes[arrayCounter]->type, PyArray_DATA(operands[arrayCounter]) );
               
               
         if (operands[arrayCounter] == NULL || dtypes[arrayCounter] == NULL) { goto fail; }
@@ -753,7 +792,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     }
             
             
-    //printf( "NumExpr_run() #6\n" ); 
+//    printf( "NumExpr_run() #6\n" ); 
     // Ne2: This built the output array.
     // Ne3: We prefer to do this in Python, as multi-line exec is permitted.
     /*
@@ -903,7 +942,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    // printf "NumExpr_run() #8\n" ); 
+//    printf( "NumExpr_run() #8\n" ); 
     // A case with a single constant output
     if (n_input == 0) {
         char retsig = get_return_sig(self);
@@ -942,7 +981,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         goto cleanup_and_exit;
     }
 
-    // printf "NumExpr_run() #9\n" ); 
+//    printf( "NumExpr_run() #9\n" ); 
     // Allocate the iterator or nested iterators
     if (reduction_size == 1) {
         //printf( "NumExpr_run() #9A, arrayCounter = %d\n", arrayCounter ); 
@@ -1049,7 +1088,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
         }
     }
-    // printf "NumExpr_run() #10\n" ); 
+//    printf( "NumExpr_run() #10\n" ); 
     // Initialize the output to the reduction unit
     //printf( "TODO: Output size should be appropriate for reductions.\n" );
 //    if (is_reduction) {
@@ -1083,7 +1122,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     // 1 thread per BLOCK_SIZE1 in the iterator?
     // Also this is still on an element rather than bytesize basis.
     if (NpyIter_GetIterSize(iter) < 2*BLOCK_SIZE1) {
-        printf( "NumExpr_run() FORCING SERIAL MODE\n" ); 
+        //printf( "NumExpr_run() FORCING SERIAL MODE\n" ); 
 
         gs.force_serial = 1;
     }
@@ -1099,12 +1138,12 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 //            (int)self->program[I].op, (int)self->program[I].ret, (int)self->program[I].arg1, 
 //            (int)self->program[I].arg2, (int)self->program[I].arg3 );
 //    }
-    
+//    
     r = run_interpreter(self, iter, reduce_iter,
                              reduction_outer_loop, need_output_buffering,
                              &pc_error);
                         
-    //printf( "NumExpr_run() #12\n" ); 
+//    printf( "NumExpr_run() #12\n" ); 
     if (r < 0) {
         if (r == -1) {
             if (!PyErr_Occurred()) {
@@ -1121,7 +1160,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-    //printf( "NumExpr_run() #13\n" ); 
+//    printf( "NumExpr_run() #13\n" ); 
     // Get the output from the iterator
     ret = (PyObject *)NpyIter_GetOperandArray(iter)[0];
     Py_INCREF(ret);

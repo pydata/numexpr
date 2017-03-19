@@ -855,8 +855,9 @@ def OpsFactory( opsList ):
         opsList += [Operation(ast.FloorDiv, '$DEST = $ARG1/$ARG2',
                                (LIB_STD,), ALL_INT, [ALL_INT,ALL_INT] )]
     else: # Python 2.7
-        opsList +=[Operation( ast.Div, '$DEST = $ARG1 / $ARG2', (LIB_STD,),
-                          ALL_NUM, [ALL_NUM, ALL_NUM] )]
+        # Divide-by-zero is fine for float but not for integer division
+        opsList +=[Operation( ast.Div, '$DEST = $ARG2 ? ($ARG1 / $ARG2) : 0', (LIB_STD,),
+                          REAL_NUM, [REAL_NUM, REAL_NUM] )]
         opsList +=[Operation( 'truediv', '$DEST = (npy_float64)$ARG1 / (npy_float64)$ARG2',
                               (LIB_STD,), ['d']*len(BOOL+ALL_INT), [BOOL+ALL_INT, BOOL+ALL_INT] )]
     

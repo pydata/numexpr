@@ -30,18 +30,21 @@ except: from io import BytesIO
 # struct.pack is the quickest way to build the program as structs
 # All important format characters: https://docs.python.org/2/library/struct.html
 from struct import pack, unpack, calcsize
-# Due to global state in the C-API, we need to restrict the module to running 
-# one expression per Python process.
-# Rather than use a threading.Lock(), use a queue.Queue() as it has a timeout 
-# in Py2.7
-from queue import Queue
-_NE_RUN_LOCK = Queue( maxsize=1 )
-_NE_RUN_TIMEOUT = 60
-_NE_RUN_LOCK.put(1, block=False)
 
-# Python 2 to 3 handling
+
+
 if sys.version_info[0] >= 3:
+    # Python 2 to 3 handling
     unicode = str # To suppress warnings only
+else:
+
+    pass
+
+# Due to global state in the C-API, we need to restrict the module to running 
+# one expression per Python process.  There is, unfortunately, no timeout 
+# in Python 2.7 for Lock
+from threading import Lock
+_NE_RUN_LOCK = Lock()
 
 # interpreter.so/pyd:
 try: 
@@ -402,6 +405,12 @@ class NumExpr(object):
     def print_names(self):
         for val in self.namesReg.values(): print( '{}:{}'.format( val[4], val[3])  )
         
+    def __call__(self, **kwargs):
+        if not 'stackDepth' in kwargs:
+            kwargs['stackDepth'] = self._stackDepth + 1
+        else: 
+            pass
+        self.run( **kwargs)
         
     def run(self, **kwargs):
         '''
@@ -493,7 +502,11 @@ class NumExpr(object):
             # Is there a better way than to iterate through all the registers
             # such as inside the AST parse with _lastOp?
             arraysOrdered = [reg[1] for reg in sorted( self.namesReg.values() )]
-            self._broadCast = np.broadcast( *[arraysOrdered[N] for N in argNs if arraysOrdered[N] is not None] )
+            # So we have broadcast problem for something like '2.0 * a + 3.0 * b * c'
+            guessedBroadcast = [arraysOrdered[N] for N in argNs if arraysOrdered[N] is not None]
+            if not guessedBroadcast:
+                raise ValueError( "Broadcast guess failed" )
+            self._broadCast = np.broadcast( *guessedBroadcast )
             unalloc = np.empty( self._broadCast.shape, dtype=self.retChar )
             
             print( 'Unallocated output: {} broadcast shape: {}, dtype: {}'.format(self.outputTarget, unalloc.shape, unalloc.dtype) )
@@ -515,9 +528,9 @@ class NumExpr(object):
         else:
             unalloc = None
 
-        _NE_RUN_LOCK.get(block=True, timeout=_NE_RUN_TIMEOUT)
-        self._compiled_exec( *args, ex_uses_vml=ex_uses_vml, **kwargs )
-        _NE_RUN_LOCK.put(1, block=False)
+        
+        with _NE_RUN_LOCK:
+            self._compiled_exec( *args, ex_uses_vml=ex_uses_vml, **kwargs )
         
         if promoteResult and self.outputTarget is not None:
             # Insert result into calling frame
@@ -525,13 +538,16 @@ class NumExpr(object):
                 sys._getframe( stackDepth ).f_locals[self.outputTarget] = unalloc
                 return
             self.local_dict[self.outputTarget] = unalloc
+            self.unallocatedOutput = False
             return 
                            
         if self.outputTarget is None:
             return unalloc
         return
     
-    def _assign(self, node ):
+
+    
+    def _assign(self, node, outputTup=None  ):
         # node.targets is a list; It must have a len=1 for NumExpr3
         # node.value is likely a BinOp, Call, Comparison, or BoolOp
         if len(node.targets) != 1:
@@ -544,18 +560,19 @@ class NumExpr(object):
         return valueTup
         
         
-    def _expression(self, node ):
+    def _expression(self, node, outputTup=None  ):
         # For expressions we have to return the value instead of promoting it.
         valueTup = self._ASTAssembler[type(node.value)](node.value)
         self.unallocatedOutput = valueTup
         return valueTup
         
            
-    def _name(self, node ):
+    def _name(self, node, outputTup=None ):
         #print( 'ast.Name' )
         # node.ctx is probably not something we care for.
         node_id = node.id
-            
+        
+
         if node_id in self.namesReg:
             regTup = self.namesReg[node_id]
             regToken = regTup[0]
@@ -579,9 +596,24 @@ class NumExpr(object):
                 # It's probably supposed to be a temporary with a name, i.e. an assignment target
                 regTup = self._newTemp( None, name = node_id )
                 
+        if outputTup is not None:
+            # This is a copy operation in an assignment.
+            return self._copy(regTup, outputTup)
+            pass
+            
+        
         return regTup
 
+    def _copy(self, regTup, outputTup ):
+        print( "DEBUG: outputTup = " + str(outputTup) )
+        opCode, self.retChar = OPTABLE[ ('copy', self.lib,
+                               regTup[2]) ]
+        outputTup = self._magic_output( outputTup )
             
+        self._codeStream.write( b"".join( (opCode, outputTup[0], 
+                                regTup[0], _NULL_REG, _NULL_REG)  )  )
+        pass
+    
     def _const(self, node ):
         constNo = next( self._regCount )
         regKey = pack( _PACK_REG, constNo )
@@ -639,8 +671,17 @@ class NumExpr(object):
         # module/class reference. Then .attr is the attribute reference that 
         # we need to resolve.
         # WE CAN ONLY DEREFERENCE ONE LEVEL ('.')
+        
+        # TODO: .real and .imag need special handling
+        
+        
+        if node.attr == 'real' or node.attr == 'imag':
+
+            return self._real_imag( node, outputTup )
+            
         className = node.value.id
         attrName = ''.join( [className, '.', node.attr] )
+        
         if attrName in self.namesReg:
             regTup = self.namesReg[attrName]
             regToken = regTup[0]
@@ -670,6 +711,13 @@ class NumExpr(object):
             self.namesReg[attrName] = regTup = \
                          (regToken, arr, arr.dtype.char, int(np.isscalar(arr)), attrName )
         return regTup
+    
+    def _real_imag( self, outputTup ):
+        # Should they always be calls to real() and imag() or should we 
+        # get the strided array?
+        # What if the user does (x+y).real ?
+        print( "TODO: handle .real and .imag" )
+        pass
         
     def _magic_output( self, outputTup ):
         # 
@@ -836,6 +884,7 @@ class NumExpr(object):
                 
     def _cast2(self, leftTup, rightTup ): 
         leftD = leftTup[2]; rightD = rightTup[2]
+        # print( "cast2: %s, %s"%(leftD,rightD) ) 
         if leftD == rightD:
             return leftTup, rightTup
         elif np.can_cast( leftD, rightD ):

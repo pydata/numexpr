@@ -31,9 +31,12 @@ from numexpr3.utils import (
     print_info, 
     set_num_threads, detect_number_of_cores, detect_number_of_threads)
 try: # VML functions are no longer created if NumExpr was not compiled with VML
-    from numexpr.utils import ( 
+    from numexpr3.utils import ( 
             get_vml_version, set_vml_accuracy_mode, set_vml_num_threads )
+    # The default for VML is 1 thread (see #39)
+    set_vml_num_threads(1)
 except ImportError: pass
+from numexpr3.tests import test
 
 # Detect the number of cores
 # RAM: the functions in util doesn't update numexpr.ncores or numexpr.nthreads, 
@@ -53,8 +56,7 @@ if 'sparc' in __platform.machine():
 else:
     set_num_threads(nthreads)
 
-# The default for VML is 1 thread (see #39)
-set_vml_num_threads(1)
+
 
 from . import __version__
 __version__ = __version__.__version__

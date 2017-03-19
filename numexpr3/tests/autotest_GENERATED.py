@@ -238,49 +238,49 @@ class autotest_numexpr(unittest.TestCase):
         out = np.empty_like( A_d, dtype='d' )
         ne.evaluate('out=A_d * B_d')
         np.testing.assert_array_almost_equal(out,A_d * B_d)
-    def test_div_d11(self):
+    def test_div_111(self):
         print('Test: out=A_1 / B_1')
-        out = np.empty_like( A_d, dtype='d' )
+        out = np.empty_like( A_d, dtype='?' )
         ne.evaluate('out=A_1 / B_1')
         np.testing.assert_array_almost_equal(out,A_1 / B_1)
-    def test_div_dbb(self):
+    def test_div_bbb(self):
         print('Test: out=A_b / B_b')
-        out = np.empty_like( A_d, dtype='d' )
+        out = np.empty_like( A_d, dtype='b' )
         ne.evaluate('out=A_b / B_b')
         np.testing.assert_array_almost_equal(out,A_b / B_b)
-    def test_div_dhh(self):
+    def test_div_hhh(self):
         print('Test: out=A_h / B_h')
-        out = np.empty_like( A_d, dtype='d' )
+        out = np.empty_like( A_d, dtype='h' )
         ne.evaluate('out=A_h / B_h')
         np.testing.assert_array_almost_equal(out,A_h / B_h)
-    def test_div_dii(self):
+    def test_div_iii(self):
         print('Test: out=A_i / B_i')
-        out = np.empty_like( A_d, dtype='d' )
+        out = np.empty_like( A_d, dtype='i' )
         ne.evaluate('out=A_i / B_i')
         np.testing.assert_array_almost_equal(out,A_i / B_i)
-    def test_div_dll(self):
+    def test_div_lll(self):
         print('Test: out=A_l / B_l')
-        out = np.empty_like( A_d, dtype='d' )
+        out = np.empty_like( A_d, dtype='l' )
         ne.evaluate('out=A_l / B_l')
         np.testing.assert_array_almost_equal(out,A_l / B_l)
-    def test_div_dBB(self):
+    def test_div_BBB(self):
         print('Test: out=A_B / B_B')
-        out = np.empty_like( A_d, dtype='d' )
+        out = np.empty_like( A_d, dtype='B' )
         ne.evaluate('out=A_B / B_B')
         np.testing.assert_array_almost_equal(out,A_B / B_B)
-    def test_div_dHH(self):
+    def test_div_HHH(self):
         print('Test: out=A_H / B_H')
-        out = np.empty_like( A_d, dtype='d' )
+        out = np.empty_like( A_d, dtype='H' )
         ne.evaluate('out=A_H / B_H')
         np.testing.assert_array_almost_equal(out,A_H / B_H)
-    def test_div_dII(self):
+    def test_div_III(self):
         print('Test: out=A_I / B_I')
-        out = np.empty_like( A_d, dtype='d' )
+        out = np.empty_like( A_d, dtype='I' )
         ne.evaluate('out=A_I / B_I')
         np.testing.assert_array_almost_equal(out,A_I / B_I)
-    def test_div_dLL(self):
+    def test_div_LLL(self):
         print('Test: out=A_L / B_L')
-        out = np.empty_like( A_d, dtype='d' )
+        out = np.empty_like( A_d, dtype='L' )
         ne.evaluate('out=A_L / B_L')
         np.testing.assert_array_almost_equal(out,A_L / B_L)
     def test_div_fff(self):
