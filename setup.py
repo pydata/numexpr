@@ -73,18 +73,19 @@ with open( 'numexpr3/__version__.py', 'w' ) as fh:
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()    
     
-# TODO: unique Windows / Linux / OSX flags
+# Unique Windows / Linux / OSX flags
 # TODO: compile detections of AVX2 and SSE2 using numpy.distutils
 # Turned off funroll, doesn't seem to affect speed.
 # https://gcc.gnu.org/onlinedocs/gcc-5.4.0/gcc/Optimize-Options.html
-#compile_args = {
-#    'gcc': [ # '-funroll-loops',
-#            '-fdiagnostics-color=always', 
-#             '-fopt-info-vec',
-#            ],
-#    'msvc':[  '/Qvec-report:2', 
-#            ],
-#}
+extra_compile_args = []
+if os.name == 'posix':
+    extra_compile_args = [ '-fdiagnostics-color=always', 
+                     '-fopt-info-vec',
+                   ]
+elif os.name == 'nt':
+    extra_compile_args = [ '/Qvec-report:2' ]
+
+    
 
 
 
@@ -250,10 +251,7 @@ def setup_package():
                             ],
                 'libraries': ['m'],
                 # Now how to get setuptools to actually pass arguments to MSVC?
-#                'extra_compile_args': [ # '-funroll-loops',
-#                    '-fdiagnostics-color=always', 
-#                     '-fopt-info-vec',
-#                    ],
+                'extra_compile_args': extra_compile_args,
             }
             dict_append(extension_config_data, **mkl_config_data)
             if 'library_dirs' in mkl_config_data:
