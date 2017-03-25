@@ -53,8 +53,8 @@ class test_numexpr(TestCase):
 
     def test_simple_func_big_array(self):
         print( 'Test simple func big array' )
-        func = ne3.NumExpr('a')
-        x = np.arange( 1.0e6 )
+        x = np.arange( 1e6 )
+        func = ne3.NumExpr('x')
         y = func(x=x)
         npt.assert_array_equal(x, y)
 
@@ -408,9 +408,18 @@ class test_evaluate(TestCase):
         y = np.empty_like(x)
         ne3.evaluate('y = sin(complex(a, b)).real + z.imag')
         npt.assert_array_almost_equal(x, y)
-
+        
     def test_complex_strides(self):
-        print( 'Test complex strides' )
+        a = np.arange(1e4)
+        b = np.arange(1e4) * 1e-5
+        z1 = (a + 1j * b)[::2]
+        z2 = (a - 1j * b)[::2]
+        ne3.evaluate( 'out = z1 + z2' )
+        npt.assert_array_almost_equal( out, z1+z2 )
+        
+
+    def test_nontrival_strides(self):
+        print( 'Test nontrival strides' )
         a = np.arange(100).reshape(10, 10)[::2]
         b = np.arange(50).reshape(5, 10)
         npt.assert_array_equal(ne3.evaluate('a+b'), a + b)
@@ -666,7 +675,7 @@ class test_int64(TestCase):
         # Big ints should be promoted to longs.
         ne3.evaluate('res = 2**40')
         npt.assert_array_equal(res, 2 ** 40)
-        assert(res.dtype.name, 'int64')
+        assert(res.dtype.name == 'int64')
 
 
 '''

@@ -833,11 +833,8 @@ def OpsFactory( opsList ):
     ###### Standard arithmatic operations ######
     opsList += [Operation( ast.Add, '$DEST = $ARG1 + $ARG2', (LIB_STD,),
                       REAL_NUM, [REAL_NUM, REAL_NUM] )]
-            
-    # For complex functions, complex_functions.hpp was vectorized.
     opsList += [Operation( ast.Sub, '$DEST = $ARG1 - $ARG2', (LIB_STD,),
                       ALL_INT+DECIMAL, [ALL_INT+DECIMAL, ALL_INT+DECIMAL] )]
-    
     opsList += [Operation( ast.Mult ,'$DEST = $ARG1 * $ARG2', (LIB_STD,),
                       REAL_NUM, [REAL_NUM, REAL_NUM] )]
     
@@ -1095,74 +1092,74 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
     ###############################################
     # Complex number functions (from complex.hpp) #
     ###############################################
-    opsList += [ Operation( 'complex', 'nc_complex(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [DECIMAL, DECIMAL], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'real', 'nc_real(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, DECIMAL, [COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'imag', 'nc_imag(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, DECIMAL, [COMPLEX], vecType=TYPE_ALIGNED ) ]
+    opsList += [ Operation( 'complex', 'nc_complex(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [DECIMAL, DECIMAL], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( 'real', 'nc_real(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, DECIMAL, [COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( 'imag', 'nc_imag(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, DECIMAL, [COMPLEX], vecType=TYPE_STRIDED ) ]
     
-    opsList += [ Operation( 'abs', 'nc_abs(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, DECIMAL, [COMPLEX], vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( 'abs2', 'nc_abs2(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, DECIMAL, [COMPLEX], vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( ast.Add, 'nc_add(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( ast.Sub, 'nc_sub(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( ast.Mult, 'nc_mul(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( ast.Div, 'nc_div(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( ast.USub, 'nc_neg(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'neg', 'nc_neg(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'conj', 'nc_conj(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]
+    opsList += [ Operation( 'abs', 'nc_abs(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, DECIMAL, [COMPLEX], vecType=TYPE_STRIDED ) ] 
+    opsList += [ Operation( 'abs2', 'nc_abs2(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, DECIMAL, [COMPLEX], vecType=TYPE_STRIDED ) ] 
+    opsList += [ Operation( ast.Add, 'nc_add(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( ast.Sub, 'nc_sub(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( ast.Mult, 'nc_mul(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( ast.Div, 'nc_div(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( ast.USub, 'nc_neg(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( 'neg', 'nc_neg(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( 'conj', 'nc_conj(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
 
-    opsList += [ Operation( 'conj', 'fconj(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, DECIMAL, [DECIMAL], vecType=TYPE_ALIGNED ) ]  
+    opsList += [ Operation( 'conj', 'fconj(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, DECIMAL, [DECIMAL], vecType=TYPE_STRIDED ) ]  
          
-    opsList += [ Operation( 'sqrt', 'nc_sqrt(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'log', 'nc_log(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( 'log1p', 'nc_log1p(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]                        
-    opsList += [ Operation( 'log10', 'nc_log10(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]         
-    opsList += [ Operation( 'exp', 'nc_exp(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]  
-    opsList += [ Operation( 'expm1', 'nc_expm1(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ] 
+    opsList += [ Operation( 'sqrt', 'nc_sqrt(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( 'log', 'nc_log(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ] 
+    opsList += [ Operation( 'log1p', 'nc_log1p(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]                        
+    opsList += [ Operation( 'log10', 'nc_log10(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]         
+    opsList += [ Operation( 'exp', 'nc_exp(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]  
+    opsList += [ Operation( 'expm1', 'nc_expm1(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ] 
     # TODO: add aliases for 'power'
-    opsList += [ Operation( ast.Pow, 'nc_pow(block_size, ($DTYPE1 *)x1, ($DTYPE2 *)x2, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_ALIGNED ) ]  
-    opsList += [ Operation( 'arccos', 'nc_acos(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'arccosh', 'nc_acosh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]    
-    opsList += [ Operation( 'arcsin', 'nc_asin(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'arcsinh', 'nc_asinh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]   
-    opsList += [ Operation( 'arctan', 'nc_atan(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'arctanh', 'nc_atanh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]
-    opsList += [ Operation( 'cos', 'nc_cos(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( 'cosh', 'nc_cosh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]               
-    opsList += [ Operation( 'sin', 'nc_sin(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( 'sinh', 'nc_sinh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]       
-    opsList += [ Operation( 'tan', 'nc_tan(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ] 
-    opsList += [ Operation( 'tanh', 'nc_tanh(block_size, ($DTYPE1 *)x1, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_ALIGNED ) ]
+    opsList += [ Operation( ast.Pow, 'nc_pow(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED ) ]  
+    opsList += [ Operation( 'arccos', 'nc_acos(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( 'arccosh', 'nc_acosh(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]    
+    opsList += [ Operation( 'arcsin', 'nc_asin(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( 'arcsinh', 'nc_asinh(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]   
+    opsList += [ Operation( 'arctan', 'nc_atan(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( 'arctanh', 'nc_atanh(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( 'cos', 'nc_cos(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ] 
+    opsList += [ Operation( 'cosh', 'nc_cosh(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]               
+    opsList += [ Operation( 'sin', 'nc_sin(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ] 
+    opsList += [ Operation( 'sinh', 'nc_sinh(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]       
+    opsList += [ Operation( 'tan', 'nc_tan(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ] 
+    opsList += [ Operation( 'tanh', 'nc_tanh(block_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
 
                
     ##################################################################

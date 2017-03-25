@@ -206,7 +206,7 @@ int vm_engine_iter_task(NpyIter *iter,
 //        printf( "regs[%d]:: kind:%d, mem:%p, \n", I, params->registers[I].kind, params->registers[I].mem  );
 //        
 //    }
-//
+
 //    for( int I = 0; I < params->n_reg; I++ ) {
 //        if( params->registers[I].kind == KIND_ARRAY ) {
 //            printf( "iterDataPtr[%d]:: %p, iterStrides[%d]:: %p \n", I, iterDataPtr[I], I, (void *)iterStrides[I] );
@@ -368,7 +368,7 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *params,
     if (gs.count_threads < gs.n_thread) {
         gs.count_threads++;
 //        printf( "vm_engine_iter_parallel #2D\n" );
-        // Crash occurs here:
+        // Crash in Python 3.6 occurs here:
         pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
     }
     else {
@@ -987,13 +987,13 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         //printf( "NumExpr_run() #9A, arrayCounter = %d\n", arrayCounter ); 
         // When there's no reduction, reduction_size is 1 as well
         
-        // RAM: Ah... problem. operands needs to be n_ndarray only...
         iter = NpyIter_AdvancedNew(arrayCounter, operands,
                             NPY_ITER_BUFFERED|
                             NPY_ITER_REDUCE_OK|
                             NPY_ITER_RANGED|
                             NPY_ITER_DELAY_BUFALLOC|
-                            NPY_ITER_EXTERNAL_LOOP,
+                            NPY_ITER_EXTERNAL_LOOP|
+                            NPY_ITER_ZEROSIZE_OK,
                             order, casting,
                             op_flags, dtypes,
                             -1, NULL, NULL,
