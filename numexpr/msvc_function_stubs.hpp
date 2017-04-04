@@ -38,6 +38,7 @@
 #define fabsf(x)    ((float)fabs((double)(x)))
 #define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
+#define ceilf(x)    ((float)ceil((double)(x)))
 
 /* The next are directly called from interp_body.cpp */
 #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
@@ -136,6 +137,14 @@ inline float atan2f2(float x, float y) {
 // conjugate operations
 inline float fconjf2(float x) {
     return x;
+}
+
+inline float ceilf2(float x) {
+    return ceilf(x);
+}
+
+inline float floorf2(float x) {
+    return floorf(x);
 }
 
 #endif // NUMEXPR_MSVC_FUNCTION_STUBS_HPP

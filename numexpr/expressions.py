@@ -371,6 +371,8 @@ functions = {
     'expm1': func(numpy.expm1, 'float'),
 
     'abs': func(numpy.absolute, 'float'),
+    'ceil': func(numpy.ceil, 'float', 'double'),
+    'floor': func(numpy.floor, 'float', 'double'),
 
     'where': where_func,
 

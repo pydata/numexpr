@@ -516,7 +516,8 @@ func1tests = []
 for func in ['copy', 'ones_like', 'sqrt',
              'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-             'log', 'log1p', 'log10', 'exp', 'expm1', 'abs', 'conj']:
+             'log', 'log1p', 'log10', 'exp', 'expm1', 'abs', 'conj',
+             'ceil', 'floor']:
     func1tests.append("a + %s(b+c)" % func)
 tests.append(('1_ARG_FUNCS', func1tests))
 
