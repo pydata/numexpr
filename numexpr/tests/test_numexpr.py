@@ -19,7 +19,7 @@ import numpy as np
 from numpy import (
     array, arange, empty, zeros, int32, int64, uint16, complex_, float64, rec,
     copy, ones_like, where, alltrue, linspace,
-    sum, prod, sqrt, fmod,
+    sum, prod, sqrt, fmod, floor, ceil,
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
     log, log1p, log10, exp, expm1, conj)
@@ -654,7 +654,8 @@ def test_expressions():
                     for expr in section_tests:
                         if (dtype == complex and
                             ('<' in expr or '>' in expr or '%' in expr
-                             or "arctan2" in expr or "fmod" in expr)):
+                             or "arctan2" in expr or "fmod" in expr
+                             or "floor" in expr or "ceil" in expr)):
                             # skip complex comparisons or functions not
                             # defined in complex domain.
                             continue
