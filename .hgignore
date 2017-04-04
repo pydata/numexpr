@@ -7,3 +7,5 @@ numexpr.egg-info/
 *.pyc
 *.swp
 *~
+doc/_build
+

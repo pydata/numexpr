@@ -7,6 +7,14 @@ Changes from 2.6.2 to 2.6.3
 
 #XXX version-specific blurb XXX#
 
+- Support for floor() and ceil() functions added by Caleb P. Burns.
+                   
+- NumPy requirement increased from 1.6 to 1.7 due to changes in iterator
+  flags (#245).
+  
+- Sphinx autodocs support added for documentation on readthedocs.org.
+
+
 
 Changes from 2.6.1 to 2.6.2
 ===========================
