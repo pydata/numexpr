@@ -14,7 +14,8 @@ Changes from 2.6.2 to 2.6.3
   
 - Sphinx autodocs support added for documentation on readthedocs.org.
 
-
+- Fixed a bug where complex constants would return an error, fixing 
+  problems with `sympy` when using NumExpr as a backend.
 
 Changes from 2.6.1 to 2.6.2
 ===========================
