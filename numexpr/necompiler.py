@@ -108,6 +108,18 @@ class ASTNode(object):
             if getattr(self, name) != getattr(other, name):
                 return False
         return True
+    
+    def __lt__(self,other):
+        # RAM: this is a fix for issue #88 whereby sorting on constants 
+        # that may be of astKind == 'complex' but type(self.value) == int or float
+        # Here we let NumPy sort as it will cast data properly for comparison 
+        # when the Python built-ins will raise an error.
+        if self.astType == 'constant':
+            if self.astKind == other.astKind:
+                return numpy.array(self.value) < numpy.array(other.value)
+            return self.astKind < other.astKind
+        else:
+            raise TypeError( 'Sorting not implemented for astType: %s'%self.astType )
 
     def __hash__(self):
         if self.astType == 'alias':
@@ -326,12 +338,14 @@ def convertConstantToKind(x, kind):
 
 
 def getConstants(ast):
-    const_map = {}
-    for a in ast.allOf('constant'):
-        const_map[(a.astKind, a.value)] = a
-    ordered_constants = const_map.keys()
-    ordered_constants.sort()
-    constants_order = [const_map[v] for v in ordered_constants]
+    '''
+    RAM: implemented magic method __lt__ for ASTNode to fix issues
+    #88 and #209. The following test code works now, as does the test suite.
+    import numexpr as ne
+    a = 1 + 3j; b = 5.0
+    ne.evaluate( 'a*2 + 15j - b' )
+    '''
+    constants_order = sorted( ast.allOf('constant') )
     constants = [convertConstantToKind(a.value, a.astKind)
                  for a in constants_order]
     return constants_order, constants
