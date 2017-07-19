@@ -16,6 +16,9 @@ Changes from 2.6.2 to 2.6.3
 
 - Fixed a bug where complex constants would return an error, fixing 
   problems with `sympy` when using NumExpr as a backend.
+  
+- Fix for #277 whereby arrays of shape (1,...) would be reduced as 
+  if they were full reduction. Behavoir now matches that of NumPy.
 
 Changes from 2.6.1 to 2.6.2
 ===========================

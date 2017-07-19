@@ -100,6 +100,12 @@ class test_numexpr(TestCase):
         assert_allclose(evaluate("min(x)"), np.min(x))
         assert_allclose(evaluate("max(x,axis=0)"), np.max(x, axis=0))
 
+        # Fix for #277, array with leading singleton dimension
+        x = np.arange(10).reshape(1,10)
+        assert_allclose(evaluate("sum(x,axis=None)"), sum(x, axis=None) )
+        assert_allclose(evaluate("sum(x,axis=0)"), sum(x, axis=0) )
+        assert_allclose(evaluate("sum(x,axis=1)"), sum(x, axis=1) )
+
         x = arange(10.0)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))

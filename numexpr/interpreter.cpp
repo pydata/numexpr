@@ -979,9 +979,9 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     unsigned int i, n_inputs;
     int r, pc_error = 0;
     int reduction_axis = -1;
-    npy_intp reduction_size = 1;
+    npy_intp reduction_size = -1; // For #277 change this 1 -> -1 to be in-line with NumPy 1.8,
     int ex_uses_vml = 0, is_reduction = 0;
-    bool reduction_outer_loop = false, need_output_buffering = false;
+    bool reduction_outer_loop = false, need_output_buffering = false, full_reduction = false;
 
     // To specify axes when doing a reduction
     int op_axes_values[NPY_MAXARGS][NPY_MAXDIMS],
@@ -1148,6 +1148,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
         // A full reduction can be done without nested iteration
         if (oa_ndim == 0) {
+            full_reduction = true;
             if (operands[0] == NULL) {
                 npy_intp dim = 1;
                 operands[0] = (PyArrayObject *)PyArray_SimpleNew(0, &dim,
@@ -1278,8 +1279,13 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
 
     /* Allocate the iterator or nested iterators */
-    if (reduction_size == 1) {
+    if (reduction_size < 0 || full_reduction) {
         /* When there's no reduction, reduction_size is 1 as well */
+        // RAM: in issue #277 this was also the case for reductions on arrays 
+        // with axis=0 having singleton dimension, i.e. such ops were interpreted 
+        // as full_reductions when they weren't in Numpy. As such, the default 
+        // reduction_size is now -1 and we add the flag for full_reduction, 
+        // e.g. ne.evaluate("sum(a)")"
         iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                             NPY_ITER_BUFFERED|
                             NPY_ITER_REDUCE_OK|
