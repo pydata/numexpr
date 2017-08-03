@@ -260,13 +260,10 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     #define INCREF_REPLACE_OBJ(argument) {Py_INCREF(argument); REPLACE_OBJ(argument);}
     #define REPLACE_MEM(argument) {PyMem_Del(self->argument); self->argument=argument;}
 
-    //PyMem_Del(iter_reg);
-    //PyMem_Del(iter_arr);
-    
-    // Do some more reading on how CPython handles garbage collection.
-    // https://docs.python/org/3/c-api/memory.html
+
     REPLACE_MEM(program);
     REPLACE_MEM(registers);
+    PyMem_Del(arrays);
     REPLACE_MEM(scalar_mem);
     self->program_len = program_len;
     self->n_reg = n_reg;

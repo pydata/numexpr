@@ -412,9 +412,8 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *params,
         
     }
     // TODO: re-use thread_params
-    // I think we can only delete the registers, the rest isn't copied?
-    // This should be a function then?
-//    printf( "vm_engine_iter_parallel #5\n" );
+    //  Removing this PyMem call does not help with #252
+    PyMem_Free(th_params.params->registers);
     PyMem_Del(th_params.params);
              
     return th_params.ret_code;
