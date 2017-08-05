@@ -24,7 +24,7 @@ NumExpr_dealloc(NumExprObject *self)
     // Free temporaries
     for ( NE_REGISTER R = 0; R < self->n_reg; R++) {
         if( self->registers[R].kind == KIND_TEMP ) {
-            PyMem_Free( self->registers[R].mem  );
+            free( self->registers[R].mem  );
         }
     }
     
@@ -297,6 +297,9 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     //PyMem_Del(testObj);
     return 0;
 }
+
+// Pickle support
+static 
 
 static PyMethodDef NumExpr_methods[] = {
     {"run", (PyCFunction) NumExpr_run, METH_VARARGS|METH_KEYWORDS, NULL},
