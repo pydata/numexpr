@@ -108,7 +108,8 @@ get_temps_space(NumExprObject *self, size_t block_size)
         if( self->registers[R].kind == KIND_TEMP ) {
             // GIL _not_ released here.
             // RAM: Why not move this inside the threads and use PyMem_RawMalloc?
-            self->registers[R].mem = (char *)PyMem_Malloc( block_size * self->registers[R].itemsize );
+            //self->registers[R].mem = (char *)PyMem_Malloc( block_size * self->registers[R].itemsize );
+            self->registers[R].mem = (char *)malloc( block_size * self->registers[R].itemsize );
             if ( self->registers[R].mem == NULL) {
                 return -1;
             }
@@ -144,13 +145,15 @@ NumExprObject_copy_threadsafe( const NumExprObject *self )
     //NumExprObject *copy = (NumExprObj*)malloc( sizeof(NumExprObject) );
     // NumExprObject is a Python object, althought perhaps it shouldn't be.  
     // If we removed the array references in registers?
-    NumExprObject *copy = PyMem_New( NumExprObject, 1 );
+    //NumExprObject *copy = PyMem_New( NumExprObject, 1 );
+    NumExprObject *copy = (NumExprObject*)malloc( sizeof(NumExprObject) );
 
             
     memcpy( copy, self, sizeof(NumExprObject) );
     
     // program is immutable, but registers is not (especially the mem pointers)
-    copy->registers = (NumExprReg *)PyMem_Malloc( self->n_reg*sizeof(NumExprReg) );
+    //copy->registers = (NumExprReg *)PyMem_Malloc( self->n_reg*sizeof(NumExprReg) );
+    copy->registers = (NumExprReg *)malloc( self->n_reg*sizeof(NumExprReg) );
     
     for( R = 0; R < self->n_reg; R++ ) {
         copy->registers[R] = self->registers[R];
@@ -413,9 +416,11 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *params,
     }
     // TODO: re-use thread_params
     //  Removing this PyMem call does not help with #252
-    PyMem_Free(th_params.params->registers);
-    PyMem_Del(th_params.params);
-             
+    //PyMem_Free(th_params.params->registers);
+    //PyMem_Del(th_params.params);
+    free(th_params.params->registers);
+    free(th_params.params);
+    
     return th_params.ret_code;
 }
 

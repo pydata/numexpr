@@ -16,5 +16,7 @@ bext
 mkl
 nogen
 bench/*.png
+.eggs
+*.vscode
 
 

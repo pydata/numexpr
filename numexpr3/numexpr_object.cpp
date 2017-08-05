@@ -28,9 +28,12 @@ NumExpr_dealloc(NumExprObject *self)
         }
     }
     
-    PyMem_Del( self->program );
-    PyMem_Del( self->registers );
-    PyMem_Del( self->scalar_mem );
+    //PyMem_Del( self->program );
+    //PyMem_Del( self->registers );
+    //PyMem_Del( self->scalar_mem );
+    free( self->program );
+    free( self->registers );
+    free( self->scalar_mem );
     Py_TYPE(self)->tp_free( (PyObject*)self );
 }
 
@@ -141,12 +144,15 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     
     // We have to copy bytes_prog or Python garbage collects it
     //program = (NumExprOperation*)PyMem_Malloc( program_len*sizeof(NumExprOperation) );
-    program = (NumExprOperation*)PyMem_New( NumExprOperation, program_len );
+    //program = (NumExprOperation*)PyMem_New( NumExprOperation, program_len );
+    program = (NumExprOperation*)malloc( program_len * sizeof(NumExprOperation) );
     memcpy( program, PyBytes_AsString( bytes_prog ), program_len*sizeof(NumExprOperation) );
 
     // Build registers
-    registers = PyMem_New(NumExprReg, n_reg);
-    arrays = PyMem_New(PyObject*, n_reg);
+    // registers = PyMem_New(NumExprReg, n_reg);
+    // arrays = PyMem_New(PyObject*, n_reg);
+    registers = (NumExprReg *)malloc(n_reg * sizeof(NumExprReg) );
+    arrays = (PyObject**)malloc(n_reg * sizeof(PyObject *) );
     for( I = 0; I < n_reg; I++ ) {
         // Get reference and check format of register
         iter_reg = PyTuple_GET_ITEM( reg_tuple, I );
@@ -226,9 +232,11 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     // maintainable.
     // The other option would be PyArray_Ones()
     scalar_mem_size = total_scalar_itemsize * BLOCK_SIZE1;
-    // TODO: Hrm... BLOCK_SIZE1 scales with the data type... it should be a fixed 
-    // size in bytes to fit into L1 cache nicely.
-    scalar_mem = PyMem_New( char, scalar_mem_size );
+
+    //scalar_mem = PyMem_New( char, scalar_mem_size );
+    // TODO: we shouldn't need BLOCKSIZE1 arrays for scalars, nditer should be able to deal with 
+    // single elements and return a step of 0.
+    scalar_mem = (char *)malloc( scalar_mem_size );
 
     for( I = 0; I < n_reg; I++ ) {
         if( registers[I].kind != KIND_SCALAR ) continue;
@@ -261,10 +269,14 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     #define REPLACE_MEM(argument) {PyMem_Del(self->argument); self->argument=argument;}
 
 
-    REPLACE_MEM(program);
-    REPLACE_MEM(registers);
-    PyMem_Del(arrays);
-    REPLACE_MEM(scalar_mem);
+    //REPLACE_MEM(program);
+    //REPLACE_MEM(registers);
+    //PyMem_Del(arrays);
+    free(arrays);
+    //REPLACE_MEM(scalar_mem);
+    self->program = program;
+    self->registers = registers;
+    self->scalar_mem = scalar_mem;
     self->program_len = program_len;
     self->n_reg = n_reg;
     self->n_ndarray = n_ndarray;
