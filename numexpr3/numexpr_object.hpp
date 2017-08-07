@@ -22,25 +22,6 @@
 // self is a struct NumExprObject
 #define LAST_OP(self) self->program[self->program_len].op
 
-// RAM: What does vm_params do that's (significantly) different from NumExprObject?
-//struct vm_params {
-//    int prog_len;
-//    NE_WORD *program;
-//    int n_ndarrays;
-//    int n_scalars;
-//    int n_temp;
-//    NE_WORD r_end;
-//    char *output;
-//    char **inputs;
-//    char **mem;
-//    npy_intp *memsteps;
-//    npy_intp *memsizes;
-//    //struct index_data *index_data;
-//    // Memory for output buffering. If output buffering is unneeded,
-//    // it contains NULL.
-//    char *out_buffer;
-//};
-
 struct NumExprOperation
 {
     NE_WORD      op;
@@ -63,9 +44,10 @@ struct NumExprReg
     npy_intp       elements;   // number of array elements
 };
 
-
-// Perhaps the Python object should be Py_NumExprObject and this struct 
-// doesn't need the PyObject_HEAD declaration?
+// Presently the PyObject_HEAD macro expands into a single PyObject
+// When copying data we generally don't want to overwrite the head.
+// https://docs.python.org/3/c-api/structures.html
+#define SIZEOF_PYOBJECT_HEAD sizeof(PyObject)
 struct NumExprObject
 {
     PyObject_HEAD
@@ -77,14 +59,13 @@ struct NumExprObject
     // a chunk of raw memory for storing scalar BLOCKs, just a reference
     // for efficient garbage collection.
     char                    *scalar_mem;  
+    npy_intp                 scalar_mem_size;
     int                      program_len;    
     NE_REGISTER              n_reg;
     NE_REGISTER              n_ndarray;
     NE_REGISTER              n_scalar;
-    NE_REGISTER              n_temp;
+    NE_REGISTER              n_temp;  
 };
-        
-
 
 // Structure for parameters in worker threads
 struct thread_data {

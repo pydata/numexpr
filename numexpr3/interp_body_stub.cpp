@@ -45,12 +45,13 @@
 
     for (pc = 0; pc < params->program_len; pc++ ) {
 
-        // Sample debug output: 
+        // Sample debug output, to be pasted into functions_GENERATED.cpp 
+        // as needed: 
         // printf( "Arg1(%d@%p) + ARG2(%d@%p) => DEST(%d@%p)\n", arg1, x1, arg2, x2, store_in, dest );
         
         // TODO: BLOCK_SIZE1 is the number of operations, not the array block size,
         // so the memory block scales with itemsize...
-        //printf( "Exec op: %d\n", op );
+        // printf( "Exec op: %d\n", params->program[pc].op );
         switch (params->program[pc].op) {
         case 0: 
             break;

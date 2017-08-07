@@ -75,12 +75,12 @@ void *th_worker(void *tidptr)
 
         // If output buffering is needed, allocate it
         // RAM: is this thread-safe???  params is the same thing 
-        if (th_params.need_output_buffering) {
-            out_buffer.resize( GET_RETURN_REG(params).itemsize * BLOCK_SIZE1);
-            params->outBuffer = (char *)(&out_buffer[0]);
-        } else {
-            params->outBuffer = NULL;
-        }
+        //if (th_params.need_output_buffering) {
+        //    out_buffer.resize( GET_RETURN_REG(params).itemsize * BLOCK_SIZE1);
+        //    params->outBuffer = (char *)(&out_buffer[0]);
+        //} else {
+        //    params->outBuffer = NULL;
+        //}
 
         // Populate private data for each thread
         // RAM: unnecessary if we just safe_copy params
@@ -408,7 +408,7 @@ initinterpreter()
         INITERROR;
 
     Py_INCREF(&NumExprType);
-    PyModule_AddObject(m, "NumExpr", (PyObject *)&NumExprType);
+    PyModule_AddObject(m, "CompiledExec", (PyObject *)&NumExprType);
 
     import_array();
 

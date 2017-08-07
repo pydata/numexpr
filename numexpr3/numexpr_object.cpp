@@ -19,18 +19,8 @@
 static void
 NumExpr_dealloc(NumExprObject *self)
 {
-    // Where are threads.params dealloc'd?
-    
-    // Free temporaries
-    for ( NE_REGISTER R = 0; R < self->n_reg; R++) {
-        if( self->registers[R].kind == KIND_TEMP ) {
-            free( self->registers[R].mem  );
-        }
-    }
-    
-    //PyMem_Del( self->program );
-    //PyMem_Del( self->registers );
-    //PyMem_Del( self->scalar_mem );
+    // Free temporaries is done by free_temps_space()
+
     free( self->program );
     free( self->registers );
     free( self->scalar_mem );
@@ -48,7 +38,7 @@ NumExpr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             Py_DECREF(self); \
             return NULL; \
         }
-
+        Py_INCREF(Py_None);
         self->program = NULL;
         self->registers = NULL;
         self->scalar_mem = NULL;
@@ -56,6 +46,7 @@ NumExpr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         self->n_scalar = 0;
         self->n_temp = 0;
         self->program_len = 0;
+        self->scalar_mem_size = 0;
 #undef INIT_WITH
     }
     return (PyObject *)self;
@@ -97,12 +88,11 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     PyObject **arrays; // C-array of PyArrayObjects
     PyObject *iter_reg = NULL;
     int n_reg = 0, n_scalar = 0, n_temp = 0, n_ndarray = 0, program_len = 0;
-    int I, J, K; 
+    int I; 
 
     // Build const blocks variables
-    npy_intp total_scalar_itemsize = 0, scalar_size = 0;
-    char *scalar_pointer, *scalar_mem, *mem_loc;
-    int scalar_mem_size = 0, mem_offset = 0;
+    npy_intp total_scalar_itemsize = 0, mem_offset = 0;
+    char *scalar_mem, *mem_loc;
     
     
     static char *kwlist[] = { CHARP("program"), CHARP("registers"), NULL };
@@ -231,34 +221,26 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     // tree as in NE2. This should make the code more general and hence more 
     // maintainable.
     // The other option would be PyArray_Ones()
-    scalar_mem_size = total_scalar_itemsize * BLOCK_SIZE1;
+    //scalar_mem_size = total_scalar_itemsize * BLOCK_SIZE1;
 
     //scalar_mem = PyMem_New( char, scalar_mem_size );
     // TODO: we shouldn't need BLOCKSIZE1 arrays for scalars, nditer should be able to deal with 
     // single elements and return a step of 0.
-    scalar_mem = (char *)malloc( scalar_mem_size );
-
-    for( I = 0; I < n_reg; I++ ) {
-        if( registers[I].kind != KIND_SCALAR ) continue;
-        
-        registers[I].mem = mem_loc = scalar_mem + mem_offset;
-
-        
-        mem_offset += BLOCK_SIZE1 * registers[I].itemsize;
-
-        // Fill in the BLOCKs for scalar arrays
-        scalar_size = registers[I].itemsize;
-        scalar_pointer = PyArray_BYTES( (PyArrayObject *)arrays[I] );
-
-        for( J = 0; J < BLOCK_SIZE1; J++ ) {
-            // Essentially a memcpy but likely optimized to be faster by the compiler
-            for( K = 0; K < scalar_size; K++ ) {
-                *mem_loc = scalar_pointer[K];
-                mem_loc++;
-            }
+    if( total_scalar_itemsize > 0) {
+        scalar_mem = (char *)malloc( total_scalar_itemsize );
+        for( I = 0; I < n_reg; I++ ) {
+            if( registers[I].kind != KIND_SCALAR ) continue;
             
-        } 
-        // RAM: Passes valgrind check
+            registers[I].mem = mem_loc = scalar_mem + mem_offset;
+            // Stride for scalars is always zero
+            registers[I].stride = 0;
+            // Copy scalar value
+            memcpy( mem_loc, PyArray_DATA( (PyArrayObject *)arrays[I]), registers[I].itemsize );
+            // Advance memory pointer
+            mem_offset += registers[I].itemsize;
+
+            // RAM: Passes valgrind check
+        }
     }
 
     #define REPLACE_OBJ(argument) \
@@ -282,7 +264,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     self->n_ndarray = n_ndarray;
     self->n_scalar = n_scalar;
     self->n_temp = n_temp;
-    
+    self->scalar_mem_size = total_scalar_itemsize;
     // DEBUG: print the program to screen
 //    for( I = 0; I < self->program_len; I++ ) {
 //        printf( "NE_init: Program[%d]: %d %d %d %d %d \n", I,
@@ -298,11 +280,125 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     return 0;
 }
 
-// Pickle support
-static 
 
+static PyObject*
+NumExpr_getstate(NumExprObject *self) {
+    // Pickle support
+    // The NumExprObject struct and its childern is packed into a C-string
+    // which is then returned as a PyBytes object which is pickleable.
+
+    // Compute total size of self, program, registers, and scalarmem
+    npy_intp totalSize = sizeof(NumExprObject) + 
+                         self->program_len*sizeof(NumExprOperation) +
+                         self->n_reg*sizeof(NumExprReg) + 
+                         self->scalar_mem_size;
+
+
+    char* state = (char *)malloc(totalSize);
+    npy_intp statePoint = 0;
+
+    printf( "TODO: likely PyObject_HEAD should not be overwritten.\n" );
+    // Copy top-level NumExprObject
+    memcpy( state, self, sizeof(NumExprObject) );
+    statePoint += sizeof(NumExprObject);
+    // Copy program
+    memcpy( state+statePoint, self->program, self->program_len*sizeof(NumExprOperation) );
+    statePoint += self->program_len*sizeof(NumExprOperation);
+    // Copy registers
+    memcpy( state+statePoint, self->registers, self->n_reg*sizeof(NumExprReg) );
+    statePoint += self->n_reg*sizeof(NumExprReg);
+    // Copy scalar_mem
+    memcpy( state+statePoint, self->scalar_mem, self->scalar_mem_size );
+
+
+    return PyBytes_FromStringAndSize( state, totalSize );
+}
+
+static PyObject*
+NumExpr_setstate(NumExprObject *self, PyObject *args) {
+    // printf( "In __setstate__, ob_base: %p\n", &self->ob_base );
+    npy_intp statePoint = 0, mem_offset = 0;
+
+    PyObject *state_obj = NULL;
+    // Get 'state' from args
+    if( ! PyArg_ParseTuple(args, "S",  &state_obj ) ) { 
+        PyErr_Format(PyExc_RuntimeError,
+                    "numexpr_object.cpp: Pickled state expected as bytes." );
+        return NULL; 
+    }
+    char* state = PyBytes_AsString( state_obj );
+
+    //memcpy( self+SIZEOF_PYOBJECT_HEAD, state+SIZEOF_PYOBJECT_HEAD, sizeof(NumExprObject)-SIZEOF_PYOBJECT_HEAD );
+    memcpy( self, state, sizeof(NumExprObject) );
+    statePoint += sizeof(NumExprObject);
+
+    // Do some simple limit checks on program_len and n_reg
+    printf( "TODO: checks, program_len: %d, n_reg: %d\n", self->program_len, self->n_reg );
+
+    // Load program
+    self->program = (NumExprOperation*)malloc( self->program_len*sizeof(NumExprOperation) );
+    memcpy( self->program, state+statePoint, self->program_len*sizeof(NumExprOperation) );
+    statePoint += self->program_len*sizeof(NumExprOperation);
+
+    // Load registers
+    self->registers = (NumExprReg*)malloc( self->n_reg*sizeof(NumExprReg) );
+    memcpy( self->registers, state+statePoint, self->n_reg*sizeof(NumExprReg) );
+    statePoint += self->n_reg*sizeof(NumExprReg);
+
+    // Load scalar_mem
+    self->scalar_mem = (char *)malloc( self->scalar_mem_size );
+    memcpy( self->scalar_mem, state+statePoint, self->scalar_mem_size );
+    // Restore scalar memory pointers in registers
+    
+    for ( NE_REGISTER R = 0; R < self->n_reg; R++) {
+        if( self->registers[R].kind != KIND_SCALAR ) continue;
+        // Set pointer in the register to the block in scalar_mem
+        self->registers[R].mem = self->scalar_mem + mem_offset;
+        // Advance memory pointer
+        mem_offset += self->registers[R].itemsize;
+    }
+
+    return Py_BuildValue("");
+}
+ 
+static PyObject*
+NumExpr_print_state(NumExprObject *self, PyObject *args) {
+    printf( "Sizeof(NumExprObject): %zd\n", sizeof(NumExprObject) );
+    printf( "Sizeof(self->ob_base): %zd\n", sizeof(self->ob_base) );
+    printf( "Object base pointer: %p\n", &self->ob_base );
+    printf( "\nProgram pointer: %p\n", self->program );
+    printf( "program_len: %d\n", self->program_len );
+    for( int I = 0; I < self->program_len; I++ ) {
+        printf( "    #%d:: OP: %u, RET: %u, ARG1: %u, ARG2: %u, ARG3: %u\n", I,
+            self->program[I].op, self->program[I].ret, self->program[I].arg1, 
+            self->program[I].arg2, self->program[I].arg3  );
+    }
+    printf( "\nRegisters pointer: %p\n", self->registers );
+    printf( "n_reg: %d\n", self->n_reg );
+    printf( "n_ndarray: %d\n", self->n_ndarray );
+    printf( "n_scalar: %d\n", self->n_scalar );
+    printf( "n_temp: %d\n", self->n_temp );
+    for( int J = 0; J < self->n_reg; J++ ) {
+        printf( "    #%d:: mem: %p, dchar: %c, kind: %d, itemsize: %Id, stride: %Id, elements: %Id\n", 
+            J, self->registers[J].mem, self->registers[J].dchar, 
+            self->registers[J].kind, self->registers[J].itemsize, 
+            self->registers[J].stride, self->registers[J].elements );
+    }
+
+    printf( "\nScalar memory pointer: %p\n", self->scalar_mem );
+    printf( "scalar_mem_size: %ld\n", self->scalar_mem_size );
+    
+
+    return Py_BuildValue(""); 
+}
+
+// C-api structures:
+// https://docs.python.org/3/c-api/structures.html
 static PyMethodDef NumExpr_methods[] = {
     {"run", (PyCFunction) NumExpr_run, METH_VARARGS|METH_KEYWORDS, NULL},
+    {"print_state", (PyCFunction) NumExpr_print_state, METH_NOARGS, NULL},
+    {"__getstate__", (PyCFunction) NumExpr_getstate, METH_NOARGS, NULL},
+    {"__setstate__", (PyCFunction) NumExpr_setstate, METH_VARARGS, NULL},
     {NULL, NULL}
 };
 
@@ -315,7 +411,7 @@ static PyMemberDef NumExpr_members[] = {
 
 PyTypeObject NumExprType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "numexpr.NumExpr",         /*tp_name*/
+    "numexpr3.interpreter.CompiledExec",   /*tp_name*/
     sizeof(NumExprObject),     /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)NumExpr_dealloc, /*tp_dealloc*/
@@ -334,7 +430,7 @@ PyTypeObject NumExprType = {
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-    "NumExpr objects",         /* tp_doc */
+    "NumExpr compiled executable",         /* tp_doc */
     0,                       /* tp_traverse */
     0,                       /* tp_clear */
     0,                       /* tp_richcompare */

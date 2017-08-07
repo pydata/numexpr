@@ -23,21 +23,19 @@ from collections import defaultdict, OrderedDict
 
 # The operations are saved on disk as a pickled dict
 try: import cPickle as pickle
-except: import pickle
+except ImportError: import pickle
 # For appending long strings, using a buffer is faster than ''.join()
 try: from cStringIO import StringIO as BytesIO
-except: from io import BytesIO
+except ImportError: from io import BytesIO
 # struct.pack is the quickest way to build the program as structs
 # All important format characters: https://docs.python.org/2/library/struct.html
 from struct import pack, unpack, calcsize
-
 
 
 if sys.version_info[0] >= 3:
     # Python 2 to 3 handling
     unicode = str # To suppress warnings only
 else:
-
     pass
 
 # Due to global state in the C-API, we need to restrict the module to running 
@@ -221,6 +219,318 @@ def evaluate( expr, name=None, lib=LIB_STD,
         return neObj.run( check_arrays=False, stackDepth=stackDepth+1 )
     
 
+########################## AST PARSING HANDLERS ################################
+# Move the ast parse functions outside of class NumExpr so we can pickle it.
+# Pickle cannot deal with bound methods.
+# Note: these use 'self', what is passed around is an NumExpr object
+
+
+def _assign(self, node, outputTup=None  ):
+        # node.targets is a list; It must have a len=1 for NumExpr3
+        # node.value is likely a BinOp, Call, Comparison, or BoolOp
+        if len(node.targets) != 1:
+            raise ValueError( 'NumExpr3 supports only singleton returns in assignments.' )
+        
+        # _messages.append( "Assign node: %s op assigned to %s" % ( node.value, node.targets[0]) )
+        # Call function on target and value nodes
+        targetTup = _ASTAssembler[type(node.targets[0])](self, node.targets[0])
+        valueTup = _ASTAssembler[type(node.value)](self, node.value, targetTup )
+        return valueTup
+        
+        
+def _expression(self, node, outputTup=None  ):
+    # For expressions we have to return the value instead of promoting it.
+    valueTup = _ASTAssembler[type(node.value)](self, node.value)
+    self.unallocatedOutput = valueTup
+    return valueTup
+        
+           
+def _name(self, node, outputTup=None ):
+    #print( 'ast.Name' )
+    # node.ctx is probably not something we care for.
+    node_id = node.id
+    
+
+    if node_id in self.namesReg:
+        regTup = self.namesReg[node_id]
+        regToken = regTup[0]
+    else: # Get address so we can find the dtype
+        arr = None
+        if node_id in self.local_dict:
+            arr = self.local_dict[node_id]
+        elif node_id in self._global_dict:
+            arr = self._global_dict[node_id]
+
+        if arr is not None:
+            regToken = pack( _PACK_REG, next( self._regCount ) )
+            # Force lists, ints, floats, and native arrays to be numpy.ndarrays
+            if type(arr) != np.ndarray:
+                arr = np.asarray( arr )
+            # print( "Name found in locals/globals: " + node_id )
+            # Build tuple and add to the namesReg
+            self.namesReg[node_id] = regTup = (regToken, arr, arr.dtype.char, int(np.isscalar(arr)), node_id )
+        else:
+            # print( "Name not found: " + node_id )
+            # It's probably supposed to be a temporary with a name, i.e. an assignment target
+            regTup = self._newTemp( None, name = node_id )
+            
+    if outputTup is not None:
+        # This is a copy operation in an assignment.
+        return self._copy(regTup, outputTup)
+        pass
+        
+    
+    return regTup
+
+def _copy(self, regTup, outputTup ):
+    print( "DEBUG: outputTup = " + str(outputTup) )
+    opCode, self.retChar = OPTABLE[ ('copy', self.lib,
+                            regTup[2]) ]
+    outputTup = self._magic_output( outputTup )
+        
+    self._codeStream.write( b"".join( (opCode, outputTup[0], 
+                            regTup[0], _NULL_REG, _NULL_REG)  )  )
+    pass
+    
+def _const(self, node ):
+    constNo = next( self._regCount )
+    regKey = pack( _PACK_REG, constNo )
+    token = '${}'.format(constNo)
+    
+    # It's easier to just use ndim==0 numpy arrays, since PyArrayScalar 
+    # isn't in the API anymore.
+    # Use the _minimum _ dtype available so that we don't accidently upcast.
+    # TODO: we should try and force consts to be of the correct dtype in 
+    # Python, to avoid extraneous cast operations in the interpreter.
+
+    if np.mod( node.n, 1) == 0: # int
+        # Always try and used unsigned ints, but only up to half the 
+        # bit-width?
+        if node.n < 0:
+            if node.n > 128:
+                constArr = np.asarray(node.n, dtype='int8' )
+            elif node.n > 32768:
+                constArr = np.asarray(node.n, dtype='int16' )  
+            elif node.n > 32768:
+                constArr = np.asarray(node.n, dtype='int16' )  
+            elif node.n > 2147483648:
+                constArr = np.asarray(node.n, dtype='int32' )
+            elif node.n > 2305843009213693952:
+                constArr = np.asarray(node.n, dtype='int32' )
+            else:
+                constArr = np.asarray(node.n, dtype='float64' )
+        else: # unsigned
+            if node.n < 128:
+                constArr = np.asarray(node.n, dtype='uint8' )
+            elif node.n < 32768:
+                constArr = np.asarray(node.n, dtype='uint16' )  
+            elif node.n < 32768:
+                constArr = np.asarray(node.n, dtype='uint16' )  
+            elif node.n < 2147483648:
+                constArr = np.asarray(node.n, dtype='uint32' )
+            elif node.n < 2305843009213693952:
+                constArr = np.asarray(node.n, dtype='uint32' )
+            else:
+                constArr = np.asarray(node.n, dtype='float64' )
+        
+    elif type(node.n) == str or type(node.n) == bytes : 
+        constArr = np.asarray(node.n)
+    elif np.iscomplex(node.n):
+        constArr = np.complex64(node.n)
+    else: # float
+        constArr = np.asarray(node.n, dtype='float32' )
+
+    self.namesReg[token] = regTup = ( regKey, constArr, 
+                    constArr.dtype.char, _REGKIND_SCALAR, node.n.__str__() )
+    return regTup
+        
+def _attribute(self, node ):
+    # An attribute has a .value node which is a Name, and .value.id is the 
+    # module/class reference. Then .attr is the attribute reference that 
+    # we need to resolve.
+    # WE CAN ONLY DEREFERENCE ONE LEVEL ('.')
+    
+    # TODO: .real and .imag need special handling
+    
+    
+    if node.attr == 'real' or node.attr == 'imag':
+
+        return self._real_imag( node, outputTup )
+        
+    className = node.value.id
+    attrName = ''.join( [className, '.', node.attr] )
+    
+    if attrName in self.namesReg:
+        regTup = self.namesReg[attrName]
+        regToken = regTup[0]
+    else:
+        regToken = pack( _PACK_REG, next( self._regCount ) )
+        # Get address
+        arr = None
+        
+        # Is there any tricky way to retrieve the local_dict as is rather than
+        # forcing the system to make a dict?
+        if className in self.local_dict:
+            classRef = self.local_dict[className]
+            if node.attr in classRef.__dict__:
+                arr = self.local_dict[className].__dict__[node.attr]
+        # Globals is, as usual, slower than the locals, so we prefer not to 
+        # search it.  
+        elif className in self._global_dict:
+            classRef = self.local_dict[className]
+            if node.attr in classRef.__dict__:
+                arr =self._global_dict[className].__dict__[node.attr]
+        
+        if arr is not None and not hasattr(arr,'dtype'):
+            # Force lists and native arrays to be numpy.ndarrays
+            arr = np.asarray( arr )
+
+        # Build tuple and add to the namesReg
+        self.namesReg[attrName] = regTup = \
+                        (regToken, arr, arr.dtype.char, int(np.isscalar(arr)), attrName )
+    return regTup
+    
+
+        
+    
+def _binop(self, node, outputTup=None ):
+    #print( 'ast.Binop' )
+    # (left,op,right)
+    leftTup = _ASTAssembler[type(node.left)](self, node.left)
+    rightTup = _ASTAssembler[type(node.right)](self, node.right)
+    
+    # Check to see if a cast is required
+    leftTup, rightTup = self._cast2( leftTup, rightTup )
+        
+    # Format: (opCode, lib, left_register, right_register)
+    try:
+        opWord, self.retChar = OPTABLE[  (type(node.op), self.lib, leftTup[2], rightTup[2] ) ]
+    except KeyError as e:
+        if leftTup[2] == None or rightTup[2] == None:
+            raise ValueError( 
+                    'Binop did not find arrays: left: {}, right: {}.  Possibly a stack depth issue'.format(
+                            leftTup[4], rightTup[4]) )
+        else:
+            raise e
+    
+    # Make/reuse a temporary for output
+    outputTup = self._magic_output( outputTup )
+        
+    #_messages.append( 'BinOp: %s %s %s' %( node.left, type(node.op), node.right ) )
+    self._codeStream.write( b"".join( (opWord, outputTup[0], leftTup[0], rightTup[0], _NULL_REG ))  )
+    
+    # Release the leftTup and rightTup if they are temporaries and weren't reused.
+    if leftTup[3] == _REGKIND_TEMP and leftTup[0] != outputTup[0]: 
+        self._releaseTemp(leftTup[0])
+    if rightTup[3] == _REGKIND_TEMP and rightTup[0] != outputTup[0]: 
+        self._releaseTemp(rightTup[0])
+    return outputTup
+           
+def _call(self, node, outputTup=None ):
+    # ast.Call has the following fields:
+    # ('func', 'args', 'keywords', 'starargs', 'kwargs')
+    argTups = [_ASTAssembler[type(arg)](self, arg) for arg in node.args]
+    
+    # Would be nice to have a prettier way to fill out the program 
+    # than if-else block?
+    if len(argTups) == 1:
+        opCode, self.retChar = OPTABLE[ (node.func.id, self.lib,
+                            argTups[0][2]) ]
+        outputTup = self._magic_output( outputTup )
+        
+
+        self._codeStream.write( b"".join( (opCode, outputTup[0], 
+                            argTups[0][0], _NULL_REG, _NULL_REG)  )  )
+        
+    elif len(argTups) == 2:
+        argTups = self._cast2( *argTups )
+        opCode, self.retChar = OPTABLE[ (node.func.id, self.lib,
+                            argTups[0][2], argTups[1][2]) ]
+        outputTup = self._magic_output( outputTup )
+                
+
+        self._codeStream.write( b"".join( (opCode, outputTup[0], 
+                            argTups[0][0], argTups[1][0], _NULL_REG)  )  )
+        
+    elif len(argTups) == 3: 
+        # The where() ternary operator function is currently the _only_
+        # 3 argument function
+        argTups[1], argTups[2] = self._cast2( argTups[1], argTups[2] )
+        opCode, self.retChar = OPTABLE[ (node.func.id, self.lib,
+                            argTups[0][2], argTups[1][2], argTups[2][2]) ]
+        outputTup = self._magic_output( outputTup )
+                
+        self._codeStream.write( b"".join( (opCode, outputTup[0], 
+                            argTups[0][0], argTups[1][0], argTups[2][0])  )  )
+        
+    else:
+        raise ValueError( "call(): function calls are 1-3 arguments" )
+    
+    for arg in argTups:
+        if arg[3] == _REGKIND_TEMP: self._releaseTemp( arg[0] )
+        
+    return outputTup
+    
+    
+
+        
+    
+def _compare(self, node, outputTup=None ):
+    # print( 'ast.Compare' )
+    # "Awkward... this ast.Compare node is," said Yoga disparagingly.  
+    # (left,ops,comparators)
+    # NumExpr3 does not handle [Is, IsNot, In, NotIn]
+    if len(node.ops) > 1:
+        raise NotImplementedError( 
+                'NumExpr3 only supports binary comparisons (between two elements); try inserting brackets' )
+    # Force the node into something the _binop machinery can handle
+    node.right = node.comparators[0]
+    node.op = node.ops[0]
+    return self._binop(node, outputTup)
+   
+def _boolop(self, node, outputTup=None ):
+    # Functionally from the NumExpr perspective there's no difference 
+    # between boolean binary operations and binary operations
+    if len(node.values) != 2:
+        raise ValueError( "NumExpr3 supports binary logical operations only, please seperate operations with ()." )
+    node.left = node.values[0]
+    node.right = node.values[1]
+    self._binop( node, outputTup )
+    
+def _unaryop(self, node, outputTup=None ):
+    # Currently only ast.USub is supported, and the node.operand is the 
+    # value acted upon.
+    operandTup = _ASTAssembler[type(node.operand)](self, node.operand)
+    outputTup = self._magic_output( outputTup )
+    
+    try:
+        opWord, self.retChar = OPTABLE[  (type(node.op), self.lib, operandTup[2] ) ]
+    except KeyError as e:
+        if operandTup[2] == None :
+            raise ValueError( 
+                    'Unary did not find operand array {}. Possibly a stack depth issue'.format(
+                            operandTup[4]) )
+        else:
+            raise e
+    self._codeStream.write( b"".join( (opWord, outputTup[0], operandTup[0], _NULL_REG, _NULL_REG ))  )  
+        
+    # Release the operandTup if it was a temporary
+    if operandTup[3] == _REGKIND_TEMP and operandTup[0] != outputTup[0]: 
+        self._releaseTemp(operandTup[0])
+    return outputTup
+                
+def _unsupported(self, node, outputTuple=None ):
+    raise KeyError( 'unimplmented ASTNode' + type(node) )
+
+_ASTAssembler = defaultdict( _unsupported, 
+                  { ast.Assign:_assign, ast.Expr:_expression, \
+                    ast.Name:_name, ast.Num:_const, \
+                    ast.Attribute:_attribute, ast.BinOp:_binop, \
+                    ast.BoolOp:_boolop, ast.UnaryOp:_unaryop, \
+                    ast.Call:_call, ast.Compare:_compare, \
+                     } )
+######################### END OF AST HANDLERS ##################################
+
 class NumExpr(object):
     """
     
@@ -264,17 +574,13 @@ class NumExpr(object):
         self.retChar = ''
         
         # Protected
-        # 'protected' variables are not needed for serialization
-        self._regCount = np.nditer( np.arange(NumExpr.MAX_ARGS) )
+        self._regCount = iter(range(NumExpr.MAX_ARGS))
         self._stackDepth = stackDepth # How many frames 'up' to promote outputs
         
         self._codeStream = BytesIO()
         self._occupiedTemporaries = set()
         self._freeTemporaries = set()
         self._messages = []           # For debugging
-        # It would be great if the _compiled_exec could be pickled, but that 
-        # seems difficult. Is there a C-API interface that we could implement?
-        # And just write out the structs arrays as bytes?
         self._compiled_exec = None    # Handle to the C-api NumExprObject
         self._lastOp = False          # sentinel
         self._broadCast = None
@@ -288,20 +594,50 @@ class NumExpr(object):
             self.local_dict = local_dict
             self._global_dict = _global_dict
             
-        # TODO: Is it faster to have a global lookup dict versus building 
-        # the function dict per-object?
-        self._ASTAssembler = defaultdict( self._unsupported, 
-                  { ast.Assign:self._assign, ast.Expr:self._expression, \
-                    ast.Name:self._name, ast.Num:self._const, \
-                    ast.Attribute:self._attribute, ast.BinOp:self._binop, \
-                    ast.BoolOp:self._boolop, ast.UnaryOp:self._unaryop, \
-                    ast.Call:self._call, ast.Compare:self._compare, \
-                     } )
+        # self._ASTAssembler = defaultdict( self._unsupported, 
+        #           { ast.Assign:self._assign, ast.Expr:self._expression, \
+        #             ast.Name:self._name, ast.Num:self._const, \
+        #             ast.Attribute:self._attribute, ast.BinOp:self._binop, \
+        #             ast.BoolOp:self._boolop, ast.UnaryOp:self._unaryop, \
+        #             ast.Call:self._call, ast.Compare:self._compare, \
+        #              } )
     
         self.assemble()
 
-    
-    
+    def __getstate__(self):
+        '''
+        Preserves NumExpr object via `pickledBytes = pickle.dumps(neObj)`
+
+        For pickling, we have to remove the local_dict and _global_dict 
+        attributes as they aren't pickleable.
+        '''
+        pickleDict = self.__dict__.copy()
+        # Remove non-needed and non-pickelable attributes
+        pickleDict['local_dict'] = None
+        pickleDict['_global_dict'] = None
+        pickleDict['_codeStream'] = b''
+        #pickleDict['_compiled_exec'] = self._compiled_exec.__getstate__()
+
+        # Strip out the array references in namesReg so we don't pickle the 
+        # entire array set
+        namesReg = pickleDict['namesReg']
+        for key, value in namesReg.items():
+            namesReg[key] = (value[0], None, *value[2:] )
+
+        # print( 'pickleDict: {}'.format(pickleDict) )
+        return pickleDict
+
+    def __setstate__(self, state):
+        '''
+        Restores NumExpr object via `neObj = pickle.loads(pickledBytes)`
+        '''
+        self.__dict__ = state
+        # print( 'setstate.state: {}'.format(state) )
+        call_frame = sys._getframe( state['_stackDepth'] )
+        self.local_dict = call_frame.f_locals
+        self._global_dict = call_frame.f_globals
+       
+
     def assemble(self):
         ''' 
         NumExpr.assemble() can be used in the context of having a pool of 
@@ -328,7 +664,7 @@ class NumExpr(object):
                 # Do we need something else for ast.Expr?
                                         
             if bodyType == ast.Assign:
-                self._ASTAssembler[bodyType]( bodyItem )
+                _ASTAssembler[bodyType](self, bodyItem)
             elif bodyType == ast.Expr:
                 # Probably the easiest thing to do is generate magic output 
                 # as with Assign but return rather than promote it.
@@ -336,7 +672,7 @@ class NumExpr(object):
                     raise SyntaxError( "Expressions may only be single statements." )
                     
                 # Just an unallocated output case
-                self._ASTAssembler[ast.Expr]( bodyItem )
+                _ASTAssembler[ast.Expr](self, bodyItem)
                 
             else:
                 raise NotImplementedError( 'Unknown ast body: {}'.format(bodyType) )
@@ -359,9 +695,10 @@ class NumExpr(object):
         wisdom[(self.expr, self.lib, self.casting)] = self
         # Maybe we should have a set as well?
         # print( "assemble: regsToInterpreter: " + str(regsToInterpreter))
-        self._compiled_exec = interpreter.NumExpr( program=self.program, 
+        # self._compiled_exec = interpreter.NumExpr( program=self.program, 
+        #                                      registers=regsToInterpreter )
+        self._compiled_exec = interpreter.CompiledExec( program=self.program, 
                                              registers=regsToInterpreter )
-        
         
     
     def disassemble( self ):
@@ -412,72 +749,52 @@ class NumExpr(object):
             pass
         self.run( **kwargs)
         
-    def run(self, **kwargs):
+    def run(self, stackDepth=None, local_dict=None, check_arrays=True, **kwargs):
         '''
-        It is preferred to call run() with keyword arguments as the order of 
+        `run()` is called with keyword arguments as the order of 
         args is based on the Abstract Syntax Tree parse and may be 
         non-intuitive.
         
             e.g. self.run( a=a1, b=b1, out=out_new )
         
-        where {a,b,out} were the original names in the expression.
+        where {a,b,out} were the original names in the expression. 
         
-        Keyword arguments are:
+        Additional keyword arguments are:
             
             stackDepth {None}: Generally not needed, tells the function how 
-            many stacks up it was called from.
+              many stacks up it was called from.
             
             local_dict {None}: A optional dict containing all of the arrays 
-            required for calculation.  Saves the Python interpreter some time 
-            in looking them up from the calling namespace. 
-            Note that this is somewhat superfluous as its functionality is 
-            mimiced by kwargs.  
+              required for calculation.  Saves the Python interpreter some time 
+              in looking them up from the calling namespace. 
+              Note that this is somewhat superfluous as its functionality is 
+              mimiced by kwargs.  
         
             check_arrays {True}: Resamples the calling frame to grab arrays. 
               There is some overhead associated with grabbing the frames so 
               if inside a loop and using run on the same arrays repeatedly 
               then try `False`. 
-              
-            ex_uses_vml {False}: Not currently used.  Present for backward 
-              compatibility with NumExpr 2.6.
+
         '''
-        # For Python 2.7 compatibility, mixing proper keyword arguments and 
-        # **kwargs does not work so well, so check for the keys in kwargs
-        # instead.
-        if not 'stackDepth' in kwargs:
+        # Not supporting Python 2.7 anymore, so we can mix named keywords and kw_args
+        if not stackDepth:
             stackDepth = self._stackDepth
-        else: 
-            stackDepth = kwargs['stackDepth']
-            
 
-        if not 'ex_uses_vml' in kwargs:
-            ex_uses_vml = False
+        if kwargs:
+            # Match kwargs to self.namesReg[4]
+            args = [kwargs[reg[4]] for reg in self.namesReg.values() if reg[3] == _REGKIND_ARRAY]
 
-        local_dict = None
-        if 'local_dict' in kwargs and bool(kwargs['local_dict']):
-            # RAM: It occurs to me we don't need to keep the 4th register around if
-            # we zip the keys to the back of values
-            local_dict = kwargs['local_dict']
-
+        elif local_dict: # Use local_dict, may be deprecated eventually.
             args = [local_dict[reg[4]] for reg in self.namesReg.values() if reg[3] == _REGKIND_ARRAY]
-        elif 'check_arrays' in kwargs and bool(kwargs['check_arrays']):
-            # Renew references to frames
+
+        elif check_arrays: # Renew references to frames
             call_frame = sys._getframe( stackDepth ) 
-            if local_dict is None:
-                self.local_dict = call_frame.f_locals
-                self._global_dict = call_frame.f_globals
-            else:
-                self.local_dict = local_dict
-                #self._global_dict = [None]
+            self.local_dict = call_frame.f_locals
+            self._global_dict = call_frame.f_globals
                 
-            # TODO: a smoother function interface.
-            # Build args from kwargs and the list of known names
-            args = []
-            for regKey in self.namesReg:     
-                if regKey in kwargs:
-                    args.append( kwargs[regKey] )
-                    kwargs.pop( regKey )
-        else:
+            args = [self.local_dict[reg[4]] for reg in self.namesReg.values() if reg[3] == _REGKIND_ARRAY]
+
+        else: # Re-use existing arrays
             args = [reg[1] for reg in self.namesReg.values() if reg[3] == _REGKIND_ARRAY]
             if len(args) == 0:
                 raise ValueError( "No input arguments found, perhaps you intended to set check_arrays=False?" )
@@ -509,7 +826,7 @@ class NumExpr(object):
             self._broadCast = np.broadcast( *guessedBroadcast )
             unalloc = np.empty( self._broadCast.shape, dtype=self.retChar )
             
-            print( 'Unallocated output: {} broadcast shape: {}, dtype: {}'.format(self.outputTarget, unalloc.shape, unalloc.dtype) )
+            # print( 'Unallocated output: {} broadcast shape: {}, dtype: {}'.format(self.outputTarget, unalloc.shape, unalloc.dtype) )
             
             # Sometimes the return is in the middle of the args because 
             # the set.pop() from _occupiedTemps is not deterministic.
@@ -529,8 +846,10 @@ class NumExpr(object):
             unalloc = None
 
         
+        # for I, arg in enumerate(args):
+        #     print( "DB#{}: {}".format(I,arg) )
         with _NE_RUN_LOCK:
-            self._compiled_exec( *args, ex_uses_vml=ex_uses_vml, **kwargs )
+            self._compiled_exec( *args, **kwargs )
         
         if promoteResult and self.outputTarget is not None:
             # Insert result into calling frame
@@ -543,275 +862,9 @@ class NumExpr(object):
                            
         if self.outputTarget is None:
             return unalloc
-        return
-    
+        return # end NumExpr.run()
 
-    
-    def _assign(self, node, outputTup=None  ):
-        # node.targets is a list; It must have a len=1 for NumExpr3
-        # node.value is likely a BinOp, Call, Comparison, or BoolOp
-        if len(node.targets) != 1:
-            raise ValueError( 'NumExpr3 supports only singleton returns in assignments.' )
-        
-        # _messages.append( "Assign node: %s op assigned to %s" % ( node.value, node.targets[0]) )
-        # Call function on target and value nodes
-        targetTup = self._ASTAssembler[type(node.targets[0])](node.targets[0])
-        valueTup = self._ASTAssembler[type(node.value)]( node.value, targetTup )
-        return valueTup
-        
-        
-    def _expression(self, node, outputTup=None  ):
-        # For expressions we have to return the value instead of promoting it.
-        valueTup = self._ASTAssembler[type(node.value)](node.value)
-        self.unallocatedOutput = valueTup
-        return valueTup
-        
-           
-    def _name(self, node, outputTup=None ):
-        #print( 'ast.Name' )
-        # node.ctx is probably not something we care for.
-        node_id = node.id
-        
 
-        if node_id in self.namesReg:
-            regTup = self.namesReg[node_id]
-            regToken = regTup[0]
-        else: # Get address so we can find the dtype
-            arr = None
-            if node_id in self.local_dict:
-                arr = self.local_dict[node_id]
-            elif node_id in self._global_dict:
-                arr = self._global_dict[node_id]
-    
-            if arr is not None:
-                regToken = pack( _PACK_REG, next( self._regCount ) )
-                # Force lists, ints, floats, and native arrays to be numpy.ndarrays
-                if type(arr) != np.ndarray:
-                    arr = np.asarray( arr )
-                # print( "Name found in locals/globals: " + node_id )
-                # Build tuple and add to the namesReg
-                self.namesReg[node_id] = regTup = (regToken, arr, arr.dtype.char, int(np.isscalar(arr)), node_id )
-            else:
-                # print( "Name not found: " + node_id )
-                # It's probably supposed to be a temporary with a name, i.e. an assignment target
-                regTup = self._newTemp( None, name = node_id )
-                
-        if outputTup is not None:
-            # This is a copy operation in an assignment.
-            return self._copy(regTup, outputTup)
-            pass
-            
-        
-        return regTup
-
-    def _copy(self, regTup, outputTup ):
-        print( "DEBUG: outputTup = " + str(outputTup) )
-        opCode, self.retChar = OPTABLE[ ('copy', self.lib,
-                               regTup[2]) ]
-        outputTup = self._magic_output( outputTup )
-            
-        self._codeStream.write( b"".join( (opCode, outputTup[0], 
-                                regTup[0], _NULL_REG, _NULL_REG)  )  )
-        pass
-    
-    def _const(self, node ):
-        constNo = next( self._regCount )
-        regKey = pack( _PACK_REG, constNo )
-        token = '${}'.format(constNo)
-        
-        # It's easier to just use ndim==0 numpy arrays, since PyArrayScalar 
-        # isn't in the API anymore.
-        # Use the _minimum _ dtype available so that we don't accidently upcast.
-        # TODO: we should try and force consts to be of the correct dtype in 
-        # Python, to avoid extraneous cast operations in the interpreter.
-
-        if np.mod( node.n, 1) == 0: # int
-            # Always try and used unsigned ints, but only up to half the 
-            # bit-width?
-            if node.n < 0:
-                if node.n > 128:
-                    constArr = np.asarray(node.n, dtype='int8' )
-                elif node.n > 32768:
-                    constArr = np.asarray(node.n, dtype='int16' )  
-                elif node.n > 32768:
-                    constArr = np.asarray(node.n, dtype='int16' )  
-                elif node.n > 2147483648:
-                    constArr = np.asarray(node.n, dtype='int32' )
-                elif node.n > 2305843009213693952:
-                    constArr = np.asarray(node.n, dtype='int32' )
-                else:
-                    constArr = np.asarray(node.n, dtype='float64' )
-            else: # unsigned
-                if node.n < 128:
-                    constArr = np.asarray(node.n, dtype='uint8' )
-                elif node.n < 32768:
-                    constArr = np.asarray(node.n, dtype='uint16' )  
-                elif node.n < 32768:
-                    constArr = np.asarray(node.n, dtype='uint16' )  
-                elif node.n < 2147483648:
-                    constArr = np.asarray(node.n, dtype='uint32' )
-                elif node.n < 2305843009213693952:
-                    constArr = np.asarray(node.n, dtype='uint32' )
-                else:
-                    constArr = np.asarray(node.n, dtype='float64' )
-            
-        elif type(node.n) == str or type(node.n) == bytes : 
-            constArr = np.asarray(node.n)
-        elif np.iscomplex(node.n):
-            constArr = np.complex64(node.n)
-        else: # float
-            constArr = np.asarray(node.n, dtype='float32' )
-    
-        self.namesReg[token] = regTup = ( regKey, constArr, 
-                     constArr.dtype.char, _REGKIND_SCALAR, node.n.__str__() )
-        return regTup
-        
-    def _attribute(self, node ):
-        # An attribute has a .value node which is a Name, and .value.id is the 
-        # module/class reference. Then .attr is the attribute reference that 
-        # we need to resolve.
-        # WE CAN ONLY DEREFERENCE ONE LEVEL ('.')
-        
-        # TODO: .real and .imag need special handling
-        
-        
-        if node.attr == 'real' or node.attr == 'imag':
-
-            return self._real_imag( node, outputTup )
-            
-        className = node.value.id
-        attrName = ''.join( [className, '.', node.attr] )
-        
-        if attrName in self.namesReg:
-            regTup = self.namesReg[attrName]
-            regToken = regTup[0]
-        else:
-            regToken = pack( _PACK_REG, next( self._regCount ) )
-            # Get address
-            arr = None
-            
-            # Is there any tricky way to retrieve the local_dict as is rather than
-            # forcing the system to make a dict?
-            if className in self.local_dict:
-                classRef = self.local_dict[className]
-                if node.attr in classRef.__dict__:
-                    arr = self.local_dict[className].__dict__[node.attr]
-            # Globals is, as usual, slower than the locals, so we prefer not to 
-            # search it.  
-            elif className in self._global_dict:
-                classRef = self.local_dict[className]
-                if node.attr in classRef.__dict__:
-                    arr =self._global_dict[className].__dict__[node.attr]
-            
-            if arr is not None and not hasattr(arr,'dtype'):
-                # Force lists and native arrays to be numpy.ndarrays
-                arr = np.asarray( arr )
-
-            # Build tuple and add to the namesReg
-            self.namesReg[attrName] = regTup = \
-                         (regToken, arr, arr.dtype.char, int(np.isscalar(arr)), attrName )
-        return regTup
-    
-    def _real_imag( self, outputTup ):
-        # Should they always be calls to real() and imag() or should we 
-        # get the strided array?
-        # What if the user does (x+y).real ?
-        print( "TODO: handle .real and .imag" )
-        pass
-        
-    def _magic_output( self, outputTup ):
-        # 
-        if outputTup is None:
-            outputTup = self._newTemp( self.retChar )
-        elif outputTup[2] == None: 
-            self.namesReg[outputTup[4]] = outputTup = \
-                                 (outputTup[0], outputTup[1], self.retChar, outputTup[3], outputTup[4] )
-            if self._lastOp:
-                self.unallocatedOutput = outputTup
-        return outputTup
-        
-    
-    def _binop(self, node, outputTup=None ):
-        #print( 'ast.Binop' )
-        # (left,op,right)
-        leftTup = self._ASTAssembler[type(node.left)](node.left)
-        rightTup = self._ASTAssembler[type(node.right)](node.right)
-        
-        # Check to see if a cast is required
-        leftTup, rightTup = self._cast2( leftTup, rightTup )
-          
-        # Format: (opCode, lib, left_register, right_register)
-        try:
-            opWord, self.retChar = OPTABLE[  (type(node.op), self.lib, leftTup[2], rightTup[2] ) ]
-        except KeyError as e:
-            if leftTup[2] == None or rightTup[2] == None:
-                raise ValueError( 
-                        'Binop did not find arrays: left: {}, right: {}.  Possibly a stack depth issue'.format(
-                                leftTup[4], rightTup[4]) )
-            else:
-                raise e
-        
-        # Make/reuse a temporary for output
-        outputTup = self._magic_output( outputTup )
-            
-        #_messages.append( 'BinOp: %s %s %s' %( node.left, type(node.op), node.right ) )
-        self._codeStream.write( b"".join( (opWord, outputTup[0], leftTup[0], rightTup[0], _NULL_REG ))  )
-        
-        # Release the leftTup and rightTup if they are temporaries and weren't reused.
-        if leftTup[3] == _REGKIND_TEMP and leftTup[0] != outputTup[0]: 
-            self._releaseTemp(leftTup[0])
-        if rightTup[3] == _REGKIND_TEMP and rightTup[0] != outputTup[0]: 
-            self._releaseTemp(rightTup[0])
-        return outputTup
-        
-
-        
-    def _call(self, node, outputTup=None ):
-        # ast.Call has the following fields:
-        # ('func', 'args', 'keywords', 'starargs', 'kwargs')
-        argTups = [self._ASTAssembler[type(arg)](arg) for arg in node.args]
-        
-        # Would be nice to have a prettier way to fill out the program 
-        # than if-else block?
-        if len(argTups) == 1:
-            opCode, self.retChar = OPTABLE[ (node.func.id, self.lib,
-                               argTups[0][2]) ]
-            outputTup = self._magic_output( outputTup )
-            
-
-            self._codeStream.write( b"".join( (opCode, outputTup[0], 
-                                argTups[0][0], _NULL_REG, _NULL_REG)  )  )
-            
-        elif len(argTups) == 2:
-            argTups = self._cast2( *argTups )
-            opCode, self.retChar = OPTABLE[ (node.func.id, self.lib,
-                               argTups[0][2], argTups[1][2]) ]
-            outputTup = self._magic_output( outputTup )
-                    
-
-            self._codeStream.write( b"".join( (opCode, outputTup[0], 
-                               argTups[0][0], argTups[1][0], _NULL_REG)  )  )
-            
-        elif len(argTups) == 3: 
-            # The where() ternary operator function is currently the _only_
-            # 3 argument function
-            argTups[1], argTups[2] = self._cast2( argTups[1], argTups[2] )
-            opCode, self.retChar = OPTABLE[ (node.func.id, self.lib,
-                               argTups[0][2], argTups[1][2], argTups[2][2]) ]
-            outputTup = self._magic_output( outputTup )
-                    
-            self._codeStream.write( b"".join( (opCode, outputTup[0], 
-                               argTups[0][0], argTups[1][0], argTups[2][0])  )  )
-            
-        else:
-            raise ValueError( "call(): function calls are 1-3 arguments" )
-        
-        for arg in argTups:
-            if arg[3] == _REGKIND_TEMP: self._releaseTemp( arg[0] )
-            
-        return outputTup
-    
-    
     def _newTemp(self, dchar, name = None ):
         if len(self._freeTemporaries) > 0:
             regId = self._freeTemporaries.pop()
@@ -829,59 +882,35 @@ class NumExpr(object):
                 regId, None, dchar, _REGKIND_TEMP, name )
         self._occupiedTemporaries.add( regId )
         return tempTup
-        
-    
-    # Free a temporary
+            
+
     def _releaseTemp(self, regId ):
+        # Free a temporary
         #print( "Releasing temporary: %s" % regId )
         self._occupiedTemporaries.remove( regId )
         self._freeTemporaries.add( regId )
-            
+
+
+    def _real_imag( self, outputTup ):
+            # Should they always be calls to real() and imag() or should we 
+            # get the strided array?
+            # What if the user does (x+y).real ?
+            print( "TODO: handle .real and .imag" )
+            pass
         
-    def _compare(self, node, outputTup=None ):
-        # print( 'ast.Compare' )
-        # "Awkward... this ast.Compare node is," said Yoga disparagingly.  
-        # (left,ops,comparators)
-        # NumExpr3 does not handle [Is, IsNot, In, NotIn]
-        if len(node.ops) > 1:
-            raise NotImplementedError( 
-                    'NumExpr3 only supports binary comparisons (between two elements); try inserting brackets' )
-        # Force the node into something the _binop machinery can handle
-        node.right = node.comparators[0]
-        node.op = node.ops[0]
-        return self._binop(node, outputTup)
-   
-    def _boolop(self, node, outputTup=None ):
-        # Functionally from the NumExpr perspective there's no difference 
-        # between boolean binary operations and binary operations
-        if len(node.values) != 2:
-            raise ValueError( "NumExpr3 supports binary logical operations only, please seperate operations with ()." )
-        node.left = node.values[0]
-        node.right = node.values[1]
-        self._binop( node, outputTup )
-        
-    def _unaryop(self, node, outputTup=None ):
-        # Currently only ast.USub is supported, and the node.operand is the 
-        # value acted upon.
-        operandTup = self._ASTAssembler[type(node.operand)](node.operand)
-        outputTup = self._magic_output( outputTup )
-        
-        try:
-            opWord, self.retChar = OPTABLE[  (type(node.op), self.lib, operandTup[2] ) ]
-        except KeyError as e:
-            if operandTup[2] == None :
-                raise ValueError( 
-                        'Unary did not find operand array {}. Possibly a stack depth issue'.format(
-                                operandTup[4]) )
-            else:
-                raise e
-        self._codeStream.write( b"".join( (opWord, outputTup[0], operandTup[0], _NULL_REG, _NULL_REG ))  )  
-         
-        # Release the operandTup if it was a temporary
-        if operandTup[3] == _REGKIND_TEMP and operandTup[0] != outputTup[0]: 
-            self._releaseTemp(operandTup[0])
+
+    def _magic_output( self, outputTup ):
+        # 
+        if outputTup is None:
+            outputTup = self._newTemp( self.retChar )
+        elif outputTup[2] == None: 
+            self.namesReg[outputTup[4]] = outputTup = \
+                                    (outputTup[0], outputTup[1], self.retChar, outputTup[3], outputTup[4] )
+            if self._lastOp:
+                self.unallocatedOutput = outputTup
         return outputTup
-                
+
+
     def _cast2(self, leftTup, rightTup ): 
         leftD = leftTup[2]; rightD = rightTup[2]
         # print( "cast2: %s, %s"%(leftD,rightD) ) 
@@ -893,7 +922,7 @@ class NumExpr(object):
             
             self._codeStream.write( b"".join( 
                     (OPTABLE[('cast',self.casting,rightD,leftD)][0], castTup[0], 
-                             leftTup[0], _NULL_REG, _NULL_REG)  ) )
+                                leftTup[0], _NULL_REG, _NULL_REG)  ) )
             return castTup, rightTup
         elif np.can_cast( rightD, leftD ):
             # Make a new temporary
@@ -901,23 +930,19 @@ class NumExpr(object):
                         
             self._codeStream.write( b"".join( 
                     (OPTABLE[('cast',self.casting,leftD,rightD)][0], castTup[0], 
-                             rightTup[0], _NULL_REG, _NULL_REG) ) )
+                                rightTup[0], _NULL_REG, _NULL_REG) ) )
             return leftTup, castTup
         else:
             raise TypeError( "cast2(): Cannot cast %s to %s by rule 'safe'"
                             %(np.dtype(leftD), np.dtype(rightD) ) ) 
-                
-        
+            
+    
     def _cast3(self, leftTup, midTup, rightTup ):
         # _cast3 isn't called by where/tenary so no need for an implementation
         # at present.
         self._messages.append( 'TODO: implement 3-argument casting' )
         return leftTup, midTup, rightTup
 
-    def _unsupported(self, node, outputTuple=None ):
-        raise KeyError( 'unimplmented ASTNode' + type(node) )
-        
-    
 # The wisdomBank connects strings to their NumExpr objects, so if the same 
 # expression pattern is called, it will be retrieved from the bank.
 # Also this permits serialization via pickle.
@@ -964,22 +989,21 @@ class _WisdomBankSingleton(dict):
         #self.__dict__[key] = value
         super(_WisdomBankSingleton, self).__setitem__(key, value)
          
-# Pickling cannot work as desired because the C-api numexpr.NumExpr object 
-# isn't a Python object.  So probably it's necessary to build things from 
-# JSON? Would that actually be faster?  Or we can define the state functions.
-# Would have to define __getstate__ and __setstate__ in module.cpp
-#    def load( self, wisdomFile=None ):
-#        if wisdomFile == None:
-#            wisdomFile = self.wisdomFile
-#            
-#        with open( wisdomFile, 'rb' ) as fh:
-#            self = pickle.load(fh)
-#
-#    def dump( self, wisdomFile=None ):
-#        if wisdomFile == None:
-#            wisdomFile = self.wisdomFile
-#        print( "DEBUG" )    
-#        with open( wisdomFile, 'wb' ) as fh:
-#            pickle.dump(self, fh)
+    # Pickling support for wisdom:
+    # Pickling still needs some work.  Possibly the WisdomBankSingleton also needs 
+    # __getstate__ and __setstate__ magic functions.
+    # def load( self, wisdomFile=None ):
+    #     if wisdomFile == None:
+    #         wisdomFile = self.wisdomFile
+            
+    #     with open( wisdomFile, 'rb' ) as fh:
+    #         self = pickle.load(fh)
+
+    # def dump( self, wisdomFile=None ):
+    #     if wisdomFile == None:
+    #         wisdomFile = self.wisdomFile
+  
+    #     with open( wisdomFile, 'wb' ) as fh:
+    #         pickle.dump(self, fh)
 
 wisdom = _WisdomBankSingleton()
