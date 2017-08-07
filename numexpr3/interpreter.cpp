@@ -717,7 +717,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     //        }
       }
     }
-    printf( "NumExpr_run() #5\n" ); 
+    // printf( "NumExpr_run() #5\n" ); 
                       
     // Run through all the registers and match the input arguments to that
     // parsed by NumExpr_init

@@ -216,7 +216,7 @@ def evaluate( expr, name=None, lib=LIB_STD,
         neObj = NumExpr( expr, lib=lib, casting=casting, stackDepth=stackDepth,
                         local_dict=local_dict, _global_dict=_global_dict )
         # neObj.assemble() called on __init__()
-        return neObj.run( check_arrays=False, stackDepth=stackDepth+1 )
+        return neObj.run( verify=False, stackDepth=stackDepth+1 )
     
 
 ########################## AST PARSING HANDLERS ################################
@@ -742,14 +742,17 @@ class NumExpr(object):
     def print_names(self):
         for val in self.namesReg.values(): print( '{}:{}'.format( val[4], val[3])  )
         
-    def __call__(self, **kwargs):
-        if not 'stackDepth' in kwargs:
-            kwargs['stackDepth'] = self._stackDepth + 1
-        else: 
-            pass
-        self.run( **kwargs)
+    def __call__(self, stackDepth=None, local_dict=None, verify=False, **kwargs):
+        '''
+        A convenience shortcut for `NumExpr.run()`.  Keyword arguments are 
+        similar except `verify` defaults to False.  
+        '''
+        if not stackDepth:
+            stackDepth = self.stackDepth + 1
+            
+        self.run( stackDepth=stackDepth, local_dict=local_dict, verify=verify, **kwargs)
         
-    def run(self, stackDepth=None, local_dict=None, check_arrays=True, **kwargs):
+    def run(self, stackDepth=None, local_dict=None, verify=True, **kwargs):
         '''
         `run()` is called with keyword arguments as the order of 
         args is based on the Abstract Syntax Tree parse and may be 
@@ -770,7 +773,7 @@ class NumExpr(object):
               Note that this is somewhat superfluous as its functionality is 
               mimiced by kwargs.  
         
-            check_arrays {True}: Resamples the calling frame to grab arrays. 
+            verify {True}: Resamples the calling frame to grab arrays. 
               There is some overhead associated with grabbing the frames so 
               if inside a loop and using run on the same arrays repeatedly 
               then try `False`. 
@@ -787,7 +790,7 @@ class NumExpr(object):
         elif local_dict: # Use local_dict, may be deprecated eventually.
             args = [local_dict[reg[4]] for reg in self.namesReg.values() if reg[3] == _REGKIND_ARRAY]
 
-        elif check_arrays: # Renew references to frames
+        elif verify: # Renew references to frames
             call_frame = sys._getframe( stackDepth ) 
             self.local_dict = call_frame.f_locals
             self._global_dict = call_frame.f_globals
@@ -797,7 +800,7 @@ class NumExpr(object):
         else: # Re-use existing arrays
             args = [reg[1] for reg in self.namesReg.values() if reg[3] == _REGKIND_ARRAY]
             if len(args) == 0:
-                raise ValueError( "No input arguments found, perhaps you intended to set check_arrays=False?" )
+                raise ValueError( "No input arguments found, perhaps you intended to set verify=False?" )
         
         # Check if the result needs to be added to the calling frame's locals
         promoteResult = (not self.outputTarget in kwargs) \
