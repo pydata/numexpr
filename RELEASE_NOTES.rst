@@ -1,3 +1,23 @@
+=====================================
+ Release notes for NumExpr 3.0 series
+=====================================
+
+Changes from 3.0.0 to 3.0.1
+===========================
+
+* There is no longer any MAX_THREADS.  All threading resources are now 
+  dynamically allocated.
+* Temporaries are now pre-allocated in a block rather than being individually 
+  allocated by the virtual machine at runtime. If the total temporary space is 
+  too small it will be `realloc`ed to be the appropriate size.  This space can
+  be managed by `set_tempsize( new_size_per_thread)`. Setting the temporary 
+  size to zero will release all temporary memory.  
+* Python-side NumExpr and their associated C-extension objects are now 
+  pickleable.  As an part of this, constants no longer occupy BLOCKSIZE memory 
+  and are instead single values with a `numpy.nditer` stride of zero.
+* There is no longer a MAX_THREADS, the global thread parameters is now 
+  resizable.  
+
 ======================================
  Release notes for Numexpr 2.4 series
 ======================================

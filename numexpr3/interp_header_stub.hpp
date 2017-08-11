@@ -20,14 +20,15 @@
 #endif
 
 // Global state which holds thread parameters
-extern thread_data th_params;
+extern global_state gs;
 
 PyObject *NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds);
 
 int NPYENUM_from_dchar(char c);
 char get_return_sig(NumExprObject *self);
-int get_temps_space(NumExprObject *self, size_t block_size);
+int get_temps_space(NumExprObject *self, size_t task_size);
 void free_temps_space(const NumExprObject *self);
+int prepareThreads( NumExprObject* self, NpyIter *iter, int *pc_error, char **errorMessage );
 int vm_engine_iter_task(NpyIter *iter, const NumExprObject *params, 
                         int *pc_error, char **errorMessage);
 NumExprObject* NumExprObject_copy_threadsafe( const NumExprObject *self );                

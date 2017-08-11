@@ -11,6 +11,7 @@
 #include <numpy/npy_common.h>
 
 // Maximum number of arguments (including return) per operation
+// Not related to NPY_MAXARGS.
 #define NUMEXPR_MAX_ARGS 4
 // Maximum number of arrays in a NumExprObject
 #define NE_MAX_BUFFERS 255
@@ -27,6 +28,8 @@
     
 // RAM: This is also an arbitrary for reductions
 #define INNER_LOOP_MAX_SIZE 64
+// The default block size on module load.
+#define DEFAULT_BLOCK 4096
 
 #define OP_NOOP 0
 // TODO: OP_REDUCTION will need to be inserted by the code generator.
@@ -37,10 +40,11 @@
 
 
 
-/* The maximum number of threads (for some static arrays).
- * Choose this large enough for most monsters out there.
-   Keep in sync this with the number in __init__.py. */
-#define MAX_THREADS 256
+// The maximum number of threads (for some static arrays).
+// Choose this large enough for most monsters out there.
+// Keep in sync this with the number in __init__.py. 
+//#define MAX_THREADS 256
+#define DEFAULT_THREADS 1
 
 #if defined(_WIN32)
   #include "win32/pthread.h"

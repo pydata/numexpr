@@ -142,9 +142,7 @@ def detect_number_of_threads():
             print( "NumExpr3 notification: n_threads set to " + str(max_sensible_threads) 
 				  + ", increase with util.set_num_threads(n)" )
             nthreads = max_sensible_threads		
-    # Check that we don't surpass the MAX_THREADS in interpreter.cpp		
-    if nthreads > 256:		
-        nthreads = 256		
+
     return nthreads		
 
 

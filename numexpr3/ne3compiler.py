@@ -60,6 +60,12 @@ _NULL_REG =  pack( 'B', 255 )
 _PACK_OP =  b'H'
 _PACK_REG = b'B'
 _UNPACK = b''.join([_PACK_OP,_PACK_REG,_PACK_REG,_PACK_REG,_PACK_REG])
+
+# Map np.dtype.char to np.dtype.itemsize
+_DCHAR_ITEMSIZE = {dchar:np.dtype(dchar).itemsize for dchar in np.typecodes['All']}
+#    gives 0s for strings and unicode.
+_DCHAR_ITEMSIZE['S'] = 1
+_DCHAR_ITEMSIZE['U'] = 4
     
 # Context for casting
 CAST_SAFE = 0
@@ -78,9 +84,9 @@ OPT_MODERATE = 0
 #OPT_AGGRESSIVE = 1
 
 # Defaults to LIB_STD
-LIB_STD = 0    # C++ cmath standard library
+LIB_STD = 0     # C++ cmath standard library
 #LIB_VML = 1    # Intel Vector Math library
-#LIB_SIMD = 2  # x86 SIMD extensions
+#LIB_YEPPP = 2  # Yeppp! math library
 
 CHECK_ALL = 0  # Normal operation in checking dtypes
 #CHECK_NONE = 1 # Disable all checks for dtypes if expr is in cache
@@ -593,14 +599,6 @@ class NumExpr(object):
         else:
             self.local_dict = local_dict
             self._global_dict = _global_dict
-            
-        # self._ASTAssembler = defaultdict( self._unsupported, 
-        #           { ast.Assign:self._assign, ast.Expr:self._expression, \
-        #             ast.Name:self._name, ast.Num:self._const, \
-        #             ast.Attribute:self._attribute, ast.BinOp:self._binop, \
-        #             ast.BoolOp:self._boolop, ast.UnaryOp:self._unaryop, \
-        #             ast.Call:self._call, ast.Compare:self._compare, \
-        #              } )
     
         self.assemble()
 
@@ -748,8 +746,8 @@ class NumExpr(object):
         similar except `verify` defaults to False.  
         '''
         if not stackDepth:
-            stackDepth = self.stackDepth + 1
-            
+            stackDepth = self._stackDepth + 1
+
         self.run( stackDepth=stackDepth, local_dict=local_dict, verify=verify, **kwargs)
         
     def run(self, stackDepth=None, local_dict=None, verify=True, **kwargs):
@@ -807,14 +805,14 @@ class NumExpr(object):
                         and ( (not self.outputTarget in self.local_dict) and 
                               (not self.outputTarget in self._global_dict) )
         
-        #print( "args2: " + str(args) )
         if bool(self.unallocatedOutput):
+            op, retN, *argNs = unpack( _UNPACK, self.program[-6:] )
+
             # Can't *assign in Python 2.7
-            # op, retN, *argNs = unpack( _UNPACK, self.program[-6:] )
-            op, retN, arg1, arg2, arg3 = unpack( _UNPACK, self.program[-6:] )
+            #op, retN, arg1, arg2, arg3 = unpack( _UNPACK, self.program[-6:] )
             #print( "Broadcast for op: {}, ret: {}, a1: {}, a2: {}, a3: {}".format(
             #        op, retN, argNs[0], argNs[1], argNs[2] ) )
-            argNs = [N for N in (arg1,arg2,arg3) if N != ord(_NULL_REG)]
+            #argNs = [N for N in (arg1,arg2,arg3) if N != ord(_NULL_REG)]
             
             if retN != ord(self.namesReg[self.outputTarget][0]):
                 raise ValueError( 'Last program set destination to other than output' )
@@ -871,8 +869,15 @@ class NumExpr(object):
     def _newTemp(self, dchar, name = None ):
         if len(self._freeTemporaries) > 0:
             regId = self._freeTemporaries.pop()
-            #print( 'Re-using temporary: %s' % regId )
-            tempTup = ( regId, None, dchar, _REGKIND_TEMP, '${}'.format(ord(regId)) )
+            
+            # Check if the previous temporary itemsize was different, and use 
+            # the biggest of the two.
+            tempName = '${}'.format(ord(regId))
+            prevDChar = self.namesReg[tempName][2]
+            if _DCHAR_ITEMSIZE[dchar] < _DCHAR_ITEMSIZE[prevDChar]:
+                dchar = prevDChar
+            tempTup = ( regId, None, dchar, _REGKIND_TEMP, tempName )
+
         else:
             tempNo = next( self._regCount )
             

@@ -60,34 +60,13 @@ struct NumExprObject
     // for efficient garbage collection.
     char                    *scalar_mem;  
     npy_intp                 scalar_mem_size;
+    // temporaries need a block of memory at least sum(BLOCKSIZE1*total_temp_itemsize)
+    Py_ssize_t               total_temp_itemsize; 
     int                      program_len;    
     NE_REGISTER              n_reg;
     NE_REGISTER              n_ndarray;
     NE_REGISTER              n_scalar;
     NE_REGISTER              n_temp;  
-};
-
-// Structure for parameters in worker threads
-struct thread_data {
-    npy_intp start;
-    npy_intp vlen;
-    npy_intp block_size;
-    // RAM: we could make params not-a-pointer so it's not being 
-    // allocated and de-allocated.
-    NumExprObject *params;
-    int ret_code;
-    int *pc_error;
-    char **errorMessage;
-    // One strides array per thread
-    npy_intp *stridesArray[MAX_THREADS];
-    // One iterator per thread */
-    NpyIter *iter[MAX_THREADS];
-    // When doing nested iteration for a reduction
-    NpyIter *reduce_iter[MAX_THREADS];
-    // Flag indicating reduction is the outer loop instead of the inner
-    bool reduction_outer_loop;
-    // Flag indicating whether output buffering is needed
-    bool need_output_buffering;
 };
 
 

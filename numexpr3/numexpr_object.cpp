@@ -19,8 +19,7 @@
 static void
 NumExpr_dealloc(NumExprObject *self)
 {
-    // Free temporaries is done by free_temps_space()
-
+    // Temporaries are held at the module level in an memory block.
     free( self->program );
     free( self->registers );
     free( self->scalar_mem );
@@ -91,9 +90,8 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     int I; 
 
     // Build const blocks variables
-    npy_intp total_scalar_itemsize = 0, mem_offset = 0;
-    char *scalar_mem, *mem_loc;
-    
+    npy_intp total_scalar_itemsize = 0, mem_offset = 0, total_temp_itemsize = 0;
+    char *scalar_mem = NULL, *mem_loc;
     
     static char *kwlist[] = { CHARP("program"), CHARP("registers"), NULL };
     
@@ -131,7 +129,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     program_len = (int)( PyBytes_GET_SIZE(bytes_prog) / NE_PROG_LEN );
     // Cast from Python_Bytes->char array->NumExprOperation struct array
     // which works because we use struct.pack() in Python.
-    
+
     // We have to copy bytes_prog or Python garbage collects it
     //program = (NumExprOperation*)PyMem_Malloc( program_len*sizeof(NumExprOperation) );
     //program = (NumExprOperation*)PyMem_New( NumExprOperation, program_len );
@@ -140,9 +138,9 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
 
     // Build registers
     // registers = PyMem_New(NumExprReg, n_reg);
-    // arrays = PyMem_New(PyObject*, n_reg);
+    arrays = PyMem_New(PyObject*, n_reg);
     registers = (NumExprReg *)malloc(n_reg * sizeof(NumExprReg) );
-    arrays = (PyObject**)malloc(n_reg * sizeof(PyObject *) );
+    //arrays = (PyObject**)malloc(n_reg * sizeof(PyObject *) );
     for( I = 0; I < n_reg; I++ ) {
         // Get reference and check format of register
         iter_reg = PyTuple_GET_ITEM( reg_tuple, I );
@@ -189,13 +187,13 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
                 //printf( "Found scalar at register %d, dtype %c with itemsize %lu\n", 
                 //       I, registers[I].dchar, registers[I].itemsize );
                 n_scalar++;
-                // TODO: build a BLOCK_SIZE1 ones array
                 total_scalar_itemsize += registers[I].itemsize;
                 break;
             case KIND_TEMP:
                 //printf( "Found temporary at register %d, dtype %c with itemsize %lu\n", 
                 //        I, registers[I].dchar, registers[I].itemsize );
                 n_temp++;
+                total_temp_itemsize += registers[I].itemsize;
                 break;
             case KIND_RETURN:
                 //printf( "Found return at register %d\n", I );
@@ -242,7 +240,6 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
             // RAM: Passes valgrind check
         }
     }
-
     #define REPLACE_OBJ(argument) \
     {PyObject *temp = self->argument; \
      self->argument = argument; \
@@ -253,8 +250,8 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
 
     //REPLACE_MEM(program);
     //REPLACE_MEM(registers);
-    //PyMem_Del(arrays);
-    free(arrays);
+    PyMem_Del(arrays);
+    //free(arrays);
     //REPLACE_MEM(scalar_mem);
     self->program = program;
     self->registers = registers;
@@ -265,6 +262,8 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     self->n_scalar = n_scalar;
     self->n_temp = n_temp;
     self->scalar_mem_size = total_scalar_itemsize;
+    self->total_temp_itemsize = total_temp_itemsize;
+
     // DEBUG: print the program to screen
 //    for( I = 0; I < self->program_len; I++ ) {
 //        printf( "NE_init: Program[%d]: %d %d %d %d %d \n", I,
@@ -381,8 +380,8 @@ NumExpr_print_state(NumExprObject *self, PyObject *args) {
     for( int J = 0; J < self->n_reg; J++ ) {
         printf( "    #%d:: mem: %p, dchar: %c, kind: %d, itemsize: %Id, stride: %Id, elements: %Id\n", 
             J, self->registers[J].mem, self->registers[J].dchar, 
-            self->registers[J].kind, self->registers[J].itemsize, 
-            self->registers[J].stride, self->registers[J].elements );
+            self->registers[J].kind, (int)self->registers[J].itemsize, 
+            (int)self->registers[J].stride, (int)self->registers[J].elements );
     }
 
     printf( "\nScalar memory pointer: %p\n", self->scalar_mem );

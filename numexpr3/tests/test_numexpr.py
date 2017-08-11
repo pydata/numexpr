@@ -28,10 +28,10 @@ minimum_numpy_version = '1.7'
 
 class test_numexpr(TestCase):
     '''Testing with 1 thread'''
-    nthreads = 1
 
-    def setUp(self):
-        ne3.set_num_threads(self.nthreads)
+    def setUp(self, N_threads=1):
+        print( "Run test suite with {} thread(s)".format(N_threads) )
+        ne3.set_num_threads(N_threads)
 
     def test_simple_func(self):
         print( 'Test simple func' )
@@ -291,8 +291,10 @@ class test_numexpr(TestCase):
 
 class test_numexpr2(test_numexpr):
     '''Testing with 2 threads'''
-    nthreads = 2
-
+    
+    def setUp(self, N_threads=2):
+        print( "Run test suite with {} thread(s)".format(N_threads) )
+        ne3.set_num_threads(N_threads)
 
 class test_evaluate(TestCase):
     def test_simple_eval(self):
