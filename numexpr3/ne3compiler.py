@@ -126,7 +126,9 @@ def evaluate( expr, name=None, lib=LIB_STD,
         use wisdom functions instead.
         
     local_dict : dictionary, optional
-        A dictionary that replaces the local operands in current frame.
+        A dictionary that replaces the local operands in current frame. This is 
+        generally required in Cython, as Cython does not populate the calling 
+        frame variables according to Python standards.
 
     global_dict : DEPRECATED
         A dictionary that replaces the global operands in current frame.
@@ -138,6 +140,8 @@ def evaluate( expr, name=None, lib=LIB_STD,
         use assignment in expr (i.e. 'out=a*b') instead.
 
     order : {'C', 'F', 'A', or 'K'}, optional
+        Currently only 'K' is supported in NumExpr3.
+
         Controls the iteration order for operands. 'C' means C order, 'F'
         means Fortran order, 'A' means 'F' order if all the arrays are
         Fortran contiguous, 'C' order otherwise, and 'K' means as close to
@@ -148,6 +152,9 @@ def evaluate( expr, name=None, lib=LIB_STD,
     casting : {CAST_SAFE, CAST_NO, CAST_EQUIV, CAST_SAME_KIND, CAST_UNSAFE}, 
                optional 
                (NumPy string repr also accepted)
+
+        Currently only 'safe' is supported in NumExpr3.
+
         Controls what kind of data casting may occur when making a copy or
         buffering.  Setting this to 'unsafe' is not recommended, as it can
         adversely affect accumulations.
@@ -158,23 +165,20 @@ def evaluate( expr, name=None, lib=LIB_STD,
           * 'same_kind' means only safe casts or casts within a kind,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
-          
-    optimization: {OPT_MODERATE, OPT_AGGRESSIVE}, optional
+
+    optimization: {OPT_MODERATE}, optional
         Controls what level of optimization the compiler will attempt to 
         perform on the expression to speed its execution.  This optimization
         is performed both by python.compile and numexpr3
         
           * OPT_MODERATE performs simple optimizations, such as minimizing 
             the number of temporary arrays
-          * OPT_AGGRESSIVE performs aggressive optimizations, such as replacing 
-            powers with mutliplies.
             
-    library: {LIB_STD, LIB_VML}, optional
+    library: {LIB_STD}, optional
         Indicates which library to use for calculations.  The library must 
         have been linked during the C-extension compilation, such that the 
         associated operations are found in the opTable.
           * LIB_STD is the standard C math.h / cmath.h library
-          * LIB_VML is the Intel Vector Math Library
         
         Falls-back to LIB_STD if the other library is not available.  
     """
@@ -240,7 +244,9 @@ def _assign(self, node, outputTup=None  ):
         # _messages.append( "Assign node: %s op assigned to %s" % ( node.value, node.targets[0]) )
         # Call function on target and value nodes
         targetTup = _ASTAssembler[type(node.targets[0])](self, node.targets[0])
+        print( "Assign targetTup={}".format(targetTup) )
         valueTup = _ASTAssembler[type(node.value)](self, node.value, targetTup )
+        print( "Assign valueTup={}".format(valueTup) )
         return valueTup
         
         
@@ -568,7 +574,83 @@ class NumExpr(object):
     
     def __init__(self, expr, lib=LIB_STD, casting=CAST_SAFE, local_dict=None, 
                  _global_dict=None, stackDepth=1 ):
+    """Evaluate a mutliline expression element-wise, using the a NumPy.iter.
+
+    `expr` is a string forming an expression, like 
+
+        neObj = NumExpr( 'c = 2*a + 3*b )    # Builds an NumExpr object
+        neObj( a=a, b=b, c=c )       # Executes the calculation
+
+    The values for 'a', 'b', and 'c' will by default be taken from the calling 
+    function's frame (through use of sys._getframe()). Alternatively, they 
+    can be specifed using the 'local_dict' argument.
+    
+    Multi-line statements, typically using triple-quote strings, or semi-colon 
+    seperated statements, are supported.
+    
+    
+    Parameters
+    ----------
+    name : DEPRECATED
+        use wisdom functions instead.
         
+    local_dict : dictionary, optional
+        A dictionary that replaces the local operands in current frame. This is 
+        generally required in Cython, as Cython does not populate the calling 
+        frame variables according to Python standards.
+
+    global_dict : DEPRECATED
+        A dictionary that replaces the global operands in current frame.
+        Setting to {} can speed operations if you do not call globals.
+        global_dict was deprecated as there is little reason for the 
+        user to maintain two dictionaries of arrays.
+        
+    out : DEPRECATED
+        use assignment in expr (i.e. 'out=a*b') instead.
+
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Currently only 'K' is supported in NumExpr3.
+
+        Controls the iteration order for operands. 'C' means C order, 'F'
+        means Fortran order, 'A' means 'F' order if all the arrays are
+        Fortran contiguous, 'C' order otherwise, and 'K' means as close to
+        the order the array elements appear in memory as possible.  For
+        efficient computations, typically 'K'eep order (the default) is
+        desired.
+
+    casting : {CAST_SAFE, CAST_NO, CAST_EQUIV, CAST_SAME_KIND, CAST_UNSAFE}, 
+               optional 
+               (NumPy string repr also accepted)
+
+        Currently only 'safe' is supported in NumExpr3.
+
+        Controls what kind of data casting may occur when making a copy or
+        buffering.  Setting this to 'unsafe' is not recommended, as it can
+        adversely affect accumulations.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
+
+    optimization: {OPT_MODERATE}, optional
+        Controls what level of optimization the compiler will attempt to 
+        perform on the expression to speed its execution.  This optimization
+        is performed both by python.compile and numexpr3
+        
+          * OPT_MODERATE performs simple optimizations, such as minimizing 
+            the number of temporary arrays
+            
+    library: {LIB_STD}, optional
+        Indicates which library to use for calculations.  The library must 
+        have been linked during the C-extension compilation, such that the 
+        associated operations are found in the opTable.
+          * LIB_STD is the standard C math.h / cmath.h library
+        
+        Falls-back to LIB_STD if the other library is not available.  
+    """
         # Public
         self.expr = expr
         self.program = b''
@@ -593,13 +675,14 @@ class NumExpr(object):
 
         # Get references to frames
         call_frame = sys._getframe( self._stackDepth ) 
+       
         if local_dict is None:
             self.local_dict = call_frame.f_locals
             self._global_dict = call_frame.f_globals
         else:
             self.local_dict = local_dict
             self._global_dict = _global_dict
-    
+
         self.assemble()
 
     def __getstate__(self):
@@ -780,6 +863,9 @@ class NumExpr(object):
         # Not supporting Python 2.7 anymore, so we can mix named keywords and kw_args
         if not stackDepth:
             stackDepth = self._stackDepth
+
+        for key,val in kwargs.items():
+            print( "{}:{}".format(key,val) )
 
         if kwargs:
             # Match kwargs to self.namesReg[4]

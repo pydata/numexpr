@@ -414,6 +414,8 @@ initinterpreter()
 {
     PyObject *m, *d;
 
+    // WARNING: PyType_Ready MUST be called to finalize new Python types before
+    // a module is created. Official documentation is weak on this point.
     if (PyType_Ready(&NumExprType) < 0)
         INITERROR;
 
