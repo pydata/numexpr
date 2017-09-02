@@ -15,50 +15,10 @@ from distutils.command.clean import clean
 import time
 import setuptools
 
-'''
- NOTES FOR WINDOWS:
- For Python 2.7, you must have the x64 environment variables set correctly...
 
-from:
-    http://scikit-learn.org/stable/developers/advanced_installation.html#windows
-for the 64-bit architecture, you either need the full visual studio or the free windows sdks that 
-can be downloaded from the links below.
-the windows sdks include the msvc compilers both for 32 and 64-bit architectures. they come as a 
-grmsdkx_en_dvd.iso file that can be mounted as a new drive with a setup.exe installer in it.
-
-for python 2 you need sdk v7.0: ms windows sdk for windows 7 and .net framework 3.5 sp1
-
-for python 3 you need sdk v7.1: ms windows sdk for windows 7 and .net framework 4
-
-both sdks can be installed in parallel on the same host. to use the windows sdks, you need to setup 
-the environment of a cmd console launched with the following flags (at least for sdk v7.0):
-cmd /e:on /v:on /k
-then configure the build environment with (FOR PYTHON 2.7):
-
-set distutils_use_sdk=1
-set mssdk=1
-"c:\program files\microsoft sdks\windows\v7.0\setup\windowssdkver.exe" -q -version:v7.0
-"c:\program files\microsoft sdks\windows\v7.0\bin\setenv.cmd" /x64 /release
-
-finally you can build scikit-learn in the same cmd console:
-
-python setup.py install
-
-replace v7.0 by the v7.1 in the above commands to do the same for python 3 instead of python 2.
-replace /x64 by /x86 to build for 32-bit python instead of 64-bit python.
-
-Ignore the "Missing compiler_cxx fix for MSVCCompiler" error message.
-
-You also need the .NET Framework 3.5 SP1 installed for Python 2.7
-'''
-
-if sys.version_info < (2, 7):
-    raise RuntimeError( 'NumExpr3 requires Python 2.7 or greater.' )
-    
 if sys.version_info.major == 3 and sys.version_info.minor < 3:
     raise RuntimeError( 'NumExpr requires Python 3.3 or greater.' )
     
-
 # Increment version for each PyPi release.
 major_ver = 3
 minor_ver = 0
@@ -87,8 +47,6 @@ elif os.name == 'nt':
 
     
 
-
-
 def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     # Do not generate new files if the GENERATED files are all newer than
     # interp_generator.py.  This saves recompiling if its not needed.
@@ -96,7 +54,7 @@ def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     generator_time  = os.path.getmtime( 'code_generators/interp_generator.py' )
     if all( [generator_time < os.path.getmtime(GEN_file) for GEN_file in GENERATED_files] ) \
         and os.path.isfile('numexpr3/lookup.pkl'):
-        print( "=Generation not required=" )
+        print( "---===Generation not required===---" )
         return
     # Python 2.7 cannot do relative imports here so we need to use inspect to 
     # modify the PYTHONPATH.
@@ -108,7 +66,7 @@ def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     # we insert configuration tricks into the code_generator directory.
     # TODO: It also needs to see if the stubs have been incremented.
     import interp_generator
-    print( '=====GENERATING INTERPRETER CODE=====' )
+    print( '---===GENERATING INTERPRETER CODE===---' )
     # Try to auto-detect MKL and C++/11 here.
     # mkl=True 
     
@@ -147,47 +105,43 @@ def setup_package():
         from numpy.distutils.core import setup
         from numpy.distutils.command.build_ext import build_ext as numpy_build_ext
 
-        try:  # Python 3
-            # Code taken form numpy/distutils/command/build_py.py
-            from distutils.command.build_py import build_by as du_build_py
-            from numpy.distutils.misc_util import is_string
 
-            class build_py(du_build_py):
+        # Code taken form numpy/distutils/command/build_py.py
+        from distutils.command.build_py import build_by as du_build_py
+        from numpy.distutils.misc_util import is_string
 
-                def run(self):
-                    build_src = self.get_finalized_command('build_src')
-                    if build_src.py_modules_dict and self.packages is None:
-                        self.packages = list(build_src.py_modules_dict.keys())
-                    du_build_py.run(self)
+        class build_py(du_build_py):
 
-                def find_package_modules(self, package, package_dir):
-                    modules = du_build_py.find_package_modules(self, package, package_dir)
+            def run(self):
+                build_src = self.get_finalized_command('build_src')
+                if build_src.py_modules_dict and self.packages is None:
+                    self.packages = list(build_src.py_modules_dict.keys())
+                du_build_py.run(self)
 
-                    # Find build_src generated *.py files.
-                    build_src = self.get_finalized_command('build_src')
-                    modules += build_src.py_modules_dict.get(package, [])
+            def find_package_modules(self, package, package_dir):
+                modules = du_build_py.find_package_modules(self, package, package_dir)
 
-                    return modules
+                # Find build_src generated *.py files.
+                build_src = self.get_finalized_command('build_src')
+                modules += build_src.py_modules_dict.get(package, [])
 
-                def find_modules(self):
-                    old_py_modules = self.py_modules[:]
-                    new_py_modules = list(filter(is_string, self.py_modules))
-                    self.py_modules[:] = new_py_modules
-                    modules = du_build_py.find_modules(self)
-                    self.py_modules[:] = old_py_modules
+                return modules
 
-                    return modules
+            def find_modules(self):
+                old_py_modules = self.py_modules[:]
+                new_py_modules = list(filter(is_string, self.py_modules))
+                self.py_modules[:] = new_py_modules
+                modules = du_build_py.find_modules(self)
+                self.py_modules[:] = old_py_modules
 
-        except ImportError:  # Python 2
-            from numpy.distutils.command.build_py import build_py
+                return modules
 
-        DEBUG = False
-
+        _DEBUG = False
         def localpath(*args):
             return os.path.abspath(os.pathjoin(*((os.path.dirname(__file__),) + args)))
 
         def debug(instring):
-            if DEBUG:
+            if _DEBUG:
                 print(' DEBUG: ' + instring)
 
 

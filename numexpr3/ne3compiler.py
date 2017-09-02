@@ -29,7 +29,7 @@ except ImportError: import pickle
 try: from cStringIO import StringIO as BytesIO
 except ImportError: from io import BytesIO
 # struct.pack is the quickest way to build the program as structs
-# All important format characters: https://docs.python.org/2/library/struct.html
+# All important format characters: https://docs.python.org/3/library/struct.html
 from struct import pack, unpack, calcsize
 
 
@@ -46,15 +46,9 @@ except ImportError:
     info = print; warn = print; debug = print
 
 
-if sys.version_info[0] >= 3:
-    # Python 2 to 3 handling
-    unicode = str # To suppress warnings only
-else:
-    pass
 
 # Due to global state in the C-API, we need to restrict the module to running 
-# one expression per Python process.  There is, unfortunately, no timeout 
-# in Python 2.7 for Lock
+# one expression per Python process. 
 from threading import Lock
 _NE_RUN_LOCK = Lock()
 
@@ -199,9 +193,7 @@ def evaluate( expr, name=None, lib=LIB_STD,
         
         Falls-back to LIB_STD if the other library is not available.  
     """
-    if sys.version_info[0] < 3 and not isinstance(expr, (str,unicode) ):
-        raise ValueError( "expr must be specified as a string or unicode." )
-    elif not isinstance(expr, (str,bytes)):
+    if not isinstance(expr, (str,bytes)):
         raise ValueError( "expr must be specified as a string or bytes." )
         
     if out is not None:

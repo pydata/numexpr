@@ -1,4 +1,3 @@
 numpy>=1.7
 setuptools>=18.2
-six>=1.10
 

@@ -339,7 +339,7 @@ static PyMethodDef module_methods[] = {
 extern "C" {
 #endif
 
-#if PY_MAJOR_VERSION >= 3
+// #if PY_MAJOR_VERSION >= 3
 
 // Handle the "global_state" state via moduedef 
 static struct PyModuleDef moduledef = {
@@ -358,12 +358,12 @@ static struct PyModuleDef moduledef = {
 
 PyObject*
 PyInit_interpreter(void)
-#else  // Python 2.7
-#define INITERROR return
+// #else  // Python 2.7
+// #define INITERROR return
 
-PyMODINIT_FUNC
-initinterpreter()
-#endif
+// PyMODINIT_FUNC
+// initinterpreter()
+// #endif
 {
     // PyObject *m, *d;
     PyObject *m;
@@ -373,11 +373,11 @@ initinterpreter()
     if (PyType_Ready(&NumExprType) < 0)
         INITERROR;
 
-#if PY_MAJOR_VERSION >= 3
+// #if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule3("interpreter", module_methods, NULL);
-#endif
+// #else
+    // m = Py_InitModule3("interpreter", module_methods, NULL);
+// #endif
 
     if (m == NULL)
         INITERROR;
@@ -398,9 +398,9 @@ initinterpreter()
     // d = PyDict_New();
     // if (!d) INITERROR;
 
-#if PY_MAJOR_VERSION >= 3
+// #if PY_MAJOR_VERSION >= 3
     return m;
-#endif
+// #endif
 }
 
 #ifdef __cplusplus
