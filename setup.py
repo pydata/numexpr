@@ -39,11 +39,10 @@ with open('requirements.txt') as f:
 # https://gcc.gnu.org/onlinedocs/gcc-5.4.0/gcc/Optimize-Options.html
 extra_compile_args = []
 if os.name == 'posix':
-    extra_compile_args = [ '-fdiagnostics-color=always', 
-                     '-fopt-info-vec',
-                   ]
+    extra_compile_args += [ '-fdiagnostics-color=always', 
+                           '-fopt-info-vec' ]
 elif os.name == 'nt':
-    extra_compile_args = [ '/Qvec-report:2' ]
+    extra_compile_args += [ '/Qvec-report:2' ]
 
     
 
@@ -107,7 +106,7 @@ def setup_package():
 
 
         # Code taken form numpy/distutils/command/build_py.py
-        from distutils.command.build_py import build_by as du_build_py
+        from distutils.command.build_py import build_py as du_build_py
         from numpy.distutils.misc_util import is_string
 
         class build_py(du_build_py):
