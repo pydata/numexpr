@@ -1,7 +1,7 @@
 #include "numexpr_object.hpp"
 
 static int
-cast_b1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_b1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10,17 +10,18 @@ cast_b1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int8)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int8)(x1[J*sb1]); 
     }
     return 0;
@@ -28,7 +29,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_h1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_h1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -37,17 +38,18 @@ cast_h1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int16)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int16)(x1[J*sb1]); 
     }
     return 0;
@@ -55,7 +57,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_i1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_l1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -64,17 +66,18 @@ cast_i1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int32)(x1[J*sb1]); 
     }
     return 0;
@@ -82,7 +85,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_l1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_q1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -91,17 +94,18 @@ cast_l1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
     }
     return 0;
@@ -109,7 +113,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_B1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_B1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -118,17 +122,18 @@ cast_B1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_uint8)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint8)(x1[J*sb1]); 
     }
     return 0;
@@ -136,7 +141,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_H1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_H1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -145,17 +150,18 @@ cast_H1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_uint16)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint16)(x1[J*sb1]); 
     }
     return 0;
@@ -163,7 +169,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_I1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_L1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -172,17 +178,18 @@ cast_I1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_uint32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint32)(x1[J*sb1]); 
     }
     return 0;
@@ -190,7 +197,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_L1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Q1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -199,17 +206,18 @@ cast_L1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_uint64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint64)(x1[J*sb1]); 
     }
     return 0;
@@ -217,7 +225,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_f1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_f1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -226,17 +234,18 @@ cast_f1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float32)(x1[J*sb1]); 
     }
     return 0;
@@ -244,7 +253,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_d1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_d1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -253,17 +262,18 @@ cast_d1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)(x1[J*sb1]); 
     }
     return 0;
@@ -271,7 +281,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_F1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_F1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -280,17 +290,18 @@ cast_F1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex64 *dest = (npy_complex64 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float32)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float32)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -298,7 +309,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_D1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_D1( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -307,17 +318,18 @@ cast_D1( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -325,7 +337,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_hb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_hb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -334,17 +346,18 @@ cast_hb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int16)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int16)(x1[J*sb1]); 
     }
     return 0;
@@ -352,7 +365,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_ib( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_lb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -361,17 +374,18 @@ cast_ib( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int32)(x1[J*sb1]); 
     }
     return 0;
@@ -379,7 +393,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_lb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -388,17 +402,18 @@ cast_lb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
     }
     return 0;
@@ -406,7 +421,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_fb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_fb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -415,17 +430,18 @@ cast_fb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float32)(x1[J*sb1]); 
     }
     return 0;
@@ -433,7 +449,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_db( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_db( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -442,17 +458,18 @@ cast_db( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)(x1[J*sb1]); 
     }
     return 0;
@@ -460,7 +477,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_Fb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Fb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -469,17 +486,18 @@ cast_Fb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex64 *dest = (npy_complex64 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float32)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float32)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -487,7 +505,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_Db( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Db( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -496,17 +514,18 @@ cast_Db( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -514,7 +533,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_ih( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_lh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -523,17 +542,18 @@ cast_ih( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int32)(x1[J*sb1]); 
     }
     return 0;
@@ -541,7 +561,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_lh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -550,17 +570,18 @@ cast_lh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
     }
     return 0;
@@ -568,7 +589,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_fh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_fh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -577,17 +598,18 @@ cast_fh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float32)(x1[J*sb1]); 
     }
     return 0;
@@ -595,7 +617,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_dh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -604,17 +626,18 @@ cast_dh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)(x1[J*sb1]); 
     }
     return 0;
@@ -622,7 +645,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_Fh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Fh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -631,17 +654,18 @@ cast_Fh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex64 *dest = (npy_complex64 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float32)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float32)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -649,7 +673,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_Dh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Dh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -658,17 +682,18 @@ cast_Dh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -676,7 +701,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_li( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_ql( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -685,17 +710,18 @@ cast_li( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
     }
     return 0;
@@ -703,7 +729,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_di( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dl( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -712,17 +738,18 @@ cast_di( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)(x1[J*sb1]); 
     }
     return 0;
@@ -730,7 +757,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_Di( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Dl( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -739,17 +766,18 @@ cast_Di( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -757,7 +785,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_dl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -766,17 +794,18 @@ cast_dl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)(x1[J*sb1]); 
     }
     return 0;
@@ -784,7 +813,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_Dl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Dq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -793,17 +822,18 @@ cast_Dl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -811,7 +841,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_hB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_hB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -820,17 +850,18 @@ cast_hB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int16)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int16)(x1[J*sb1]); 
     }
     return 0;
@@ -838,7 +869,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_iB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_lB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -847,17 +878,18 @@ cast_iB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int32)(x1[J*sb1]); 
     }
     return 0;
@@ -865,7 +897,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_lB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -874,17 +906,18 @@ cast_lB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
     }
     return 0;
@@ -892,7 +925,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_HB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_HB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -901,17 +934,18 @@ cast_HB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_uint16)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint16)(x1[J*sb1]); 
     }
     return 0;
@@ -919,7 +953,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_IB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_LB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -928,17 +962,18 @@ cast_IB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_uint32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint32)(x1[J*sb1]); 
     }
     return 0;
@@ -946,7 +981,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_LB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_QB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -955,17 +990,18 @@ cast_LB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_uint64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint64)(x1[J*sb1]); 
     }
     return 0;
@@ -973,7 +1009,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_fB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_fB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -982,17 +1018,18 @@ cast_fB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float32)(x1[J*sb1]); 
     }
     return 0;
@@ -1000,7 +1037,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_dB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1009,17 +1046,18 @@ cast_dB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)(x1[J*sb1]); 
     }
     return 0;
@@ -1027,7 +1065,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_FB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_FB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1036,17 +1074,18 @@ cast_FB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex64 *dest = (npy_complex64 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float32)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float32)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -1054,7 +1093,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_DB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_DB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1063,17 +1102,18 @@ cast_DB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -1081,7 +1121,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_iH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_lH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1090,17 +1130,18 @@ cast_iH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int32)(x1[J*sb1]); 
     }
     return 0;
@@ -1108,7 +1149,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_lH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1117,17 +1158,18 @@ cast_lH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
     }
     return 0;
@@ -1135,7 +1177,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_IH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_LH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1144,17 +1186,18 @@ cast_IH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_uint32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint32)(x1[J*sb1]); 
     }
     return 0;
@@ -1162,7 +1205,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_LH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_QH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1171,17 +1214,18 @@ cast_LH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_uint64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint64)(x1[J*sb1]); 
     }
     return 0;
@@ -1189,7 +1233,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_fH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_fH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1198,17 +1242,18 @@ cast_fH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float32)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float32)(x1[J*sb1]); 
     }
     return 0;
@@ -1216,7 +1261,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_dH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1225,17 +1270,18 @@ cast_dH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)(x1[J*sb1]); 
     }
     return 0;
@@ -1243,7 +1289,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_FH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_FH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1252,17 +1298,18 @@ cast_FH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex64 *dest = (npy_complex64 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float32)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float32)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -1270,7 +1317,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_DH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_DH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1279,17 +1326,18 @@ cast_DH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -1297,7 +1345,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_lI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_qL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1306,17 +1354,18 @@ cast_lI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_int64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
     }
     return 0;
@@ -1324,7 +1373,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_LI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_QL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1333,17 +1382,18 @@ cast_LI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_uint64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint64)(x1[J*sb1]); 
     }
     return 0;
@@ -1351,7 +1401,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_dI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1360,17 +1410,18 @@ cast_dI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)(x1[J*sb1]); 
     }
     return 0;
@@ -1378,7 +1429,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_DI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_DL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1387,17 +1438,18 @@ cast_DI( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -1405,7 +1457,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_dL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_dQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1414,17 +1466,18 @@ cast_dL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)(x1[J*sb1]); 
     }
     return 0;
@@ -1432,7 +1485,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_DL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_DQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1441,17 +1494,18 @@ cast_DL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -1459,7 +1513,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_df( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_df( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1468,17 +1522,18 @@ cast_df( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)(x1[J*sb1]); 
     }
     return 0;
@@ -1486,7 +1541,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_Ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1495,17 +1550,18 @@ cast_Ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex64 *dest = (npy_complex64 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float32)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float32)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -1513,7 +1569,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_Df( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Df( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1522,17 +1578,18 @@ cast_Df( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -1540,7 +1597,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_Dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_Dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1549,17 +1606,18 @@ cast_Dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]); dest[J].imag=0.0; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
     }
     return 0;
@@ -1567,7 +1625,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cast_DF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cast_DF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1576,17 +1634,18 @@ cast_DF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_complex64 *x1 = (npy_complex64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_complex64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_complex64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J].real = (npy_float64)(x1[J]).real; dest[J].imag=(npy_float64)(x1[J]).imag; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_complex64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]).real; dest[J].imag=(npy_float64)(x1[J*sb1]).imag; 
     }
     return 0;
@@ -1594,7 +1653,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_11( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_11( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1603,17 +1662,18 @@ copy_11( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1621,7 +1681,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1630,17 +1690,18 @@ copy_bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1648,7 +1709,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1657,17 +1718,18 @@ copy_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1675,7 +1737,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1684,17 +1746,18 @@ copy_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1702,7 +1765,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1711,17 +1774,18 @@ copy_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1729,7 +1793,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_BB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1738,17 +1802,18 @@ copy_BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1756,7 +1821,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_HH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1765,17 +1830,18 @@ copy_HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1783,7 +1849,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_LL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1792,17 +1858,18 @@ copy_II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1810,7 +1877,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_QQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1819,17 +1886,18 @@ copy_LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1837,7 +1905,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1846,17 +1914,18 @@ copy_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1864,7 +1933,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1873,17 +1942,18 @@ copy_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1891,7 +1961,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1900,17 +1970,18 @@ copy_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex64 *dest = (npy_complex64 *)params->registers[store_in].mem;
     npy_complex64 *x1 = (npy_complex64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_complex64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_complex64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_complex64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1918,7 +1989,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copy_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copy_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1927,17 +1998,18 @@ copy_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_complex128 *x1 = (npy_complex128 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_complex128) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_complex128) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_complex128);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1]; 
     }
     return 0;
@@ -1945,7 +2017,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1956,12 +2028,14 @@ add_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -1969,7 +2043,7 @@ add_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -1977,7 +2051,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_bbb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -1988,12 +2062,14 @@ add_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -2001,7 +2077,7 @@ add_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -2009,7 +2085,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_hhh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2020,12 +2096,14 @@ add_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -2033,7 +2111,7 @@ add_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -2041,7 +2119,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_lll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2052,12 +2130,14 @@ add_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -2065,7 +2145,7 @@ add_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -2073,7 +2153,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_qqq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2084,12 +2164,14 @@ add_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -2097,7 +2179,7 @@ add_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -2105,7 +2187,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_BBB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2116,12 +2198,14 @@ add_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -2129,7 +2213,7 @@ add_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -2137,7 +2221,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_HHH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2148,12 +2232,14 @@ add_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -2161,7 +2247,7 @@ add_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -2169,7 +2255,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_LLL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2180,12 +2266,14 @@ add_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -2193,7 +2281,7 @@ add_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -2201,7 +2289,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_QQQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2212,12 +2300,14 @@ add_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -2225,7 +2315,7 @@ add_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -2233,7 +2323,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2244,12 +2334,14 @@ add_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -2257,7 +2349,7 @@ add_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -2265,7 +2357,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-add_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2276,12 +2368,14 @@ add_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] + x2[J]; 
 }
         return 0;
@@ -2289,7 +2383,7 @@ add_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] + x2[J*sb2]; 
     }
     return 0;
@@ -2297,7 +2391,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sub_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_bbb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2308,12 +2402,14 @@ sub_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - x2[J]; 
 }
         return 0;
@@ -2321,7 +2417,7 @@ sub_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - x2[J*sb2]; 
     }
     return 0;
@@ -2329,7 +2425,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sub_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_hhh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2340,12 +2436,14 @@ sub_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - x2[J]; 
 }
         return 0;
@@ -2353,7 +2451,7 @@ sub_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - x2[J*sb2]; 
     }
     return 0;
@@ -2361,7 +2459,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sub_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_lll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2372,12 +2470,14 @@ sub_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - x2[J]; 
 }
         return 0;
@@ -2385,7 +2485,7 @@ sub_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - x2[J*sb2]; 
     }
     return 0;
@@ -2393,7 +2493,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sub_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_qqq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2404,12 +2504,14 @@ sub_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - x2[J]; 
 }
         return 0;
@@ -2417,7 +2519,7 @@ sub_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - x2[J*sb2]; 
     }
     return 0;
@@ -2425,7 +2527,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sub_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_BBB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2436,12 +2538,14 @@ sub_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - x2[J]; 
 }
         return 0;
@@ -2449,7 +2553,7 @@ sub_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - x2[J*sb2]; 
     }
     return 0;
@@ -2457,7 +2561,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sub_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_HHH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2468,12 +2572,14 @@ sub_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - x2[J]; 
 }
         return 0;
@@ -2481,7 +2587,7 @@ sub_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - x2[J*sb2]; 
     }
     return 0;
@@ -2489,7 +2595,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sub_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_LLL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2500,12 +2606,14 @@ sub_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - x2[J]; 
 }
         return 0;
@@ -2513,7 +2621,7 @@ sub_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - x2[J*sb2]; 
     }
     return 0;
@@ -2521,7 +2629,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sub_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_QQQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2532,12 +2640,14 @@ sub_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - x2[J]; 
 }
         return 0;
@@ -2545,7 +2655,7 @@ sub_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - x2[J*sb2]; 
     }
     return 0;
@@ -2553,7 +2663,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sub_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2564,12 +2674,14 @@ sub_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - x2[J]; 
 }
         return 0;
@@ -2577,7 +2689,7 @@ sub_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - x2[J*sb2]; 
     }
     return 0;
@@ -2585,7 +2697,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sub_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2596,12 +2708,14 @@ sub_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - x2[J]; 
 }
         return 0;
@@ -2609,7 +2723,7 @@ sub_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - x2[J*sb2]; 
     }
     return 0;
@@ -2617,7 +2731,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2628,12 +2742,14 @@ mult_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2641,7 +2757,7 @@ mult_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2649,7 +2765,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_bbb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2660,12 +2776,14 @@ mult_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2673,7 +2791,7 @@ mult_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2681,7 +2799,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_hhh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2692,12 +2810,14 @@ mult_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2705,7 +2825,7 @@ mult_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2713,7 +2833,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_lll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2724,12 +2844,14 @@ mult_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2737,7 +2859,7 @@ mult_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2745,7 +2867,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_qqq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2756,12 +2878,14 @@ mult_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2769,7 +2893,7 @@ mult_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2777,7 +2901,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_BBB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2788,12 +2912,14 @@ mult_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2801,7 +2927,7 @@ mult_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2809,7 +2935,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_HHH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2820,12 +2946,14 @@ mult_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2833,7 +2961,7 @@ mult_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2841,7 +2969,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_LLL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2852,12 +2980,14 @@ mult_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2865,7 +2995,7 @@ mult_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2873,7 +3003,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_QQQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2884,12 +3014,14 @@ mult_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2897,7 +3029,7 @@ mult_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2905,7 +3037,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2916,12 +3048,14 @@ mult_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2929,7 +3063,7 @@ mult_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2937,7 +3071,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mult_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2948,12 +3082,14 @@ mult_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] * x2[J]; 
 }
         return 0;
@@ -2961,7 +3097,7 @@ mult_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] * x2[J*sb2]; 
     }
     return 0;
@@ -2969,7 +3105,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_d11( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_d11( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -2980,12 +3116,14 @@ div_d11( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)x1[J] / (npy_float64)x2[J]; 
 }
         return 0;
@@ -2993,7 +3131,7 @@ div_d11( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)x1[J*sb1] / (npy_float64)x2[J*sb2]; 
     }
     return 0;
@@ -3001,7 +3139,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_dbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_dbb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3012,12 +3150,14 @@ div_dbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)x1[J] / (npy_float64)x2[J]; 
 }
         return 0;
@@ -3025,7 +3165,7 @@ div_dbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)x1[J*sb1] / (npy_float64)x2[J*sb2]; 
     }
     return 0;
@@ -3033,7 +3173,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_dhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_dhh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3044,12 +3184,14 @@ div_dhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)x1[J] / (npy_float64)x2[J]; 
 }
         return 0;
@@ -3057,7 +3199,7 @@ div_dhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)x1[J*sb1] / (npy_float64)x2[J*sb2]; 
     }
     return 0;
@@ -3065,7 +3207,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_dii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_dll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3076,12 +3218,14 @@ div_dii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)x1[J] / (npy_float64)x2[J]; 
 }
         return 0;
@@ -3089,7 +3233,7 @@ div_dii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)x1[J*sb1] / (npy_float64)x2[J*sb2]; 
     }
     return 0;
@@ -3097,7 +3241,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_dll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_dqq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3108,12 +3252,14 @@ div_dll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)x1[J] / (npy_float64)x2[J]; 
 }
         return 0;
@@ -3121,7 +3267,7 @@ div_dll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)x1[J*sb1] / (npy_float64)x2[J*sb2]; 
     }
     return 0;
@@ -3129,7 +3275,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_dBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_dBB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3140,12 +3286,14 @@ div_dBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)x1[J] / (npy_float64)x2[J]; 
 }
         return 0;
@@ -3153,7 +3301,7 @@ div_dBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)x1[J*sb1] / (npy_float64)x2[J*sb2]; 
     }
     return 0;
@@ -3161,7 +3309,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_dHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_dHH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3172,12 +3320,14 @@ div_dHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)x1[J] / (npy_float64)x2[J]; 
 }
         return 0;
@@ -3185,7 +3335,7 @@ div_dHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)x1[J*sb1] / (npy_float64)x2[J*sb2]; 
     }
     return 0;
@@ -3193,7 +3343,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_dII( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_dLL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3204,12 +3354,14 @@ div_dII( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)x1[J] / (npy_float64)x2[J]; 
 }
         return 0;
@@ -3217,7 +3369,7 @@ div_dII( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)x1[J*sb1] / (npy_float64)x2[J*sb2]; 
     }
     return 0;
@@ -3225,7 +3377,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_dLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_dQQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3236,12 +3388,14 @@ div_dLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (npy_float64)x1[J] / (npy_float64)x2[J]; 
 }
         return 0;
@@ -3249,7 +3403,7 @@ div_dLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_float64)x1[J*sb1] / (npy_float64)x2[J*sb2]; 
     }
     return 0;
@@ -3257,7 +3411,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3268,12 +3422,14 @@ div_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] / x2[J]; 
 }
         return 0;
@@ -3281,7 +3437,7 @@ div_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] / x2[J*sb2]; 
     }
     return 0;
@@ -3289,7 +3445,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-div_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3300,12 +3456,14 @@ div_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] / x2[J]; 
 }
         return 0;
@@ -3313,7 +3471,7 @@ div_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] / x2[J*sb2]; 
     }
     return 0;
@@ -3321,7 +3479,279 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-pow_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+floordiv_bbb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    
+    npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
+    npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
+    npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
+                                    
+    if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = x2[J] ? (x1[J] / x2[J]) : 0; 
+}
+        return 0;
+    }
+    // Strided
+        sb2 /= sizeof(npy_int8);
+    sb1 /= sizeof(npy_int8);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = x2[J*sb2] ? (x1[J*sb1] / x2[J*sb2]) : 0; 
+    }
+    return 0;
+    }
+
+
+static int
+floordiv_hhh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    
+    npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
+    npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
+    npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
+                                    
+    if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = x2[J] ? (x1[J] / x2[J]) : 0; 
+}
+        return 0;
+    }
+    // Strided
+        sb2 /= sizeof(npy_int16);
+    sb1 /= sizeof(npy_int16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = x2[J*sb2] ? (x1[J*sb1] / x2[J*sb2]) : 0; 
+    }
+    return 0;
+    }
+
+
+static int
+floordiv_lll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    
+    npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
+    npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
+    npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
+                                    
+    if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = x2[J] ? (x1[J] / x2[J]) : 0; 
+}
+        return 0;
+    }
+    // Strided
+        sb2 /= sizeof(npy_int32);
+    sb1 /= sizeof(npy_int32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = x2[J*sb2] ? (x1[J*sb1] / x2[J*sb2]) : 0; 
+    }
+    return 0;
+    }
+
+
+static int
+floordiv_qqq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    
+    npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
+    npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
+    npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
+                                    
+    if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = x2[J] ? (x1[J] / x2[J]) : 0; 
+}
+        return 0;
+    }
+    // Strided
+        sb2 /= sizeof(npy_int64);
+    sb1 /= sizeof(npy_int64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = x2[J*sb2] ? (x1[J*sb1] / x2[J*sb2]) : 0; 
+    }
+    return 0;
+    }
+
+
+static int
+floordiv_BBB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    
+    npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
+    npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
+    npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
+                                    
+    if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = x2[J] ? (x1[J] / x2[J]) : 0; 
+}
+        return 0;
+    }
+    // Strided
+        sb2 /= sizeof(npy_uint8);
+    sb1 /= sizeof(npy_uint8);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = x2[J*sb2] ? (x1[J*sb1] / x2[J*sb2]) : 0; 
+    }
+    return 0;
+    }
+
+
+static int
+floordiv_HHH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    
+    npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
+    npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
+    npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
+                                    
+    if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = x2[J] ? (x1[J] / x2[J]) : 0; 
+}
+        return 0;
+    }
+    // Strided
+        sb2 /= sizeof(npy_uint16);
+    sb1 /= sizeof(npy_uint16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = x2[J*sb2] ? (x1[J*sb1] / x2[J*sb2]) : 0; 
+    }
+    return 0;
+    }
+
+
+static int
+floordiv_LLL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    
+    npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
+    npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
+    npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
+                                    
+    if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = x2[J] ? (x1[J] / x2[J]) : 0; 
+}
+        return 0;
+    }
+    // Strided
+        sb2 /= sizeof(npy_uint32);
+    sb1 /= sizeof(npy_uint32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = x2[J*sb2] ? (x1[J*sb1] / x2[J*sb2]) : 0; 
+    }
+    return 0;
+    }
+
+
+static int
+floordiv_QQQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    
+    npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
+    npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
+    npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
+                                    
+    if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = x2[J] ? (x1[J] / x2[J]) : 0; 
+}
+        return 0;
+    }
+    // Strided
+        sb2 /= sizeof(npy_uint64);
+    sb1 /= sizeof(npy_uint64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = x2[J*sb2] ? (x1[J*sb1] / x2[J*sb2]) : 0; 
+    }
+    return 0;
+    }
+
+
+static int
+pow_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3332,12 +3762,14 @@ pow_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = pow(x1[J], x2[J]); 
 }
         return 0;
@@ -3345,7 +3777,7 @@ pow_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = pow(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -3353,7 +3785,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-pow_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+pow_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3364,12 +3796,14 @@ pow_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = pow(x1[J], x2[J]); 
 }
         return 0;
@@ -3377,7 +3811,7 @@ pow_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = pow(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -3385,7 +3819,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mod_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mod_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3396,12 +3830,14 @@ mod_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - floor(x1[J]/x2[J]) * x2[J]; 
 }
         return 0;
@@ -3409,7 +3845,7 @@ mod_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - floor(x1[J*sb1]/x2[J*sb2]) * x2[J*sb2]; 
     }
     return 0;
@@ -3417,7 +3853,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-mod_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mod_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3428,12 +3864,14 @@ mod_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] - floor(x1[J]/x2[J]) * x2[J]; 
 }
         return 0;
@@ -3441,7 +3879,7 @@ mod_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] - floor(x1[J*sb1]/x2[J*sb2]) * x2[J*sb2]; 
     }
     return 0;
@@ -3449,7 +3887,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_1111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_1111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3462,14 +3900,17 @@ where_1111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
     npy_bool *x3 = (npy_bool *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) && sb3 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3478,7 +3919,7 @@ where_1111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_bool);
     sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3486,7 +3927,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_b1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_b1bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3499,14 +3940,17 @@ where_b1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
     npy_int8 *x3 = (npy_int8 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_int8) && sb3 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3515,7 +3959,7 @@ where_b1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_int8);
     sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3523,7 +3967,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_h1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_h1hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3536,14 +3980,17 @@ where_h1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
     npy_int16 *x3 = (npy_int16 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_int16) && sb3 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3552,7 +3999,7 @@ where_h1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_int16);
     sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3560,7 +4007,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_i1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_l1ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3573,14 +4020,17 @@ where_i1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
     npy_int32 *x3 = (npy_int32 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_int32) && sb3 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3589,7 +4039,7 @@ where_i1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_int32);
     sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3597,7 +4047,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_l1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_q1qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3610,14 +4060,17 @@ where_l1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
     npy_int64 *x3 = (npy_int64 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_int64) && sb3 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3626,7 +4079,7 @@ where_l1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_int64);
     sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3634,7 +4087,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_B1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_B1BB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3647,14 +4100,17 @@ where_B1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
     npy_uint8 *x3 = (npy_uint8 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_uint8) && sb3 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3663,7 +4119,7 @@ where_B1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_uint8);
     sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3671,7 +4127,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_H1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_H1HH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3684,14 +4140,17 @@ where_H1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
     npy_uint16 *x3 = (npy_uint16 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_uint16) && sb3 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3700,7 +4159,7 @@ where_H1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_uint16);
     sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3708,7 +4167,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_I1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_L1LL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3721,14 +4180,17 @@ where_I1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
     npy_uint32 *x3 = (npy_uint32 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_uint32) && sb3 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3737,7 +4199,7 @@ where_I1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_uint32);
     sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3745,7 +4207,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_L1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_Q1QQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3758,14 +4220,17 @@ where_L1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
     npy_uint64 *x3 = (npy_uint64 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_uint64) && sb3 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3774,7 +4239,7 @@ where_L1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_uint64);
     sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3782,7 +4247,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_f1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_f1ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3795,14 +4260,17 @@ where_f1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
     npy_float32 *x3 = (npy_float32 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_float32) && sb3 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3811,7 +4279,7 @@ where_f1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_float32);
     sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3819,7 +4287,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_d1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_d1dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3832,14 +4300,17 @@ where_d1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
     npy_float64 *x3 = (npy_float64 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_float64) && sb3 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3848,7 +4319,7 @@ where_d1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_float64);
     sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3856,7 +4327,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_F1FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_F1FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3869,14 +4340,17 @@ where_F1FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_complex64 *dest = (npy_complex64 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_complex64 *x2 = (npy_complex64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_complex64) : params->registers[arg2].stride;
     npy_complex64 *x3 = (npy_complex64 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_complex64) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_complex64) && sb3 == sizeof(npy_complex64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3885,7 +4359,7 @@ where_F1FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_complex64);
     sb2 /= sizeof(npy_complex64);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3893,7 +4367,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-where_D1DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+where_D1DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3906,14 +4380,17 @@ where_D1DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_complex128 *dest = (npy_complex128 *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_complex128 *x2 = (npy_complex128 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_complex128) : params->registers[arg2].stride;
     npy_complex128 *x3 = (npy_complex128 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_complex128) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_complex128) && sb3 == sizeof(npy_complex128) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] ? x2[J] : x3[J]; 
 }
         return 0;
@@ -3922,7 +4399,7 @@ where_D1DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_complex128);
     sb2 /= sizeof(npy_complex128);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] ? x2[J*sb2] : x3[J*sb3]; 
     }
     return 0;
@@ -3930,7 +4407,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-ones_like_11( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_11( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3939,16 +4416,17 @@ ones_like_11( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -3956,7 +4434,7 @@ ones_like_11( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3965,16 +4443,17 @@ ones_like_bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -3982,7 +4461,7 @@ ones_like_bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -3991,16 +4470,17 @@ ones_like_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -4008,7 +4488,7 @@ ones_like_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4017,16 +4497,17 @@ ones_like_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -4034,7 +4515,7 @@ ones_like_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4043,16 +4524,17 @@ ones_like_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -4060,7 +4542,7 @@ ones_like_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_BB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4069,16 +4551,17 @@ ones_like_BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -4086,7 +4569,7 @@ ones_like_BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_HH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4095,16 +4578,17 @@ ones_like_HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -4112,7 +4596,7 @@ ones_like_HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_LL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4121,16 +4605,17 @@ ones_like_II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -4138,7 +4623,7 @@ ones_like_II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_QQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4147,16 +4632,17 @@ ones_like_LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -4164,7 +4650,7 @@ ones_like_LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4173,16 +4659,17 @@ ones_like_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -4190,7 +4677,7 @@ ones_like_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-ones_like_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ones_like_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4199,16 +4686,17 @@ ones_like_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = 1; 
 }
         return 0;
     } 
     // Strided
-    for(npy_intp J = 0; J < block_size; J++) { 
+    for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = 1; 
     }
     return 0;
@@ -4216,7 +4704,7 @@ ones_like_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
 
 static int
-usub_bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+usub_bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4225,17 +4713,18 @@ usub_bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = -x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = -x1[J*sb1]; 
     }
     return 0;
@@ -4243,7 +4732,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-usub_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+usub_hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4252,17 +4741,18 @@ usub_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = -x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = -x1[J*sb1]; 
     }
     return 0;
@@ -4270,7 +4760,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-usub_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+usub_ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4279,17 +4769,18 @@ usub_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = -x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = -x1[J*sb1]; 
     }
     return 0;
@@ -4297,7 +4788,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-usub_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+usub_qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4306,17 +4797,18 @@ usub_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = -x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = -x1[J*sb1]; 
     }
     return 0;
@@ -4324,7 +4816,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-usub_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+usub_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4333,17 +4825,18 @@ usub_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = -x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = -x1[J*sb1]; 
     }
     return 0;
@@ -4351,7 +4844,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-usub_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+usub_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4360,17 +4853,18 @@ usub_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = -x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = -x1[J*sb1]; 
     }
     return 0;
@@ -4378,7 +4872,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lshift_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_bbb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4389,12 +4883,14 @@ lshift_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] << x2[J]; 
 }
         return 0;
@@ -4402,7 +4898,7 @@ lshift_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] << x2[J*sb2]; 
     }
     return 0;
@@ -4410,7 +4906,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lshift_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_hhh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4421,12 +4917,14 @@ lshift_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] << x2[J]; 
 }
         return 0;
@@ -4434,7 +4932,7 @@ lshift_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] << x2[J*sb2]; 
     }
     return 0;
@@ -4442,7 +4940,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lshift_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_lll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4453,12 +4951,14 @@ lshift_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] << x2[J]; 
 }
         return 0;
@@ -4466,7 +4966,7 @@ lshift_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] << x2[J*sb2]; 
     }
     return 0;
@@ -4474,7 +4974,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lshift_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_qqq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4485,12 +4985,14 @@ lshift_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] << x2[J]; 
 }
         return 0;
@@ -4498,7 +5000,7 @@ lshift_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] << x2[J*sb2]; 
     }
     return 0;
@@ -4506,7 +5008,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lshift_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_BBB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4517,12 +5019,14 @@ lshift_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] << x2[J]; 
 }
         return 0;
@@ -4530,7 +5034,7 @@ lshift_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] << x2[J*sb2]; 
     }
     return 0;
@@ -4538,7 +5042,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lshift_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_HHH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4549,12 +5053,14 @@ lshift_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] << x2[J]; 
 }
         return 0;
@@ -4562,7 +5068,7 @@ lshift_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] << x2[J*sb2]; 
     }
     return 0;
@@ -4570,7 +5076,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lshift_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_LLL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4581,12 +5087,14 @@ lshift_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] << x2[J]; 
 }
         return 0;
@@ -4594,7 +5102,7 @@ lshift_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] << x2[J*sb2]; 
     }
     return 0;
@@ -4602,7 +5110,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lshift_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lshift_QQQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4613,12 +5121,14 @@ lshift_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] << x2[J]; 
 }
         return 0;
@@ -4626,7 +5136,7 @@ lshift_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] << x2[J*sb2]; 
     }
     return 0;
@@ -4634,7 +5144,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-rshift_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_bbb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4645,12 +5155,14 @@ rshift_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] >> x2[J]; 
 }
         return 0;
@@ -4658,7 +5170,7 @@ rshift_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] >> x2[J*sb2]; 
     }
     return 0;
@@ -4666,7 +5178,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-rshift_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_hhh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4677,12 +5189,14 @@ rshift_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] >> x2[J]; 
 }
         return 0;
@@ -4690,7 +5204,7 @@ rshift_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] >> x2[J*sb2]; 
     }
     return 0;
@@ -4698,7 +5212,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-rshift_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_lll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4709,12 +5223,14 @@ rshift_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] >> x2[J]; 
 }
         return 0;
@@ -4722,7 +5238,7 @@ rshift_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] >> x2[J*sb2]; 
     }
     return 0;
@@ -4730,7 +5246,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-rshift_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_qqq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4741,12 +5257,14 @@ rshift_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] >> x2[J]; 
 }
         return 0;
@@ -4754,7 +5272,7 @@ rshift_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] >> x2[J*sb2]; 
     }
     return 0;
@@ -4762,7 +5280,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-rshift_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_BBB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4773,12 +5291,14 @@ rshift_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] >> x2[J]; 
 }
         return 0;
@@ -4786,7 +5306,7 @@ rshift_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] >> x2[J*sb2]; 
     }
     return 0;
@@ -4794,7 +5314,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-rshift_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_HHH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4805,12 +5325,14 @@ rshift_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] >> x2[J]; 
 }
         return 0;
@@ -4818,7 +5340,7 @@ rshift_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] >> x2[J*sb2]; 
     }
     return 0;
@@ -4826,7 +5348,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-rshift_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_LLL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4837,12 +5359,14 @@ rshift_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] >> x2[J]; 
 }
         return 0;
@@ -4850,7 +5374,7 @@ rshift_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] >> x2[J*sb2]; 
     }
     return 0;
@@ -4858,7 +5382,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-rshift_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rshift_QQQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4869,12 +5393,14 @@ rshift_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] >> x2[J]; 
 }
         return 0;
@@ -4882,7 +5408,7 @@ rshift_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] >> x2[J*sb2]; 
     }
     return 0;
@@ -4890,7 +5416,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitand_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4901,12 +5427,14 @@ bitand_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] & x2[J]); 
 }
         return 0;
@@ -4914,7 +5442,7 @@ bitand_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] & x2[J*sb2]); 
     }
     return 0;
@@ -4922,7 +5450,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitand_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_bbb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4933,12 +5461,14 @@ bitand_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] & x2[J]); 
 }
         return 0;
@@ -4946,7 +5476,7 @@ bitand_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] & x2[J*sb2]); 
     }
     return 0;
@@ -4954,7 +5484,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitand_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_hhh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4965,12 +5495,14 @@ bitand_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] & x2[J]); 
 }
         return 0;
@@ -4978,7 +5510,7 @@ bitand_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] & x2[J*sb2]); 
     }
     return 0;
@@ -4986,7 +5518,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitand_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_lll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -4997,12 +5529,14 @@ bitand_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] & x2[J]); 
 }
         return 0;
@@ -5010,7 +5544,7 @@ bitand_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] & x2[J*sb2]); 
     }
     return 0;
@@ -5018,7 +5552,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitand_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_qqq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5029,12 +5563,14 @@ bitand_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] & x2[J]); 
 }
         return 0;
@@ -5042,7 +5578,7 @@ bitand_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] & x2[J*sb2]); 
     }
     return 0;
@@ -5050,7 +5586,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitand_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_BBB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5061,12 +5597,14 @@ bitand_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] & x2[J]); 
 }
         return 0;
@@ -5074,7 +5612,7 @@ bitand_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] & x2[J*sb2]); 
     }
     return 0;
@@ -5082,7 +5620,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitand_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_HHH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5093,12 +5631,14 @@ bitand_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] & x2[J]); 
 }
         return 0;
@@ -5106,7 +5646,7 @@ bitand_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] & x2[J*sb2]); 
     }
     return 0;
@@ -5114,7 +5654,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitand_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_LLL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5125,12 +5665,14 @@ bitand_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] & x2[J]); 
 }
         return 0;
@@ -5138,7 +5680,7 @@ bitand_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] & x2[J*sb2]); 
     }
     return 0;
@@ -5146,7 +5688,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitand_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitand_QQQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5157,12 +5699,14 @@ bitand_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] & x2[J]); 
 }
         return 0;
@@ -5170,7 +5714,7 @@ bitand_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] & x2[J*sb2]); 
     }
     return 0;
@@ -5178,7 +5722,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitor_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5189,12 +5733,14 @@ bitor_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] | x2[J]); 
 }
         return 0;
@@ -5202,7 +5748,7 @@ bitor_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] | x2[J*sb2]); 
     }
     return 0;
@@ -5210,7 +5756,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitor_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_bbb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5221,12 +5767,14 @@ bitor_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] | x2[J]); 
 }
         return 0;
@@ -5234,7 +5782,7 @@ bitor_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] | x2[J*sb2]); 
     }
     return 0;
@@ -5242,7 +5790,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitor_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_hhh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5253,12 +5801,14 @@ bitor_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] | x2[J]); 
 }
         return 0;
@@ -5266,7 +5816,7 @@ bitor_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] | x2[J*sb2]); 
     }
     return 0;
@@ -5274,7 +5824,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitor_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_lll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5285,12 +5835,14 @@ bitor_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] | x2[J]); 
 }
         return 0;
@@ -5298,7 +5850,7 @@ bitor_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] | x2[J*sb2]); 
     }
     return 0;
@@ -5306,7 +5858,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitor_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_qqq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5317,12 +5869,14 @@ bitor_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] | x2[J]); 
 }
         return 0;
@@ -5330,7 +5884,7 @@ bitor_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] | x2[J*sb2]); 
     }
     return 0;
@@ -5338,7 +5892,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitor_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_BBB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5349,12 +5903,14 @@ bitor_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] | x2[J]); 
 }
         return 0;
@@ -5362,7 +5918,7 @@ bitor_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] | x2[J*sb2]); 
     }
     return 0;
@@ -5370,7 +5926,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitor_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_HHH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5381,12 +5937,14 @@ bitor_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] | x2[J]); 
 }
         return 0;
@@ -5394,7 +5952,7 @@ bitor_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] | x2[J*sb2]); 
     }
     return 0;
@@ -5402,7 +5960,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitor_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_LLL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5413,12 +5971,14 @@ bitor_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] | x2[J]); 
 }
         return 0;
@@ -5426,7 +5986,7 @@ bitor_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] | x2[J*sb2]); 
     }
     return 0;
@@ -5434,7 +5994,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitor_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitor_QQQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5445,12 +6005,14 @@ bitor_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] | x2[J]); 
 }
         return 0;
@@ -5458,7 +6020,7 @@ bitor_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] | x2[J*sb2]); 
     }
     return 0;
@@ -5466,7 +6028,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitxor_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5477,12 +6039,14 @@ bitxor_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] ^ x2[J]); 
 }
         return 0;
@@ -5490,7 +6054,7 @@ bitxor_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] ^ x2[J*sb2]); 
     }
     return 0;
@@ -5498,7 +6062,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitxor_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_bbb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5509,12 +6073,14 @@ bitxor_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] ^ x2[J]); 
 }
         return 0;
@@ -5522,7 +6088,7 @@ bitxor_bbb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] ^ x2[J*sb2]); 
     }
     return 0;
@@ -5530,7 +6096,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitxor_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_hhh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5541,12 +6107,14 @@ bitxor_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] ^ x2[J]); 
 }
         return 0;
@@ -5554,7 +6122,7 @@ bitxor_hhh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] ^ x2[J*sb2]); 
     }
     return 0;
@@ -5562,7 +6130,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitxor_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_lll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5573,12 +6141,14 @@ bitxor_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] ^ x2[J]); 
 }
         return 0;
@@ -5586,7 +6156,7 @@ bitxor_iii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] ^ x2[J*sb2]); 
     }
     return 0;
@@ -5594,7 +6164,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitxor_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_qqq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5605,12 +6175,14 @@ bitxor_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] ^ x2[J]); 
 }
         return 0;
@@ -5618,7 +6190,7 @@ bitxor_lll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] ^ x2[J*sb2]); 
     }
     return 0;
@@ -5626,7 +6198,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitxor_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_BBB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5637,12 +6209,14 @@ bitxor_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] ^ x2[J]); 
 }
         return 0;
@@ -5650,7 +6224,7 @@ bitxor_BBB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] ^ x2[J*sb2]); 
     }
     return 0;
@@ -5658,7 +6232,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitxor_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_HHH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5669,12 +6243,14 @@ bitxor_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] ^ x2[J]); 
 }
         return 0;
@@ -5682,7 +6258,7 @@ bitxor_HHH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] ^ x2[J*sb2]); 
     }
     return 0;
@@ -5690,7 +6266,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitxor_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_LLL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5701,12 +6277,14 @@ bitxor_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] ^ x2[J]); 
 }
         return 0;
@@ -5714,7 +6292,7 @@ bitxor_III( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] ^ x2[J*sb2]); 
     }
     return 0;
@@ -5722,7 +6300,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-bitxor_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+bitxor_QQQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5733,12 +6311,14 @@ bitxor_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] ^ x2[J]); 
 }
         return 0;
@@ -5746,7 +6326,7 @@ bitxor_LLL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] ^ x2[J*sb2]); 
     }
     return 0;
@@ -5754,7 +6334,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-logical_and_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+logical_and_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5765,12 +6345,14 @@ logical_and_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] && x2[J]); 
 }
         return 0;
@@ -5778,7 +6360,7 @@ logical_and_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] && x2[J*sb2]); 
     }
     return 0;
@@ -5786,7 +6368,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-logical_or_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+logical_or_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5797,12 +6379,14 @@ logical_or_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] || x2[J]); 
 }
         return 0;
@@ -5810,7 +6394,7 @@ logical_or_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] || x2[J*sb2]); 
     }
     return 0;
@@ -5818,7 +6402,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5829,12 +6413,14 @@ gt_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -5842,7 +6428,7 @@ gt_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -5850,7 +6436,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_1bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5861,12 +6447,14 @@ gt_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -5874,7 +6462,7 @@ gt_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -5882,7 +6470,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_1hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5893,12 +6481,14 @@ gt_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -5906,7 +6496,7 @@ gt_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -5914,7 +6504,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_1ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5925,12 +6515,14 @@ gt_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -5938,7 +6530,7 @@ gt_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -5946,7 +6538,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_1qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5957,12 +6549,14 @@ gt_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -5970,7 +6564,7 @@ gt_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -5978,7 +6572,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_1BB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -5989,12 +6583,14 @@ gt_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -6002,7 +6598,7 @@ gt_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -6010,7 +6606,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_1HH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6021,12 +6617,14 @@ gt_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -6034,7 +6632,7 @@ gt_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -6042,7 +6640,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_1LL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6053,12 +6651,14 @@ gt_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -6066,7 +6666,7 @@ gt_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -6074,7 +6674,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_1QQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6085,12 +6685,14 @@ gt_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -6098,7 +6700,7 @@ gt_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -6106,7 +6708,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_1ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6117,12 +6719,14 @@ gt_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -6130,7 +6734,7 @@ gt_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -6138,7 +6742,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gt_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gt_1dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6149,12 +6753,14 @@ gt_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] > x2[J]); 
 }
         return 0;
@@ -6162,7 +6768,7 @@ gt_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] > x2[J*sb2]); 
     }
     return 0;
@@ -6170,7 +6776,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6181,12 +6787,14 @@ gte_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6194,7 +6802,7 @@ gte_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6202,7 +6810,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_1bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6213,12 +6821,14 @@ gte_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6226,7 +6836,7 @@ gte_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6234,7 +6844,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_1hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6245,12 +6855,14 @@ gte_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6258,7 +6870,7 @@ gte_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6266,7 +6878,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_1ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6277,12 +6889,14 @@ gte_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6290,7 +6904,7 @@ gte_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6298,7 +6912,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_1qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6309,12 +6923,14 @@ gte_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6322,7 +6938,7 @@ gte_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6330,7 +6946,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_1BB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6341,12 +6957,14 @@ gte_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6354,7 +6972,7 @@ gte_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6362,7 +6980,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_1HH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6373,12 +6991,14 @@ gte_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6386,7 +7006,7 @@ gte_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6394,7 +7014,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_1LL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6405,12 +7025,14 @@ gte_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6418,7 +7040,7 @@ gte_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6426,7 +7048,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_1QQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6437,12 +7059,14 @@ gte_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6450,7 +7074,7 @@ gte_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6458,7 +7082,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_1ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6469,12 +7093,14 @@ gte_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6482,7 +7108,7 @@ gte_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6490,7 +7116,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-gte_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+gte_1dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6501,12 +7127,14 @@ gte_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] >= x2[J]); 
 }
         return 0;
@@ -6514,7 +7142,7 @@ gte_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] >= x2[J*sb2]); 
     }
     return 0;
@@ -6522,7 +7150,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6533,12 +7161,14 @@ lt_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6546,7 +7176,7 @@ lt_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6554,7 +7184,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_1bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6565,12 +7195,14 @@ lt_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6578,7 +7210,7 @@ lt_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6586,7 +7218,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_1hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6597,12 +7229,14 @@ lt_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6610,7 +7244,7 @@ lt_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6618,7 +7252,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_1ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6629,12 +7263,14 @@ lt_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6642,7 +7278,7 @@ lt_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6650,7 +7286,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_1qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6661,12 +7297,14 @@ lt_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6674,7 +7312,7 @@ lt_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6682,7 +7320,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_1BB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6693,12 +7331,14 @@ lt_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6706,7 +7346,7 @@ lt_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6714,7 +7354,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_1HH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6725,12 +7365,14 @@ lt_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6738,7 +7380,7 @@ lt_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6746,7 +7388,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_1LL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6757,12 +7399,14 @@ lt_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6770,7 +7414,7 @@ lt_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6778,7 +7422,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_1QQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6789,12 +7433,14 @@ lt_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6802,7 +7448,7 @@ lt_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6810,7 +7456,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_1ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6821,12 +7467,14 @@ lt_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6834,7 +7482,7 @@ lt_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6842,7 +7490,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lt_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lt_1dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6853,12 +7501,14 @@ lt_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] < x2[J]); 
 }
         return 0;
@@ -6866,7 +7516,7 @@ lt_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] < x2[J*sb2]); 
     }
     return 0;
@@ -6874,7 +7524,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6885,12 +7535,14 @@ lte_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -6898,7 +7550,7 @@ lte_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -6906,7 +7558,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_1bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6917,12 +7569,14 @@ lte_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -6930,7 +7584,7 @@ lte_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -6938,7 +7592,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_1hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6949,12 +7603,14 @@ lte_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -6962,7 +7618,7 @@ lte_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -6970,7 +7626,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_1ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -6981,12 +7637,14 @@ lte_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -6994,7 +7652,7 @@ lte_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -7002,7 +7660,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_1qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7013,12 +7671,14 @@ lte_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -7026,7 +7686,7 @@ lte_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -7034,7 +7694,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_1BB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7045,12 +7705,14 @@ lte_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -7058,7 +7720,7 @@ lte_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -7066,7 +7728,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_1HH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7077,12 +7739,14 @@ lte_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -7090,7 +7754,7 @@ lte_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -7098,7 +7762,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_1LL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7109,12 +7773,14 @@ lte_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -7122,7 +7788,7 @@ lte_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -7130,7 +7796,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_1QQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7141,12 +7807,14 @@ lte_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -7154,7 +7822,7 @@ lte_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -7162,7 +7830,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_1ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7173,12 +7841,14 @@ lte_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -7186,7 +7856,7 @@ lte_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -7194,7 +7864,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lte_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lte_1dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7205,12 +7875,14 @@ lte_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] <= x2[J]); 
 }
         return 0;
@@ -7218,7 +7890,7 @@ lte_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] <= x2[J*sb2]); 
     }
     return 0;
@@ -7226,7 +7898,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7237,12 +7909,14 @@ eq_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7250,7 +7924,7 @@ eq_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7258,7 +7932,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_1bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7269,12 +7943,14 @@ eq_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7282,7 +7958,7 @@ eq_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7290,7 +7966,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_1hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7301,12 +7977,14 @@ eq_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7314,7 +7992,7 @@ eq_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7322,7 +8000,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_1ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7333,12 +8011,14 @@ eq_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7346,7 +8026,7 @@ eq_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7354,7 +8034,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_1qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7365,12 +8045,14 @@ eq_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7378,7 +8060,7 @@ eq_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7386,7 +8068,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_1BB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7397,12 +8079,14 @@ eq_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7410,7 +8094,7 @@ eq_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7418,7 +8102,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_1HH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7429,12 +8113,14 @@ eq_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7442,7 +8128,7 @@ eq_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7450,7 +8136,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_1LL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7461,12 +8147,14 @@ eq_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7474,7 +8162,7 @@ eq_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7482,7 +8170,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_1QQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7493,12 +8181,14 @@ eq_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7506,7 +8196,7 @@ eq_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7514,7 +8204,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_1ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7525,12 +8215,14 @@ eq_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7538,7 +8230,7 @@ eq_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7546,7 +8238,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-eq_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+eq_1dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7557,12 +8249,14 @@ eq_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] == x2[J]); 
 }
         return 0;
@@ -7570,7 +8264,7 @@ eq_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] == x2[J*sb2]); 
     }
     return 0;
@@ -7578,7 +8272,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_111( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7589,12 +8283,14 @@ noteq_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_bool *x1 = (npy_bool *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg1].stride;
     npy_bool *x2 = (npy_bool *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_bool) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_bool) && sb2 == sizeof(npy_bool) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7602,7 +8298,7 @@ noteq_111( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_bool);
     sb1 /= sizeof(npy_bool);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7610,7 +8306,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_1bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7621,12 +8317,14 @@ noteq_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
     npy_int8 *x2 = (npy_int8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7634,7 +8332,7 @@ noteq_1bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int8);
     sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7642,7 +8340,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_1hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7653,12 +8351,14 @@ noteq_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
     npy_int16 *x2 = (npy_int16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7666,7 +8366,7 @@ noteq_1hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int16);
     sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7674,7 +8374,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_1ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7685,12 +8385,14 @@ noteq_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
     npy_int32 *x2 = (npy_int32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7698,7 +8400,7 @@ noteq_1ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int32);
     sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7706,7 +8408,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_1qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7717,12 +8419,14 @@ noteq_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7730,7 +8434,7 @@ noteq_1ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7738,7 +8442,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_1BB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7749,12 +8453,14 @@ noteq_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
     npy_uint8 *x2 = (npy_uint8 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7762,7 +8468,7 @@ noteq_1BB( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint8);
     sb1 /= sizeof(npy_uint8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7770,7 +8476,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_1HH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7781,12 +8487,14 @@ noteq_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
     npy_uint16 *x2 = (npy_uint16 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7794,7 +8502,7 @@ noteq_1HH( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint16);
     sb1 /= sizeof(npy_uint16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7802,7 +8510,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_1LL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7813,12 +8521,14 @@ noteq_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
     npy_uint32 *x2 = (npy_uint32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7826,7 +8536,7 @@ noteq_1II( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint32);
     sb1 /= sizeof(npy_uint32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7834,7 +8544,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_1QQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7845,12 +8555,14 @@ noteq_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
     npy_uint64 *x2 = (npy_uint64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7858,7 +8570,7 @@ noteq_1LL( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_uint64);
     sb1 /= sizeof(npy_uint64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7866,7 +8578,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_1ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7877,12 +8589,14 @@ noteq_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7890,7 +8604,7 @@ noteq_1ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7898,7 +8612,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-noteq_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+noteq_1dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7909,12 +8623,14 @@ noteq_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = (x1[J] != x2[J]); 
 }
         return 0;
@@ -7922,7 +8638,7 @@ noteq_1dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (x1[J*sb1] != x2[J*sb2]); 
     }
     return 0;
@@ -7930,7 +8646,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-abs_bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+abs_bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7939,17 +8655,18 @@ abs_bb( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
     npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int8) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] < 0 ? -x1[J] : x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int8);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] < 0 ? -x1[J*sb1] : x1[J*sb1]; 
     }
     return 0;
@@ -7957,7 +8674,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-abs_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+abs_hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7966,17 +8683,18 @@ abs_hh( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
     npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int16) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] < 0 ? -x1[J] : x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int16);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] < 0 ? -x1[J*sb1] : x1[J*sb1]; 
     }
     return 0;
@@ -7984,7 +8702,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-abs_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+abs_ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -7993,17 +8711,18 @@ abs_ii( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] < 0 ? -x1[J] : x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] < 0 ? -x1[J*sb1] : x1[J*sb1]; 
     }
     return 0;
@@ -8011,7 +8730,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-abs_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+abs_qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8020,17 +8739,18 @@ abs_ll( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] < 0 ? -x1[J] : x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_int64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] < 0 ? -x1[J*sb1] : x1[J*sb1]; 
     }
     return 0;
@@ -8038,7 +8758,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-abs_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+abs_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8047,17 +8767,18 @@ abs_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] < 0 ? -x1[J] : x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] < 0 ? -x1[J*sb1] : x1[J*sb1]; 
     }
     return 0;
@@ -8065,7 +8786,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-abs_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+abs_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8074,17 +8795,18 @@ abs_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = x1[J] < 0 ? -x1[J] : x1[J]; 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = x1[J*sb1] < 0 ? -x1[J*sb1] : x1[J*sb1]; 
     }
     return 0;
@@ -8092,7 +8814,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arccos_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arccos_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8101,17 +8823,18 @@ arccos_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = acos(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = acos(x1[J*sb1]); 
     }
     return 0;
@@ -8119,7 +8842,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arccos_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arccos_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8128,17 +8851,18 @@ arccos_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = acos(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = acos(x1[J*sb1]); 
     }
     return 0;
@@ -8146,7 +8870,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arcsin_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arcsin_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8155,17 +8879,18 @@ arcsin_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = asin(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = asin(x1[J*sb1]); 
     }
     return 0;
@@ -8173,7 +8898,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arcsin_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arcsin_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8182,17 +8907,18 @@ arcsin_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = asin(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = asin(x1[J*sb1]); 
     }
     return 0;
@@ -8200,7 +8926,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arctan_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arctan_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8209,17 +8935,18 @@ arctan_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = atan(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = atan(x1[J*sb1]); 
     }
     return 0;
@@ -8227,7 +8954,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arctan_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arctan_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8236,17 +8963,18 @@ arctan_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = atan(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = atan(x1[J*sb1]); 
     }
     return 0;
@@ -8254,7 +8982,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arctan2_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arctan2_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8265,12 +8993,14 @@ arctan2_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = atan2(x1[J], x2[J]); 
 }
         return 0;
@@ -8278,7 +9008,7 @@ arctan2_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = atan2(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -8286,7 +9016,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arctan2_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arctan2_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8297,12 +9027,14 @@ arctan2_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = atan2(x1[J], x2[J]); 
 }
         return 0;
@@ -8310,7 +9042,7 @@ arctan2_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = atan2(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -8318,7 +9050,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-ceil_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ceil_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8327,17 +9059,18 @@ ceil_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = ceil(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = ceil(x1[J*sb1]); 
     }
     return 0;
@@ -8345,7 +9078,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-ceil_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ceil_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8354,17 +9087,18 @@ ceil_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = ceil(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = ceil(x1[J*sb1]); 
     }
     return 0;
@@ -8372,7 +9106,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cos_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cos_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8381,17 +9115,18 @@ cos_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = cos(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = cos(x1[J*sb1]); 
     }
     return 0;
@@ -8399,7 +9134,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cos_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cos_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8408,17 +9143,18 @@ cos_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = cos(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = cos(x1[J*sb1]); 
     }
     return 0;
@@ -8426,7 +9162,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cosh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cosh_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8435,17 +9171,18 @@ cosh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = cosh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = cosh(x1[J*sb1]); 
     }
     return 0;
@@ -8453,7 +9190,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cosh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cosh_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8462,17 +9199,18 @@ cosh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = cosh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = cosh(x1[J*sb1]); 
     }
     return 0;
@@ -8480,7 +9218,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-exp_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+exp_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8489,17 +9227,18 @@ exp_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = exp(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = exp(x1[J*sb1]); 
     }
     return 0;
@@ -8507,7 +9246,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-exp_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+exp_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8516,17 +9255,18 @@ exp_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = exp(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = exp(x1[J*sb1]); 
     }
     return 0;
@@ -8534,7 +9274,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fabs_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fabs_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8543,17 +9283,18 @@ fabs_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fabs(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fabs(x1[J*sb1]); 
     }
     return 0;
@@ -8561,7 +9302,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fabs_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fabs_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8570,17 +9311,18 @@ fabs_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fabs(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fabs(x1[J*sb1]); 
     }
     return 0;
@@ -8588,7 +9330,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-floor_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+floor_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8597,17 +9339,18 @@ floor_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = floor(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = floor(x1[J*sb1]); 
     }
     return 0;
@@ -8615,7 +9358,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-floor_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+floor_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8624,17 +9367,18 @@ floor_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = floor(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = floor(x1[J*sb1]); 
     }
     return 0;
@@ -8642,7 +9386,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fmod_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fmod_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8653,12 +9397,14 @@ fmod_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fmod(x1[J], x2[J]); 
 }
         return 0;
@@ -8666,7 +9412,7 @@ fmod_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fmod(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -8674,7 +9420,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fmod_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fmod_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8685,12 +9431,14 @@ fmod_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fmod(x1[J], x2[J]); 
 }
         return 0;
@@ -8698,7 +9446,7 @@ fmod_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fmod(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -8706,7 +9454,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-log_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8715,17 +9463,18 @@ log_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = log(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = log(x1[J*sb1]); 
     }
     return 0;
@@ -8733,7 +9482,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-log_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8742,17 +9491,18 @@ log_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = log(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = log(x1[J*sb1]); 
     }
     return 0;
@@ -8760,7 +9510,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-log10_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log10_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8769,17 +9519,18 @@ log10_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = log10(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = log10(x1[J*sb1]); 
     }
     return 0;
@@ -8787,7 +9538,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-log10_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log10_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8796,17 +9547,18 @@ log10_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = log10(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = log10(x1[J*sb1]); 
     }
     return 0;
@@ -8814,7 +9566,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sin_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sin_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8823,17 +9575,18 @@ sin_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = sin(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = sin(x1[J*sb1]); 
     }
     return 0;
@@ -8841,7 +9594,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sin_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sin_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8850,17 +9603,18 @@ sin_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = sin(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = sin(x1[J*sb1]); 
     }
     return 0;
@@ -8868,7 +9622,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sinh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sinh_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8877,17 +9631,18 @@ sinh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = sinh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = sinh(x1[J*sb1]); 
     }
     return 0;
@@ -8895,7 +9650,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sinh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sinh_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8904,17 +9659,18 @@ sinh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = sinh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = sinh(x1[J*sb1]); 
     }
     return 0;
@@ -8922,7 +9678,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sqrt_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sqrt_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8931,17 +9687,18 @@ sqrt_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = sqrt(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = sqrt(x1[J*sb1]); 
     }
     return 0;
@@ -8949,7 +9706,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-sqrt_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sqrt_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8958,17 +9715,18 @@ sqrt_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = sqrt(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = sqrt(x1[J*sb1]); 
     }
     return 0;
@@ -8976,7 +9734,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-tan_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+tan_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -8985,17 +9743,18 @@ tan_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = tan(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = tan(x1[J*sb1]); 
     }
     return 0;
@@ -9003,7 +9762,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-tan_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+tan_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9012,17 +9771,18 @@ tan_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = tan(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = tan(x1[J*sb1]); 
     }
     return 0;
@@ -9030,7 +9790,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-tanh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+tanh_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9039,17 +9799,18 @@ tanh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = tanh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = tanh(x1[J*sb1]); 
     }
     return 0;
@@ -9057,7 +9818,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-tanh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+tanh_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9066,17 +9827,18 @@ tanh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = tanh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = tanh(x1[J*sb1]); 
     }
     return 0;
@@ -9084,7 +9846,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fpclassify_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fpclassify_lf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9093,17 +9855,18 @@ fpclassify_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fpclassify(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fpclassify(x1[J*sb1]); 
     }
     return 0;
@@ -9111,7 +9874,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fpclassify_id( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fpclassify_ld( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9120,17 +9883,18 @@ fpclassify_id( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fpclassify(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fpclassify(x1[J*sb1]); 
     }
     return 0;
@@ -9138,7 +9902,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-isfinite_1f( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+isfinite_1f( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9147,17 +9911,18 @@ isfinite_1f( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = isfinite(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = isfinite(x1[J*sb1]); 
     }
     return 0;
@@ -9165,7 +9930,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-isfinite_1d( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+isfinite_1d( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9174,17 +9939,18 @@ isfinite_1d( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = isfinite(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = isfinite(x1[J*sb1]); 
     }
     return 0;
@@ -9192,7 +9958,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-isinf_1f( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+isinf_1f( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9201,17 +9967,18 @@ isinf_1f( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = isinf(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = isinf(x1[J*sb1]); 
     }
     return 0;
@@ -9219,7 +9986,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-isinf_1d( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+isinf_1d( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9228,17 +9995,18 @@ isinf_1d( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = isinf(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = isinf(x1[J*sb1]); 
     }
     return 0;
@@ -9246,7 +10014,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-isnan_1f( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+isnan_1f( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9255,17 +10023,18 @@ isnan_1f( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = isnan(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = isnan(x1[J*sb1]); 
     }
     return 0;
@@ -9273,7 +10042,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-isnan_1d( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+isnan_1d( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9282,17 +10051,18 @@ isnan_1d( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = isnan(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = isnan(x1[J*sb1]); 
     }
     return 0;
@@ -9300,7 +10070,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-isnormal_1f( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+isnormal_1f( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9309,17 +10079,18 @@ isnormal_1f( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = isnormal(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = isnormal(x1[J*sb1]); 
     }
     return 0;
@@ -9327,7 +10098,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-isnormal_1d( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+isnormal_1d( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9336,17 +10107,18 @@ isnormal_1d( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = isnormal(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = isnormal(x1[J*sb1]); 
     }
     return 0;
@@ -9354,7 +10126,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-signbit_1f( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+signbit_1f( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9363,17 +10135,18 @@ signbit_1f( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = signbit(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = signbit(x1[J*sb1]); 
     }
     return 0;
@@ -9381,7 +10154,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-signbit_1d( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+signbit_1d( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9390,17 +10163,18 @@ signbit_1d( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = signbit(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = signbit(x1[J*sb1]); 
     }
     return 0;
@@ -9408,7 +10182,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arccosh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arccosh_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9417,17 +10191,18 @@ arccosh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = acosh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = acosh(x1[J*sb1]); 
     }
     return 0;
@@ -9435,7 +10210,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arccosh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arccosh_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9444,17 +10219,18 @@ arccosh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = acosh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = acosh(x1[J*sb1]); 
     }
     return 0;
@@ -9462,7 +10238,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arcsinh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arcsinh_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9471,17 +10247,18 @@ arcsinh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = asinh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = asinh(x1[J*sb1]); 
     }
     return 0;
@@ -9489,7 +10266,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arcsinh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arcsinh_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9498,17 +10275,18 @@ arcsinh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = asinh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = asinh(x1[J*sb1]); 
     }
     return 0;
@@ -9516,7 +10294,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arctanh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arctanh_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9525,17 +10303,18 @@ arctanh_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = atanh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = atanh(x1[J*sb1]); 
     }
     return 0;
@@ -9543,7 +10322,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-arctanh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arctanh_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9552,17 +10331,18 @@ arctanh_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = atanh(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = atanh(x1[J*sb1]); 
     }
     return 0;
@@ -9570,7 +10350,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cbrt_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cbrt_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9579,17 +10359,18 @@ cbrt_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = cbrt(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = cbrt(x1[J*sb1]); 
     }
     return 0;
@@ -9597,7 +10378,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-cbrt_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cbrt_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9606,17 +10387,18 @@ cbrt_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = cbrt(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = cbrt(x1[J*sb1]); 
     }
     return 0;
@@ -9624,7 +10406,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copysign_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copysign_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9635,12 +10417,14 @@ copysign_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = copysign(x1[J], x2[J]); 
 }
         return 0;
@@ -9648,7 +10432,7 @@ copysign_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = copysign(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -9656,7 +10440,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-copysign_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+copysign_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9667,12 +10451,14 @@ copysign_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = copysign(x1[J], x2[J]); 
 }
         return 0;
@@ -9680,7 +10466,7 @@ copysign_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = copysign(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -9688,7 +10474,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-erf_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+erf_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9697,17 +10483,18 @@ erf_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = erf(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = erf(x1[J*sb1]); 
     }
     return 0;
@@ -9715,7 +10502,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-erf_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+erf_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9724,17 +10511,18 @@ erf_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = erf(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = erf(x1[J*sb1]); 
     }
     return 0;
@@ -9742,7 +10530,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-erfc_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+erfc_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9751,17 +10539,18 @@ erfc_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = erfc(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = erfc(x1[J*sb1]); 
     }
     return 0;
@@ -9769,7 +10558,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-erfc_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+erfc_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9778,17 +10567,18 @@ erfc_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = erfc(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = erfc(x1[J*sb1]); 
     }
     return 0;
@@ -9796,7 +10586,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-exp2_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+exp2_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9805,17 +10595,18 @@ exp2_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = exp2(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = exp2(x1[J*sb1]); 
     }
     return 0;
@@ -9823,7 +10614,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-exp2_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+exp2_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9832,17 +10623,18 @@ exp2_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = exp2(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = exp2(x1[J*sb1]); 
     }
     return 0;
@@ -9850,7 +10642,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-expm1_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+expm1_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9859,17 +10651,18 @@ expm1_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = expm1(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = expm1(x1[J*sb1]); 
     }
     return 0;
@@ -9877,7 +10670,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-expm1_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+expm1_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9886,17 +10679,18 @@ expm1_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = expm1(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = expm1(x1[J*sb1]); 
     }
     return 0;
@@ -9904,7 +10698,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fdim_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fdim_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9915,12 +10709,14 @@ fdim_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fdim(x1[J], x2[J]); 
 }
         return 0;
@@ -9928,7 +10724,7 @@ fdim_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fdim(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -9936,7 +10732,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fdim_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fdim_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9947,12 +10743,14 @@ fdim_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fdim(x1[J], x2[J]); 
 }
         return 0;
@@ -9960,7 +10758,7 @@ fdim_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fdim(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -9968,7 +10766,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fma_ffff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fma_ffff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -9981,14 +10779,17 @@ fma_ffff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
     npy_float32 *x3 = (npy_float32 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) && sb3 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fma(x1[J], x2[J], x3[J]); 
 }
         return 0;
@@ -9997,7 +10798,7 @@ fma_ffff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_float32);
     sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fma(x1[J*sb1], x2[J*sb2], x3[J*sb3]); 
     }
     return 0;
@@ -10005,7 +10806,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fma_dddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fma_dddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10018,14 +10819,17 @@ fma_dddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
     npy_float64 *x3 = (npy_float64 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) && sb3 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fma(x1[J], x2[J], x3[J]); 
 }
         return 0;
@@ -10034,7 +10838,7 @@ fma_dddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
         sb3 /= sizeof(npy_float64);
     sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fma(x1[J*sb1], x2[J*sb2], x3[J*sb3]); 
     }
     return 0;
@@ -10042,7 +10846,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fmax_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fmax_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10053,12 +10857,14 @@ fmax_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fmax(x1[J], x2[J]); 
 }
         return 0;
@@ -10066,7 +10872,7 @@ fmax_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fmax(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10074,7 +10880,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fmax_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fmax_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10085,12 +10891,14 @@ fmax_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fmax(x1[J], x2[J]); 
 }
         return 0;
@@ -10098,7 +10906,7 @@ fmax_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fmax(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10106,7 +10914,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fmin_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fmin_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10117,12 +10925,14 @@ fmin_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fmin(x1[J], x2[J]); 
 }
         return 0;
@@ -10130,7 +10940,7 @@ fmin_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fmin(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10138,7 +10948,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-fmin_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+fmin_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10149,12 +10959,14 @@ fmin_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = fmin(x1[J], x2[J]); 
 }
         return 0;
@@ -10162,7 +10974,7 @@ fmin_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = fmin(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10170,7 +10982,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-hypot_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+hypot_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10181,12 +10993,14 @@ hypot_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = hypot(x1[J], x2[J]); 
 }
         return 0;
@@ -10194,7 +11008,7 @@ hypot_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = hypot(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10202,7 +11016,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-hypot_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+hypot_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10213,12 +11027,14 @@ hypot_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = hypot(x1[J], x2[J]); 
 }
         return 0;
@@ -10226,7 +11042,7 @@ hypot_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = hypot(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10234,7 +11050,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-ilogb_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ilogb_lf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10243,17 +11059,18 @@ ilogb_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = ilogb(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = ilogb(x1[J*sb1]); 
     }
     return 0;
@@ -10261,7 +11078,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-ilogb_id( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+ilogb_ld( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10270,17 +11087,18 @@ ilogb_id( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = ilogb(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = ilogb(x1[J*sb1]); 
     }
     return 0;
@@ -10288,7 +11106,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lgamma_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lgamma_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10297,17 +11115,18 @@ lgamma_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = lgamma(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = lgamma(x1[J*sb1]); 
     }
     return 0;
@@ -10315,7 +11134,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lgamma_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lgamma_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10324,17 +11143,18 @@ lgamma_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = lgamma(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = lgamma(x1[J*sb1]); 
     }
     return 0;
@@ -10342,7 +11162,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-log1p_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log1p_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10351,17 +11171,18 @@ log1p_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = log1p(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = log1p(x1[J*sb1]); 
     }
     return 0;
@@ -10369,7 +11190,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-log1p_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log1p_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10378,17 +11199,18 @@ log1p_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = log1p(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = log1p(x1[J*sb1]); 
     }
     return 0;
@@ -10396,7 +11218,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-log2_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log2_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10405,17 +11227,18 @@ log2_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = log2(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = log2(x1[J*sb1]); 
     }
     return 0;
@@ -10423,7 +11246,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-log2_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log2_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10432,17 +11255,18 @@ log2_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = log2(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = log2(x1[J*sb1]); 
     }
     return 0;
@@ -10450,7 +11274,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-logb_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+logb_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10459,17 +11283,18 @@ logb_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = logb(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = logb(x1[J*sb1]); 
     }
     return 0;
@@ -10477,7 +11302,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-logb_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+logb_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10486,17 +11311,18 @@ logb_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = logb(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = logb(x1[J*sb1]); 
     }
     return 0;
@@ -10504,7 +11330,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lrint_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lrint_qf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10513,17 +11339,18 @@ lrint_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = lrint(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = lrint(x1[J*sb1]); 
     }
     return 0;
@@ -10531,7 +11358,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lrint_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lrint_qd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10540,17 +11367,18 @@ lrint_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = lrint(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = lrint(x1[J*sb1]); 
     }
     return 0;
@@ -10558,7 +11386,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lround_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lround_qf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10567,17 +11395,18 @@ lround_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = lround(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = lround(x1[J*sb1]); 
     }
     return 0;
@@ -10585,7 +11414,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-lround_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+lround_qd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10594,17 +11423,18 @@ lround_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = lround(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = lround(x1[J*sb1]); 
     }
     return 0;
@@ -10612,7 +11442,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-nearbyint_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+nearbyint_qf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10621,17 +11451,18 @@ nearbyint_lf( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = nearbyint(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = nearbyint(x1[J*sb1]); 
     }
     return 0;
@@ -10639,7 +11470,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-nearbyint_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+nearbyint_qd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10648,17 +11479,18 @@ nearbyint_ld( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = nearbyint(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = nearbyint(x1[J*sb1]); 
     }
     return 0;
@@ -10666,7 +11498,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-nextafter_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+nextafter_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10677,12 +11509,14 @@ nextafter_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = nextafter(x1[J], x2[J]); 
 }
         return 0;
@@ -10690,7 +11524,7 @@ nextafter_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = nextafter(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10698,7 +11532,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-nextafter_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+nextafter_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10709,12 +11543,14 @@ nextafter_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = nextafter(x1[J], x2[J]); 
 }
         return 0;
@@ -10722,7 +11558,7 @@ nextafter_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = nextafter(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10730,7 +11566,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-nexttoward_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+nexttoward_fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10741,12 +11577,14 @@ nexttoward_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_float32 *x2 = (npy_float32 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = nexttoward(x1[J], x2[J]); 
 }
         return 0;
@@ -10754,7 +11592,7 @@ nexttoward_fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float32);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = nexttoward(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10762,7 +11600,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-nexttoward_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+nexttoward_ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10773,12 +11611,14 @@ nexttoward_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_float64 *x2 = (npy_float64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = nexttoward(x1[J], x2[J]); 
 }
         return 0;
@@ -10786,7 +11626,7 @@ nexttoward_ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_float64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = nexttoward(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10794,7 +11634,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-rint_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rint_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10803,17 +11643,18 @@ rint_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = rint(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = rint(x1[J*sb1]); 
     }
     return 0;
@@ -10821,7 +11662,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-rint_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+rint_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10830,17 +11671,18 @@ rint_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = rint(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = rint(x1[J*sb1]); 
     }
     return 0;
@@ -10848,7 +11690,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-round_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+round_lf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10857,17 +11699,18 @@ round_if( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = round(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = round(x1[J*sb1]); 
     }
     return 0;
@@ -10875,7 +11718,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-round_id( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+round_ld( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10884,17 +11727,18 @@ round_id( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = round(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = round(x1[J*sb1]); 
     }
     return 0;
@@ -10902,7 +11746,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-scalbln_ffl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+scalbln_ffq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10913,12 +11757,14 @@ scalbln_ffl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float32) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = scalbln(x1[J], x2[J]); 
 }
         return 0;
@@ -10926,7 +11772,7 @@ scalbln_ffl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = scalbln(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10934,7 +11780,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-scalbln_ddl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+scalbln_ddq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10945,12 +11791,14 @@ scalbln_ddl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
     npy_int64 *x2 = (npy_int64 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof(npy_float64) && sb2 == sizeof(npy_int64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = scalbln(x1[J], x2[J]); 
 }
         return 0;
@@ -10958,7 +11806,7 @@ scalbln_ddl( npy_intp block_size, npy_intp pc, const NumExprObject *params )
     // Strided
         sb2 /= sizeof(npy_int64);
     sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = scalbln(x1[J*sb1], x2[J*sb2]); 
     }
     return 0;
@@ -10966,7 +11814,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-tgamma_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+tgamma_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -10975,17 +11823,18 @@ tgamma_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = tgamma(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = tgamma(x1[J*sb1]); 
     }
     return 0;
@@ -10993,7 +11842,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-tgamma_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+tgamma_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11002,17 +11851,18 @@ tgamma_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = tgamma(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = tgamma(x1[J*sb1]); 
     }
     return 0;
@@ -11020,7 +11870,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-trunc_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+trunc_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11029,17 +11879,18 @@ trunc_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
     npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float32) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = trunc(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float32);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = trunc(x1[J*sb1]); 
     }
     return 0;
@@ -11047,7 +11898,7 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-trunc_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+trunc_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
     NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11056,17 +11907,18 @@ trunc_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
     npy_float64 *dest = (npy_float64 *)params->registers[store_in].mem;
     npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
         
     if( sb1 == sizeof(npy_float64) ) { // Aligned
-        for(npy_intp J = 0; J < block_size; J++) { 
+        for(npy_intp J = 0; J < task_size; J++) { 
     dest[J] = trunc(x1[J]); 
 }
         return 0;
     } 
     // Strided
         sb1 /= sizeof(npy_float64);
-for(npy_intp J = 0; J < block_size; J++) { 
+for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = trunc(x1[J*sb1]); 
     }
     return 0;
@@ -11074,43 +11926,49 @@ for(npy_intp J = 0; J < block_size; J++) {
 
 
 static int
-complex_Fff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+complex_Fff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_complex(block_size, (npy_float32 *)x1, (npy_float32 *)x2, (npy_complex64 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_complex(task_size, (npy_float32 *)x1, sb1, (npy_float32 *)x2, sb2, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-complex_Ddd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+complex_Ddd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_complex(block_size, (npy_float64 *)x1, (npy_float64 *)x2, (npy_complex128 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_complex(task_size, (npy_float64 *)x1, sb1, (npy_float64 *)x2, sb2, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-real_fF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+real_fF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11119,13 +11977,15 @@ real_fF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_real(block_size, (npy_complex64 *)x1, (npy_float32 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_real(task_size, (npy_complex64 *)x1, sb1, (npy_float32 *)dest);
         return 0;
     }
 
 
 static int
-real_dD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+real_dD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11134,13 +11994,15 @@ real_dD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_real(block_size, (npy_complex128 *)x1, (npy_float64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_real(task_size, (npy_complex128 *)x1, sb1, (npy_float64 *)dest);
         return 0;
     }
 
 
 static int
-imag_fF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+imag_fF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11149,13 +12011,15 @@ imag_fF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_imag(block_size, (npy_complex64 *)x1, (npy_float32 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_imag(task_size, (npy_complex64 *)x1, sb1, (npy_float32 *)dest);
         return 0;
     }
 
 
 static int
-imag_dD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+imag_dD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11164,13 +12028,15 @@ imag_dD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_imag(block_size, (npy_complex128 *)x1, (npy_float64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_imag(task_size, (npy_complex128 *)x1, sb1, (npy_float64 *)dest);
         return 0;
     }
 
 
 static int
-abs_fF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+abs_fF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11179,13 +12045,15 @@ abs_fF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_abs(block_size, (npy_complex64 *)x1, (npy_float32 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_abs(task_size, (npy_complex64 *)x1, sb1, (npy_float32 *)dest);
         return 0;
     }
 
 
 static int
-abs_dD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+abs_dD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11194,13 +12062,15 @@ abs_dD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_abs(block_size, (npy_complex128 *)x1, (npy_float64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_abs(task_size, (npy_complex128 *)x1, sb1, (npy_float64 *)dest);
         return 0;
     }
 
 
 static int
-abs2_fF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+abs2_fF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11209,13 +12079,15 @@ abs2_fF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_abs2(block_size, (npy_complex64 *)x1, (npy_float32 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_abs2(task_size, (npy_complex64 *)x1, sb1, (npy_float32 *)dest);
         return 0;
     }
 
 
 static int
-abs2_dD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+abs2_dD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11224,157 +12096,183 @@ abs2_dD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_abs2(block_size, (npy_complex128 *)x1, (npy_float64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_abs2(task_size, (npy_complex128 *)x1, sb1, (npy_float64 *)dest);
         return 0;
     }
 
 
 static int
-add_FFF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_FFF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_add(block_size, (npy_complex64 *)x1, (npy_complex64 *)x2, (npy_complex64 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_add(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)x2, sb2, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-add_DDD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+add_DDD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_add(block_size, (npy_complex128 *)x1, (npy_complex128 *)x2, (npy_complex128 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_add(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)x2, sb2, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-sub_FFF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_FFF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_sub(block_size, (npy_complex64 *)x1, (npy_complex64 *)x2, (npy_complex64 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_sub(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)x2, sb2, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-sub_DDD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sub_DDD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_sub(block_size, (npy_complex128 *)x1, (npy_complex128 *)x2, (npy_complex128 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_sub(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)x2, sb2, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-mult_FFF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_FFF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_mul(block_size, (npy_complex64 *)x1, (npy_complex64 *)x2, (npy_complex64 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_mul(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)x2, sb2, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-mult_DDD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+mult_DDD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_mul(block_size, (npy_complex128 *)x1, (npy_complex128 *)x2, (npy_complex128 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_mul(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)x2, sb2, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-div_FFF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_FFF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_div(block_size, (npy_complex64 *)x1, (npy_complex64 *)x2, (npy_complex64 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_div(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)x2, sb2, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-div_DDD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+div_DDD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_div(block_size, (npy_complex128 *)x1, (npy_complex128 *)x2, (npy_complex128 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_div(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)x2, sb2, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-usub_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+usub_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11383,13 +12281,15 @@ usub_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_neg(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_neg(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-usub_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+usub_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11398,13 +12298,15 @@ usub_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_neg(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_neg(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-neg_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+neg_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11413,13 +12315,15 @@ neg_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_neg(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_neg(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-neg_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+neg_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11428,13 +12332,15 @@ neg_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_neg(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_neg(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-conj_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+conj_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11443,13 +12349,15 @@ conj_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_conj(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_conj(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-conj_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+conj_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11458,13 +12366,15 @@ conj_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_conj(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_conj(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-conj_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+conj_ff( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11473,13 +12383,15 @@ conj_ff( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        fconj(block_size, (npy_float32 *)x1, (npy_float32 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        fconj(task_size, (npy_float32 *)x1, sb1, (npy_float32 *)dest);
         return 0;
     }
 
 
 static int
-conj_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+conj_dd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11488,13 +12400,15 @@ conj_dd( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        fconj(block_size, (npy_float64 *)x1, (npy_float64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        fconj(task_size, (npy_float64 *)x1, sb1, (npy_float64 *)dest);
         return 0;
     }
 
 
 static int
-sqrt_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sqrt_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11503,13 +12417,15 @@ sqrt_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_sqrt(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_sqrt(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-sqrt_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sqrt_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11518,13 +12434,15 @@ sqrt_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_sqrt(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_sqrt(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-log_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11533,13 +12451,15 @@ log_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_log(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_log(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-log_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11548,13 +12468,15 @@ log_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_log(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_log(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-log1p_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log1p_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11563,13 +12485,15 @@ log1p_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_log1p(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_log1p(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-log1p_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log1p_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11578,13 +12502,15 @@ log1p_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_log1p(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_log1p(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-log10_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log10_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11593,13 +12519,15 @@ log10_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_log10(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_log10(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-log10_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+log10_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11608,13 +12536,15 @@ log10_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_log10(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_log10(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-exp_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+exp_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11623,13 +12553,15 @@ exp_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_exp(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_exp(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-exp_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+exp_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11638,13 +12570,15 @@ exp_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_exp(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_exp(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-expm1_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+expm1_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11653,13 +12587,15 @@ expm1_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_expm1(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_expm1(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-expm1_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+expm1_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11668,49 +12604,57 @@ expm1_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_expm1(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_expm1(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-pow_FFF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+pow_FFF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_pow(block_size, (npy_complex64 *)x1, (npy_complex64 *)x2, (npy_complex64 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_pow(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)x2, sb2, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-pow_DDD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+pow_DDD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
+        npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
-        nc_pow(block_size, (npy_complex128 *)x1, (npy_complex128 *)x2, (npy_complex128 *)dest);
+        npy_intp sb2 = params->registers[arg2].stride;
+       
+        nc_pow(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)x2, sb2, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-arccos_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arccos_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11719,13 +12663,15 @@ arccos_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_acos(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_acos(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-arccos_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arccos_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11734,13 +12680,15 @@ arccos_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_acos(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_acos(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-arccosh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arccosh_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11749,13 +12697,15 @@ arccosh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_acosh(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_acosh(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-arccosh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arccosh_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11764,13 +12714,15 @@ arccosh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_acosh(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_acosh(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-arcsin_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arcsin_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11779,13 +12731,15 @@ arcsin_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_asin(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_asin(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-arcsin_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arcsin_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11794,13 +12748,15 @@ arcsin_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_asin(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_asin(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-arcsinh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arcsinh_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11809,13 +12765,15 @@ arcsinh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_asinh(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_asinh(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-arcsinh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arcsinh_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11824,13 +12782,15 @@ arcsinh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_asinh(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_asinh(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-arctan_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arctan_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11839,13 +12799,15 @@ arctan_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_atan(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_atan(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-arctan_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arctan_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11854,13 +12816,15 @@ arctan_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_atan(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_atan(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-arctanh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arctanh_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11869,13 +12833,15 @@ arctanh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_atanh(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_atanh(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-arctanh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+arctanh_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11884,13 +12850,15 @@ arctanh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_atanh(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_atanh(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-cos_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cos_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11899,13 +12867,15 @@ cos_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_cos(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_cos(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-cos_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cos_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11914,13 +12884,15 @@ cos_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_cos(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_cos(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-cosh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cosh_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11929,13 +12901,15 @@ cosh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_cosh(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_cosh(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-cosh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+cosh_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11944,13 +12918,15 @@ cosh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_cosh(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_cosh(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-sin_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sin_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11959,13 +12935,15 @@ sin_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_sin(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_sin(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-sin_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sin_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11974,13 +12952,15 @@ sin_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_sin(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_sin(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-sinh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sinh_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -11989,13 +12969,15 @@ sinh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_sinh(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_sinh(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-sinh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+sinh_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -12004,13 +12986,15 @@ sinh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_sinh(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_sinh(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-tan_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+tan_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -12019,13 +13003,15 @@ tan_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_tan(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_tan(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-tan_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+tan_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -12034,13 +13020,15 @@ tan_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_tan(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_tan(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
 
 static int
-tanh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+tanh_FF( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -12049,13 +13037,15 @@ tanh_FF( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_tanh(block_size, (npy_complex64 *)x1, (npy_complex64 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_tanh(task_size, (npy_complex64 *)x1, sb1, (npy_complex64 *)dest);
         return 0;
     }
 
 
 static int
-tanh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
+tanh_DD( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
@@ -12064,7 +13054,9 @@ tanh_DD( npy_intp block_size, npy_intp pc, const NumExprObject *params )
 
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
-        nc_tanh(block_size, (npy_complex128 *)x1, (npy_complex128 *)dest);
+        npy_intp sb1 = params->registers[arg1].stride;
+     
+        nc_tanh(task_size, (npy_complex128 *)x1, sb1, (npy_complex128 *)dest);
         return 0;
     }
 
