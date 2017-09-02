@@ -5,6 +5,9 @@
 Changes from 3.0.0 to 3.0.1
 ===========================
 
+* Broadcasting is now calculated internally for allocation of magic output.  
+  This is a step on the route to reimplementing reductions.
+* Re-use of temporaries is more efficient.
 * There is no longer any MAX_THREADS.  All threading resources are now 
   dynamically allocated.
 * Temporaries are now pre-allocated in a block rather than being individually 
@@ -14,9 +17,22 @@ Changes from 3.0.0 to 3.0.1
   size to zero will release all temporary memory.  
 * Python-side NumExpr and their associated C-extension objects are now 
   pickleable.  As an part of this, constants no longer occupy BLOCKSIZE memory 
-  and are instead single values with a `numpy.nditer` stride of zero.
-* There is no longer a MAX_THREADS, the global thread parameters is now 
-  resizable.  
+  and are instead singleton arrays with a `numpy.nditer` stride of zero.
+* Complex division with float-32 is now explicitely a fast but lower precision
+  implementation compared to NumPy.
+
+TODO List:
+^^^^^^^^^^
+
+* Make KIND into bitmasks
+* _cast1() for single argument funcs (e.g. 'sin(x)' if x is integer dtype )
+* explicit cast functions 'float32(x)'
+* global-state protection mutex in C-interpreter
+* more test cases: in-line named intermediate, secondary-output, 
+  in-line magic output, named intermediate -> magic output
+* pickle and multi-processing tests
+* module-level properties for ncores, nthreads
+
 
 ======================================
  Release notes for Numexpr 2.4 series

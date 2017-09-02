@@ -14,11 +14,13 @@ There should be two version:
 import unittest
 import numpy as np
 import numexpr3 as ne
+import os
 
-SMALL_SIZE = 256
-LARGE_SIZE = 65536
+SMALL_SIZE = 2**7
+LARGE_SIZE = 2**17
 
 np.random.seed(42)
+
 # Float-64
 A_d = np.random.uniform( size=LARGE_SIZE )
 B_d = np.random.uniform( size=LARGE_SIZE )
@@ -27,34 +29,56 @@ C_d = np.random.uniform( size=LARGE_SIZE )
 A_f = A_d.astype('float32')
 B_f = B_d.astype('float32')
 C_f = C_d.astype('float32')
-# Int-64
-A_l = np.random.randint( 0, high=100, size=LARGE_SIZE )
-B_l = np.random.randint( 0, high=100, size=LARGE_SIZE )
-C_l = np.random.randint( 0, high=100, size=LARGE_SIZE )
-# Int-32
-A_i = A_l.astype('int32')
-B_i = B_l.astype('int32')
-C_i = C_l.astype('int32')
+
+if os.name == 'nt':
+    # Int-64
+    A_q = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
+    B_q = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
+    C_q = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
+    # Int-32
+    A_l = A_q.astype('int32')
+    B_l = B_q.astype('int32')
+    C_l = C_q.astype('int32')
+    # UInt-64
+    A_Q = A_q.astype('uint64')
+    B_Q = B_q.astype('uint64')
+    C_Q = C_q.astype('uint64')
+    # UInt-32
+    A_L = A_q.astype('uint32')
+    B_L = B_q.astype('uint32')
+    C_L = C_q.astype('uint32')
+
+else:
+    # Int-64
+    A_l = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
+    B_l = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
+    C_l = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
+    # Int-32
+    A_i = A_l.astype('int32')
+    B_i = B_l.astype('int32')
+    C_i = C_l.astype('int32')
+    # UInt-64
+    A_L = A_l.astype('uint64')
+    B_L = B_l.astype('uint64')
+    C_L = C_l.astype('uint64')
+    # UInt-32
+    A_I = A_l.astype('uint32')
+    B_I = B_l.astype('uint32')
+    C_I = C_l.astype('uint32')
+
 # Int-16
 A_h = A_l.astype('int16')
 B_h = B_l.astype('int16')
 C_h = C_l.astype('int16')
-# Int-8
-A_b = A_l.astype('int8')
-B_b = B_l.astype('int8')
-C_b = C_l.astype('int8')
-# UInt-64
-A_L = A_l.astype('uint64')
-B_L = B_l.astype('uint64')
-C_L = C_l.astype('uint64')
-# UInt-32
-A_I = A_l.astype('uint32')
-B_I = B_l.astype('uint32')
-C_I = C_l.astype('uint32')
 # UInt-16
 A_H = A_l.astype('uint16')
 B_H = B_l.astype('uint16')
 C_H = C_l.astype('uint16')
+
+# Int-8
+A_b = A_l.astype('int8')
+B_b = B_l.astype('int8')
+C_b = C_l.astype('int8')
 # UInt-8
 A_B = A_l.astype('uint8')
 B_B = B_l.astype('uint8')

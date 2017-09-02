@@ -52,6 +52,7 @@
         // TODO: BLOCK_SIZE1 is the number of operations, not the array block size,
         // so the memory block scales with itemsize...
         // printf( "Exec op: %d\n", params->program[pc].op );
+
         switch (params->program[pc].op) {
         case 0: 
             break;

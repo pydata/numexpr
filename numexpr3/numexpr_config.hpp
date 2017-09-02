@@ -13,8 +13,10 @@
 // Maximum number of arguments (including return) per operation
 // Not related to NPY_MAXARGS.
 #define NUMEXPR_MAX_ARGS 4
+// An argument that isn't present
+#define NULL_REG 255
 // Maximum number of arrays in a NumExprObject
-#define NE_MAX_BUFFERS 255
+#define NE_MAX_BUFFERS 254
 // Size of a register in a program when encoded as bytes
 #define NE_REGISTER      npy_uint8
 // Size of an operation in a program when encoded as bytes
@@ -25,7 +27,8 @@
 #define TASKS_PER_THREAD 16 
     // RAM: old comment: Try to make it so each thread gets 16 tasks.  This is 
     // a compromise between 1 task per thread and one block per task.
-    
+
+
 // RAM: This is also an arbitrary for reductions
 #define INNER_LOOP_MAX_SIZE 64
 // The default block size on module load.
@@ -47,7 +50,7 @@
 #define DEFAULT_THREADS 1
 
 #if defined(_WIN32)
-  #include "win32/pthread.h"
+  #include "win32/pthread.h" 
   #include <process.h>
   #define getpid _getpid
 #else

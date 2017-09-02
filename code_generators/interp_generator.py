@@ -62,6 +62,7 @@ BLOCKSIZE = 4096 # Will be set as a global by generate()
 # OP_COUNT = count( start=256 )
 OP_COUNT = count( start=1 ) # Leave space for NOOP=0
 
+
 DCHAR_TO_CTYPE = { 
                    np.dtype('bool').char:       'npy_bool', 
                    np.dtype('uint8').char:      'npy_uint8', 
@@ -145,6 +146,8 @@ def VEC_ARG0( expr ):
 
 # We could write a more general function suitable for any number of arguments,
 # but that would make the generator code more opaque
+
+
 def VEC_ARG1(expr):
     return '''
 {   
@@ -155,7 +158,8 @@ def VEC_ARG1(expr):
 
     $DTYPE0 *dest = ($DTYPE0 *)params->registers[store_in].mem;
     $DTYPE1 *x1 = ($DTYPE1 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof($DTYPE1) : params->registers[arg1].stride;
         
     if( sb1 == sizeof($DTYPE1) ) { // Aligned
         VEC_LOOP(expr)
@@ -179,9 +183,11 @@ def VEC_ARG2(expr):
     
     $DTYPE0 *dest = ($DTYPE0 *)params->registers[store_in].mem;
     $DTYPE1 *x1 = ($DTYPE1 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof($DTYPE1) : params->registers[arg1].stride;
     $DTYPE2 *x2 = ($DTYPE2 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof($DTYPE2) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof($DTYPE1) && sb2 == sizeof($DTYPE2) ) { // Aligned
         VEC_LOOP(expr)
@@ -208,11 +214,14 @@ def VEC_ARG3(expr):
     
     $DTYPE0 *dest = ($DTYPE0 *)params->registers[store_in].mem;
     $DTYPE1 *x1 = ($DTYPE1 *)params->registers[arg1].mem;
-    npy_intp sb1 = params->registers[arg1].stride;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof($DTYPE1) : params->registers[arg1].stride;
     $DTYPE2 *x2 = ($DTYPE2 *)params->registers[arg2].mem;
-    npy_intp sb2 = params->registers[arg2].stride;
+    //npy_intp sb2 = params->registers[arg2].stride;
+    npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof($DTYPE2) : params->registers[arg2].stride;
     $DTYPE3 *x3 = ($DTYPE3 *)params->registers[arg3].mem;
-    npy_intp sb3 = params->registers[arg3].stride;
+    //npy_intp sb3 = params->registers[arg3].stride;
+    npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof($DTYPE3) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof($DTYPE1) && sb2 == sizeof($DTYPE2) && sb3 == sizeof($DTYPE3) ) { // Aligned
         VEC_LOOP(expr)
@@ -377,7 +386,7 @@ def VEC_ARG0_STRIDED(expr):
         BOUNDS_CHECK(store_in);
 
         char *dest = params->registers[store_in].mem;
-        
+       
         EXPR;
         return 0;
     }
@@ -394,7 +403,7 @@ def VEC_ARG1_STRIDED(expr):
         char *dest = params->registers[store_in].mem;
         char *x1 = params->registers[arg1].mem;
         npy_intp sb1 = params->registers[arg1].stride;
-        
+     
         EXPR;
         return 0;
     }
@@ -406,7 +415,7 @@ def VEC_ARG2_STRIDED(expr):
         NE_REGISTER store_in = params->program[pc].ret;
         NE_REGISTER arg1 = params->program[pc].arg1;
         NE_REGISTER arg2 = params->program[pc].arg2;
-        
+       
         BOUNDS_CHECK(store_in);
         BOUNDS_CHECK(arg1);
         BOUNDS_CHECK(arg2);
@@ -415,7 +424,7 @@ def VEC_ARG2_STRIDED(expr):
         npy_intp sb1 = params->registers[arg1].stride;
         char *x2 = params->registers[arg2].mem;
         npy_intp sb2 = params->registers[arg2].stride;
-        
+       
         EXPR;
         return 0;
     }
@@ -440,7 +449,7 @@ def VEC_ARG3_STRIDED(expr):
         npy_intp sb2 = params->registers[arg2].stride;
         char *x3 = params->registers[arg3].mem;
         npy_intp sb3 = params->registers[arg3].stride;
-        
+       
         EXPR;
         return 0;
     } 
@@ -514,6 +523,11 @@ bytes = 'S'
 str/unicode = 'U'
 
 Windows has different characters.
+
+int32 = 'l'
+uint32 = 'L'
+int64 = 'q'
+uint64 = 'Q'
 '''
 # These are some convience shortcuts for our operation hash-table below
 BOOL = [ np.dtype('bool').char ]
@@ -559,6 +573,8 @@ AUTOTEST_DICT = defaultdict( bool, {
              'complex': '',
              } )
 
+#  Functions which have significantly lower precision than their NumPy counterparts:
+LOW_PRECISION_FUNCS = ('div_FFF')
 
 # This is the red meat of the generator, where we give the code stubs and the
 # valid data type families.  Eventually the actual operation lists should be 
@@ -735,11 +751,16 @@ class Operation(object):
                         funcNameUnique) )
                 testCode.append( "        print('Test: out={0}')\n".format( 
                         evalFunc ) )
-                testCode.append( "        out = np.empty_like( A_d, dtype='{}' )\n".format(retChar) )
-                testCode.append( "        ne.evaluate('out={0}')\n".format(
+                testCode.append( "        out = ne.evaluate('{0}')\n".format(
                         evalFunc ) )
-                testCode.append( "        np.testing.assert_array_almost_equal(out,{})\n".format( 
-                        numpyFunc ) )
+
+                if funcNameUnique in LOW_PRECISION_FUNCS: # A fast but lower-precision function, e.g. complex div_FFF
+                    testCode.append( "        np.testing.assert_array_almost_equal(out,{},decimal=4)\n".format( 
+                            numpyFunc ) )
+                else: # Expect similar precision to NumPy
+                    testCode.append( "        np.testing.assert_array_almost_equal(out,{})\n".format( 
+                            numpyFunc ) )
+
                 evalFunc = None
                 
         return ''.join(testCode)

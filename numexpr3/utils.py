@@ -11,16 +11,14 @@
 import os, sys
 import subprocess
 import numpy as np
-from numexpr3.interpreter import _set_num_threads
+import numexpr3.interpreter
 import numexpr3
 
 try:
-    from numexpr3.interpreter import (
-        _get_vml_version, _set_vml_accuracy_mode, _set_vml_num_threads)
-    
+    from numexpr3.interpreter import _get_vml_version, _set_vml_accuracy_mode, _set_vml_num_threads
     def get_vml_version():
         """Get the VML/MKL library version."""
-        return _get_vml_version()
+        return get_vml_version()
 
     def set_vml_accuracy_mode(mode):
         """
@@ -46,7 +44,7 @@ try:
         if mode not in acc_dict.keys():
             raise ValueError(
                 "mode argument must be one of: None, 'high', 'low', 'fast'")
-        retval = _set_vml_accuracy_mode(acc_dict.get(mode, 0))
+        retval = set_vml_accuracy_mode(acc_dict.get(mode, 0))
         return acc_reverse_dict.get(retval)
 
 
@@ -63,7 +61,7 @@ try:
     
         for more info about it.
         """
-        _set_vml_num_threads(new_nthreads)
+        set_vml_num_threads(new_nthreads)
         
 except ImportError: 
     pass # End of VML utility function import block
@@ -78,8 +76,8 @@ def print_info():
         (sysname, nodename, release, version, machine) = os.uname()
         print('Platform:          %s-%s' % (sys.platform, machine))
     # print("VML available?     %s" % use_vml)
-    try: print("VML/MKL version:   %s" % numexpr3.get_vml_version())
-    except NameError: pass
+    # try: print("VML/MKL version:   %s" % numexpr3.get_vml_version())
+    # except NameError: pass
     print("Number of threads used by default: %d "
           "(out of %d detected cores)" % (numexpr3.nthreads, numexpr3.ncores))
     print('-=' * 38)
@@ -94,19 +92,13 @@ def set_num_threads(new_nthreads):
 
     During initialization time Numexpr sets this number to the number
     of detected cores in the system (see `detect_number_of_cores()`).
-
-    If you are using Intel's VML, you may want to use
-    `set_vml_num_threads(nthreads)` to perform the parallel job with
-    VML instead.  However, you should get very similar performance
-    with VML-optimized functions, and VML's parallelizer cannot deal
-    with common expresions like `(x+1)*(x-2)`, while Numexpr's one
-    can.
     """
-    old_nthreads = _set_num_threads(new_nthreads)
+
+    old_nthreads = numexpr3.interpreter.set_num_threads(new_nthreads)
     numexpr3.nthreads = new_nthreads
     return old_nthreads
 
-
+# TODO: replace with cpuinfo.py equivalent.
 def detect_number_of_cores():
     """
     Detects the number of cores on a system. Cribbed from pp.

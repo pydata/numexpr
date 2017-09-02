@@ -170,12 +170,11 @@ void* th_worker(void *tidptr) {
 int reinit_threads(int n_thread_old) {
     int tid, rc;
 
-    // printf( "Called reinit_threads.\n" );
+    printf( "Called reinit_threads.\n" );
     // TODO: we also need to cancel the pthread_create 
 
-    // Don't free the first register, this belongs to a NumExprObject.
-    // Is this always true?
-    for( int I=1; I < n_thread_old; I++ ) {
+    // Free old params registers
+    for( int I=0; I < n_thread_old; I++ ) {
         free( gs.params[I].registers );
     }
 
@@ -191,10 +190,9 @@ int reinit_threads(int n_thread_old) {
     gs.threads = (pthread_t*)realloc( gs.threads, gs.n_thread * sizeof(pthread_t) );
     gs.tids = (int*)realloc( gs.tids, gs.n_thread * sizeof(int*) );
 
-
     gs.params = (NumExprObject*)realloc( gs.params, gs.n_thread  * sizeof(NumExprObject) );
     // params[R].program is shared.
-    for( int I=1; I < gs.n_thread; I++ ) {
+    for( int I=0; I < gs.n_thread; I++ ) {
         // Since NPY_MAXARGS=32, we can just allocate a maximum space and only 
         // consume a kB or so of RAM.
         gs.params[I].registers = (NumExprReg*)malloc( NPY_MAXARGS * sizeof(NumExprReg) );
@@ -233,7 +231,7 @@ int numexpr_set_nthreads(int n_thread_new) {
 
     // printf( "set_nthreads: old: %d, new: %d\n", gs.n_thread, n_thread_new );
 
-    gs.n_thread = n_thread_new;
+    
     /*
     if (n_thread_new > MAX_THREADS) {
         fprintf(stderr,
@@ -260,7 +258,7 @@ int numexpr_set_nthreads(int n_thread_new) {
 
         // Join exiting threads 
         // printf( "SET_NTHREADS:: Try to lock .\n" );
-        // Since we're calling pthread_join we don't need need mutex protection.
+        // Since we're calling pthread_join we don't need mutex protection.
         //pthread_mutex_lock(&gs.count_threads_mutex);
         for( T=0; T < n_thread_old; T++ ) {
             rc = pthread_join(gs.threads[T], &status);
@@ -272,6 +270,8 @@ int numexpr_set_nthreads(int n_thread_new) {
                 exit(-1);
             }
         }
+        gs.count_threads = 0;
+        gs.n_thread = n_thread_new;
         gs.init_threads_done = 0;
         gs.end_threads = 0;
         // printf( "SET_NTHREADS:: Unlocking, threads are joined .\n" );
@@ -291,9 +291,10 @@ int numexpr_set_nthreads(int n_thread_new) {
 
     return n_thread_old;
 }
-
+PyDoc_STRVAR(SetNumThreads__doc__,
+"Sets a maximum number of threads to be used in operations. Returns old value.\n");
 static PyObject*
-_set_num_threads(PyObject *self, PyObject *args) {
+PySet_num_threads(PyObject *self, PyObject *args) {
     int n_threads_new, n_threads_old;
     if (!PyArg_ParseTuple(args, "i", &n_threads_new))
     return NULL;
@@ -302,31 +303,39 @@ _set_num_threads(PyObject *self, PyObject *args) {
 }
 
 Py_ssize_t numexpr_set_tempsize(Py_ssize_t newSize) {
+    // WARNING: you must ALWAYS acquire the mutex lock before calling this function
+
     // The bytes of pre-allocated space for temporaries PER THREAD.
     Py_ssize_t oldSize = gs.tempSize;
-
-    pthread_mutex_lock(&gs.count_threads_mutex);
+    // printf( "numexpr_set_tempsize #1\n");
     if( newSize <= 0) {
         // Free space for hibernation
+        // printf( "numexpr_set_tempsize #2\n");
         gs.tempSize = 0;
         free( gs.tempStack );
 
     } else if( oldSize <= 0 ) {
+        // printf( "numexpr_set_tempsize #3\n");
         // Space was deallocated or never initialized.
         gs.tempSize = newSize;
         gs.tempStack = (char *)malloc(gs.tempSize * gs.n_thread);
 
     } else {
+        // printf( "numexpr_set_tempsize #4\n");
         // We can use realloc here.
         gs.tempSize = newSize;
         gs.tempStack = (char *)realloc(gs.tempStack, gs.tempSize * gs.n_thread);
     }
-    pthread_mutex_unlock(&gs.count_threads_mutex);
+    // printf( "numexpr_set_tempsize #5\n");
     return oldSize;
 }
 
+PyDoc_STRVAR(SetTempSize__doc__,
+"set_tempsize(int size) -- Sets the size of the temporary array arena. If you \
+expect to continuously increase the number of temporaries this can avoid \
+realloc's of the arena. Set to zero to free all temporary array resources.\n");
 static PyObject*
-_set_tempsize(PyObject *self, PyObject *args) {
+PySet_tempsize(PyObject *self, PyObject *args) {
     Py_ssize_t newSize, oldSize;
     if (!PyArg_ParseTuple(args, "n", &newSize))
     return NULL;
@@ -335,16 +344,20 @@ _set_tempsize(PyObject *self, PyObject *args) {
 }
 
 #ifdef USE_VML
+PyDoc_STRVAR(GetVMLVersion__doc__,
+"Get the VML/MKL library version.\n");
 static PyObject*
-_get_vml_version(PyObject *self, PyObject *args) {
+PyGet_vml_version(PyObject *self, PyObject *args) {
     int len=198;
     char buf[198];
     mkl_get_version_string(buf, len);
     return Py_BuildValue("s", buf);
 }
 
+PyDoc_STRVAR(SetVMLAccuracy__doc__, 
+"Set accuracy mode for VML functions.\n");
 static PyObject*
-_set_vml_accuracy_mode(PyObject *self, PyObject *args) {
+PySet_vml_accuracy_mode(PyObject *self, PyObject *args) {
     int mode_in, mode_old;
     if (!PyArg_ParseTuple(args, "i", &mode_in))
     return NULL;
@@ -353,8 +366,10 @@ _set_vml_accuracy_mode(PyObject *self, PyObject *args) {
     return Py_BuildValue("i", mode_old);
 }
 
+PyDoc_STRVAR(SetVMLNumThreads__doc__, 
+"Suggests a maximum number of threads to be used in VML operations.\n");
 static PyObject*
-_set_vml_num_threads(PyObject *self, PyObject *args) {
+PySet_vml_num_threads(PyObject *self, PyObject *args) {
     int max_num_threads;
     if (!PyArg_ParseTuple(args, "i", &max_num_threads))
     return NULL;
@@ -366,20 +381,15 @@ _set_vml_num_threads(PyObject *self, PyObject *args) {
 
 static PyMethodDef module_methods[] = {
 #ifdef USE_VML
-    {"_get_vml_version", _get_vml_version, METH_VARARGS,
-     "Get the VML/MKL library version."},
-    {"_set_vml_accuracy_mode", _set_vml_accuracy_mode, METH_VARARGS,
-     "Set accuracy mode for VML functions."},
-    {"_set_vml_num_threads", _set_vml_num_threads, METH_VARARGS,
-     "Suggests a maximum number of threads to be used in VML operations."},
+    {"_get_vml_version",       PyGet_vml_version,       METH_VARARGS, GetVMLVersion__doc__   },
+    {"_set_vml_accuracy_mode", PySet_vml_accuracy_mode, METH_VARARGS, SetVMLAccuracy__doc__  },
+    {"_set_vml_num_threads",   PySet_vml_num_threads,   METH_VARARGS, SetVMLNumThreads__doc__},
 #endif
-    {"_set_num_threads", _set_num_threads, METH_VARARGS,
-     "Suggests a maximum number of threads to be used in operations. Returns old value."},
-    {"_set_tempsize", _set_tempsize, METH_VARARGS, 
-     "Set the stack/pool for temporaries in bytes per thread. Returns old value."},
+    {"set_num_threads",       PySet_num_threads,       METH_VARARGS, SetNumThreads__doc__   },
+    {"set_tempsize",          PySet_tempsize,          METH_VARARGS, SetTempSize__doc__     },
+
     {NULL}
 };
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -402,17 +412,17 @@ static struct PyModuleDef moduledef = {
 
 #define INITERROR return NULL
 
-PyObject *
+PyObject*
 PyInit_interpreter(void)
-
-#else
+#else  // Python 2.7
 #define INITERROR return
 
 PyMODINIT_FUNC
 initinterpreter()
 #endif
 {
-    PyObject *m, *d;
+    // PyObject *m, *d;
+    PyObject *m;
 
     // WARNING: PyType_Ready MUST be called to finalize new Python types before
     // a module is created. Official documentation is weak on this point.
@@ -433,16 +443,14 @@ initinterpreter()
 
     import_array();
 
-
     // Let's export the block sizes to Python side for benchmarking comparisons
     PyModule_AddIntConstant(m, "__BLOCK_SIZE1__", BLOCK_SIZE1 );
     PyModule_AddIntConstant(m, "__BLOCK_SIZE2__", BLOCK_SIZE2 );
 
-    d = PyDict_New();
-    if (!d) INITERROR;
-
-    if (PyModule_AddObject(m, "allaxes", PyLong_FromLong(255)) < 0) INITERROR;
-    if (PyModule_AddObject(m, "maxdims", PyLong_FromLong(NPY_MAXDIMS)) < 0) INITERROR;
+    PyModule_AddIntConstant(m, "MAX_ARGS", NPY_MAXARGS );
+    PyModule_AddIntConstant(m, "MAX_DIMS", NPY_MAXDIMS );
+    // d = PyDict_New();
+    // if (!d) INITERROR;
 
 #if PY_MAJOR_VERSION >= 3
     return m;

@@ -60,10 +60,17 @@ ssize_from_dchar(char c)
         case 'B': return sizeof(npy_uint8);
         case 'h': return sizeof(npy_int16);
         case 'H': return sizeof(npy_uint16);
+#ifdef _WIN32
+        case 'l': return sizeof(npy_int32);
+        case 'L': return sizeof(npy_uint32);
+        case 'q': return sizeof(npy_int64);
+        case 'Q': return sizeof(npy_uint64);
+#else
         case 'i': return sizeof(npy_int32);
         case 'I': return sizeof(npy_uint32);
         case 'l': return sizeof(npy_int64);
         case 'L': return sizeof(npy_uint64);
+#endif
         case 'f': return sizeof(npy_float32);
         case 'F': return sizeof(npy_complex64);
         case 'd': return sizeof(npy_float64);
@@ -78,7 +85,7 @@ ssize_from_dchar(char c)
 }
 
 static int
-NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
+NumExpr_init(NumExprObject *self, PyObject *args)
 {
     // NE2to3: Now uses structs instead of seperate arrays for each field
     PyObject *bytes_prog = NULL, *reg_tuple = NULL;
@@ -86,22 +93,18 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     NumExprReg *registers = NULL;
     PyObject **arrays; // C-array of PyArrayObjects
     PyObject *iter_reg = NULL;
-    int n_reg = 0, n_scalar = 0, n_temp = 0, n_ndarray = 0, program_len = 0;
-    int I; 
+    int I, program_len = 0;
+    NE_REGISTER n_reg = 0, n_scalar = 0, n_temp = 0, n_array = 0, returnReg = -1, returnOperand = -1;
 
     // Build const blocks variables
     npy_intp total_scalar_itemsize = 0, mem_offset = 0, total_temp_itemsize = 0;
     char *scalar_mem = NULL, *mem_loc;
     
-    static char *kwlist[] = { CHARP("program"), CHARP("registers"), NULL };
-    
-    if( ! PyArg_ParseTupleAndKeywords(args, kwargs, "SO", kwlist, 
-                                      &bytes_prog, &reg_tuple ) ) { 
+    if( ! PyArg_ParseTuple(args, "SO", &bytes_prog, &reg_tuple ) ) { 
         PyErr_Format(PyExc_RuntimeError,
                     "numexpr_object.cpp: Could not parse input arguments." );
         return -1; 
     }
-    
     // NE2to3: Move the check_program() logic into _Init before allocating 
     // new memory. It makes zeros sense to have it in interpreter.cpp
     if( ! PyBytes_Check(bytes_prog) ) { // Check if program_bytes is a byte string
@@ -126,6 +129,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
                     "numexpr_object.cpp: No. buffers (%d) exceeds %d.", n_reg, NE_MAX_BUFFERS);
         return -1;
     }
+
     program_len = (int)( PyBytes_GET_SIZE(bytes_prog) / NE_PROG_LEN );
     // Cast from Python_Bytes->char array->NumExprOperation struct array
     // which works because we use struct.pack() in Python.
@@ -153,35 +157,53 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
         // Python does error checking here for us.
         // PyUnicode_AsUTF8 doesn't exist in 2.7
         // We can use PyString_AsString
-#if PY_MAJOR_VERSION >= 3        
+#if PY_MAJOR_VERSION >= 3
+        // if (PyTuple_GetItem( iter_reg, 2 ) == Py_None) {
+        //     // Should only happen if this is the return array
+        //     // In which case we can get the return type from the last program
+        //     PyErr_Format(PyExc_RuntimeError,
+        //         "numexpr_object.cpp: register[%d] has unknown dtype type.\n", I );
+        //     return -1;
+        // }
         registers[I].dchar = (char)PyUnicode_AsUTF8( PyTuple_GetItem( iter_reg, 2 ) )[0];
 #else        
         registers[I].dchar = (char)PyString_AsString( PyTuple_GetItem( iter_reg, 2 ) )[0];  
 #endif
         registers[I].kind = (npy_uint8)PyLong_AsUnsignedLong( PyTuple_GetItem( iter_reg, 3 ) );
+        
+        // We're not using name so let's not keep a copy
+        // registers[I].name = (char*)PyUnicode_AsUTF8( PyTuple_GetItem( iter_reg, 4) );
 
         // PyArray_ITEMSIZE gives a wrong result for scalars (and strings), so 
         // a lookup table is needed.
-        registers[I].itemsize = (npy_intp)ssize_from_dchar(registers[I].dchar);
-        // The stride is always one element for scalars and temps but it will 
-        // potentially be different for numpy.ndarrays.
-        registers[I].stride = registers[I].itemsize;
-
-        if( arrays[I] == Py_None ) {
-            registers[I].elements = 0;
-            registers[I].mem = NULL;
+        if (registers[I].kind == KIND_TEMP) {
+            // For temps the dchar is not defined, and we allocate based on max_itemsize alone
+            registers[I].itemsize = (npy_intp)PyLong_AsUnsignedLong( PyTuple_GetItem( iter_reg, 4 ) );
         }
-        else if ( PyArray_Check( arrays[I] ) ) {
-            // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html#c.PyArrayObject
-            registers[I].elements = PyArray_Size(arrays[I]);
-            registers[I].mem = NULL;
+        else {
+            registers[I].itemsize = (npy_intp)ssize_from_dchar(registers[I].dchar);
         }
+        // The stride is always zero for scalars and temps
         
+        // printf( "Register #%d: dchar: %c, array: %p, kind: %d, itemsize: %d\n", I, registers[I].dchar, arrays[I], registers[I].kind, registers[I].itemsize );
+
+        // Skip this check as we don't access the arrays at all in NumExpr_init
+        registers[I].mem = NULL;
+        // if( arrays[I] == Py_None ) {
+        //     // registers[I].elements = 0;
+        //     registers[I].mem = NULL;
+        // }
+        // else if ( PyArray_Check( arrays[I] ) ) {
+        //     // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html#c.PyArrayObject
+        //     // registers[I].elements = PyArray_Size(arrays[I]);
+        //     registers[I].mem = NULL;
+        // }
+
         switch( registers[I].kind ) {
             case KIND_ARRAY:
                 //printf( "Found array at register %d with %lu elements, dtype %c with itemsize %lu\n", 
                 //    I, registers[I].elements, registers[I].dchar, registers[I].itemsize );
-                n_ndarray++;
+                n_array++;
                 break;
             case KIND_SCALAR:
                 //printf( "Found scalar at register %d, dtype %c with itemsize %lu\n", 
@@ -194,11 +216,15 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
                 //        I, registers[I].dchar, registers[I].itemsize );
                 n_temp++;
                 total_temp_itemsize += registers[I].itemsize;
+                
+                printf( "FIXME: move temporary stride management inside GENERATED.\n" );
+                registers[I].stride = registers[I].itemsize;
                 break;
             case KIND_RETURN:
                 //printf( "Found return at register %d\n", I );
-                // This is handled by NumExpr_run() as the array pointer can change.
-                n_ndarray++;
+                returnReg = I;
+                returnOperand = n_array;
+                n_array++;
                 break;
             default:
                 PyErr_Format(PyExc_RuntimeError,
@@ -210,8 +236,8 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
          
     }
     // DEBUG
-    //printf( "NumExpr_init(): program_len = %d, n_ndarray = %d, n_scalar = %d, n_temp = %d\n", 
-    //    program_len, n_ndarray, n_scalar, n_temp );
+    printf( "NumExpr_init(): program_len = %d, n_array = %d, n_scalar = %d, n_temp = %d\n", 
+       program_len, n_array, n_scalar, n_temp );
     
     
     // Pre-build the scalar blocks.
@@ -240,12 +266,13 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
             // RAM: Passes valgrind check
         }
     }
-    #define REPLACE_OBJ(argument) \
-    {PyObject *temp = self->argument; \
-     self->argument = argument; \
-     Py_XDECREF(temp);}
-    #define INCREF_REPLACE_OBJ(argument) {Py_INCREF(argument); REPLACE_OBJ(argument);}
-    #define REPLACE_MEM(argument) {PyMem_Del(self->argument); self->argument=argument;}
+
+    // #define REPLACE_OBJ(argument) \
+    // {PyObject *temp = self->argument; \
+    //  self->argument = argument; \
+    //  Py_XDECREF(temp);}
+    // #define INCREF_REPLACE_OBJ(argument) {Py_INCREF(argument); REPLACE_OBJ(argument);}
+    // #define REPLACE_MEM(argument) {PyMem_Del(self->argument); self->argument=argument;}
 
 
     //REPLACE_MEM(program);
@@ -258,25 +285,30 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwargs)
     self->scalar_mem = scalar_mem;
     self->program_len = program_len;
     self->n_reg = n_reg;
-    self->n_ndarray = n_ndarray;
+    self->n_array = n_array;
     self->n_scalar = n_scalar;
     self->n_temp = n_temp;
     self->scalar_mem_size = total_scalar_itemsize;
     self->total_temp_itemsize = total_temp_itemsize;
+    self->returnReg = returnReg;
+    self->returnOperand = returnOperand;
 
-    // DEBUG: print the program to screen
-//    for( I = 0; I < self->program_len; I++ ) {
-//        printf( "NE_init: Program[%d]: %d %d %d %d %d \n", I,
-//            (int)self->program[I].op, (int)self->program[I].ret, (int)self->program[I].arg1, 
-//            (int)self->program[I].arg2, (int)self->program[I].arg3 );
-//    }
-    #undef REPLACE_OBJ
-    #undef INCREF_REPLACE_OBJ
-    #undef REPLACE_MEM
+
+    // // DEBUG: print the program to screen
+    // for( I = 0; I < self->program_len; I++ ) {
+    //     printf( "NE_init: Program[%d]: %d %d %d %d %d \n", I,
+    //         (int)self->program[I].op, (int)self->program[I].ret, (int)self->program[I].arg1, 
+    //         (int)self->program[I].arg2, (int)self->program[I].arg3 );
+    // }
+    // #undef REPLACE_OBJ
+    // #undef INCREF_REPLACE_OBJ
+    // #undef REPLACE_MEM
     
     // Release debugging memory (if used)
     //PyMem_Del(testObj);
     return 0;
+
+
 }
 
 
@@ -374,14 +406,14 @@ NumExpr_print_state(NumExprObject *self, PyObject *args) {
     }
     printf( "\nRegisters pointer: %p\n", self->registers );
     printf( "n_reg: %d\n", self->n_reg );
-    printf( "n_ndarray: %d\n", self->n_ndarray );
+    printf( "n_array: %d\n", self->n_array );
     printf( "n_scalar: %d\n", self->n_scalar );
     printf( "n_temp: %d\n", self->n_temp );
     for( int J = 0; J < self->n_reg; J++ ) {
-        printf( "    #%d:: mem: %p, dchar: %c, kind: %d, itemsize: %Id, stride: %Id, elements: %Id\n", 
+        printf( "    #%d:: mem: %p, dchar: %c, kind: %d, itemsize: %Id, stride: %Id\n", 
             J, self->registers[J].mem, self->registers[J].dchar, 
             self->registers[J].kind, (int)self->registers[J].itemsize, 
-            (int)self->registers[J].stride, (int)self->registers[J].elements );
+            (int)self->registers[J].stride );
     }
 
     printf( "\nScalar memory pointer: %p\n", self->scalar_mem );
