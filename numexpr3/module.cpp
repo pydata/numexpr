@@ -10,9 +10,6 @@
 #define DO_NUMPY_IMPORT_ARRAY
 
 #include "module.hpp"
-#include <structmember.h>
-#include <vector>
-
 #include "interp_header_GENERATED.hpp"
 #include "numexpr_object.hpp"
 
@@ -35,8 +32,6 @@ void* th_worker(void *tidptr) {
     int ret;
     npy_intp istart, iend;
     char** errorMessage;
-    // For output buffering if needed
-    vector<char> out_buffer;
 
     while(1) {
         
@@ -45,22 +40,18 @@ void* th_worker(void *tidptr) {
         }
 
         // Meeting point for all threads (wait for initialization)
-        // printf( "TH_WORKER %d:: Acquire init lock. count = %d\n", tid, gs.count_threads );
         pthread_mutex_lock(&gs.count_threads_mutex);
         if( gs.count_threads < gs.n_thread ) {
             gs.count_threads++;
             pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
         }
         else { // Every thread is ready, go...
-            // printf( "TH_WORKER %d:: started VM.\n", tid );
             pthread_cond_broadcast(&gs.count_threads_cv);
         }
-        // printf( "TH_WORKER %d:: Release init lock. count = %d\n", tid, gs.count_threads );
         pthread_mutex_unlock(&gs.count_threads_mutex);
 
         // Check if thread has been asked to return
         if( gs.end_threads ) {
-            // printf( "TH_WORKER %d:: Killing,\n", tid );
             return(0);
         }
 
@@ -70,8 +61,6 @@ void* th_worker(void *tidptr) {
         task_size = gs.task_size;
         neObj = &gs.params[tid];
         pc_error = gs.pc_error;
-
-        // printf( "TH_WORKER %d:: got neObj at %p\n", tid, neObj);
 
         errorMessage = gs.errorMessage;
 
@@ -102,16 +91,6 @@ void* th_worker(void *tidptr) {
             gs.giveup = 1;
         }
         
-        // Get temporary space for each thread
-        //ret = get_temps_space(params, BLOCK_SIZE1);
-        // Prepare the NumExprObject
-        // CORRECTION: Do this before PyThreads are released.
-        // ret = prepare_thread_mem( tid, neObj );
-        // if (ret < 0) {
-        //     // Propagate error to main thread 
-        //     gs.ret_code = ret;
-        //     gs.giveup = 1;
-        // }
         pthread_mutex_unlock(&gs.count_mutex);
 
         while( istart < vlen && !gs.giveup ) {
@@ -143,22 +122,14 @@ void* th_worker(void *tidptr) {
         }
 
         // Meeting point for all threads (wait for finalization)
-        // printf( "TH_WORKER %d:: Acquire finalization lock. count = %d\n", tid, gs.count_threads );
         pthread_mutex_lock(&gs.count_threads_mutex);
         if (gs.count_threads > 0) { // Not the last thread to join
             gs.count_threads--;
             pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
         } else { // We're the last thread, get out of here.
-            // printf( "TH_WORKER %d:: Final thread releasing all\n", tid );
             pthread_cond_broadcast(&gs.count_threads_cv);
         }
-        // printf( "TH_WORKER %d:: Release finalization lock. count = %d\n", tid, gs.count_threads );
         pthread_mutex_unlock(&gs.count_threads_mutex);
-
-        // Release resources
-        //free_temps_space(params);
-        // TODO: keep an array of NumExprObjs for threads instead of creating/destroying structs often.
-        //free(params);
 
     }  // closes while(1)
 
@@ -169,9 +140,6 @@ void* th_worker(void *tidptr) {
 // Initialize threads and allocate space for arrays in global_state
 int reinit_threads(int n_thread_old) {
     int tid, rc;
-
-    printf( "Called reinit_threads.\n" );
-    // TODO: we also need to cancel the pthread_create 
 
     // Free old params registers
     for( int I=0; I < n_thread_old; I++ ) {
@@ -196,7 +164,6 @@ int reinit_threads(int n_thread_old) {
         // Since NPY_MAXARGS=32, we can just allocate a maximum space and only 
         // consume a kB or so of RAM.
         gs.params[I].registers = (NumExprReg*)malloc( NPY_MAXARGS * sizeof(NumExprReg) );
-        
     }
 
     gs.stridesArray = (npy_intp*)realloc( gs.stridesArray, gs.n_thread * sizeof(npy_intp) );
@@ -229,17 +196,6 @@ int numexpr_set_nthreads(int n_thread_new) {
     int T, rc;
     void *status;
 
-    // printf( "set_nthreads: old: %d, new: %d\n", gs.n_thread, n_thread_new );
-
-    
-    /*
-    if (n_thread_new > MAX_THREADS) {
-        fprintf(stderr,
-                "Error.  nthreads cannot be larger than MAX_THREADS (%d)",
-                MAX_THREADS);
-        return -1;
-    }
-    */
     if( n_thread_new <= 0 ) {
         fprintf(stderr, "Error.  nthreads must be a positive integer");
         return -1;
@@ -249,7 +205,6 @@ int numexpr_set_nthreads(int n_thread_new) {
     //   different from that in pid var (probably means that we are a
     //   subprocess, and thus threads are non-existent).
     if( n_thread_old > 1 && gs.init_threads_done && gs.pid == getpid() ) {
-        // printf( "SET_NTHREADS:: JOINING OLD THREADS\n ");
         // Tell all existing threads to finish 
         gs.end_threads = 1;
 
@@ -257,9 +212,8 @@ int numexpr_set_nthreads(int n_thread_new) {
         pthread_cond_broadcast(&gs.count_threads_cv);
 
         // Join exiting threads 
-        // printf( "SET_NTHREADS:: Try to lock .\n" );
         // Since we're calling pthread_join we don't need mutex protection.
-        //pthread_mutex_lock(&gs.count_threads_mutex);
+        // pthread_mutex_lock(&gs.count_threads_mutex);
         for( T=0; T < n_thread_old; T++ ) {
             rc = pthread_join(gs.threads[T], &status);
             if (rc) {
@@ -274,10 +228,8 @@ int numexpr_set_nthreads(int n_thread_new) {
         gs.n_thread = n_thread_new;
         gs.init_threads_done = 0;
         gs.end_threads = 0;
-        // printf( "SET_NTHREADS:: Unlocking, threads are joined .\n" );
-        //pthread_mutex_unlock(&gs.count_threads_mutex);
-
-    } else {
+    } 
+    else {
         // printf( "set_n_threads NOT JOING OLD THREADS.\n ");
     }
 
@@ -285,9 +237,6 @@ int numexpr_set_nthreads(int n_thread_new) {
     if( gs.n_thread > 1 ) {
         reinit_threads(n_thread_old);
     }
-    // if (gs.n_thread > 1 && (!gs.init_threads_done || gs.pid != getpid())) {
-    //     reinit_threads(n_thread_old);
-    // }
 
     return n_thread_old;
 }
@@ -307,26 +256,21 @@ Py_ssize_t numexpr_set_tempsize(Py_ssize_t newSize) {
 
     // The bytes of pre-allocated space for temporaries PER THREAD.
     Py_ssize_t oldSize = gs.tempSize;
-    // printf( "numexpr_set_tempsize #1\n");
     if( newSize <= 0) {
         // Free space for hibernation
-        // printf( "numexpr_set_tempsize #2\n");
         gs.tempSize = 0;
         free( gs.tempStack );
 
     } else if( oldSize <= 0 ) {
-        // printf( "numexpr_set_tempsize #3\n");
         // Space was deallocated or never initialized.
         gs.tempSize = newSize;
         gs.tempStack = (char *)malloc(gs.tempSize * gs.n_thread);
 
     } else {
-        // printf( "numexpr_set_tempsize #4\n");
         // We can use realloc here.
         gs.tempSize = newSize;
         gs.tempStack = (char *)realloc(gs.tempStack, gs.tempSize * gs.n_thread);
     }
-    // printf( "numexpr_set_tempsize #5\n");
     return oldSize;
 }
 
@@ -449,6 +393,8 @@ initinterpreter()
 
     PyModule_AddIntConstant(m, "MAX_ARGS", NPY_MAXARGS );
     PyModule_AddIntConstant(m, "MAX_DIMS", NPY_MAXDIMS );
+
+    // The OpTable is loaded via pickle now.
     // d = PyDict_New();
     // if (!d) INITERROR;
 

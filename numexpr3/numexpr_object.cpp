@@ -91,7 +91,7 @@ NumExpr_init(NumExprObject *self, PyObject *args)
     PyObject *bytes_prog = NULL, *reg_tuple = NULL;
     NumExprOperation *program = NULL;
     NumExprReg *registers = NULL;
-    PyObject **arrays; // C-array of PyArrayObjects
+    PyObject *arrayObj;
     PyObject *iter_reg = NULL;
     int I, program_len = 0;
     NE_REGISTER n_reg = 0, n_scalar = 0, n_temp = 0, n_array = 0, returnReg = -1, returnOperand = -1;
@@ -134,25 +134,19 @@ NumExpr_init(NumExprObject *self, PyObject *args)
     // Cast from Python_Bytes->char array->NumExprOperation struct array
     // which works because we use struct.pack() in Python.
 
-    // We have to copy bytes_prog or Python garbage collects it
-    //program = (NumExprOperation*)PyMem_Malloc( program_len*sizeof(NumExprOperation) );
-    //program = (NumExprOperation*)PyMem_New( NumExprOperation, program_len );
+    // We are avoiding using PyMalloc and similar due to the changes in 3.6 
+    // resulting in some inconsistant behavoir.
     program = (NumExprOperation*)malloc( program_len * sizeof(NumExprOperation) );
     memcpy( program, PyBytes_AsString( bytes_prog ), program_len*sizeof(NumExprOperation) );
 
     // Build registers
-    // registers = PyMem_New(NumExprReg, n_reg);
-    arrays = PyMem_New(PyObject*, n_reg);
+    // arrays = PyMem_New(PyObject*, n_reg);
     registers = (NumExprReg *)malloc(n_reg * sizeof(NumExprReg) );
+    // registers = PyMem_New(NumExprReg, n_reg);
     //arrays = (PyObject**)malloc(n_reg * sizeof(PyObject *) );
     for( I = 0; I < n_reg; I++ ) {
         // Get reference and check format of register
         iter_reg = PyTuple_GET_ITEM( reg_tuple, I );
-
-        // Fill in the registers
-        // Note: in NE2 the array handles are only set in NumExpr_Run() because
-        // NumPy iterators are used.
-        arrays[I] = (PyObject *)PyTuple_GET_ITEM( iter_reg, 1 );
 
         // Python does error checking here for us.
         // PyUnicode_AsUTF8 doesn't exist in 2.7
@@ -170,9 +164,6 @@ NumExpr_init(NumExprObject *self, PyObject *args)
         registers[I].dchar = (char)PyString_AsString( PyTuple_GetItem( iter_reg, 2 ) )[0];  
 #endif
         registers[I].kind = (npy_uint8)PyLong_AsUnsignedLong( PyTuple_GetItem( iter_reg, 3 ) );
-        
-        // We're not using name so let's not keep a copy
-        // registers[I].name = (char*)PyUnicode_AsUTF8( PyTuple_GetItem( iter_reg, 4) );
 
         // PyArray_ITEMSIZE gives a wrong result for scalars (and strings), so 
         // a lookup table is needed.
@@ -183,22 +174,11 @@ NumExpr_init(NumExprObject *self, PyObject *args)
         else {
             registers[I].itemsize = (npy_intp)ssize_from_dchar(registers[I].dchar);
         }
-        // The stride is always zero for scalars and temps
         
         // printf( "Register #%d: dchar: %c, array: %p, kind: %d, itemsize: %d\n", I, registers[I].dchar, arrays[I], registers[I].kind, registers[I].itemsize );
 
-        // Skip this check as we don't access the arrays at all in NumExpr_init
+        // Arrays are now only checked for scalars.
         registers[I].mem = NULL;
-        // if( arrays[I] == Py_None ) {
-        //     // registers[I].elements = 0;
-        //     registers[I].mem = NULL;
-        // }
-        // else if ( PyArray_Check( arrays[I] ) ) {
-        //     // https://docs.scipy.org/doc/numpy/reference/c-api.types-and-structures.html#c.PyArrayObject
-        //     // registers[I].elements = PyArray_Size(arrays[I]);
-        //     registers[I].mem = NULL;
-        // }
-
         switch( registers[I].kind ) {
             case KIND_ARRAY:
                 //printf( "Found array at register %d with %lu elements, dtype %c with itemsize %lu\n", 
@@ -216,8 +196,8 @@ NumExpr_init(NumExprObject *self, PyObject *args)
                 //        I, registers[I].dchar, registers[I].itemsize );
                 n_temp++;
                 total_temp_itemsize += registers[I].itemsize;
-                
-                printf( "FIXME: move temporary stride management inside GENERATED.\n" );
+                // Per-register stride is set in GENERATED functions now, as 
+                // the stride of a temporary can change throughout the program.
                 registers[I].stride = registers[I].itemsize;
                 break;
             case KIND_RETURN:
@@ -231,53 +211,36 @@ NumExpr_init(NumExprObject *self, PyObject *args)
                         "numexpr_object.cpp: register[%d] has unknown register type %d.\n", I, registers[I].kind );
                 return -1;
                 break;
-        }    
-
-         
+        }        
     }
-    // DEBUG
-    printf( "NumExpr_init(): program_len = %d, n_array = %d, n_scalar = %d, n_temp = %d\n", 
-       program_len, n_array, n_scalar, n_temp );
-    
     
     // Pre-build the scalar blocks.
-    // Here we address the memory directly to avoid having a nested casting
-    // tree as in NE2. This should make the code more general and hence more 
-    // maintainable.
-    // The other option would be PyArray_Ones()
-    //scalar_mem_size = total_scalar_itemsize * BLOCK_SIZE1;
-
-    //scalar_mem = PyMem_New( char, scalar_mem_size );
-    // TODO: we shouldn't need BLOCKSIZE1 arrays for scalars, nditer should be able to deal with 
-    // single elements and return a step of 0.
+    // In NE2 the scalars were BLOCK_SIZE1 arrays, but if we set the stride to 
+    // zero they can be single values, which makes pickling much more practical.
     if( total_scalar_itemsize > 0) {
         scalar_mem = (char *)malloc( total_scalar_itemsize );
         for( I = 0; I < n_reg; I++ ) {
-            if( registers[I].kind != KIND_SCALAR ) continue;
-            
+            if( registers[I].kind != KIND_SCALAR ) 
+                continue;
+
+            // Fill in the scalar registers
+            arrayObj = (PyObject *)PyTuple_GET_ITEM( PyTuple_GET_ITEM( reg_tuple, I ), 1 );
+            if ( ! PyArray_Check( arrayObj ) ) {
+                PyErr_Format(PyExc_RuntimeError,
+                    "numexpr_object.cpp: scalar register[%d] is not of type ndarray.\n", I );
+            }
             registers[I].mem = mem_loc = scalar_mem + mem_offset;
             // Stride for scalars is always zero
             registers[I].stride = 0;
             // Copy scalar value
-            memcpy( mem_loc, PyArray_DATA( (PyArrayObject *)arrays[I]), registers[I].itemsize );
+            memcpy( mem_loc, PyArray_DATA( (PyArrayObject *)arrayObj), registers[I].itemsize );
             // Advance memory pointer
             mem_offset += registers[I].itemsize;
-
-            // RAM: Passes valgrind check
         }
     }
 
-    // #define REPLACE_OBJ(argument) \
-    // {PyObject *temp = self->argument; \
-    //  self->argument = argument; \
-    //  Py_XDECREF(temp);}
-    // #define INCREF_REPLACE_OBJ(argument) {Py_INCREF(argument); REPLACE_OBJ(argument);}
-    // #define REPLACE_MEM(argument) {PyMem_Del(self->argument); self->argument=argument;}
-
-
     //REPLACE_MEM(program);
     //REPLACE_MEM(registers);
-    PyMem_Del(arrays);
     //free(arrays);
     //REPLACE_MEM(scalar_mem);
     self->program = program;
@@ -294,18 +257,15 @@ NumExpr_init(NumExprObject *self, PyObject *args)
     self->returnOperand = returnOperand;
 
 
-    // // DEBUG: print the program to screen
+    // DEBUG: print the program to screen
+    // printf( "NumExpr_init(): program_len = %d, n_array = %d, n_scalar = %d, n_temp = %d\n", 
+    //    program_len, n_array, n_scalar, n_temp );
     // for( I = 0; I < self->program_len; I++ ) {
     //     printf( "NE_init: Program[%d]: %d %d %d %d %d \n", I,
     //         (int)self->program[I].op, (int)self->program[I].ret, (int)self->program[I].arg1, 
     //         (int)self->program[I].arg2, (int)self->program[I].arg3 );
     // }
-    // #undef REPLACE_OBJ
-    // #undef INCREF_REPLACE_OBJ
-    // #undef REPLACE_MEM
-    
-    // Release debugging memory (if used)
-    //PyMem_Del(testObj);
+
     return 0;
 
 

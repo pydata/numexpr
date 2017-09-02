@@ -9,12 +9,10 @@
   See LICENSE.txt for details about copyright and rights to use.
 **********************************************************************/
 
-
 #define KIND_ARRAY  0
 #define KIND_SCALAR 1
 #define KIND_TEMP   2
 #define KIND_RETURN 3
-//#define KIND_ITER 4 // A scalar that's expected to change with each NumExpr_run()
 
 // self is a struct NumExprObject
 #define GET_RETURN_REG(self) self->registers[ self->program[self->n_reg-1].ret ]
@@ -38,11 +36,9 @@ struct NumExprReg
 {
     char          *mem;        // Pointer to array data for scalars and temps (npy_iter used for arrays)
     char           dchar;      // numpy.dtype.char
-    // char*          name;       // UTF8 representation of name, for lookup in keyword args
     npy_uint8      kind;       // 0 = array, 1 = scalar, 2 = temp
     npy_intp       itemsize;   // element size in bytes   (was: memsizes)
     npy_intp       stride;     // How many bytes until next element  (was: memsteps)
-    // npy_intp       elements;   // number of array elements
 };
 
 // Presently the PyObject_HEAD macro expands into a single PyObject
@@ -54,9 +50,6 @@ struct NumExprObject
     PyObject_HEAD
     struct NumExprOperation  *program;
     struct NumExprReg        *registers;
-
-    // We don't do output buffering anymore
-    // char                     *outBuffer;
     
     // a chunk of raw memory for storing scalar BLOCKs, just a reference
     // for efficient garbage collection.

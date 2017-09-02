@@ -1020,12 +1020,12 @@ class NumExpr(object):
         
         # Add self to the wisdom
         wisdom[(self.expr, self.lib, self.casting)] = self
-        self.disassemble() # DEBUG
+        # self.disassemble() # DEBUG
 
-        warn( "%%%%regsToInterpreter%%%%")
-        for I, reg in enumerate(regsToInterpreter):
-            warn( '{}::{}'.format(I,reg) )
-        warn( '%%%%')
+        # warn( "%%%%regsToInterpreter%%%%")
+        # for I, reg in enumerate(regsToInterpreter):
+        #     warn( '{}::{}'.format(I,reg) )
+        # warn( '%%%%')
 
         self._compiled_exec = interpreter.CompiledExec( self.program, regsToInterpreter )
         # packedRegs = [reg.pack() for reg in self.registers]
@@ -1158,7 +1158,7 @@ class NumExpr(object):
                     if isinstance(reg.ref, weakref.ref):
                         arg = reg.ref()
                         if arg is None: # One of our weak-refs expired.
-                            print( "Weakref expired" )
+                            debug( "Weakref expired" )
                             return self.run( verify=True, stackDepth=stackDepth+1 )
                     else:
                         arg = reg.ref
@@ -1170,11 +1170,8 @@ class NumExpr(object):
 
         
         # Promotion of magic output
-        print( 'assignTarget = {}'.format(self.assignTarget) )
-        print( "unalloc = {}".format(unalloc) )
         if self.assignTarget.ref is None and isinstance(self.assignTarget.name, str):
             # Insert result into calling frame
-            print( "promoting {}".format(self.assignTarget.name) )
             if call_frame is None:
                 sys._getframe( stackDepth ).f_locals[self.assignTarget.name] = unalloc
             else:

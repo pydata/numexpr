@@ -208,34 +208,33 @@ int vm_engine_iter_task(NpyIter *iter,
     iterStrides = NpyIter_GetInnerStrideArray(iter);
 
     // DEBUG
-    printf( "DEBUG vm_enginer_iter_task\n" );
-    for( int I = 0; I < params->program_len; I++ ) {                                         
-        printf( "program[%d]:: r:%d a1:%d a1:%d a2:%d a3:%d \n", I,
-            (int)params->program[I].op, (int)params->program[I].ret, (int)params->program[I].arg1, 
-            (int)params->program[I].arg2, (int)params->program[I].arg3 );
-    }
-    for( int I = 0; I < params->n_reg; I++ ) {
-        printf( "regs[%d]:: kind:%d, mem:%p, \n", I, params->registers[I].kind, params->registers[I].mem  );
-    }
-    printf( "params: %p, n_reg: %d, iter: %p\n", params, params->n_reg, iter );
-    for( int I = 0; I < params->n_reg; I++ ) {
-        int ac = 0;
-        if( params->registers[I].kind == KIND_ARRAY || params->registers[I].kind == KIND_RETURN ) {
-            printf( "iterDataPtr[%d]:: %p, iterStrides[%d]:: %ld, sizePtr:: %ld \n", 
-                I, iterDataPtr[ac], I, (void *)iterStrides[ac], *sizePtr );
-            ac++;
-        }
+    // printf( "DEBUG vm_enginer_iter_task\n" );
+    // for( int I = 0; I < params->program_len; I++ ) {                                         
+    //     printf( "program[%d]:: r:%d a1:%d a1:%d a2:%d a3:%d \n", I,
+    //         (int)params->program[I].op, (int)params->program[I].ret, (int)params->program[I].arg1, 
+    //         (int)params->program[I].arg2, (int)params->program[I].arg3 );
+    // }
+    // for( int I = 0; I < params->n_reg; I++ ) {
+    //     printf( "regs[%d]:: kind:%d, mem:%p, \n", I, params->registers[I].kind, params->registers[I].mem  );
+    // }
+    // printf( "params: %p, n_reg: %d, iter: %p\n", params, params->n_reg, iter );
+    // for( int I = 0; I < params->n_reg; I++ ) {
+    //     int ac = 0;
+    //     if( params->registers[I].kind == KIND_ARRAY || params->registers[I].kind == KIND_RETURN ) {
+    //         printf( "iterDataPtr[%d]:: %p, iterStrides[%d]:: %ld, sizePtr:: %ld \n", 
+    //             I, iterDataPtr[ac], I, (void *)iterStrides[ac], *sizePtr );
+    //         ac++;
+    //     }
 
-    }
-    printf("END DEBUG\n");
+    // }
+    // printf("END DEBUG\n");
 
     // First do all the blocks with a compile-time fixed size. This makes a 
     // big difference (30-50% on some tests).
-    // TODO: RAM, this can be replaced in the generator with a fixed size in 
+    // TODO: this can be replaced in the generator with a fixed size in 
     // _bytes_ instead of _elements_
 
     task_size = *sizePtr;
-    // RAM: let's try having a variable block size?
     // Success, with auto-vectorization it doesn't need to be a fixed size, 
     // compared to unrolling loops. Looks like we can cut-down the number of 
     // includes which will shrink the machine code.
@@ -246,26 +245,7 @@ int vm_engine_iter_task(NpyIter *iter,
         iterNext(iter);
         task_size = *sizePtr;   
     }
-    printf( "Finished serial VM task\n" );
-//    while (task_size == BLOCK_SIZE1) {
-//        //printf( "vm_iter_engine run block.\n" );
-//#define REDUCTION_INNER_LOOP
-//#define BLOCK_SIZE BLOCK_SIZE1
-//#include "interp_body_GENERATED.cpp"
-//#undef BLOCK_SIZE
-//#undef REDUCTION_INNER_LOOP
-//        iterNext(iter);
-//        task_size = *sizePtr;
-//    }
-//
-//    /* Then finish off the rest */
-//    if (task_size > 0) do {
-//#define REDUCTION_INNER_LOOP
-//#define BLOCK_SIZE task_size
-//#include "interp_body_GENERATED.cpp"
-//#undef BLOCK_SIZE
-//#undef REDUCTION_INNER_LOOP
-//    } while (iterNext(iter));
+
 
     return 0;
 }
@@ -301,26 +281,6 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter,
         task_size = *sizePtr;   
     }
     
-    
-//    while (task_size == BLOCK_SIZE1) {
-//#define BLOCK_SIZE BLOCK_SIZE1
-//#define NO_OUTPUT_BUFFERING // Because it's a reduction
-//#include "interp_body_GENERATED.cpp"
-//#undef NO_OUTPUT_BUFFERING
-//#undef BLOCK_SIZE
-//        iterNext(iter);
-//        task_size = *sizePtr;
-//    }
-//
-//    // Then finish off the rest 
-//    if (task_size > 0) do {
-//#define BLOCK_SIZE task_size
-//#define NO_OUTPUT_BUFFERING // Because it's a reduction
-//#include "interp_body_GENERATED.cpp"
-//#undef NO_OUTPUT_BUFFERING
-//#undef BLOCK_SIZE
-//    } while (iterNext(iter));
-    
     return 0;
 }
 
@@ -335,48 +295,31 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *self,
 {
     if (errorMessage == NULL) return -1;
 
-
-//    printf( "vm_engine_iter_parallel #1\n" );
-    // Threads are prepared in run_interpreter
-
-    // ALSO: why is there a semicolon here?  Docs say there shouldn't be one:
-    // https://docs.python.org/3/c-api/init.html#c.Py_BEGIN_ALLOW_THREADS
+    // Threads are prepared for execution in prepareThreads()
     Py_BEGIN_ALLOW_THREADS;
 
     // Synchronization point for all threads (wait for initialization)
-    // printf( "ITER_PARALLEL:: Acquire initial lock.\n" );
     pthread_mutex_lock(&gs.count_threads_mutex);
     if (gs.count_threads < gs.n_thread) {
-        gs.count_threads++; // RAM: why is this needed?
+        gs.count_threads++; 
         pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
     }
     else {
         pthread_cond_broadcast(&gs.count_threads_cv);
     }
-    // printf( "ITER_PARALLEL:: Release initial lock.\n" );
     pthread_mutex_unlock(&gs.count_threads_mutex);
 
     // Synchronization point for all threads (wait for finalization)
-    // RAM: this doesn't sleep, so why unlock and lock the mutex?
-
     pthread_mutex_lock(&gs.count_threads_mutex);
-    // printf( "ITER_PARALLEL:: acquire final lock. count = %d\n", gs.count_threads );
     if (gs.count_threads > 0) {
-        // printf( "ITER_PARALLEL:: not last thread.\n" );
         gs.count_threads--; // RAM: why is this needed?
         pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
     }
     else {
-        // printf( "ITER_PARALLEL:: is last thread.\n" );
         pthread_cond_broadcast(&gs.count_threads_cv);
     }
-    // printf( "ITER_PARALLEL:: Release final lock. count = %d\n", gs.count_threads );
     pthread_mutex_unlock(&gs.count_threads_mutex);
     Py_END_ALLOW_THREADS;
-
-    // TODO: re-use thread_params
-    //free(gs.params->registers);
-    //free(gs.params);
 
     return gs.ret_code;
 }
@@ -387,19 +330,9 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                      int *pc_error)
 {
         
-    
     int returnValue;
-    //Py_ssize_t plen;
-    // RAM: Why do we need a seperate NumExprObject now???
-    // For now we'll call this 'safeParams' but I'm not clear that it's required.
-    // NumExprObject *safeParams = NULL;
+
     char *errorMessage = NULL;
-    
-//    for( int I = 0; I < self->program_len; I++ ) {
-//        printf( "run_interpreter::Program[%d]: %d %d %d %d %d \n", I,
-//            (int)self->program[I].op, (int)self->program[I].ret, (int)self->program[I].arg1, 
-//            (int)self->program[I].arg2, (int)self->program[I].arg3 );
-//    }
 
     *pc_error = -1;
     
@@ -407,27 +340,19 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     if ((gs.n_thread == 1) || gs.force_serial) {
         // Can do it as one "task"
         if (reduce_iter == NULL) {
-
-            // printf( "run_interpreter #1A\n" );         
-
-            // printf( "run_interpreter #2\n" );
             // Reset the iterator to allocate its buffers
             if(NpyIter_Reset(iter, NULL) != NPY_SUCCEED) return -1;
 
             // printf( "run_interpreter #2B\n" );
-            // get_temps_space( safeParams, BLOCK_SIZE1);
             returnValue = prepareThreads( self, iter, pc_error, &errorMessage );
             if( returnValue != 0 ) return -1;
 
             // printf( "run_interpreter #3\n" );
-            Py_BEGIN_ALLOW_THREADS   
-            // printf( "run_interpreter #4\n" );
-            returnValue = vm_engine_iter_task(iter, self, pc_error, &errorMessage);
-            // printf( "run_interpreter #4A\n" );                              
+            Py_BEGIN_ALLOW_THREADS
+            returnValue = vm_engine_iter_task(iter, self, pc_error, &errorMessage);                            
             Py_END_ALLOW_THREADS
             // printf( "run_interpreter #5\n" );
             finishThreads();
-            // free_temps_space(safeParams);
         }
         else { // Reduction operation 
             if (reduction_outer_loop) { // Reduction on outer loop 
@@ -439,8 +364,6 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                 if (iterNext == NULL) {
                     return -1;
                 }
-                //safeParams = NumExprObject_copy_threadsafe( self );
-                //safeParams = self;
                                     
                 // get_temps_space( safeParams, BLOCK_SIZE1);
                 returnValue = prepareThreads( self, iter, pc_error, &errorMessage );
@@ -460,7 +383,6 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                 } while (iterNext(reduce_iter));
                 Py_END_ALLOW_THREADS
                 finishThreads();
-                //free_temps_space(safeParams);
             }
             else { // Inner reduction    
                 char **dataPtr;
@@ -471,10 +393,6 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                 if (iterNext == NULL) {
                     return -1;
                 }
-                //safeParams = NumExprObject_copy_threadsafe( self );
-                //safeParams = self;
-                                   
-                //get_temps_space(safeParams, BLOCK_SIZE1); 
                 returnValue = prepareThreads( self, iter, pc_error, &errorMessage );
                 if( returnValue != 0 ) return -1;
                 Py_BEGIN_ALLOW_THREADS
@@ -492,7 +410,6 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                 Py_END_ALLOW_THREADS
                 
                 finishThreads();
-                //free_temps_space(safeParams);
             }
         }
     }
@@ -519,25 +436,12 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
 static int
 run_interpreter_const(NumExprObject *params, char *output, int *pc_error)
 {
-     
-    //NumExprObject *params;
     int returnValue = 0;
-    //Py_ssize_t plen;
-    //char **mem;
-    //npy_intp *memsteps;
 
-    //*pc_error = -1;
-    // RAM: program isn't bytes anymore.
-//    if (PyBytes_AsStringAndSize(self->program, (char **)&(params.program),
-//                                &plen) < 0) {
-//        return -1;
-//    }
+
     if (params->n_array != 0) {
         return -1;
     }
-
-    //params = NumExprObject_copy_threadsafe( self );
-    //get_temps_space(params, 1);
 
 #define SINGLE_ITEM_CONST_LOOP
 #define task_size 1
@@ -546,7 +450,6 @@ run_interpreter_const(NumExprObject *params, char *output, int *pc_error)
 #undef NO_OUTPUT_BUFFERING
 #undef task_size
 #undef SINGLE_ITEM_CONST_LOOP
-    //free_temps_space(params);
     
     return 0;
 }
@@ -595,27 +498,25 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     // Don't force serial mode by default
     gs.force_serial = 0;
 
-    // Check whether there's a reduction as the final step
-    // RAM: this is clumsy and we'll remove it later
-    // is_reduction = LAST_OP(self) >= OP_REDUCTION;
     n_input = (int)PyTuple_Size(args);
 
     memset(operands, 0, sizeof(operands));
     memset(dtypes, 0, sizeof(dtypes));
+    // Moving away from kwds
     // if (kwds) {
     //     // Parse standard keyword arguments
     //     // User can't change casting here, it would change the program
-    //     // tmp = PyDict_GetItemString(kwds, "casting"); // borrowed ref
-    //     // if (tmp != NULL && !PyArray_CastingConverter(tmp, &casting)) {
-    //     //     return PyErr_Format(PyExc_ValueError,
-    //     //         "NumExpr_run(): casting keyword argument is invalid.");
-    //     // }
-    //     // Array ordering is not implemented Python-side
-    //     // tmp = PyDict_GetItemString(kwds, "order"); // borrowed ref
-    //     // if (tmp != NULL && !PyArray_OrderConverter(tmp, &order)) {
-    //     //     return PyErr_Format(PyExc_ValueError,
-    //     //         "NumExpr_run(): order keyword argument is invalid.");
-    //     // }
+    //     tmp = PyDict_GetItemString(kwds, "casting"); // borrowed ref
+    //     if (tmp != NULL && !PyArray_CastingConverter(tmp, &casting)) {
+    //         return PyErr_Format(PyExc_ValueError,
+    //             "NumExpr_run(): casting keyword argument is invalid.");
+    //     }
+    //     Array ordering is not implemented Python-side
+    //     tmp = PyDict_GetItemString(kwds, "order"); // borrowed ref
+    //     if (tmp != NULL && !PyArray_OrderConverter(tmp, &order)) {
+    //         return PyErr_Format(PyExc_ValueError,
+    //             "NumExpr_run(): order keyword argument is invalid.");
+    //     }
     //     tmp = PyDict_GetItemString(kwds, "#alloc");
     //     if( tmp == NULL ) {
     //         return PyErr_Format(PyExc_ValueError,
@@ -639,8 +540,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     // Run through all the registers and match the input arguments to that
     // parsed by NumExpr_init
     for (I = 0; I < self->n_reg; I++) {
-
-        printf( "reg#%d:: arrayCounter=%d, n_input=%d, kind=%d\n", I, arrayCounter, n_input, self->registers[I].kind );
+        // printf( "reg#%d:: arrayCounter=%d, n_input=%d, kind=%d\n", I, arrayCounter, n_input, self->registers[I].kind );
 
         if( arrayCounter > n_input + allocOutput ) { 
             PyErr_SetString(PyExc_ValueError, 
@@ -658,9 +558,9 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             arrayCounter++;
             continue;
         }
+
         // KIND_RETURN arrays are treated identically to KIND_ARRAY if they are 
         // pre-allocated.
-
         int typecode = NPYENUM_from_dchar( self->registers[I].dchar );
         // Convert it if it's not an array
         if (!PyArray_Check(objectRef)) {
@@ -741,7 +641,6 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
 
             if( self->registers[I].kind == KIND_ARRAY ) {
-                printf( "Operands[%d] points to %p\n", arrayCounter, operands[arrayCounter] );
                 // Broadcast appends leading singleton dimension to under-dimension arrays
                 arrayShape = PyArray_SHAPE( operands[arrayCounter] );
                 arrayOffset += maxDims - PyArray_NDIM(operands[arrayCounter]);
@@ -754,11 +653,6 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 arrayCounter++;
             }
 
-            printf( "Init broadcast reg #%d: [", I );
-            for( J = 0; J < maxDims; J++ ) {
-                printf( " %d,", broadcastShape[I*maxDims+J] );
-            }
-            printf(" ]\n");
         }
 
         // Iterate through program and determine virtual shape of temporaries
@@ -795,13 +689,12 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                         broadcastShape[retIndex*maxDims+J] = MAX( broadcastShape[arg2Index*maxDims+J], broadcastShape[self->program[I].arg3*maxDims+J] );
                     }
                 }
-                // printf( " ]\n" );
             }
             
         } 
 
-        // TODO: Allocate the output array
-        printf( "Allocating output array to index %d, operand index %d\n", self->returnReg, self->returnOperand);
+        // Allocate the output array
+        // printf( "Allocating output array to index %d, operand index %d\n", self->returnReg, self->returnOperand);
         // The Return type is parsed by the Python-side
         outputType = PyArray_DescrFromType( NPYENUM_from_dchar( self->registers[self->returnReg].dchar ) );
         
@@ -981,7 +874,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     }
     */
 
-    printf( "NumExpr_run() #8\n" ); 
+    // printf( "NumExpr_run() #8\n" ); 
     // A case with a single constant output
     if (n_input == 0) {
         char retsig = get_return_sig(self);
@@ -1028,11 +921,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         goto cleanup_and_exit;
     }
 
-    printf( "NumExpr_run() #9\n" ); 
+    // printf( "NumExpr_run() #9\n" ); 
     // Allocate the iterator or nested iterators
     if (reduction_size == 1) {
         // When there's no reduction, reduction_size is 1 as well
-        printf( "NumExpr_run() #9A, arrayCounter = %d\n", arrayCounter+allocOutput ); 
+        // printf( "NumExpr_run() #9A, arrayCounter = %d\n", arrayCounter+allocOutput ); 
         iter = NpyIter_AdvancedNew(arrayCounter, operands,
                             NPY_ITER_BUFFERED|
                             NPY_ITER_REDUCE_OK|
@@ -1044,11 +937,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                             op_flags, dtypes,
                             -1, NULL, NULL,
                             BLOCK_SIZE1);
-        printf( "NumExpr_run() #9A2\n" );                           
+        // printf( "NumExpr_run() #9A2\n" );                           
         if (iter == NULL) { goto fail; }
 
     } else {
-        printf( "NumExpr_run() #9B\n" );
+        // printf( "NumExpr_run() #9B\n" );
         npy_uint32 op_flags_outer[NPY_MAXDIMS];
         // The outer loop is unbuffered 
         
@@ -1060,7 +953,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                                             NPY_ITER_NO_BROADCAST;
         // Arbitrary threshold for which is the inner loop...benchmark?
         if (reduction_size < INNER_LOOP_MAX_SIZE) {
-            printf( "NumExpr_run() #9C\n" );
+            // printf( "NumExpr_run() #9C\n" );
             reduction_outer_loop = true;
             iter = NpyIter_AdvancedNew(arrayCounter, operands,
                                 NPY_ITER_BUFFERED|
@@ -1102,7 +995,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
         }
         else {
-            printf( "NumExpr_run() #9D\n" );
+            // printf( "NumExpr_run() #9D\n" );
             PyArray_Descr *dtypes_outer[NPY_MAXDIMS];
 
             // If the output is being allocated, need to specify its dtype
@@ -1149,7 +1042,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
         }
     }
-    printf( "NumExpr_run() #10\n" ); 
+    // printf( "NumExpr_run() #10\n" ); 
     // Initialize the output to the reduction unit
     //printf( "TODO: Output size should be appropriate for reductions.\n" );
 //    if (is_reduction) {
@@ -1181,12 +1074,12 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     if (is_reduction) {
         gs.force_serial = 1;
     }
-    printf( "NumExpr_run() #11\n" ); 
+    // printf( "NumExpr_run() #11\n" ); 
     r = run_interpreter(self, iter, reduce_iter,
                              reduction_outer_loop, need_output_buffering,
                              &pc_error);
                         
-    printf( "NumExpr_run() #12\n" ); 
+    // printf( "NumExpr_run() #12\n" ); 
     if (r < 0) {
         if (r == -1) {
             if (!PyErr_Occurred()) {
@@ -1203,13 +1096,13 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-    printf( "NumExpr_run() #13, returnOperand: %d\n", self->returnOperand ); 
+    // printf( "NumExpr_run() #13, returnOperand: %d\n", self->returnOperand ); 
     // Get the output from the iterator
     returnArray = (PyObject *)NpyIter_GetOperandArray(iter)[self->returnOperand];
     Py_INCREF(returnArray);
-    printf( "NumExpr_run() #14\n" ); 
+    // printf( "NumExpr_run() #14\n" ); 
     NpyIter_Deallocate(iter);
-    printf( "NumExpr_run() #14B\n" ); 
+    // printf( "NumExpr_run() #14B\n" ); 
     if (reduce_iter != NULL) {
         NpyIter_Deallocate(reduce_iter);
     }
@@ -1223,7 +1116,7 @@ cleanup_and_exit:
     //     Py_XDECREF(operands[I]);
     //     Py_XDECREF(dtypes[I]);
     // }
-    printf( "NumExpr_run() #16: returnArray = %p\n", returnArray ); 
+    // printf( "NumExpr_run() #16: returnArray = %p\n", returnArray ); 
     return returnArray;
 
 fail:
