@@ -749,9 +749,7 @@ class Operation(object):
                 
                 testCode.append( "    def test_{}(self):\n".format(
                         funcNameUnique) )
-                testCode.append( "        print('Test: out={0}')\n".format( 
-                        evalFunc ) )
-                testCode.append( "        out = ne.evaluate('{0}')\n".format(
+                testCode.append( "        out = ne3.NumExpr('{0}')()\n".format(
                         evalFunc ) )
 
                 if funcNameUnique in LOW_PRECISION_FUNCS: # A fast but lower-precision function, e.g. complex div_FFF

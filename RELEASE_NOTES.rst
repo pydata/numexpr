@@ -32,6 +32,11 @@ TODO List:
 * global-state protection mutex in C-interpreter
 * more test cases: in-line named intermediate, secondary-output, 
   in-line magic output, named intermediate -> magic output
+* **fix seg-faults found by new test cases**
+    1. test_inplace_intermediate
+    2. test_inplace_intermediate_magic_output
+    3. test_zerodim1d
+    4. test_zerodim3d
 * pickle and multi-processing tests
 * module-level properties for ncores, nthreads
 * documentation and tutorial RSTs

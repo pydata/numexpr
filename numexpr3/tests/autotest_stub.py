@@ -13,18 +13,20 @@ There should be two version:
 
 import unittest
 import numpy as np
-import numexpr3 as ne
+import numexpr3 as ne3
 import os
 
-SMALL_SIZE = 2**7
-LARGE_SIZE = 2**17
+# Don't use powers of 2 for sizes as BLOCK_SIZEs are powers of 2, and we want 
+# to test when we have sub-sized blocks in the last cycle through the program.
+SMALL_SIZE = 100
+LARGE_SIZE = 100000
 
 np.random.seed(42)
 
 # Float-64
-A_d = np.random.uniform( size=LARGE_SIZE )
-B_d = np.random.uniform( size=LARGE_SIZE )
-C_d = np.random.uniform( size=LARGE_SIZE )
+A_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
+B_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
+C_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
 # Float-32
 A_f = A_d.astype('float32')
 B_f = B_d.astype('float32')
@@ -32,9 +34,9 @@ C_f = C_d.astype('float32')
 
 if os.name == 'nt':
     # Int-64
-    A_q = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
-    B_q = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
-    C_q = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
+    A_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+    B_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+    C_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
     # Int-32
     A_l = A_q.astype('int32')
     B_l = B_q.astype('int32')
@@ -50,9 +52,9 @@ if os.name == 'nt':
 
 else:
     # Int-64
-    A_l = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
-    B_l = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
-    C_l = np.random.randint( -10, high=100, size=LARGE_SIZE ).astype('int64')
+    A_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+    B_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+    C_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
     # Int-32
     A_i = A_l.astype('int32')
     B_i = B_l.astype('int32')

@@ -268,15 +268,13 @@ def _expression_last(self, node):
     is implicitely allocated and returned.
     '''
     info(  '$ast.Expression, flow: LAST' )
+    raise NotImplementedError('Creation of output does not work for _expression_last')
     
-    raise NotImplementedError( "We will need to duplicate all the _mutate_last logic?" )
-
-    # DEPRATED:::::::
     valueReg = _ASTAssembler[type(node.value)](self, node.value)
-    outToken = next( self._regCount )
-    assignTarget = NumReg( outToken, outToken, None, self.assignDChar, _KIND_RETURN )
-    self.registers[outToken] =  assignTarget
-    self.assignTarget = _mutate_last(self, assignTarget, valueReg)
+    # Make a substitute output node
+    targetNode = ast.Name('$out', None)
+    self.assignTarget = _mutate_last(self, targetNode, valueReg)
+    self.assignTarget.name = None
     return self.assignTarget
         
 def _mutate(self, targetNode, valueReg):
@@ -1135,7 +1133,7 @@ class NumExpr(object):
                         raise TypeError( "local variable is not a np.ndarray or scalar" )    
 
                     args.append( arg )
-                elif reg.kind == KIND_RETURN:
+                elif reg.kind == _KIND_RETURN:
                     if reg.name in local_dict:
                         # Output can exist even if it didn't used to
                         args.append( local_dict[reg.name] )
@@ -1160,7 +1158,6 @@ class NumExpr(object):
         with _NE_RUN_LOCK:
             unalloc = self._compiled_exec( *args, **kwargs )
 
-        
         # Promotion of magic output
         if self.assignTarget.ref is None and isinstance(self.assignTarget.name, str):
             # Insert result into calling frame
