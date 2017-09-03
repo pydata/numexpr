@@ -545,12 +545,12 @@ def _attribute(self, node):
         #     if node.attr in classRef.__dict__:
         #        arr = self._global_dict[className].__dict__[node.attr]
         
-        if arr is not None and not hasattr(arr,'dtype'):
-            # Force lists and native arrays to be numpy.ndarrays
-            arr = np.asarray( arr )
-
-        # Build tuple and add to the namesReg
-        self.registers[attrName] = register = NumReg( regToken, attrName, weakref.ref(arr), arr.dtype.char, int(np.isscalar(arr)) )
+        if np.isscalar(arr):
+            # Build tuple and add to the namesReg
+            dchar = np.asarray(arr).dtype.char
+            self.registers[attrName] = register = NumReg( regToken, attrName, arr, dchar, _KIND_ARRAY )
+        else:
+            self.registers[attrName] = register = NumReg( regToken, attrName, weakref.ref(arr), arr.dtype.char, _KIND_ARRAY )
     return register
     
 def _real_imag(self, node):
@@ -643,7 +643,7 @@ def _call(self, node):
         argRegisters[1], argRegisters[2] = self._cast2( argRegisters[1], argRegisters[2] )
 
         opCode, self.assignDChar = OPTABLE[ (node.func.id, self.lib,
-                            argRegisters[0].dchar, argRegisters[1].dchar, argRegisters.dchar[2]) ]
+                            argRegisters[0].dchar, argRegisters[1].dchar, argRegisters[2].dchar) ]
         # Because we know the first register is the bool, it's the least useful temporary to re-use
         # as it almost certainly must be promoted.
         outputRegister = self._transmit3( argRegisters[1], argRegisters[2], argRegisters[0] )
@@ -668,7 +668,7 @@ def _compare(self, node):
         raise NotImplementedError( 
                 'NumExpr3 only supports binary comparisons (between two elements); try inserting brackets' )
     # Force the node into something the _binop machinery can handle
-    node.right = node.comparators[0].token
+    node.right = node.comparators[0]
     node.op = node.ops[0]
     return _binop(self, node)
    
@@ -684,7 +684,7 @@ def _boolop(self, node):
 def _unaryop(self, node):
     # Currently only ast.USub is supported, and the node.operand is the 
     # value acted upon.
-    operandRegister = _ASTAssembler[type(node.operand)](self, node.operand, inputRegister)
+    operandRegister = _ASTAssembler[type(node.operand)](self, node.operand)
     try:
         opWord, self.assignDChar = OPTABLE[  (type(node.op), self.lib, operandRegister.dchar ) ]
     except KeyError as e:
@@ -1010,7 +1010,7 @@ class NumExpr(object):
         
         # Add self to the wisdom
         wisdom[(self.expr, self.lib, self.casting)] = self
-        self.disassemble() # DEBUG
+        # self.disassemble() # DEBUG
 
         # warn( "%%%%regsToInterpreter%%%%")
         # for I, reg in enumerate(regsToInterpreter):
@@ -1158,9 +1158,9 @@ class NumExpr(object):
                     args.append(arg)
             
         # TODO: move global_state mutex into C-code.
-        debug( "run args::")
-        for arg in args:
-            debug('    {}'.format(arg) )
+        # debug( "run args::")
+        # for arg in args:
+        #     debug('    {}'.format(arg) )
         with _NE_RUN_LOCK:
             unalloc = self._compiled_exec( *args, **kwargs )
 

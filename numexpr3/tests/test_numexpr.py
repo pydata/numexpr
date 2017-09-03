@@ -178,7 +178,7 @@ class test_numexpr(unittest.TestCase):
         a = 3.
         b = 4.
         expr = ne3.NumExpr('np.pi*(2*a+3*b)')
-        npt.assert_allclose( expr(), np.pi(2*a + 3*b) )
+        npt.assert_allclose( expr(), np.pi*(2*a + 3*b) )
 
     def test_run_vs_call(self):
         logger.info( 'Compare run versus __call__' )
@@ -207,8 +207,8 @@ class test_numexpr(unittest.TestCase):
             c.real = a; c.imag = b
             return c
 
-        a = np.arange(self.ssize, dtype='float32' )
-        b = (np.arange(self.ssize) * 1e-2).astype('float32')
+        a = np.linspace( -1, 1, LARGE_SIZE, dtype='float32' )
+        b = np.linspace( -1, 1, LARGE_SIZE, dtype='float32' )
         z = ( a + 1j * b ).astype( 'complex64' )
         x = z.imag
         x = np.sin(complex64_func(a,b)).real + z.imag
@@ -222,8 +222,8 @@ class test_numexpr(unittest.TestCase):
             c.real = a; c.imag = b
             return c
 
-        a = np.arange(self.ssize, dtype='float64' )
-        b = (np.arange(self.ssize) * 1e-2).astype('float64')
+        a = np.linspace( -1, 1, LARGE_SIZE, dtype='float64' )
+        b = np.linspace( -1, 1, LARGE_SIZE, dtype='float64' )
         z = a + 1j * b
         x = z.imag
         x = np.sin(complex_func(a, b)).real + z.imag
