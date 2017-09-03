@@ -84,7 +84,8 @@ def setup_package():
                       license='BSD',
                       packages=['numexpr3'],
                       install_requires=requirements,
-                      setup_requires=requirements
+                      setup_requires=requirements,
+                      classifiers=['Programming Language :: Python :: 3'],
     )
     if (len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
     in ('--help-commands', 'egg_info', '--version', 'clean'))):
