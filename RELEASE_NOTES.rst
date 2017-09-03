@@ -26,6 +26,7 @@ TODO List:
 ^^^^^^^^^^
 
 * Make KIND into bitmasks
+    Also consider renaming KIND_SCALAR to KIND_CONST
 * _cast1() for single argument funcs (e.g. 'sin(x)' if x is integer dtype )
 * Fix _const as _cast2 does scalar casts in Python now.
 * explicit cast functions 'float32(x)'

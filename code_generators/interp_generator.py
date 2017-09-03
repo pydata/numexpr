@@ -551,24 +551,24 @@ ALL_FAM = ALL_NUM + STRINGS
 # Map NumpPy functions that don't exist for the testing submodule
 # Any function that doesn't have a NumPy equivalent returns None.
 AUTOTEST_DICT = defaultdict( bool, {
-             'add': 'A_$DTYPE1 + B_$DTYPE2',
-             'sub': 'A_$DTYPE1 - B_$DTYPE2',
-             'mult': 'A_$DTYPE1 * B_$DTYPE2',
-             'div': 'A_$DTYPE1 / B_$DTYPE2',
-             'neg': '-A_$DTYPE1',
-             'mod': 'A_$DTYPE1 % B_$DTYPE2',
-             'pow': 'A_$DTYPE1 ** B_$DTYPE2',
-             'lshift': 'A_$DTYPE1 << B_$DTYPE2',
-             'rshift': 'A_$DTYPE1 >> B_$DTYPE2',
-             'bitand': 'A_$DTYPE1 & B_$DTYPE2',
-             'bitor': 'A_$DTYPE1 | B_$DTYPE2',
-             'bitxor': 'A_$DTYPE1 ^ B_$DTYPE2',
-             'gt': 'A_$DTYPE1 > B_$DTYPE2',
-             'gte':  'A_$DTYPE1 >= B_$DTYPE2',
-             'lt': 'A_$DTYPE1 < B_$DTYPE2',
-             'lte':  'A_$DTYPE1 <= B_$DTYPE2',
-             'eq': 'A_$DTYPE1 == B_$DTYPE2',
-             'noteq': 'A_$DTYPE1 != B_$DTYPE2',
+             'add': 'self.A_$DTYPE1 + self.B_$DTYPE2',
+             'sub': 'self.A_$DTYPE1 - self.B_$DTYPE2',
+             'mult': 'self.A_$DTYPE1 * self.B_$DTYPE2',
+             'div': 'self.A_$DTYPE1 / self.B_$DTYPE2',
+             'neg': '-self.A_$DTYPE1',
+             'mod': 'self.A_$DTYPE1 % self.B_$DTYPE2',
+             'pow': 'self.A_$DTYPE1 ** self.B_$DTYPE2',
+             'lshift': 'self.A_$DTYPE1 << self.B_$DTYPE2',
+             'rshift': 'self.A_$DTYPE1 >> self.B_$DTYPE2',
+             'bitand': 'self.A_$DTYPE1 & self.B_$DTYPE2',
+             'bitor': 'self.A_$DTYPE1 | self.B_$DTYPE2',
+             'bitxor': 'self.A_$DTYPE1 ^ self.B_$DTYPE2',
+             'gt': 'self.A_$DTYPE1 > self.B_$DTYPE2',
+             'gte':  'self.A_$DTYPE1 >= self.B_$DTYPE2',
+             'lt': 'self.A_$DTYPE1 < self.B_$DTYPE2',
+             'lte':  'self.A_$DTYPE1 <= self.B_$DTYPE2',
+             'eq': 'self.A_$DTYPE1 == self.B_$DTYPE2',
+             'noteq': 'self.A_$DTYPE1 != self.B_$DTYPE2',
              # There's no equivalent for ne's complex() array builder in NumPy
              'complex': '',
              } )
@@ -721,11 +721,11 @@ class Operation(object):
                     if len(idArgs) == 0:
                        evalFunc = '{0}()'.format(funcName)
                     elif len(idArgs) == 1:
-                       evalFunc = '{0}( A_{1} )'.format(funcName, idArgs[0] )
+                       evalFunc = '{0}( self.A_{1} )'.format(funcName, idArgs[0] )
                     elif len(idArgs) == 2:
-                       evalFunc = '{0}( A_{1}, B_{2} )'.format(funcName, idArgs[0], idArgs[1] )     
+                       evalFunc = '{0}( self.A_{1}, self.B_{2} )'.format(funcName, idArgs[0], idArgs[1] )     
                     elif len(idArgs) == 3:
-                       evalFunc = '{0}( A_{1}, B_{2}, C_{3} )'.format(funcName, idArgs[0], idArgs[1], idArgs[2] )
+                       evalFunc = '{0}( self.A_{1}, self.B_{2}, self.C_{3} )'.format(funcName, idArgs[0], idArgs[1], idArgs[2] )
                     numpyFunc = 'np.' + evalFunc
                 else:
                     try: evalFunc = evalFunc.replace( '$DTYPE1', idArgs[0] )
@@ -744,8 +744,8 @@ class Operation(object):
                 
                 ##### SPECIAL CASES #####
                 if funcName == 'complex':
-                    evalFunc = 'complex( A_{}, B_{} )'.format(idArgs[0], idArgs[1] ) 
-                    numpyFunc = 'A_{} + 1j*B_{}'.format(idArgs[0], idArgs[1] ) 
+                    evalFunc = 'complex( self.A_{}, self.B_{} )'.format(idArgs[0], idArgs[1] ) 
+                    numpyFunc = 'self.A_{} + 1j*self.B_{}'.format(idArgs[0], idArgs[1] ) 
                 
                 testCode.append( "    def test_{}(self):\n".format(
                         funcNameUnique) )

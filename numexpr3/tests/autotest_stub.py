@@ -16,93 +16,95 @@ import numpy as np
 import numexpr3 as ne3
 import os
 
-# Don't use powers of 2 for sizes as BLOCK_SIZEs are powers of 2, and we want 
-# to test when we have sub-sized blocks in the last cycle through the program.
-SMALL_SIZE = 100
-LARGE_SIZE = 100000
 
-np.random.seed(42)
-
-# Float-64
-A_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
-B_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
-C_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
-# Float-32
-A_f = A_d.astype('float32')
-B_f = B_d.astype('float32')
-C_f = C_d.astype('float32')
-
-if os.name == 'nt':
-    # Int-64
-    A_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
-    B_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
-    C_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
-    # Int-32
-    A_l = A_q.astype('int32')
-    B_l = B_q.astype('int32')
-    C_l = C_q.astype('int32')
-    # UInt-64
-    A_Q = A_q.astype('uint64')
-    B_Q = B_q.astype('uint64')
-    C_Q = C_q.astype('uint64')
-    # UInt-32
-    A_L = A_q.astype('uint32')
-    B_L = B_q.astype('uint32')
-    C_L = C_q.astype('uint32')
-
-else:
-    # Int-64
-    A_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
-    B_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
-    C_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
-    # Int-32
-    A_i = A_l.astype('int32')
-    B_i = B_l.astype('int32')
-    C_i = C_l.astype('int32')
-    # UInt-64
-    A_L = A_l.astype('uint64')
-    B_L = B_l.astype('uint64')
-    C_L = C_l.astype('uint64')
-    # UInt-32
-    A_I = A_l.astype('uint32')
-    B_I = B_l.astype('uint32')
-    C_I = C_l.astype('uint32')
-
-# Int-16
-A_h = A_l.astype('int16')
-B_h = B_l.astype('int16')
-C_h = C_l.astype('int16')
-# UInt-16
-A_H = A_l.astype('uint16')
-B_H = B_l.astype('uint16')
-C_H = C_l.astype('uint16')
-
-# Int-8
-A_b = A_l.astype('int8')
-B_b = B_l.astype('int8')
-C_b = C_l.astype('int8')
-# UInt-8
-A_B = A_l.astype('uint8')
-B_B = B_l.astype('uint8')
-C_B = C_l.astype('uint8')
-# Bool
-A_1 = (A_l > 50).astype('bool')
-B_1 = (B_l > 50).astype('bool')
-C_1 = (C_l > 50).astype('bool')
-# Complex-64
-A_F = A_f + 1j*B_f
-B_F = B_f + 1j*C_f
-C_F = C_f + 1j*A_f
-# Complex-128
-A_D = A_d + 1j*B_d
-B_D = B_d + 1j*C_d
-C_D = C_d + 1j*A_d
     
 class autotest_numexpr(unittest.TestCase):
+
+
     
     def setUp(self):
-        # Can put any threading or other control statements in here.
-        pass
+        # Don't use powers of 2 for sizes as BLOCK_SIZEs are powers of 2, and we want 
+        # to test when we have sub-sized blocks in the last cycle through the program.
+        SMALL_SIZE = 100
+        LARGE_SIZE = 80000
+
+        np.random.seed(42)
+
+        # Float-64
+        self.A_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
+        self.B_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
+        self.C_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
+        # Float-32
+        self.A_f = self.A_d.astype('float32')
+        self.B_f = self.B_d.astype('float32')
+        self.C_f = self.C_d.astype('float32')
+
+        if os.name == 'nt':
+            # Int-64
+            self.A_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+            self.B_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+            self.C_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+            # Int-32
+            self.A_l = self.A_q.astype('int32')
+            self.B_l = self.B_q.astype('int32')
+            self.C_l = self.C_q.astype('int32')
+            # UInt-64
+            self.A_Q = self.A_q.astype('uint64')
+            self.B_Q = self.B_q.astype('uint64')
+            self.C_Q = self.C_q.astype('uint64')
+            # UInt-32
+            self.A_L = self.A_q.astype('uint32')
+            self.B_L = self.B_q.astype('uint32')
+            self.C_L = self.C_q.astype('uint32')
+
+        else:
+            # Int-64
+            self.A_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+            self.B_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+            self.C_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+            # Int-32
+            self.A_i = self.A_l.astype('int32')
+            self.B_i = self.B_l.astype('int32')
+            self.C_i = self.C_l.astype('int32')
+            # UInt-64
+            self.A_L = self.A_l.astype('uint64')
+            self.B_L = self.B_l.astype('uint64')
+            self.C_L = self.C_l.astype('uint64')
+            # UInt-32
+            self.A_I = self.A_l.astype('uint32')
+            self.B_I = self.B_l.astype('uint32')
+            self.C_I = self.C_l.astype('uint32')
+
+        # Int-16
+        self.A_h = self.A_l.astype('int16')
+        self.B_h = self.B_l.astype('int16')
+        self.C_h = self.C_l.astype('int16')
+        # UInt-16
+        self.A_H = self.A_l.astype('uint16')
+        self.B_H = self.B_l.astype('uint16')
+        self.C_H = self.C_l.astype('uint16')
+
+        # Int-8
+        self.A_b = self.A_l.astype('int8')
+        self.B_b = self.B_l.astype('int8')
+        self.C_b = self.C_l.astype('int8')
+        # UInt-8
+        self.A_B = self.A_l.astype('uint8')
+        self.B_B = self.B_l.astype('uint8')
+        self.C_B = self.C_l.astype('uint8')
+        # Bool
+        self.A_1 = (self.A_l > 50).astype('bool')
+        self.B_1 = (self.B_l > 50).astype('bool')
+        self.C_1 = (self.C_l > 50).astype('bool')
+        # Complex-64
+        self.A_F = self.A_f + 1j*self.B_f
+        self.B_F = self.B_f + 1j*self.C_f
+        self.C_F =self. C_f + 1j*self.A_f
+        # Complex-128
+        self.A_D = self.A_d + 1j*self.B_d
+        self.B_D = self.B_d + 1j*self.C_d
+        self.C_D = self.C_d + 1j*self.A_d
+        pass # End of setup
     
 #GENERATOR_INSERT_POINT
     

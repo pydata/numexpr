@@ -21,6 +21,7 @@ import numexpr3 as ne3
 import unittest
 import logging
 import pickle
+import time
 logger = logging.getLogger('ne3.test')
 
 # Recommended minimum versions
@@ -60,8 +61,8 @@ class test_numexpr(unittest.TestCase):
         logger.info('Test changing input array shape')
         a = np.array([1., 2., 3.])
         b = np.array([4., 5., 6.])
-        a2 = np.arange(self.ssize).astype(a.dtype).arange( int(self.ssize/20), 4, 5)
-        b2 = np.arange(3.0, self.ssize+3.0).astype(b.dtype).arange( int(self.ssize/20), 4, 5)
+        a2 = np.arange(self.ssize).astype(a.dtype).reshape( int(self.ssize/20), 4, 5)
+        b2 = np.arange(3.0, self.ssize+3.0).astype(b.dtype).reshape( int(self.ssize/20), 4, 5)
         out = ne3.NumExpr( 'a*b' )(a=a2, b=b2)
         npt.assert_array_almost_equal( out, a2*b2 )
 
@@ -70,7 +71,6 @@ class test_numexpr(unittest.TestCase):
         a = np.array([1., 2., 3.])
         b = np.array([4., 5., 6.])
         func = ne3.NumExpr( 'a*b' )
-        del a, b
         a = np.arange(self.ssize).astype(a.dtype)
         b = np.arange(3.0, self.ssize+3.0).astype(b.dtype)
         out = func(verify=True)
@@ -79,11 +79,12 @@ class test_numexpr(unittest.TestCase):
     def test_weakref_expiry(self):
         logger.info('Test expiry of weak reference')
         x = np.arange(self.ssize)
-        func = ne3.NumExpr( 'x*x' )
+        func = ne3.NumExpr( 'x+x' )
         del x  # kill original array, should expire weak ref in func.registers
+        # For some reason the garbage collection isn't performed inside unittest?
         x = np.arange(self.ssize) + 50
         out = func( verify=False )
-        npt.assert_array_almost_equal( x*x, out )
+        npt.assert_array_almost_equal( x+x, out )
 
     def test_copy_output(self):
         logger.info( 'Test copy output' )
@@ -95,7 +96,7 @@ class test_numexpr(unittest.TestCase):
         logger.info( 'Test copy assignment' )
         x = np.arange(self.ssize)
         ne3.NumExpr('out=x')()
-        npt.assert_array_almost_equal(x, out)
+        npt.assert_array_almost_equal(x, locals()['out'] )
 
     def test_rational_func(self):
         logger.info( 'Test rational func' )
@@ -144,8 +145,9 @@ class test_numexpr(unittest.TestCase):
         logger.info( 'Test changing singleton' )
         pi = np.pi
         y = np.arange(self.ssize)
+        x = np.empty_like(y)
         func = ne3.NumExpr( 'x = y*pi' )
-        func( y=y, pi=pi*2 )
+        func( x=x, y=y, pi=pi*2 )
         npt.assert_array_almost_equal( x, y*np.pi*2 )
 
     def test_simple_strides(self):
@@ -163,8 +165,8 @@ class test_numexpr(unittest.TestCase):
         c = np.arange(10)
         d = np.arange(5).reshape(5, 1)
         # Test with just arrays
-        neObj1 = NumExpr('a + c')
-        neObj2 = NumExpr('a + d')
+        neObj1 = ne3.NumExpr('a + c')
+        neObj2 = ne3.NumExpr('a + d')
         npt.assert_array_equal( neObj1(), a + c )
         npt.assert_array_equal( neObj2(), a + d )
         # And with scalars
@@ -187,16 +189,18 @@ class test_numexpr(unittest.TestCase):
 
     def test_floor_div(self):
         logger.info( 'Test floor div3' )
-        x = np.arange(self.ssize, dtype='i2')
-        y = ne3.NumExpr('self.ssize//x')()
-        npt.assert_array_equal(y, self.ssize/x)
+        x = np.arange(self.ssize, dtype='int64')
+        intSize = np.int64(self.ssize)
+        y = ne3.NumExpr('intSize//x')()
+        npt.assert_array_equal(y, intSize//x)
         
     def test_true_div(self):
         logger.info( 'Test true div' )
-        x = np.arange(self.ssize, dtype='i4')
-        npt.assert_array_equal(ne3.NumExpr('x/2')(), x/2)
+        x = np.arange(self.ssize, dtype='int64')
+        intSize = np.int64(self.ssize)
+        npt.assert_array_equal(ne3.NumExpr('intSize/x')(), intSize/x)
 
-    def test_complex64_expr(self):
+    def test_complex64(self):
         logger.info( 'Test complex64 ' )
         def complex64_func(a, b):
             c = np.zeros(a.shape, dtype='complex64')
@@ -209,9 +213,9 @@ class test_numexpr(unittest.TestCase):
         x = z.imag
         x = np.sin(complex64_func(a,b)).real + z.imag
         ne3.NumExpr('y = sin(complex(a, b)).real + z.imag')()
-        npt.assert_array_almost_equal(x, y)
+        npt.assert_array_almost_equal(x, locals()['y'])
 		
-    def test_complex128_expr(self):
+    def test_complex128(self):
         logger.info( 'Test complex128' )
         def complex_func(a, b):
             c = np.zeros(a.shape, dtype='complex128')
@@ -224,12 +228,12 @@ class test_numexpr(unittest.TestCase):
         x = z.imag
         x = np.sin(complex_func(a, b)).real + z.imag
         ne3.NumExpr('y = sin(complex(a, b)).real + z.imag')()
-        npt.assert_array_almost_equal(x, y)
+        npt.assert_array_almost_equal(x, locals()['y'])
         
     def test_complex_strides(self):
         logger.info( 'Test complex strides' )
-        a = np.arange(self.ssizes)
-        b = np.arange(self.ssizes) * 1e-2
+        a = np.arange(self.ssize)
+        b = np.arange(self.ssize) * 1e-2
         z1 = (a + 1j * b)[::2]
         z2 = (a - 1j * b)[::2]
         ne3.evaluate('out = z1 + z2' )
