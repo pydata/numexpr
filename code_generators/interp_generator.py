@@ -574,7 +574,7 @@ AUTOTEST_DICT = defaultdict( bool, {
              } )
 
 #  Functions which have significantly lower precision than their NumPy counterparts:
-LOW_PRECISION_FUNCS = ('div_FFF')
+LOW_PRECISION_FUNCS = ('div_FFF','pow_FFF')
 
 # This is the red meat of the generator, where we give the code stubs and the
 # valid data type families.  Eventually the actual operation lists should be 
