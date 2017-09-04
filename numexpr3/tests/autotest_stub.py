@@ -57,9 +57,9 @@ class autotest_numexpr(unittest.TestCase):
 
         else:
             # Int-64
-            self.A_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
-            self.B_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
-            self.C_l = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+            self.A_l = np.random.randint( -100, high=100, size=SMALL_SIZE ).astype('int64')
+            self.B_l = np.random.randint( -100, high=100, size=SMALL_SIZE ).astype('int64')
+            self.C_l = np.random.randint( -100, high=100, size=SMALL_SIZE ).astype('int64')
             # Int-32
             self.A_i = self.A_l.astype('int32')
             self.B_i = self.B_l.astype('int32')
