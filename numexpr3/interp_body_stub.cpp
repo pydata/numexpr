@@ -19,7 +19,7 @@
     // TODO: this is getting expensive to set mems for each block...
     npy_intp arrayCnt = 0;
     for( J = 0; J < params->n_reg; J++ ) {
-        if( params->registers[J].kind == KIND_ARRAY || params->registers[J].kind == KIND_RETURN ) {
+        if( params->registers[J].kind & (KIND_ARRAY|KIND_RETURN) ) {
             params->registers[J].mem = iterDataPtr[arrayCnt];
             params->registers[J].stride = iterStrides[arrayCnt];
             arrayCnt++;

@@ -220,7 +220,7 @@ int vm_engine_iter_task(NpyIter *iter,
     // printf( "params: %p, n_reg: %d, iter: %p\n", params, params->n_reg, iter );
     // for( int I = 0; I < params->n_reg; I++ ) {
     //     int ac = 0;
-    //     if( params->registers[I].kind == KIND_ARRAY || params->registers[I].kind == KIND_RETURN ) {
+    //     if( params->registers[I].kind & (KIND_ARRAY | KIND_RETURN) ) {
     //         printf( "iterDataPtr[%d]:: %p, iterStrides[%d]:: %ld, sizePtr:: %ld \n", 
     //             I, iterDataPtr[ac], I, (void *)iterStrides[ac], *sizePtr );
     //         ac++;
@@ -547,7 +547,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 "Too many input arrays for program: arrayCounter > n_input" );
             goto fail; 
         }
-        if( self->registers[I].kind == KIND_SCALAR || self->registers[I].kind == KIND_TEMP )
+        if( self->registers[I].kind & (KIND_SCALAR|KIND_TEMP) )
             continue;
         
         // if a array is missing
@@ -661,8 +661,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         // and eventually the output.
         for( I=0; I < self->program_len; I++ ) {
             retIndex = self->program[I].ret;
-            if( (self->registers[retIndex].kind == KIND_TEMP) 
-                || (self->registers[retIndex].kind == KIND_RETURN) ) {
+            if( self->registers[retIndex].kind & (KIND_TEMP|KIND_RETURN) ) {
                 // Compute the virtual broadcast shape of the temporary.  
                 // Note the virtual broadcast shape can change as the program
                 // advances because the temporaries are re-used.

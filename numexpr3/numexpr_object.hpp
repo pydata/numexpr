@@ -9,10 +9,10 @@
   See LICENSE.txt for details about copyright and rights to use.
 **********************************************************************/
 
-#define KIND_ARRAY  0
-#define KIND_SCALAR 1
-#define KIND_TEMP   2
-#define KIND_RETURN 3
+#define KIND_ARRAY  1
+#define KIND_SCALAR 2
+#define KIND_TEMP   4
+#define KIND_RETURN 8
 
 // self is a struct NumExprObject
 #define GET_RETURN_REG(self) self->registers[ self->program[self->n_reg-1].ret ]
@@ -36,7 +36,7 @@ struct NumExprReg
 {
     char          *mem;        // Pointer to array data for scalars and temps (npy_iter used for arrays)
     char           dchar;      // numpy.dtype.char
-    npy_uint8      kind;       // 0 = array, 1 = scalar, 2 = temp
+    npy_uint8      kind;       // 1 = array, 2 = scalar, 4 = temp, 8 = return
     npy_intp       itemsize;   // element size in bytes   (was: memsizes)
     npy_intp       stride;     // How many bytes until next element  (was: memsteps)
 };

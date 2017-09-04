@@ -104,13 +104,12 @@ LIB_STD = 0     # C++ cmath standard library
 CHECK_ALL = 0  # Normal operation in checking dtypes
 #CHECK_NONE = 1 # Disable all checks for dtypes if expr is in cache
 
-# Note: int(np.isscalar( np.float32(0.0) )) is used to set KIND, 
-# so ARRAY == 0 and SCALAR == 1
+
 # TODO: could use bitmasks and int(1+np.isscalar( np.float32(0.0) ))
-_KIND_ARRAY = 0
-_KIND_SCALAR = 1
-_KIND_TEMP = 2
-_KIND_RETURN = 3
+_KIND_ARRAY = 1
+_KIND_SCALAR = 2
+_KIND_TEMP = 4
+_KIND_RETURN = 8
 
 
 # TODO: implement non-default casting, optimization, library, checks
@@ -292,7 +291,7 @@ def _mutate(self, targetNode, valueReg):
     '''
 
     if isinstance( targetNode, ast.Name ):
-        if valueReg.kind == _KIND_ARRAY or valueReg == _KIND_SCALAR:
+        if valueReg.kind & (_KIND_ARRAY|_KIND_SCALAR):
             # This is a copy, like NumExpr( 'y=x' )
             targetReg = _ASTAssembler[type(targetNode)](self, targetNode)
             targetReg.dchar = valueReg.dchar
@@ -351,7 +350,7 @@ def _mutate_last(self, targetNode, valueReg):
     
     '''
     if isinstance( targetNode, ast.Name ):
-        if valueReg.kind == _KIND_ARRAY or valueReg == _KIND_SCALAR:
+        if valueReg.kind & (_KIND_ARRAY|_KIND_SCALAR):
             # This is a copy, like NumExpr( 'y=x' )
             targetReg = _ASTAssembler[type(targetNode)](self, targetNode)
             targetReg.dchar = valueReg.dchar
@@ -1161,7 +1160,7 @@ class NumExpr(object):
             # We have to __call__ the weakrefs to get the original arrays
             # args = [reg.ref() for reg in self.registers.values() if reg.kind == _KIND_ARRAY]
             for reg in self.registers:
-                if reg.kind == _KIND_ARRAY or reg.kind == _KIND_RETURN:
+                if reg.kind & (_KIND_ARRAY|_KIND_RETURN):
                     if isinstance(reg.ref, weakref.ref):
                         arg = reg.ref()
                         if arg is None: # One of our weak-refs expired.
