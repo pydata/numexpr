@@ -25,3 +25,8 @@ script:
   - cd empty
   - python -c "import sys;import numexpr;sys.exit(0 if numexpr.test() else 1)"
 
+# So very tempting to abuse the travis email system...
+notifications:
+  email: false
+
+
