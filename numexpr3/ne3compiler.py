@@ -238,7 +238,7 @@ def _assign(self, node):
     This is for the assignment inside a code block.  The last assignment with 
     magic output is _last_assign.
     '''
-    print( '$ast.Assign' )
+    # print( '$ast.Assign' )
     # node.targets is a list; It must have a len=1 for NumExpr3 (i.e. no multiple returns)
     # node.value is likely a BinOp, Call, Comparison, or BoolOp
     if len(node.targets) != 1:
@@ -250,7 +250,7 @@ def _assign(self, node):
     return _mutate(self, node.targets[0], valueReg)
 
 def _assign_last(self, node):
-    info( '$ast.Assign, flow: LAST' )
+    # info( '$ast.Assign, flow: LAST' )
     
     if len(node.targets) != 1:
         raise ValueError( 'NumExpr3 supports only singleton returns in assignments.' )
@@ -267,7 +267,7 @@ def _expression_last(self, node):
     The statement block can end without an assignment, in which case the output 
     is implicitely allocated and returned.
     '''
-    info(  '$ast.Expression, flow: LAST' )
+    # info(  '$ast.Expression, flow: LAST' )
     
     valueReg = _ASTAssembler[type(node.value)](self, node.value)
     # Make a substitute output node
@@ -290,7 +290,6 @@ def _mutate(self, targetNode, valueReg):
     dtype is smaller than the valueReg.dchar it can't be mutated to a named 
     output.
     '''
-    print( "TODO: stop targetReg from being formed if it's not needed" )
 
     if isinstance( targetNode, ast.Name ):
         if valueReg.kind == _KIND_ARRAY or valueReg == _KIND_SCALAR:
@@ -419,7 +418,7 @@ def _name(self, node):
 
     nodeId = node.id
     if nodeId in self.registers:
-        info( 'ast.Name: found {} in namesReg'.format(nodeId) )
+        # info( 'ast.Name: found {} in namesReg'.format(nodeId) )
         return self.registers[nodeId]
 
     else: # Get address so we can find the dtype
@@ -430,7 +429,7 @@ def _name(self, node):
         #     nodeRef = self._global_dict[nodeId]
 
         if nodeRef is None:
-            info( 'ast.Name: named temporary {}'.format(nodeId) )
+            # info( 'ast.Name: named temporary {}'.format(nodeId) )
             # It's a named temporary.  
             # Named temporaries can re-use an existing temporary but they cannot be
             # re-used except explicitely by the user!
@@ -439,7 +438,7 @@ def _name(self, node):
             
         else: 
             # It's an existing array or scalar we haven't seen before
-            info( 'ast.Name: new existing array {}'.format(nodeId) )
+            # info( 'ast.Name: new existing array {}'.format(nodeId) )
             
             regToken = next( self._regCount )
 
@@ -557,7 +556,7 @@ def _real_imag(self, node):
     viewName = node.attr
     # Having a seperate path for slicing existing arrays was considered but 
     # it is overly difficult to manage the weak reference.
-    info( "Functionize ." + str(viewName)  )
+    # info( "Functionize ." + str(viewName)  )
 
     register = _ASTAssembler[type(node.value)](self, node.value)
 
@@ -577,7 +576,7 @@ def _real_imag(self, node):
     return outputRegister
 
 def _binop(self, node):
-    info( '$ast.Binop: %s'%node.op )
+    # info( '$ast.Binop: %s'%node.op )
     # (left,op,right)
     leftRegister = _ASTAssembler[type(node.left)](self, node.left)
     rightRegister = _ASTAssembler[type(node.right)](self, node.right)
@@ -588,7 +587,7 @@ def _binop(self, node):
     # Format: (opCode, lib, left_register, right_register)
     try:
         opWord, self.assignDChar = OPTABLE[  (type(node.op), self.lib, leftRegister.dchar, rightRegister.dchar ) ]
-        warn( "binop {}_{}{} retChar: {}".format(type(node.op), leftRegister.dchar, rightRegister.dchar, self.assignDChar) )
+        # warn( "binop {}_{}{} retChar: {}".format(type(node.op), leftRegister.dchar, rightRegister.dchar, self.assignDChar) )
     except KeyError as e:
         if leftRegister.dchar == None or rightRegister.dchar == None:
             raise ValueError( 
@@ -611,7 +610,7 @@ def _binop(self, node):
 def _call(self, node):
     # ast.Call has the following fields: (in Python <= 3.4)
     # ('func', 'args', 'keywords', 'starargs', 'kwargs')
-    info( '$ast.Call: %s'%node.func.id )
+    # info( '$ast.Call: %s'%node.func.id )
 
     argRegisters = [_ASTAssembler[type(arg)](self, arg) for arg in node.args]
     
@@ -1120,7 +1119,7 @@ class NumExpr(object):
         # self.registers must be a tuple sorted by the register tokens here
         args = []
         if kwargs:
-            info( "run case kwargs" )
+            # info( "run case kwargs" )
             # Match kwargs to self.registers.name
             # args = [kwargs[reg.name] for reg in self.registers if reg.kind == _KIND_ARRAY]
             for reg in self.registers:
@@ -1131,7 +1130,7 @@ class NumExpr(object):
                     args.append(None)
 
         elif verify: # Renew references from frames
-            info( "run case renew from frames" )
+            # info( "run case renew from frames" )
             call_frame = sys._getframe( stackDepth ) 
             local_dict = call_frame.f_locals
             for reg in self.registers:
@@ -1158,7 +1157,7 @@ class NumExpr(object):
                         args.append(None)
 
         else: # Grab arrays from existing weak references
-            info( "run case use weakrefs" )
+            # info( "run case use weakrefs" )
             # We have to __call__ the weakrefs to get the original arrays
             # args = [reg.ref() for reg in self.registers.values() if reg.kind == _KIND_ARRAY]
             for reg in self.registers:
@@ -1166,7 +1165,7 @@ class NumExpr(object):
                     if isinstance(reg.ref, weakref.ref):
                         arg = reg.ref()
                         if arg is None: # One of our weak-refs expired.
-                            debug( "Weakref expired" )
+                            # debug( "Weakref expired" )
                             return self.run( verify=True, stackDepth=stackDepth+1 )
                     else: # Likely implies a named scalar.
                         arg = reg.ref
@@ -1180,7 +1179,7 @@ class NumExpr(object):
             unalloc = self._compiled_exec( *args, **kwargs )
 
         # Promotion of magic output
-        debug( "self.assignTarget = {}".format(self.assignTarget) )
+        # debug( "self.assignTarget = {}".format(self.assignTarget) )
         if self.assignTarget.ref is None and isinstance(self.assignTarget.name, str):
             # Insert result into calling frame
             if call_frame is None:
@@ -1207,7 +1206,7 @@ class NumExpr(object):
             if name is None:
                 # Numbered temporary
                 tempRegister = self.registers[tempToken]
-                info( "_newTemp: re-use case numer = {}, new dchar = {}".format(tempToken, dchar) )
+                # info( "_newTemp: re-use case numer = {}, new dchar = {}".format(tempToken, dchar) )
                 tempRegister.itemsize = np.maximum( _DCHAR_ITEMSIZE[dchar], tempRegister.itemsize)
                 tempRegister.dchar = dchar
                 self._occupiedTemps.add(tempToken)
@@ -1216,7 +1215,7 @@ class NumExpr(object):
             else:
                 # Named temporary is taking over a previous numbered temporary, 
                 # so replace the key
-                info( "_newTemp: Named temporary is taking over a previous numbered temporary" )
+                # info( "_newTemp: Named temporary is taking over a previous numbered temporary" )
                 tempRegister = self.registers.pop(tempToken)
                 tempRegister.name = name
                 self.registers[name] = tempRegister
@@ -1232,8 +1231,7 @@ class NumExpr(object):
         if name is None:
             name = tempToken
         
-        # TODO: what if name is already in registers and isn't KIND_TEMP???
-        info( "_newTemp: creation case for name= {}, dchar = {}".format(name, dchar) )
+        # info( "_newTemp: creation case for name= {}, dchar = {}".format(name, dchar) )
         self.registers[name] = tempRegister = NumReg( tempToken, name,
             None, dchar, _KIND_TEMP, _DCHAR_ITEMSIZE[dchar] )
 
@@ -1311,11 +1309,10 @@ class NumExpr(object):
         return inputReg1
 
     def _copy(self, targetReg, valueReg ):
-        debug( "copying valueReg (%s) to targetReg (%s)"%(valueReg.dchar, targetReg.dchar) )
+        # debug( "copying valueReg (%s) to targetReg (%s)"%(valueReg.dchar, targetReg.dchar) )
         opCode, self.assignDChar = OPTABLE[ ('copy', self.lib,
                                 valueReg.dchar) ]
        
-            
         self._codeStream.write( b"".join( (opCode, targetReg.token, 
                                 valueReg.token, _NULL_REG, _NULL_REG)  )  )
         return targetReg
@@ -1325,20 +1322,21 @@ class NumExpr(object):
         if opSig in OPTABLE:
             return unaryRegister
         
-        # Else, function with appropriate dtype doesn't exist, make a new temporary
+        # If a function with appropriate dtype doesn't exist, make a new temporary
+        # Generally most functions are available as float32 and float64, occassionally
+        # complex64 and complex128
+
         # castRegister = self._newTemp( rightD, unaryRegister.name )
         # self._codeStream.write( b"".join( 
         #             (OPTABLE[('cast',self.casting,unaryTup.dchar)][0], castRegister.token, 
         #                         rightRegister.token, _NULL_REG, _NULL_REG) ) )
 
-        raise TypeError( "TODO: implement unary casts: opSig = {}, unaryTup = {}".format(opSig, unaryRegister) )
+        raise NotImplementedError( "TODO: implement unary casts: opSig = {}, unaryTup = {}".format(opSig, unaryRegister) )
 
     def _cast2(self, leftRegister, rightRegister ): 
-        
 
         leftD = leftRegister.dchar; rightD = rightRegister.dchar
-        print( "_cast2: %s dtype :%s, \n %s dtype: %s"%(leftRegister.name,leftD, rightRegister.name,rightD) ) 
-
+        # print( "_cast2: %s dtype :%s, \n %s dtype: %s"%(leftRegister.name,leftD, rightRegister.name,rightD) ) 
         
         if leftD == rightD:
             return leftRegister, rightRegister
@@ -1372,7 +1370,7 @@ class NumExpr(object):
                 return leftRegister, rightRegister
 
             # Make a new temporary
-            debug( "_cast2: leftD: {}, name: {}".format(leftD, leftRegister.name) )
+            # debug( "_cast2: leftD: {}, name: {}".format(leftD, leftRegister.name) )
             # castRegister = self._newTemp( leftD, leftRegister.name )
             if rightRegister.kind != _KIND_TEMP:
                 castRegister = self._newTemp( leftD, None )
@@ -1386,8 +1384,9 @@ class NumExpr(object):
                                 rightRegister.token, _NULL_REG, _NULL_REG) ) )
             return leftRegister, castRegister
         else:
-            raise TypeError( "cast2(): Cannot cast %s to %s by rule 'safe'"
-                            %(np.dtype(leftD), np.dtype(rightD) ) ) 
+            raise TypeError( "cast2(): Cannot cast {} (dtype {}) and {} (dtype {}) by rule 'safe'".format(
+                        leftRegister.name, leftRegister.dtype,
+                        rightRegister.name, rightRegister.dtype ) )
             
     
     def _cast3(self, leftRegister, midRegister, rightRegister ):

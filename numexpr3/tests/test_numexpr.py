@@ -161,17 +161,17 @@ class test_numexpr(unittest.TestCase):
 
     def test_broadcasting_with_strides(self):
         logger.info( 'Test broadcasting with strides' )
-        a = np.arange(self.ssize).reshape(int(self.ssize/10), 10)[::2]
+        a = np.arange(100).reshape(10,10)[::2]
         c = np.arange(10)
-        d = np.arange(5).reshape(5, 1)
+        d = np.arange(5).reshape(5,1)
         # Test with just arrays
         neObj1 = ne3.NumExpr('a + c')
         npt.assert_array_equal( neObj1(), a + c )
         neObj2 = ne3.NumExpr('a + d')
         npt.assert_array_equal( neObj2(), a + d )
         # And with scalars
-        neObj3 = ne3.NumExpr( '2*a + 3.0*c' )
-        npt.assert_array_equal( neObj3(), 2*a + 3.0*c )
+        neObj3 = ne3.NumExpr( '2*a + 3*c' )
+        npt.assert_array_equal( neObj3(), 2*a + 3*c )
 
     def test_all_scalar(self):
         logger.info( 'Test all scalar' )
@@ -240,17 +240,15 @@ class test_numexpr(unittest.TestCase):
         ne3.evaluate('out = z1 + z2' )
         npt.assert_array_almost_equal( locals()['out'], z1+z2 )
 
-    # Non-unit length multiple strides are not supported any more as it 
-    # isn't supported with the SIMD auto-vectorization.
-    def test_illegal_value(self):
-        logger.info( 'Test illegal value' )
+    def test_list_literal(self):
+        logger.info( 'Test list literal' )
         a = np.arange(3)
-        try:
-            ne3.NumExpr('a < [0, 0, 0]')()
-        except TypeError:
-            pass
-        else:
-            self.fail()
+        out = ne3.NumExpr('a < [2,2,2]')()
+        npt.assert_array_equal( out, a < np.array([2,2,2]) )
+
+    # Non-unit length multiple strides are not supported any more as it 
+    # isn't supported with the SIMD auto-vectorization.ion.
+
 
 class test_numexpr_max(test_numexpr):
     '''Testing with maximum threads and large arrays for parallel operation'''
