@@ -553,7 +553,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         // if a array is missing
         objectRef = PyTuple_GET_ITEM(args, arrayCounter);
         if( objectRef == Py_None ) { // Unallocated output of KIND_RETURN
-            printf( "NumExpr_run got Py_None, assuming unallocated output\n" );
+            // printf( "NumExpr_run got Py_None, assuming unallocated output\n" );
             allocOutput = 1;
             arrayCounter++;
             continue;
@@ -564,7 +564,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         int typecode = NPYENUM_from_dchar( self->registers[I].dchar );
         // Convert it if it's not an array
         if (!PyArray_Check(objectRef)) {
-            printf( "DEBUG: arg[%d] is not an array.\n", I );
+            // printf( "DEBUG: arg[%d] is not an array.\n", I );
             if (typecode == -1) { 
                 PyErr_SetString(PyExc_ValueError, 
                     "passed in array with typecode == -1" );
@@ -626,7 +626,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     if( allocOutput ) {
         arrayCounter = 0;
         
-        printf( "MAXDIMS = %d\n", maxDims );
+        // printf( "MAXDIMS = %d\n", maxDims );
         // There are a couple of options for broadcast tracking:
         // 1.) A 2D array that we operate over with pointer arithmetic.
         // 2.) Add a .virtualShape pointer to the NumExprReg struct.  This would require
@@ -671,21 +671,21 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 arg2Index = self->program[I].arg2;
                 
                 if (arg2Index == NULL_REG) { // Case: Casts and similar only have one argument
-                    printf( "Prog#%d:: UnaryOp broadcast at #%d to [", I, retIndex );
+                    // printf( "Prog#%d:: UnaryOp broadcast at #%d to [", I, retIndex );
                     for( J = 0; J < maxDims; J++ ) {
                         broadcastShape[retIndex*maxDims+J] = broadcastShape[arg1Index*maxDims+J];
-                        printf( " %d,", broadcastShape[retIndex*maxDims+J] );
+                        // printf( " %d,", broadcastShape[retIndex*maxDims+J] );
                     }
-                    printf( "]\n" );
+                    // printf( "]\n" );
                 } else if( self->program[I].arg3 == NULL_REG ) { // Case: BinaryOps have two arguments
-                    printf( "Prog#%d:: BinaryOp broadcast at #%d to [", I, retIndex );
+                    // printf( "Prog#%d:: BinaryOp broadcast at #%d to [", I, retIndex );
                     for( J = 0; J < maxDims; J++ ) {
                         // output size is MAX(arg1,arg2)
                         // TODO: error checking?  Or let nditer handle that?
                         broadcastShape[retIndex*maxDims+J] = MAX( broadcastShape[arg1Index*maxDims+J], broadcastShape[arg2Index*maxDims+J] );
-                        printf( " %d,", broadcastShape[retIndex*maxDims+J] );
+                        // printf( " %d,", broadcastShape[retIndex*maxDims+J] );
                     }
-                    printf( "]\n" );
+                    // printf( "]\n" );
                 } else { // With three args is the ternary 'where' only
                     for( J = 0; J < maxDims; J++ ) {
                         // output size is MAX(arg2,arg3)
@@ -697,15 +697,15 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         } 
 
         // Allocate the output array
-        printf( "Allocating output array to index %d, operand index %d\n", self->returnReg, self->returnOperand);
+        // printf( "Allocating output array to index %d, operand index %d\n", self->returnReg, self->returnOperand);
         // The Return type is parsed by the Python-side
         outputType = PyArray_DescrFromType( NPYENUM_from_dchar( self->registers[self->returnReg].dchar ) );
         
-        printf( "Broadcast output to type \'%c\', shape : [", outputType->type );
-        for( J = 0; J < maxDims; J++ ) {
-            printf( " %d,", broadcastShape[retIndex+J] );
-        }
-        printf( " ]\n" );
+        // printf( "Broadcast output to type \'%c\', shape : [", outputType->type );
+        // for( J = 0; J < maxDims; J++ ) {
+        //     printf( " %d,", broadcastShape[retIndex+J] );
+        // }
+        // printf( " ]\n" );
         // This should be the arrayCounter, not the registers index!
         operands[self->returnOperand] = (PyArrayObject*)PyArray_SimpleNewFromDescr( maxDims, broadcastShape + retIndex*maxDims, outputType );
         dtypes[self->returnOperand] = outputType;

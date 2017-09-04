@@ -659,7 +659,7 @@ def _call(self, node):
     return outputRegister
     
 def _compare(self, node):
-    info( 'ast.Compare: left: {}, ops:{}, comparators:{}'.format(node.left, node.ops, node.comparators) )
+    # info( 'ast.Compare: left: {}, ops:{}, comparators:{}'.format(node.left, node.ops, node.comparators) )
     # "Awkward... this ast.Compare node is," said Yoga disparagingly.  
     # (left,ops,comparators)
     # NumExpr3 does not handle [Is, IsNot, In, NotIn]

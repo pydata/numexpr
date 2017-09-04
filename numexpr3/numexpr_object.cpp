@@ -288,7 +288,7 @@ NumExpr_getstate(NumExprObject *self) {
     char* state = (char *)malloc(totalSize);
     npy_intp statePoint = 0;
 
-    printf( "TODO: likely PyObject_HEAD should not be overwritten.\n" );
+    // printf( "TODO: likely PyObject_HEAD should not be overwritten.\n" );
     // Copy top-level NumExprObject
     memcpy( state, self, sizeof(NumExprObject) );
     statePoint += sizeof(NumExprObject);
@@ -324,7 +324,7 @@ NumExpr_setstate(NumExprObject *self, PyObject *args) {
     statePoint += sizeof(NumExprObject);
 
     // Do some simple limit checks on program_len and n_reg
-    printf( "TODO: checks, program_len: %d, n_reg: %d\n", self->program_len, self->n_reg );
+    // printf( "TODO: checks, program_len: %d, n_reg: %d\n", self->program_len, self->n_reg );
 
     // Load program
     self->program = (NumExprOperation*)malloc( self->program_len*sizeof(NumExprOperation) );

@@ -20,8 +20,6 @@ import os
     
 class autotest_numexpr(unittest.TestCase):
 
-
-    
     def setUp(self):
         # Don't use powers of 2 for sizes as BLOCK_SIZEs are powers of 2, and we want 
         # to test when we have sub-sized blocks in the last cycle through the program.
@@ -31,9 +29,9 @@ class autotest_numexpr(unittest.TestCase):
         np.random.seed(42)
 
         # Float-64
-        self.A_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
-        self.B_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
-        self.C_d = np.random.uniform( -1.0, 1.0, size=LARGE_SIZE )
+        self.A_d = np.random.uniform( -1.0, 1.0, size=SMALL_SIZE )
+        self.B_d = np.random.uniform( -1.0, 1.0, size=SMALL_SIZE )
+        self.C_d = np.random.uniform( -1.0, 1.0, size=SMALL_SIZE )
         # Float-32
         self.A_f = self.A_d.astype('float32')
         self.B_f = self.B_d.astype('float32')
@@ -41,9 +39,9 @@ class autotest_numexpr(unittest.TestCase):
 
         if os.name == 'nt':
             # Int-64
-            self.A_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
-            self.B_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
-            self.C_q = np.random.randint( -100, high=100, size=LARGE_SIZE ).astype('int64')
+            self.A_q = np.random.randint( -100, high=100, size=SMALL_SIZE ).astype('int64')
+            self.B_q = np.random.randint( -100, high=100, size=SMALL_SIZE ).astype('int64')
+            self.C_q = np.random.randint( -100, high=100, size=SMALL_SIZE ).astype('int64')
             # Int-32
             self.A_l = self.A_q.astype('int32')
             self.B_l = self.B_q.astype('int32')

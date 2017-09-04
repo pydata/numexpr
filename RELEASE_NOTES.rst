@@ -36,10 +36,11 @@ TODO List:
     2. test_inplace_intermediate_magic_output
     3. test_zerodim1d
     4. test_zerodim3d
-* pickle and multi-processing tests
+* Don't overwrite PyObject_HEAD in pickling
 * module-level properties for ncores, nthreads
 * documentation and tutorial RSTs
 * better benchmarking
+
 
 
 ======================================
