@@ -4,27 +4,29 @@ environment:
 
   matrix:
     - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4.5"
+      PYTHON_VERSION: "3.4.7"
       PYTHON_ARCH: "32"
+      DISTUTILS_USE_SDK: "1"
 
     - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4.5"
+      PYTHON_VERSION: "3.4.7"
       PYTHON_ARCH: "64"
+      DISTUTILS_USE_SDK: "1"
 
     - PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.3"
+      PYTHON_VERSION: "3.5.4"
       PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\Python35-x64"
-      PYTHON_VERSION: "3.5.3"
+      PYTHON_VERSION: "3.5.4"
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python36"
-      PYTHON_VERSION: "3.6.1"
+      PYTHON_VERSION: "3.6.2"
       PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\Python36-x64"
-      PYTHON_VERSION: "3.6.1"
+      PYTHON_VERSION: "3.6.2"
       PYTHON_ARCH: "64"
 
 install:
