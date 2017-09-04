@@ -151,7 +151,7 @@ class test_numexpr(unittest.TestCase):
         npt.assert_array_almost_equal( x, y*np.pi*2 )
 
     def test_simple_strides(self):
-        # It may make more sense to do strided operations on all functions 
+        # It may make more sense to do strided operations on all functions `
         # in autotest_GENERATED
         logger.info( 'Test simple strides' )
         a = np.arange(self.ssize)[::3]
@@ -166,8 +166,8 @@ class test_numexpr(unittest.TestCase):
         d = np.arange(5).reshape(5, 1)
         # Test with just arrays
         neObj1 = ne3.NumExpr('a + c')
-        neObj2 = ne3.NumExpr('a + d')
         npt.assert_array_equal( neObj1(), a + c )
+        neObj2 = ne3.NumExpr('a + d')
         npt.assert_array_equal( neObj2(), a + d )
         # And with scalars
         neObj3 = ne3.NumExpr( '2*a + 3.0*c' )
@@ -175,6 +175,7 @@ class test_numexpr(unittest.TestCase):
 
     def test_all_scalar(self):
         logger.info( 'Test all scalar' )
+        import numpy as np
         a = 3.
         b = 4.
         expr = ne3.NumExpr('np.pi*(2*a+3*b)')

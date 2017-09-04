@@ -1319,8 +1319,7 @@ class NumExpr(object):
         raise TypeError( "TODO: implement unary casts: opSig = {}, unaryTup = {}".format(opSig, unaryRegister) )
 
     def _cast2(self, leftRegister, rightRegister ): 
-        # TODO: check if one of the tups is a scalar, and change its dtype 
-        # proactively.
+        
 
         leftD = leftRegister.dchar; rightD = rightRegister.dchar
         print( "_cast2: %s dtype :%s, \n %s dtype: %s"%(leftRegister.name,leftD, rightRegister.name,rightD) ) 
@@ -1336,8 +1335,15 @@ class NumExpr(object):
                 return leftRegister, rightRegister
 
             # Make a new temporary
-            debug( "_cast2: rightD: {}, name: {}".format(rightD, rightRegister.name) )
-            castRegister = self._newTemp( rightD, rightRegister.name )
+            # debug( "_cast2: rightD: {}, name: {}".format(rightD, rightRegister.name) )
+            # castRegister = self._newTemp( rightD, rightRegister.name )
+
+            if leftRegister.kind != _KIND_TEMP:
+                castRegister = self._newTemp( rightD, None )
+            else: # Else we can re-use the temporary
+                castRegister = leftRegister
+                castRegister.itemsize = np.maximum(_DCHAR_ITEMSIZE[rightD], _DCHAR_ITEMSIZE[leftD])
+                castRegister.dchar = rightD
             
             self._codeStream.write( b"".join( 
                     (OPTABLE[('cast',self.casting,rightD,leftD)][0], castRegister.token, 
@@ -1352,7 +1358,13 @@ class NumExpr(object):
 
             # Make a new temporary
             debug( "_cast2: leftD: {}, name: {}".format(leftD, leftRegister.name) )
-            castRegister = self._newTemp( leftD, leftRegister.name )
+            # castRegister = self._newTemp( leftD, leftRegister.name )
+            if rightRegister.kind != _KIND_TEMP:
+                castRegister = self._newTemp( leftD, None )
+            else: # Else we can re-use the temporary
+                castRegister = rightRegister
+                castRegister.itemsize = np.maximum(_DCHAR_ITEMSIZE[rightD], _DCHAR_ITEMSIZE[leftD])
+                castRegister.dchar = leftD
                         
             self._codeStream.write( b"".join( 
                     (OPTABLE[('cast',self.casting,leftD,rightD)][0], castRegister.token, 

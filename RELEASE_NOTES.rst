@@ -31,8 +31,6 @@ TODO List:
 * Fix _const as _cast2 does scalar casts in Python now.
 * explicit cast functions 'float32(x)'
 * global-state protection mutex in C-interpreter
-* more test cases: in-line named intermediate, secondary-output, 
-  in-line magic output, named intermediate -> magic output
 * **fix seg-faults found by new test cases**
     1. test_inplace_intermediate
     2. test_inplace_intermediate_magic_output
@@ -41,6 +39,7 @@ TODO List:
 * pickle and multi-processing tests
 * module-level properties for ncores, nthreads
 * documentation and tutorial RSTs
+* better benchmarking
 
 
 ======================================
