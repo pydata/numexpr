@@ -700,6 +700,20 @@ def _unaryop(self, node):
     # Release the operandRegister if it was a temporary
     self._releaseTemp(operandRegister, outputRegister)
     return outputRegister
+
+def _list(self, node):
+    '''
+    Parse a list literal into a numpy.array 
+    e.g. ne3.NumExpr( 'a < [1,2,3]' )
+
+    Only numbers are supported
+    '''
+    regToken = next( self._regCount )
+
+    arrayRepr = np.array( [element.n for element in node.elts] )
+    self.registers[regToken] = register = NumReg(regToken, regToken, arrayRepr, arrayRepr.dtype.char, _KIND_ARRAY )
+    return register
+
                 
 def _unsupported(self, node, outputRegisterle=None ):
     raise KeyError( 'unimplmented ASTNode' + type(node) )
@@ -719,6 +733,7 @@ _ASTAssembler = defaultdict( _unsupported,
                     ast.UnaryOp:_unaryop,
                     ast.Call:_call, 
                     ast.Compare:_compare,
+                    ast.List:_list
                      } )
 ######################### END OF AST HANDLERS ##################################
 
