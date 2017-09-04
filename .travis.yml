@@ -14,7 +14,7 @@ before_install:
   - ulimit -a
   - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-5.4; fi
   - if [ "$CXX" = "g++" ]; then export CXX="g++-5.4" CC="gcc-5.4"; fi
-  - pip install -q numpy
+  - pip install -q numpy setuptools
   - python -V
 
 install:
@@ -23,7 +23,7 @@ install:
 script:
   - mkdir empty
   - cd empty
-  - python -c "import sys;import numexpr;sys.exit(0 if numexpr.test() else 1)"
+  - python -c "import sys;import numexpr3;sys.exit(0 if numexpr3.test() else 1)"
 
 # So very tempting to abuse the travis email system...
 notifications:

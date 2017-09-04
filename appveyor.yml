@@ -48,11 +48,11 @@ install:
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 
   # Install the build and runtime dependencies of the project.
-  - "%CMD_IN_ENV% pip install --timeout=60 -r requirements.txt"
+  - "%CMD_IN_ENV% pip install --timeout=60 -r requirements.txt wheel"
   - "%CMD_IN_ENV% python setup.py bdist_wheel bdist_wininst"
 
   # Install the genreated wheel package to test it
-  - "pip install --pre --no-index --find-links dist/ numexpr"
+  - "pip install --pre --no-index --find-links dist/ numexpr3"
 
 build: false
 
@@ -61,7 +61,7 @@ test_script:
   # installed library.
   - "mkdir empty_folder"
   - "cd empty_folder"
-  - "python -c \"import numexpr; numexpr.test()\""
+  - "python -c \"import numexpr3; numexpr3.test()\""
   - "cd .."
 
 artifacts:
