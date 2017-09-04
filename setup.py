@@ -39,8 +39,8 @@ with open('requirements.txt') as f:
 # https://gcc.gnu.org/onlinedocs/gcc-5.4.0/gcc/Optimize-Options.html
 extra_compile_args = []
 if os.name == 'posix':
-    extra_compile_args += [ '-fdiagnostics-color=always', 
-                           '-fopt-info-vec' ]
+    # Turn off '-fdiagnostics-color=always' for TravisCI
+    extra_compile_args += [ '-fopt-info-vec' ]
 elif os.name == 'nt':
     extra_compile_args += [ '/Qvec-report:2' ]
 
