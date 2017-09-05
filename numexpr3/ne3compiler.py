@@ -86,6 +86,20 @@ _CAST_TRANSLATIONS = { CAST_SAFE:CAST_SAFE, 'safe':CAST_SAFE,
                         CAST_SAME_KIND:CAST_SAME_KIND, 'same_kind':CAST_SAME_KIND,
                         CAST_UNSAFE:CAST_UNSAFE, 'unsafe':CAST_UNSAFE }
 
+# Casting suggestions for functions that don't support integers, such as
+# all the transcendentals. NumPy actually returns float-16 for u/int8 but 
+# we don't support that...
+if os.name == 'nt':
+    _CAST1_SUGGEST = { 'b':'f', 'B':'f', 
+                       'h':'f', 'H':'f',
+                       'l':'d', 'L':'d',
+                       'q':'d', 'Q':'d' }
+else: # posix
+    _CAST1_SUGGEST = { 'b':'f', 'B':'f', 
+                       'h':'f', 'H':'f',
+                       'i':'d', 'I':'d',
+                       'l':'d', 'L':'d' }
+
 # Context for optimization effort
 OPT_MODERATE = 0
 #OPT_AGGRESSIVE = 1
@@ -607,41 +621,42 @@ def _call(self, node):
 
     argRegisters = [_ASTAssembler[type(arg)](self, arg) for arg in node.args]
     
-    # Would be nice to have a prettier way to fill out the program 
-    # than if-else block?
     if len(argRegisters) == 1:
-        # TODO: _cast1: We may have to do a cast here, for example "cos(<int>A)"
-        opSig = (node.func.id, self.lib, argRegisters[0].dchar)
-        # argRegisters.token = self._cast1( argRegisters.token, opSig )
+        argReg0 = argRegisters[0]
+        # _cast1: We may have to do a cast here, for example "cos(<int>A)"
+        opSig = (node.func.id, self.lib, argReg0.dchar)
+
+        argReg0, opSig = self._func_cast( argReg0, opSig )
         opCode, self.assignDChar = OPTABLE[ opSig ]
-        # TODO: should try and use argRegisters instead.
-        outputRegister = self._transmit1( argRegisters[0] )
+        outputRegister = self._transmit1( argReg0 )
 
         self._codeStream.write( b"".join( (opCode, outputRegister.token, 
-                            argRegisters[0].token, _NULL_REG, _NULL_REG)  )  )
+                            argReg0.token, _NULL_REG, _NULL_REG)  )  )
         
     elif len(argRegisters) == 2:
+        argReg0, argReg1 = argRegisters
         argRegisters = self._cast2( *argRegisters )
         opCode, self.assignDChar = OPTABLE[ (node.func.id, self.lib,
-                            argRegisters[0].dchar, argRegisters[1].dchar) ]
-        outputRegister = self._transmit2( argRegisters[0], argRegisters[1] )
+                            argReg0.dchar, argReg1.dchar) ]
+        outputRegister = self._transmit2( argReg0, argReg1 )
                 
         self._codeStream.write( b"".join( (opCode, outputRegister.token, 
-                            argRegisters[0].token, argRegisters[1].token, _NULL_REG)  )  )
+                            argReg0.token, argReg1.token, _NULL_REG)  )  )
         
     elif len(argRegisters) == 3: 
         # The where() ternary operator function is currently the _only_
         # 3 argument function
-        argRegisters[1], argRegisters[2] = self._cast2( argRegisters[1], argRegisters[2] )
+        argReg0, argReg1, argReg2 = argRegisters
+        argReg1, argReg2 = self._cast2( argReg1, argReg2 )
 
         opCode, self.assignDChar = OPTABLE[ (node.func.id, self.lib,
-                            argRegisters[0].dchar, argRegisters[1].dchar, argRegisters[2].dchar) ]
+                            argReg0.dchar, argReg1.dchar, argReg2.dchar) ]
         # Because we know the first register is the bool, it's the least useful temporary to re-use
         # as it almost certainly must be promoted.
-        outputRegister = self._transmit3( argRegisters[1], argRegisters[2], argRegisters[0] )
+        outputRegister = self._transmit3( argReg1, argReg2, argReg0 )
                 
         self._codeStream.write( b"".join( (opCode, outputRegister.token, 
-                            argRegisters[0].token, argRegisters[1].token, argRegisters[2].token)  )  )
+                            argReg0.token, argReg1.token, argReg2.token)  )  )
         
     else:
         raise ValueError( "call(): function calls are 1-3 arguments" )
@@ -735,7 +750,8 @@ class NumReg(object):
     they can't contain logic which becomes a problem.  Also now we can use 
     None for name for temporaries instead of building values.
     '''
-    TYPENAME = { 0:'array', 1:'scalar', 2:'temp', 3:'return' }
+    TYPENAME = { _KIND_ARRAY:'array', _KIND_SCALAR:'scalar', 
+                 _KIND_TEMP:'temp', _KIND_RETURN:'return' }
 
     def __init__(self, num, name, ref, dchar, kind, itemsize=0 ):
         self._num = num                     # The number of the register, must be unique
@@ -1308,21 +1324,34 @@ class NumExpr(object):
                                 valueReg.token, _NULL_REG, _NULL_REG)  )  )
         return targetReg
 
-    def _cast1(self, unaryRegister, opSig):
-        
+    def _func_cast(self, unaryRegister, opSig):
         if opSig in OPTABLE:
-            return unaryRegister
+            return unaryRegister, opSig
         
         # If a function with appropriate dtype doesn't exist, make a new temporary
         # Generally most functions are available as float32 and float64, occassionally
         # complex64 and complex128
+        print( "FIXME: _cast1 opsig = {}".format(opSig) )
 
-        # castRegister = self._newTemp( rightD, unaryRegister.name )
-        # self._codeStream.write( b"".join( 
-        #             (OPTABLE[('cast',self.casting,unaryTup.dchar)][0], castRegister.token, 
-        #                         rightRegister.token, _NULL_REG, _NULL_REG) ) )
+        funcName, castConvention, dchar = opSig
+        castDchar = _CAST1_SUGGEST[dchar]
+        castSig = (funcName, castConvention, castDchar)
+        if not castSig in OPTABLE:
+            raise NotImplementedError( "Could not find match or suitable cast for function {} with dchar {}".format(funcName, dchar) )
 
-        raise NotImplementedError( "TODO: implement unary casts: opSig = {}, unaryTup = {}".format(opSig, unaryRegister) )
+        if unaryRegister.kind != _KIND_TEMP:
+            castRegister = self._newTemp(castDchar, None )
+        else: # Else we can re-use the temporary
+            castRegister = unaryRegister
+            castRegister.itemsize = np.maximum(_DCHAR_ITEMSIZE[dchar], _DCHAR_ITEMSIZE[castDchar])
+            castRegister.dchar = castDchar
+            
+        self._codeStream.write( b"".join( 
+                    (OPTABLE[('cast',self.casting,castDchar,dchar)][0], castRegister.token, 
+                                unaryRegister.token, _NULL_REG, _NULL_REG)  ) )
+        return castRegister, castSig
+
+        
 
     def _cast2(self, leftRegister, rightRegister ): 
 

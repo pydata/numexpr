@@ -261,6 +261,7 @@ class test_numexpr(unittest.TestCase):
         npt.assert_array_equal( out, a < np.array([2,2,2]) )
 
     def test_casting(self):
+        logging.info( "Test safe, unsafe, and func helper casting")
         # Only safe casts are supported at the moment, unfortunately.
         i = np.arange(self.ssize).astype('int32')
         # 'Safe' casts
@@ -271,6 +272,11 @@ class test_numexpr(unittest.TestCase):
         npt.assert_array_equal( i.astype('float32'), f )
         assert( b.dtype == 'int8')
         npt.assert_array_equal( i.astype('int8'), b )
+        # Helper casts for functions
+        sin_ne = ne3.NumExpr( 'sin(i)' )()
+        sin_np = np.sin(i)
+        assert( sin_np.dtype == sin_ne.dtype )
+        npt.assert_array_almost_equal( sin_np, sin_ne )
 
     # Non-unit length multiple strides are not supported any more as it 
     # isn't supported with the SIMD auto-vectorization.ion.
