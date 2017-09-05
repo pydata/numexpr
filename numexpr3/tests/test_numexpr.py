@@ -260,6 +260,18 @@ class test_numexpr(unittest.TestCase):
         out = ne3.NumExpr('a < [2,2,2]')()
         npt.assert_array_equal( out, a < np.array([2,2,2]) )
 
+    def test_casting(self):
+        # Only safe casts are supported at the moment, unfortunately.
+        i = np.arange(self.ssize).astype('int32')
+        # 'Safe' casts
+        f = ne3.NumExpr('float32(i)')()
+        # 'Unsafe' casts
+        b = ne3.NumExpr('int8(i)')()
+        assert( f.dtype == 'float32' )
+        npt.assert_array_equal( i.astype('float32'), f )
+        assert( b.dtype == 'int8')
+        npt.assert_array_equal( i.astype('int8'), b )
+
     # Non-unit length multiple strides are not supported any more as it 
     # isn't supported with the SIMD auto-vectorization.ion.
 

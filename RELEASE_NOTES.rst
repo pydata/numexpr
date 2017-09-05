@@ -6,30 +6,41 @@ Changes from 3.0.0 to 3.0.1
 ===========================
 
 * **Minimum supported version is now Python 3.4**. 3.3 may work, 2.7 will not.
+* Explicit casting operations are now present, including unsafe casts. E.g. 
+
+      a = np.arange(2**12)                  # int-32
+      double = ne3.NumExpr('float64(a)')()  # Safe
+      trunc = ne3.NumExpr('int8(a)')()      # Unsafe
+
+  For complex numbers, use the `complex`,`real`, and `imag` machinery.
+* Complex numbers can be reduced to real or imag as if attributes, e.g.
+
+      imag_num = ne3.NumExpr( '(2.0*np.pi*sin(complex128(a,b))).imag' )()
+
 * Broadcasting is now calculated internally for allocation of magic output.  
   This is a step on the route to reimplementing reductions.
 * Re-use of temporaries is more efficient.
-* There is no longer any MAX_THREADS.  All threading resources are now 
-  dynamically allocated.
-* Temporaries are now pre-allocated in a block rather than being individually 
-  allocated by the virtual machine at runtime. If the total temporary space is 
-  too small it will be `realloc`ed to be the appropriate size.  This space can
-  be managed by `set_tempsize( new_size_per_thread)`. Setting the temporary 
-  size to zero will release all temporary memory.  
+* There is no longer a MAX_THREADS.  All threading resources are now 
+  dynamically allocated.  The maximum number of arguments in a function is now 
+  set by the NumPy install (default is 32, unless one recompiles with a different 
+  macro).
+* Temporaries are now pre-allocated in a block (or arena) rather than being 
+  individually allocated by the virtual machine at runtime. If the total 
+  temporary space is too small it will be `realloc`ed to be the appropriate 
+  size.  This space can be managed by `set_tempsize( new_size_per_thread)`. 
+  Setting the temporary size to zero will release all temporary memory.  
 * Python-side NumExpr and their associated C-extension objects are now 
   pickleable.  As an part of this, constants no longer occupy BLOCKSIZE memory 
   and are instead singleton arrays with a `numpy.nditer` stride of zero.
-* Complex division with float-32 is now explicitely a fast but lower precision
+* Complex division with float-32 is now explicitly a fast but lower precision
   implementation compared to NumPy.
 
 TODO List:
 ^^^^^^^^^^
 
-* Make KIND into bitmasks
-    Also consider renaming KIND_SCALAR to KIND_CONST
+* consider renaming KIND_SCALAR to KIND_CONST
 * _cast1() for single argument funcs (e.g. 'sin(x)' if x is integer dtype )
-* Fix _const as _cast2 does scalar casts in Python now.
-* explicit cast functions 'float32(x)'
+
 * global-state protection mutex in C-interpreter
 * **fix seg-faults found by new test cases**
     1. test_inplace_intermediate

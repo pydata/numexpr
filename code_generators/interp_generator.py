@@ -621,10 +621,10 @@ class Operation(object):
         
         self.alias = alias
         self.opNums = []
-        self.c_FunctionDeclares = []
-        self.py_TupleKeys = []
-        self.c_FunctionImpls = []
-        self.c_OpTableEntrys = []
+        self.c_FunctionDeclares = {}
+        self.py_TupleKeys = {}
+        self.c_FunctionImpls = {}
+        self.c_OpTableEntrys = {}
         
         self.build()
         
@@ -638,24 +638,21 @@ class Operation(object):
                 self.opNums.append( opNum )
                 passedArgs = [ arg[I] for arg in self.argFams ]
                 
-                funcBody = \
-                        EXPR( opNum, self.c_Template, retChar, *passedArgs, 
+                funcBody = EXPR( opNum, self.c_Template, retChar, *passedArgs, 
                               vecType=self.vecType )
                         
                 # The format for the Python tuple is (name,{lib},arg1type,...)
                 # or for casts, ('cast',{cast_mode},cast_dtype,original_dtype )
                 if self.py_Name == 'cast':
-                    self.py_TupleKeys.append( 
-                        tuple( [self.py_Name, lib, retChar] + passedArgs) )
+                    self.py_TupleKeys[opNum] = [tuple( [self.py_Name, lib, retChar] + passedArgs) ] 
+                    if bool(self.alias): # Cast aliases have the type explicit in the name
+                        self.py_TupleKeys[opNum].append( tuple( [self.alias, lib] + passedArgs) ) 
+
                 else:
-                    self.py_TupleKeys.append( 
-                        tuple( [self.py_Name, lib] + passedArgs) )
+                    self.py_TupleKeys[opNum] = [ tuple( [self.py_Name, lib] + passedArgs) ]
                     if bool(self.alias):
-                        self.py_TupleKeys.append( 
-                                tuple( [self.alias, lib] + passedArgs) ) 
-                        
-                            
-                
+                        self.py_TupleKeys[opNum].append( tuple( [self.alias, lib] + passedArgs) )
+
                 # Make a unique name for the function, of the form 
                 # {function}_{retchar}{argchar1,...}
                 if type(self.py_Name) == type:
@@ -676,9 +673,9 @@ class Operation(object):
                 funcCall = funcNameUnique \
                            + '( task_size, pc, params );' 
                 
-                self.c_FunctionDeclares.append(  funcDec + ';' )
-                self.c_OpTableEntrys.append( 'case {0}: {1} break;\n'.format( opNum, funcCall) )
-                self.c_FunctionImpls.append( ''.join([funcDec, funcBody]) )
+                self.c_FunctionDeclares[opNum] = funcDec + ';'
+                self.c_OpTableEntrys[opNum] =  'case {0}: {1} break;\n'.format( opNum, funcCall)
+                self.c_FunctionImpls[opNum] =  ''.join([funcDec, funcBody])
                 
                 # Debugging output
                 #print( '##### %s #####' % opNum )
@@ -702,7 +699,6 @@ class Operation(object):
                 passedArgs = [ arg[I] for arg in self.argFams ]
                 idArgs = [ arg.replace('?','1') for arg in passedArgs ]
                 
-                # TODO: implement cast/copy testing
                 if funcName == 'cast' or funcName == 'copy':
                     return ''
                     
@@ -710,7 +706,8 @@ class Operation(object):
                 if AUTOTEST_DICT[funcName]:
                     evalFunc = AUTOTEST_DICT[funcName]
                 elif not hasattr( np, funcName ):
-                    print( "test_Auto could not find NumPy function for: {}".format(funcName) )
+                    # print( "test_Auto could not find NumPy function for: {}".format(funcName) )
+                    # TODO: add optional tests for scipy.misc functions
                     return ''
                 
                 funcNameUnique = ''.join( [funcName,'_',retChar.replace('?','1') ] + idArgs )
@@ -803,12 +800,20 @@ def CastFactory( opsList, casting='safe' ):
         for castChar in ALL_FAM:
             if dChar == castChar:
                 continue
-            if not np.can_cast( dChar, castChar, casting=casting ):
-                continue
+
 
             # TEMPORARY: remove strings
             if 'S' in [dChar,castChar] or 'U' in [dChar,castChar]:
                 continue
+
+            if not np.can_cast( dChar, castChar, casting=casting ):
+                if dChar == 'F' or dChar == 'D' or castChar == 'F' or castChar == 'D':
+                    # Unsafe casts for complex aren't provided, users should use the complex(a,b) functions
+                    continue
+                # Unsafe casts
+                opsList += [Operation( 'unsafe_cast', 
+                            '$DEST = ($DTYPE0)($ARG1)', 
+                            CAST_SAFE, castChar, [dChar], alias=np.dtype(castChar).name )]
             
             # NumPy doesn't provide casts for real types to complex types so 
             # there are a number of special cases.
@@ -816,22 +821,22 @@ def CastFactory( opsList, casting='safe' ):
                 # 'F' -> 'D' is a special case, casting complex64 -> complex128
                 opsList += [Operation( 'cast', 
                             '$DEST.real = (npy_float64)($ARG1).real; $DEST.imag=(npy_float64)($ARG1).imag', 
-                            CAST_SAFE, castChar, [dChar] )]
+                            CAST_SAFE, castChar, [dChar], alias=None )]
             elif castChar=='F':
                 # In 'safe' casting one can only cast to complex and not backward
                 # and this always is allocated as = dValue + 1i*0.0
                 opsList += [Operation( 'cast', 
                             '$DEST.real = (npy_float32)($ARG1); $DEST.imag=0.0', 
-                            CAST_SAFE, castChar, [dChar] )]
+                            CAST_SAFE, castChar, [dChar], alias=None )]
             elif castChar=='D':
                 opsList += [Operation( 'cast', 
                             '$DEST.real = (npy_float64)($ARG1); $DEST.imag=0.0', 
-                            CAST_SAFE, castChar, [dChar] )]
+                            CAST_SAFE, castChar, [dChar], alias=None )]
             else:
                 # castOp = Operation( 'cast', '$DEST = ($DTYPE0)($ARG1)', CAST_SAFE, castChar, dChar )
                 opsList += [Operation( 'cast', 
                             '$DEST = ($DTYPE0)($ARG1)', 
-                            CAST_SAFE, castChar, [dChar] )]
+                            CAST_SAFE, castChar, [dChar], alias=np.dtype(castChar).name )]
     pass
 
 
@@ -1244,10 +1249,13 @@ def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.
     FunctionFactory( opsList, mkl=mkl, C11=C11 )
     
     for op in opsList:
-        for I, opNum in enumerate( op.opNums ):
-            cTable[opNum] = op.c_OpTableEntrys[I]
-            pythonTable[op.py_TupleKeys[I]] = (struct.pack( NE_STRUCT, opNum ), op.retFam[I])
-            cFuncs.append( op.c_FunctionImpls[I] )
+        for I, opNum in enumerate(op.opNums):
+            cTable[opNum] = op.c_OpTableEntrys[opNum]
+            cFuncs.append( op.c_FunctionImpls[opNum] )
+            for alias in op.py_TupleKeys[opNum]:
+                pythonTable[alias] = (struct.pack( NE_STRUCT, opNum ), op.retFam[I])
+                
+                
     
     # Write #define OP_END 
     OP_END = next(OP_COUNT) -1

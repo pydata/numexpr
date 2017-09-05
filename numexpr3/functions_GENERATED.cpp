@@ -337,6 +337,34 @@ for(npy_intp J = 0; J < task_size; J++) {
 
 
 static int
+unsafe_cast_1b( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
+    npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int8) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_bool)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int8);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_bool)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
 cast_hb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
@@ -415,6 +443,118 @@ cast_qb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
         sb1 /= sizeof(npy_int8);
 for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Bb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
+    npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int8) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int8);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Hb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
+    npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int8) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int8);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Lb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
+    npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int8) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int8);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Qb( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
+    npy_int8 *x1 = (npy_int8 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int8) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int8) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint64)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int8);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint64)(x1[J*sb1]); 
     }
     return 0;
     }
@@ -533,6 +673,62 @@ for(npy_intp J = 0; J < task_size; J++) {
 
 
 static int
+unsafe_cast_1h( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
+    npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_bool)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_bool)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_bh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
+    npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
 cast_lh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
@@ -583,6 +779,118 @@ cast_qh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
         sb1 /= sizeof(npy_int16);
 for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Bh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
+    npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Hh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
+    npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Lh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
+    npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Qh( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
+    npy_int16 *x1 = (npy_int16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int16) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint64)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint64)(x1[J*sb1]); 
     }
     return 0;
     }
@@ -701,6 +1009,90 @@ for(npy_intp J = 0; J < task_size; J++) {
 
 
 static int
+unsafe_cast_1l( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
+    npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_bool)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_bool)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_bl( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
+    npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_hl( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
+    npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
 cast_ql( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
@@ -723,6 +1115,146 @@ cast_ql( npy_intp task_size, npy_intp pc, const NumExprObject *params )
         sb1 /= sizeof(npy_int32);
 for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Bl( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
+    npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Hl( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
+    npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Ll( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
+    npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Ql( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
+    npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint64)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_fl( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
+    npy_int32 *x1 = (npy_int32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_float32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_float32)(x1[J*sb1]); 
     }
     return 0;
     }
@@ -785,6 +1317,258 @@ for(npy_intp J = 0; J < task_size; J++) {
 
 
 static int
+unsafe_cast_1q( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
+    npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_bool)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_bool)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_bq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
+    npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_hq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
+    npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_lq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
+    npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Bq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
+    npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Hq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
+    npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Lq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
+    npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Qq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
+    npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint64)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_fq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
+    npy_int64 *x1 = (npy_int64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_int64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_int64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_float32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_int64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_float32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
 cast_dq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
@@ -835,6 +1619,62 @@ cast_Dq( npy_intp task_size, npy_intp pc, const NumExprObject *params )
         sb1 /= sizeof(npy_int64);
 for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_1B( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
+    npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint8) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_bool)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint8);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_bool)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_bB( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
+    npy_uint8 *x1 = (npy_uint8 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint8) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint8) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint8);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int8)(x1[J*sb1]); 
     }
     return 0;
     }
@@ -1121,6 +1961,90 @@ for(npy_intp J = 0; J < task_size; J++) {
 
 
 static int
+unsafe_cast_1H( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
+    npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_bool)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_bool)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_bH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
+    npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_hH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
+    npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
 cast_lH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
@@ -1171,6 +2095,34 @@ cast_qH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
         sb1 /= sizeof(npy_uint16);
 for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_int64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_BH( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
+    npy_uint16 *x1 = (npy_uint16 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint16) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint16) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint16);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint8)(x1[J*sb1]); 
     }
     return 0;
     }
@@ -1345,6 +2297,118 @@ for(npy_intp J = 0; J < task_size; J++) {
 
 
 static int
+unsafe_cast_1L( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
+    npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_bool)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_bool)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_bL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
+    npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_hL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
+    npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_lL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
+    npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
 cast_qL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
@@ -1373,6 +2437,62 @@ for(npy_intp J = 0; J < task_size; J++) {
 
 
 static int
+unsafe_cast_BL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
+    npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_HL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
+    npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
 cast_QL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
@@ -1395,6 +2515,34 @@ cast_QL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
         sb1 /= sizeof(npy_uint32);
 for(npy_intp J = 0; J < task_size; J++) { 
         dest[J] = (npy_uint64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_fL( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
+    npy_uint32 *x1 = (npy_uint32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_float32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_float32)(x1[J*sb1]); 
     }
     return 0;
     }
@@ -1457,6 +2605,258 @@ for(npy_intp J = 0; J < task_size; J++) {
 
 
 static int
+unsafe_cast_1Q( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
+    npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_bool)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_bool)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_bQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
+    npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_hQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
+    npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_lQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
+    npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_qQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
+    npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int64)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_BQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
+    npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_HQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
+    npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_LQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
+    npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_fQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
+    npy_uint64 *x1 = (npy_uint64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_uint64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_uint64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_float32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_uint64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_float32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
 cast_dQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
 {   
     NE_REGISTER store_in = params->program[pc].ret;
@@ -1507,6 +2907,258 @@ cast_DQ( npy_intp task_size, npy_intp pc, const NumExprObject *params )
         sb1 /= sizeof(npy_uint64);
 for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_1f( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
+    npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_bool)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_bool)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_bf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
+    npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_hf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
+    npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_lf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
+    npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_qf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
+    npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int64)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Bf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
+    npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Hf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
+    npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Lf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
+    npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Qf( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
+    npy_float32 *x1 = (npy_float32 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float32) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float32) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint64)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float32);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint64)(x1[J*sb1]); 
     }
     return 0;
     }
@@ -1591,6 +3243,286 @@ cast_Df( npy_intp task_size, npy_intp pc, const NumExprObject *params )
         sb1 /= sizeof(npy_float32);
 for(npy_intp J = 0; J < task_size; J++) { 
         dest[J].real = (npy_float64)(x1[J*sb1]); dest[J].imag=0.0; 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_1d( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_bool *dest = (npy_bool *)params->registers[store_in].mem;
+    npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_bool)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_bool)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_bd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int8 *dest = (npy_int8 *)params->registers[store_in].mem;
+    npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_hd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int16 *dest = (npy_int16 *)params->registers[store_in].mem;
+    npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_ld( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int32 *dest = (npy_int32 *)params->registers[store_in].mem;
+    npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_qd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_int64 *dest = (npy_int64 *)params->registers[store_in].mem;
+    npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_int64)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_int64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Bd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint8 *dest = (npy_uint8 *)params->registers[store_in].mem;
+    npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint8)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint8)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Hd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint16 *dest = (npy_uint16 *)params->registers[store_in].mem;
+    npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint16)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint16)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Ld( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint32 *dest = (npy_uint32 *)params->registers[store_in].mem;
+    npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint32)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_Qd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_uint64 *dest = (npy_uint64 *)params->registers[store_in].mem;
+    npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_uint64)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_uint64)(x1[J*sb1]); 
+    }
+    return 0;
+    }
+
+
+static int
+unsafe_cast_fd( npy_intp task_size, npy_intp pc, const NumExprObject *params )
+{   
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+
+    npy_float32 *dest = (npy_float32 *)params->registers[store_in].mem;
+    npy_float64 *x1 = (npy_float64 *)params->registers[arg1].mem;
+    //npy_intp sb1 = params->registers[arg1].stride;
+    npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof(npy_float64) : params->registers[arg1].stride;
+        
+    if( sb1 == sizeof(npy_float64) ) { // Aligned
+        for(npy_intp J = 0; J < task_size; J++) { 
+    dest[J] = (npy_float32)(x1[J]); 
+}
+        return 0;
+    } 
+    // Strided
+        sb1 /= sizeof(npy_float64);
+for(npy_intp J = 0; J < task_size; J++) { 
+        dest[J] = (npy_float32)(x1[J*sb1]); 
     }
     return 0;
     }
