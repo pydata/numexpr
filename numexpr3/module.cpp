@@ -196,6 +196,8 @@ int numexpr_set_nthreads(int n_thread_new) {
     int T, rc;
     void *status;
 
+    pthread_mutex_lock(&gs.global_mutex);
+
     if( n_thread_new <= 0 ) {
         fprintf(stderr, "Error.  nthreads must be a positive integer");
         return -1;
@@ -237,7 +239,7 @@ int numexpr_set_nthreads(int n_thread_new) {
     if( gs.n_thread > 1 ) {
         reinit_threads(n_thread_old);
     }
-
+    pthread_mutex_unlock(&gs.global_mutex);
     return n_thread_old;
 }
 PyDoc_STRVAR(SetNumThreads__doc__,
@@ -252,7 +254,7 @@ PySet_num_threads(PyObject *self, PyObject *args) {
 }
 
 Py_ssize_t numexpr_set_tempsize(Py_ssize_t newSize) {
-    // WARNING: you must ALWAYS acquire the mutex lock before calling this function
+    pthread_mutex_lock(&gs.global_mutex);
 
     // The bytes of pre-allocated space for temporaries PER THREAD.
     Py_ssize_t oldSize = gs.tempSize;
@@ -271,6 +273,7 @@ Py_ssize_t numexpr_set_tempsize(Py_ssize_t newSize) {
         gs.tempSize = newSize;
         gs.tempStack = (char *)realloc(gs.tempStack, gs.tempSize * gs.n_thread);
     }
+    pthread_mutex_unlock(&gs.global_mutex);
     return oldSize;
 }
 

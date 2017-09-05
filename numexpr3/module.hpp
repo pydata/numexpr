@@ -50,6 +50,7 @@ struct global_state {
     Py_ssize_t tempSize;             // The size of the temporary memory region
 
     // Syncronization variables 
+    pthread_mutex_t global_mutex;    // Previously was a Python threading.Lock()
     pthread_mutex_t count_mutex;
     int count_threads;
     pthread_mutex_t count_threads_mutex;
@@ -72,6 +73,7 @@ struct global_state {
     char **errorMessage;
 
     global_state() {
+        pthread_mutex_init(&global_mutex, NULL);
         n_thread = DEFAULT_THREADS;
         init_threads_done = 0;
         end_threads = 0;

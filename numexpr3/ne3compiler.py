@@ -46,12 +46,6 @@ except ImportError:
     info = print; warn = print; debug = print
 
 
-
-# Due to global state in the C-API, we need to restrict the module to running 
-# one expression per Python process. 
-from threading import Lock
-_NE_RUN_LOCK = Lock()
-
 # interpreter.so/pyd:
 try: 
     import interpreter # For debugging, release should import from .
@@ -1170,12 +1164,10 @@ class NumExpr(object):
                         arg = reg.ref
                     args.append(arg)
             
-        # TODO: move global_state mutex into C-code.
         # debug( "run args::")
         # for arg in args:
         #     debug('    {}'.format(arg) )
-        with _NE_RUN_LOCK:
-            unalloc = self._compiled_exec( *args, **kwargs )
+        unalloc = self._compiled_exec( *args, **kwargs )
 
         # Promotion of magic output
         # debug( "self.assignTarget = {}".format(self.assignTarget) )

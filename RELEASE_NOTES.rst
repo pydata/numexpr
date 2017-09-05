@@ -40,8 +40,6 @@ TODO List:
 
 * consider renaming KIND_SCALAR to KIND_CONST
 * _cast1() for single argument funcs (e.g. 'sin(x)' if x is integer dtype )
-
-* global-state protection mutex in C-interpreter
 * **fix seg-faults found by new test cases**
     1. test_inplace_intermediate
     2. test_inplace_intermediate_magic_output

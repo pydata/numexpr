@@ -491,12 +491,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     int oa_ndim = 0;
     int **op_axes = NULL;
 
-    // Check whether we need to restart threads
-    if (!gs.init_threads_done || gs.pid != getpid())
-        numexpr_set_nthreads(gs.n_thread);
-            
-    // Don't force serial mode by default
-    gs.force_serial = 0;
+    
 
     n_input = (int)PyTuple_Size(args);
 
@@ -874,6 +869,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     }
     */
 
+    
+
     // printf( "NumExpr_run() #8\n" ); 
     // A case with a single constant output
     if (n_input == 0) {
@@ -920,6 +917,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         Py_INCREF(returnArray);
         goto cleanup_and_exit;
     }
+
+    
 
     // printf( "NumExpr_run() #9\n" ); 
     // Allocate the iterator or nested iterators
@@ -1060,15 +1059,24 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 //    }
     
 
+    //////////// NO ACCESS to global_state above this point //////////////
+    pthread_mutex_lock(&gs.global_mutex);
 
+    // Check whether we need to restart threads
+    if (!gs.init_threads_done || gs.pid != getpid())
+        numexpr_set_nthreads(gs.n_thread);
+        
+    // Don't force serial mode by default
+    // gs.force_serial = 0;
     // For small calculations, just use 1 thread
     // RAM: this should scale with the number of threads perhaps?  Only use 
     // 1 thread per BLOCK_SIZE1 in the iterator?
     // Also this is still on an element rather than bytesize basis.
-    if (NpyIter_GetIterSize(iter) < 2*BLOCK_SIZE1) {
-        // printf( "NumExpr_run() FORCING SERIAL MODE\n" ); 
-        gs.force_serial = 1;
-    }
+    gs.force_serial = NpyIter_GetIterSize(iter) < 2*BLOCK_SIZE1;
+    // if (NpyIter_GetIterSize(iter) < 2*BLOCK_SIZE1) {
+    //     // printf( "NumExpr_run() FORCING SERIAL MODE\n" ); 
+    //     gs.force_serial = 1;
+    // }
 
     // Reductions do not support parallel execution yet
     if (is_reduction) {
@@ -1079,6 +1087,9 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                              reduction_outer_loop, need_output_buffering,
                              &pc_error);
                         
+    pthread_mutex_unlock(&gs.global_mutex);
+    //////////// NO ACCESS to global_state below this point //////////////
+
     // printf( "NumExpr_run() #12\n" ); 
     if (r < 0) {
         if (r == -1) {
