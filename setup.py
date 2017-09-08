@@ -363,9 +363,9 @@ def setup_package():
 
 if __name__ == '__main__':
     # On cloning from GitHub the lookup dict doesn't exist so we always must run the generator.
-    # Otherwise the numpy.distutils check for the file occurs before generation.
-    # if not os.path.isfile('numexpr3/lookup.pkl'):
-    #     run_generator()
+    # Otherwise the numpy.distutils check for the file occurs before build_ext is called.
+    if not os.path.isfile('numexpr3/lookup.pkl'):
+        run_generator()
 
     t0 = time.time()
     sp = setup_package()
