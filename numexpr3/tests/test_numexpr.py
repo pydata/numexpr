@@ -81,7 +81,7 @@ class test_numexpr(unittest.TestCase):
         # in unittest that does that:
         # https://github.com/python/cpython/tree/master/Lib/unittest
         # This script works fine when run independantly.
-        ''''
+        '''
         import gc
         gc.enable()
         logger.warning('Test expiry of weak reference')
@@ -138,21 +138,17 @@ class test_numexpr(unittest.TestCase):
 
     def test_inplace_intermediate(self):
         # When the return array is also a named intermediate assignment target
-        '''
         print( 'Test in-place named intermediate' )
         y = np.arange(self.ssize)
         x = np.empty_like(y)
         ne3.NumExpr( 'x = 3.5 * y; x = x - y' )()
         npt.assert_array_almost_equal( x, (3.5*y) - y )
-        '''
 
     def test_named_intermediate_magic_output(self):
-        '''
         print( 'Test in-place named intermediate with magic output' )
         y = np.arange(self.ssize)
         ne3.NumExpr( 'x = 3.5 * y; x = x - y' )()
-        npt.assert_array_almost_equal( x, (3.5*y) - y )
-        '''
+        npt.assert_array_almost_equal( locals()['x'], (3.5*y) - y )
 
     def test_changing_singleton(self):
         # When a single-valued array is changed (i.e. it should be KIND_ARRAY, not KIND_SCALAR)
@@ -222,13 +218,13 @@ class test_numexpr(unittest.TestCase):
             c.real = a; c.imag = b
             return c
 
-        a = np.linspace( -1, 1, LARGE_SIZE, dtype='float32' )
-        b = np.linspace( -1, 1, LARGE_SIZE, dtype='float32' )
+        a = np.linspace( -1, 1, self.ssize, dtype='float32' )
+        b = np.linspace( -1, 1, self.ssize, dtype='float32' )
         z = ( a + 1j * b ).astype( 'complex64' )
         x = z.imag
         x = np.sin(complex64_func(a,b)).real + z.imag
-        ne3.NumExpr('y = sin(complex(a, b)).real + z.imag')()
-        npt.assert_array_almost_equal(x, locals()['y'])
+        func = ne3.NumExpr('sin(complex(a, b)).real + z.imag')
+        npt.assert_array_almost_equal(x, func())
 		
     def test_complex128(self):
         logger.info( 'Test complex128' )
@@ -237,22 +233,24 @@ class test_numexpr(unittest.TestCase):
             c.real = a; c.imag = b
             return c
 
-        a = np.linspace( -1, 1, LARGE_SIZE, dtype='float64' )
-        b = np.linspace( -1, 1, LARGE_SIZE, dtype='float64' )
+        a = np.linspace( -1, 1, self.ssize, dtype='float64' )
+        b = np.linspace( -1, 1, self.ssize, dtype='float64' )
         z = a + 1j * b
         x = z.imag
         x = np.sin(complex_func(a, b)).real + z.imag
         ne3.NumExpr('y = sin(complex(a, b)).real + z.imag')()
         npt.assert_array_almost_equal(x, locals()['y'])
+
         
     def test_complex_strides(self):
         logger.info( 'Test complex strides' )
-        a = np.arange(self.ssize)
-        b = np.arange(self.ssize) * 1e-2
+        a = np.linspace( -1, 1, self.ssize, dtype='float32' )
+        b = np.linspace( -0.01, 0.01, self.ssize, dtype='float32' )
         z1 = (a + 1j * b)[::2]
         z2 = (a - 1j * b)[::2]
         ne3.evaluate('out = z1 + z2' )
         npt.assert_array_almost_equal( locals()['out'], z1+z2 )
+
 
     def test_list_literal(self):
         logger.info( 'Test list literal' )
@@ -262,7 +260,7 @@ class test_numexpr(unittest.TestCase):
 
     def test_casting(self):
         logging.info( "Test safe, unsafe, and func helper casting")
-        # Only safe casts are supported at the moment, unfortunately.
+        
         i = np.arange(self.ssize).astype('int32')
         # 'Safe' casts
         f = ne3.NumExpr('float32(i)')()
@@ -706,20 +704,11 @@ def _worker(qout=None):
 # Case test for subprocesses (via multiprocessing module)
 class test_multicore(unittest.TestCase):
 
-    def test_changing_nthreads_decrement(self):
-        a = np.linspace(-1, 1, LARGE_SIZE)
-        b = ((0.25 * a + 0.75) * a - 1.5) * a - 2
-        c = np.empty_like(a)
-        for nthreads in [4,2,1]:
-            ne3.set_num_threads(nthreads)
-            ne3.evaluate('c = ((0.25*a + 0.75)*a - 1.5)*a - 2')
-            npt.assert_array_almost_equal(b, c)
-
     def test_changing_nthreads_increment(self):
         a = np.linspace(-1, 1, LARGE_SIZE)
         b = ((0.25 * a + 0.75) * a - 1.5) * a - 2
         c = np.empty_like(a)
-        for nthreads in [1,2,4]:
+        for nthreads in [1,2,3,2,1,2,3]:
             ne3.set_num_threads(nthreads)
             ne3.evaluate('c=((0.25*a + 0.75)*a - 1.5)*a - 2')
             npt.assert_array_almost_equal(b, c)
@@ -772,13 +761,12 @@ class test_multicore(unittest.TestCase):
         pass
 
 
-def test():
+def test( verbosity=2 ):
     '''
     Run all the tests in the test suite.
     '''
-
     ne3.print_info()
-    return unittest.TextTestRunner( verbosity=2 ).run( suite() )
+    return unittest.TextTestRunner( verbosity=verbosity ).run( suite() )
 
 
 test.__test__ = False

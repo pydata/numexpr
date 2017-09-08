@@ -1233,8 +1233,6 @@ class NumExpr(object):
 
         # Else case: no free temporaries, create a new one
         tempToken = next( self._regCount )
-        # From _cast2 we can get a request to 
-        # FIXME: _cast2 should re-use the temporary 
         if name is None:
             name = tempToken
         
@@ -1331,7 +1329,6 @@ class NumExpr(object):
         # If a function with appropriate dtype doesn't exist, make a new temporary
         # Generally most functions are available as float32 and float64, occassionally
         # complex64 and complex128
-        print( "FIXME: _cast1 opsig = {}".format(opSig) )
 
         funcName, castConvention, dchar = opSig
         castDchar = _CAST1_SUGGEST[dchar]
@@ -1347,7 +1344,7 @@ class NumExpr(object):
             castRegister.dchar = castDchar
             
         self._codeStream.write( b"".join( 
-                    (OPTABLE[('cast',self.casting,castDchar,dchar)][0], castRegister.token, 
+                    (OPTABLE[('cast',castConvention,castDchar,dchar)][0], castRegister.token, 
                                 unaryRegister.token, _NULL_REG, _NULL_REG)  ) )
         return castRegister, castSig
 

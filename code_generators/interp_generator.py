@@ -114,8 +114,8 @@ def VEC_LOOP( expr ):
     expr = expr.replace( '$ARG2', ARG(2) )
     expr = expr.replace( '$ARG1', ARG(1) )
     return '''for(npy_intp J = 0; J < task_size; J++) { 
-    EXPR; 
-}'''.replace( 'EXPR', expr ) 
+            EXPR; 
+        }'''.replace( 'EXPR', expr ) 
  
 def STRIDED_LOOP( expr ):
     expr = expr.replace( '$ARG3', ARG_STRIDE(3) )
@@ -125,7 +125,7 @@ def STRIDED_LOOP( expr ):
     if 'x3' in expr: retStr += '    sb3 /= sizeof($DTYPE3);\n';
     if 'x2' in expr: retStr += '    sb2 /= sizeof($DTYPE2);\n';
     if 'x1' in expr: retStr += '    sb1 /= sizeof($DTYPE1);\n';
-    retStr += '''for(npy_intp J = 0; J < task_size; J++) { 
+    retStr += '''    for(npy_intp J = 0; J < task_size; J++) { 
         EXPR; 
     }'''.replace( 'EXPR', expr ) 
     return retStr
@@ -141,7 +141,7 @@ def VEC_ARG0( expr ):
     
     VEC_LOOP(expr);
     return 0;
-    }
+}
 '''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) )
 
 # We could write a more general function suitable for any number of arguments,
@@ -158,7 +158,6 @@ def VEC_ARG1(expr):
 
     $DTYPE0 *dest = ($DTYPE0 *)params->registers[store_in].mem;
     $DTYPE1 *x1 = ($DTYPE1 *)params->registers[arg1].mem;
-    //npy_intp sb1 = params->registers[arg1].stride;
     npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof($DTYPE1) : params->registers[arg1].stride;
         
     if( sb1 == sizeof($DTYPE1) ) { // Aligned
@@ -168,7 +167,7 @@ def VEC_ARG1(expr):
     // Strided
     STRIDED_LOOP(expr)
     return 0;
-    }
+}
 '''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
 
 def VEC_ARG2(expr):
@@ -183,10 +182,8 @@ def VEC_ARG2(expr):
     
     $DTYPE0 *dest = ($DTYPE0 *)params->registers[store_in].mem;
     $DTYPE1 *x1 = ($DTYPE1 *)params->registers[arg1].mem;
-    //npy_intp sb1 = params->registers[arg1].stride;
     npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof($DTYPE1) : params->registers[arg1].stride;
     $DTYPE2 *x2 = ($DTYPE2 *)params->registers[arg2].mem;
-    //npy_intp sb2 = params->registers[arg2].stride;
     npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof($DTYPE2) : params->registers[arg2].stride;
                                     
     if( sb1 == sizeof($DTYPE1) && sb2 == sizeof($DTYPE2) ) { // Aligned
@@ -196,7 +193,7 @@ def VEC_ARG2(expr):
     // Strided
     STRIDED_LOOP(expr)
     return 0;
-    }
+}
 '''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
 
 
@@ -214,13 +211,10 @@ def VEC_ARG3(expr):
     
     $DTYPE0 *dest = ($DTYPE0 *)params->registers[store_in].mem;
     $DTYPE1 *x1 = ($DTYPE1 *)params->registers[arg1].mem;
-    //npy_intp sb1 = params->registers[arg1].stride;
     npy_intp sb1 = (params->registers[arg1].kind == KIND_TEMP) ? sizeof($DTYPE1) : params->registers[arg1].stride;
     $DTYPE2 *x2 = ($DTYPE2 *)params->registers[arg2].mem;
-    //npy_intp sb2 = params->registers[arg2].stride;
     npy_intp sb2 = (params->registers[arg2].kind == KIND_TEMP) ? sizeof($DTYPE2) : params->registers[arg2].stride;
     $DTYPE3 *x3 = ($DTYPE3 *)params->registers[arg3].mem;
-    //npy_intp sb3 = params->registers[arg3].stride;
     npy_intp sb3 = (params->registers[arg3].kind == KIND_TEMP) ? sizeof($DTYPE3) : params->registers[arg3].stride;
                                 
     if( sb1 == sizeof($DTYPE1) && sb2 == sizeof($DTYPE2) && sb3 == sizeof($DTYPE3) ) { // Aligned
@@ -230,7 +224,7 @@ def VEC_ARG3(expr):
     // Strided
     STRIDED_LOOP(expr)
     return 0;
-    }
+}
 '''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
 
 # This is a function lookup helper dict
@@ -311,68 +305,68 @@ VEC_ARGN = { 0: VEC_ARG0, 1: VEC_ARG1, 2: VEC_ARG2, 3: VEC_ARG3 }
 def VEC_ARG0_ALIGNED(expr):
     return '''
 {
-        NE_REGISTER store_in = params->program[pc].ret;
-        BOUNDS_CHECK(store_in);
+    NE_REGISTER store_in = params->program[pc].ret;
+    BOUNDS_CHECK(store_in);
 
-        char *dest = params->registers[store_in].mem;
-        EXPR;
-        return 0;
-    }
+    char *dest = params->registers[store_in].mem;
+    EXPR;
+    return 0;
+}
 '''.replace( 'EXPR', expr )
 
 def VEC_ARG1_ALIGNED(expr):
     return '''
 {
-        NE_REGISTER store_in = params->program[pc].ret;
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
 
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        EXPR;
-        return 0;
-    }
+    char *dest = params->registers[store_in].mem;
+    char *x1 = params->registers[arg1].mem;
+    EXPR;
+    return 0;
+}
 '''.replace( 'EXPR', expr )
 
 def VEC_ARG2_ALIGNED(expr):
     return '''
 {
-        NE_REGISTER store_in = params->program[pc].ret;
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        NE_REGISTER arg2 = params->program[pc].arg2;
-        
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
-        BOUNDS_CHECK(arg2);
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        char *x2 = params->registers[arg2].mem;
-        EXPR;
-        return 0;
-    }
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    char *dest = params->registers[store_in].mem;
+    char *x1 = params->registers[arg1].mem;
+    char *x2 = params->registers[arg2].mem;
+    EXPR;
+    return 0;
+}
 '''.replace( 'EXPR', expr )
 
 def VEC_ARG3_ALIGNED(expr):
     return '''
 {
-        NE_REGISTER store_in = params->program[pc].ret;
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        NE_REGISTER arg2 = params->program[pc].arg2;
-        NE_REGISTER arg3 = params->program[pc].arg3;
-        
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
-        BOUNDS_CHECK(arg2);
-        BOUNDS_CHECK(arg3);
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    NE_REGISTER arg3 = params->program[pc].arg3;
+    
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    BOUNDS_CHECK(arg3);
 
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        char *x2 = params->registers[arg2].mem;
-        char *x3 = params->registers[arg3].mem;
-        EXPR;
-        return 0;
-    }
+    char *dest = params->registers[store_in].mem;
+    char *x1 = params->registers[arg1].mem;
+    char *x2 = params->registers[arg2].mem;
+    char *x3 = params->registers[arg3].mem;
+    EXPR;
+    return 0;
+}
 '''.replace( 'EXPR', expr )
 VEC_ARGN_ALIGNED = { 0: VEC_ARG0_ALIGNED, 1: VEC_ARG1_ALIGNED, 2: VEC_ARG2_ALIGNED, 3: VEC_ARG3_ALIGNED }
 
@@ -382,77 +376,77 @@ VEC_ARGN_ALIGNED = { 0: VEC_ARG0_ALIGNED, 1: VEC_ARG1_ALIGNED, 2: VEC_ARG2_ALIGN
 def VEC_ARG0_STRIDED(expr):
     return '''
 {
-        NE_REGISTER store_in = params->program[pc].ret;
-        BOUNDS_CHECK(store_in);
+    NE_REGISTER store_in = params->program[pc].ret;
+    BOUNDS_CHECK(store_in);
 
-        char *dest = params->registers[store_in].mem;
-       
-        EXPR;
-        return 0;
-    }
+    char *dest = params->registers[store_in].mem;
+    
+    EXPR;
+    return 0;
+}
 '''.replace( 'EXPR', expr )
 
 def VEC_ARG1_STRIDED(expr):
     return '''
 {
-        NE_REGISTER store_in = params->program[pc].ret;
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
 
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        npy_intp sb1 = params->registers[arg1].stride;
-     
-        EXPR;
-        return 0;
-    }
+    char *dest = params->registers[store_in].mem;
+    char *x1 = params->registers[arg1].mem;
+    npy_intp sb1 = params->registers[arg1].stride;
+    
+    EXPR;
+    return 0;
+}
 '''.replace( 'EXPR', expr )
 
 def VEC_ARG2_STRIDED(expr):
     return '''
 {
-        NE_REGISTER store_in = params->program[pc].ret;
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        NE_REGISTER arg2 = params->program[pc].arg2;
-       
-        BOUNDS_CHECK(store_in);
-        BOUNDS_CHECK(arg1);
-        BOUNDS_CHECK(arg2);
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        npy_intp sb1 = params->registers[arg1].stride;
-        char *x2 = params->registers[arg2].mem;
-        npy_intp sb2 = params->registers[arg2].stride;
-       
-        EXPR;
-        return 0;
+    NE_REGISTER store_in = params->program[pc].ret;
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    
+    BOUNDS_CHECK(store_in);
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    char *dest = params->registers[store_in].mem;
+    char *x1 = params->registers[arg1].mem;
+    npy_intp sb1 = params->registers[arg1].stride;
+    char *x2 = params->registers[arg2].mem;
+    npy_intp sb2 = params->registers[arg2].stride;
+    
+    EXPR;
+    return 0;
     }
 '''.replace( 'EXPR', expr )
 
 def VEC_ARG3_STRIDED(expr):
     return '''
 {
-        NE_REGISTER store_in = params->program[pc].ret;
-        BOUNDS_CHECK(store_in);
-        NE_REGISTER arg1 = params->program[pc].arg1;
-        NE_REGISTER arg2 = params->program[pc].arg2;
-        NE_REGISTER arg3 = params->program[pc].arg3;
-        BOUNDS_CHECK(arg1);
-        BOUNDS_CHECK(arg2);
-        BOUNDS_CHECK(arg3);
+    NE_REGISTER store_in = params->program[pc].ret;
+    BOUNDS_CHECK(store_in);
+    NE_REGISTER arg1 = params->program[pc].arg1;
+    NE_REGISTER arg2 = params->program[pc].arg2;
+    NE_REGISTER arg3 = params->program[pc].arg3;
+    BOUNDS_CHECK(arg1);
+    BOUNDS_CHECK(arg2);
+    BOUNDS_CHECK(arg3);
 
-        char *dest = params->registers[store_in].mem;
-        char *x1 = params->registers[arg1].mem;
-        npy_intp sb1 = params->registers[arg1].stride;
-        char *x2 = params->registers[arg2].mem;
-        npy_intp sb2 = params->registers[arg2].stride;
-        char *x3 = params->registers[arg3].mem;
-        npy_intp sb3 = params->registers[arg3].stride;
-       
-        EXPR;
-        return 0;
-    } 
+    char *dest = params->registers[store_in].mem;
+    char *x1 = params->registers[arg1].mem;
+    npy_intp sb1 = params->registers[arg1].stride;
+    char *x2 = params->registers[arg2].mem;
+    npy_intp sb2 = params->registers[arg2].stride;
+    char *x3 = params->registers[arg3].mem;
+    npy_intp sb3 = params->registers[arg3].stride;
+    
+    EXPR;
+    return 0;
+} 
 '''.replace( 'EXPR', expr )
 VEC_ARGN_STRIDED = { 0:VEC_ARG0_STRIDED, 1:VEC_ARG1_STRIDED, 2:VEC_ARG2_STRIDED, 3:VEC_ARG3_STRIDED }
 
@@ -1292,6 +1286,7 @@ def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.
         
     ###### Save the lookup dict for Python ######
     with open( os.path.join(NE_DIR, 'lookup.pkl' ), 'wb' ) as lookup:
+        pythonTable['os.name'] = os.name
         pickle.dump( pythonTable, lookup )
         
     ###### Write autotest_GENERATED.py ######

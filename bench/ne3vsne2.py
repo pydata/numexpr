@@ -11,170 +11,96 @@ import numpy as np
 import numexpr as ne2
 import numexpr3 as ne3
 import timeit
-from time import time, sleep
+from time import perf_counter, sleep
 
-expr = 'A_d * B_d + C_d'
 
-setup_ne3 = '''
+
+
+def bench( expr, arrSizes, dtypes, N_threads=4, tries=5 ):
+    print( "Benchmarking for {} threads".format(N_threads) )
+    times_np = np.zeros( [len(dtypes), len(arrSizes)], dtype='float64' )
+    times_ne2 = np.zeros( [len(dtypes), len(arrSizes)], dtype='float64' )
+    times_ne3 = np.zeros( [len(dtypes), len(arrSizes)], dtype='float64' )
+    for I, dtype in enumerate(dtypes):
+        for J, arrSize in enumerate(arrSizes):
+        
+            setup_ne3 = '''
 import numpy as np
 import numexpr3 as ne3
-ne3.set_num_threads(12)
+ne3.set_num_threads({0})
 
 np.random.seed(42)
-A_d = np.random.uniform( size=arrSize )
-B_d = np.random.uniform( size=arrSize )
-C_d = np.random.uniform( size=arrSize )
-out_d = np.zeros( arrSize )
-'''
+A = np.random.uniform( size={1} ).astype('{2}')
+B = np.random.uniform( size={1} ).astype('{2}')
+C = np.random.uniform( size={1} ).astype('{2}')
+out = np.zeros( {1}, dtype='{2}' )
+neFunc = ne3.NumExpr( 'out={3}' )
+'''.format( N_threads, arrSize, dtype, expr )
 
-setup_ne2 = '''
+            setup_ne2 = '''
 import numpy as np
-import numexpr as ne2
-ne2.set_num_threads(12)
+import numexpr as ne
+ne.set_num_threads({0})
 
 np.random.seed(42)
-A_d = np.random.uniform( size=arrSize )
-B_d = np.random.uniform( size=arrSize )
-C_d = np.random.uniform( size=arrSize )
-out_d = np.zeros( arrSize )
-'''
+A = np.random.uniform( size={1} ).astype('{2}')
+B = np.random.uniform( size={1} ).astype('{2}')
+C = np.random.uniform( size={1} ).astype('{2}')
+out = np.zeros( {1}, dtype='{2}' )
+'''.format( N_threads, arrSize, dtype )
 
-tries = 50
-arraySizes = 2**np.arange(14,22)
-times_np = 1E6*np.ones_like(arraySizes, dtype='float64' )
-times_ne3 = 1E6*np.ones_like(arraySizes, dtype='float64' )
-times_ne2 = 1E6*np.ones_like(arraySizes, dtype='float64' )
-
-ne3.set_num_threads(8)
-ne2.set_num_threads(8)
-
-#### FLOAT64 ####
-for I, arrSize in enumerate( arraySizes ):
-    times_np[I] = timeit.timeit( 'out_d=' + expr, 
-            'arrSize={}\n'.format(arrSize) + setup_ne3, number=tries )
-    
-        
-# times_ne3[I] = timeit.timeit( "ne3.evaluate('out_d={}',stackDepth=3)".format(expr), 
-#            'arrSize={}\n'.format(arrSize) + setup_ne3, number=tries )
-# imes_ne2[I] = timeit.timeit( '''ne2.evaluate('{}', out=out_d); 
-#ne2._names_cache = ne2.utils.CacheDict(255);
-#ne2._numexpr_cache = ne2.utils.CacheDict(255);'''.format(expr), 
-#            'arrSize={}\n'.format(arrSize) + setup_ne2, number=tries )
-
-    
-for I, arrSize in enumerate( arraySizes ):
-    np.random.seed(42)
-    A_d = np.random.uniform( size=arrSize )
-    B_d = np.random.uniform( size=arrSize )
-    C_d = np.random.uniform( size=arrSize )
-    out_d = np.zeros( arrSize )    
-    
-    for J in np.arange(tries):
-        t0 = time()
-        ne3.evaluate( 'out_d=A_d*B_d + C_d')
-        times_ne3[I] = np.minimum( time() - t0, times_ne3[I] )
-        ne3.wisdom.clear()
-
-for I, arrSize in enumerate( arraySizes ):
-    np.random.seed(42)
-    A_d = np.random.uniform( size=arrSize )
-    B_d = np.random.uniform( size=arrSize )
-    C_d = np.random.uniform( size=arrSize )
-    out_d = np.zeros( arrSize )
-
-    for J in np.arange(tries):
-        t0 = time()
-        ne2.evaluate( 'A_d*B_d + C_d', out=out_d )
-        times_ne2[I] = np.minimum( time() - t0, times_ne2[I] )
-        # Turn off the CacheDict as it defeats the purpose of benchmarking here
-        ne2.necompiler._names_cache.clear()
-        ne2.necompiler._numexpr_cache.clear()
-        
-              
-    
-times_np /= tries
-#times_ne2 /= tries
-#times_ne3 /= tries
-
-plt.figure()
-plt.plot( arraySizes/1024, times_np, '.-', label='NumPy', markerfacecolor='k' )
-plt.plot( arraySizes/1024, times_ne2, '.-',  label='NumExpr2', markerfacecolor='k' )
-plt.plot( arraySizes/1024, times_ne3, '.-', label='NumExpr3', markerfacecolor='k' )
-plt.legend( loc='best' )
-plt.xlabel( 'Array size (kElements)' )
-plt.ylabel( 'Computation time (s)' )
-plt.xlim( [0, np.max(arraySizes/1024)] )
-plt.ylim( [0, np.max(times_np)] )
-plt.title( "'a*b + c' with float-64" )
-plt.savefig( "NE2vsNE3_float64.png", dpi=200 )
-
-
-### COMPLEX64 ####
-times_np_F = 1E6*np.ones_like(arraySizes, dtype='float64' )
-times_ne3_F = 1E6*np.ones_like(arraySizes, dtype='float64' )
-times_ne2_F = 1E6*np.ones_like(arraySizes, dtype='float64' )
-
-
-cexpr = 'A_F*B_F + C_F'
-setup_np_F = '''
+            setup_np = '''
 import numpy as np
-import numexpr3 as ne3
-ne3.set_num_threads(12)
+from numpy import sqrt
+try:
+    import mkl
+    mkl.set_num_threads({0})
+except ImportError:
+    pass
 
 np.random.seed(42)
-A_F = np.random.uniform( size=arrSize ).astype( 'complex64' )
-B_F = np.random.uniform( size=arrSize ).astype( 'complex64' )
-C_F = np.random.uniform( size=arrSize ).astype( 'complex64' )
-'''
-for I, arrSize in enumerate( arraySizes ):
-    
-    times_np_F[I] = timeit.timeit( 'out_F=' + cexpr, 
-            'arrSize={}\n'.format(arrSize) + setup_np_F, number=tries )
-    
+A = np.random.uniform( size={1} ).astype('{2}')
+B = np.random.uniform( size={1} ).astype('{2}')
+C = np.random.uniform( size={1} ).astype('{2}')
+out = np.zeros( {1}, dtype='{2}' )
+'''.format( N_threads, arrSize, dtype)
 
-for I, arrSize in enumerate( arraySizes ):
-    np.random.seed(42)
-    A_F = np.random.uniform( size=arrSize ).astype( 'complex64' )
-    B_F = np.random.uniform( size=arrSize ).astype( 'complex64' )
-    C_F = np.random.uniform( size=arrSize ).astype( 'complex64' )
-    out_F = np.zeros( arrSize, dtype='complex64' )    
-    
-    for J in np.arange(tries):
-        t0 = time()
-        ne3.evaluate( 'out_F=A_F*B_F + C_F' )
-        times_ne3_F[I] = np.minimum( time() - t0, times_ne3_F[I] )
-        ne3.wisdom.clear()
+            times_np[I,J] = timeit.timeit( 'out = ' + expr, setup_np, number=tries )
 
-for I, arrSize in enumerate( arraySizes ):
-    np.random.seed(42)
-    A_F = np.random.uniform( size=arrSize ).astype( 'complex64' )
-    B_F = np.random.uniform( size=arrSize ).astype( 'complex64' )
-    C_F = np.random.uniform( size=arrSize ).astype( 'complex64' )
-    out_D = np.zeros( arrSize, dtype='complex128' )
-    for J in np.arange(tries):
-        t0 = time()
-        ne2.evaluate( 'A_F*B_F + C_F', out=out_D )
-        times_ne2_F[I] = np.minimum( time() - t0, times_ne2_F[I] )
-        # Turn off the CacheDict as it defeats the purpose of benchmarking here
-        ne2.necompiler._names_cache.clear()
-        ne2.necompiler._numexpr_cache.clear()
-        
-              
-# TODO: also make NumPy 'best-of' rather than a mean
-times_np_F /= tries
-#times_ne2_F /= tries
-#times_ne3_F /= tries
+            times_ne3[I,J] = timeit.timeit( 'neFunc()'.format(expr),
+                                        setup_ne3, number=tries )
 
-plt.figure()
-plt.plot( arraySizes/1024, times_np_F, '.-', label='NumPy', markerfacecolor='k' )
-plt.plot( arraySizes/1024, times_ne2_F, '.-',  label='NumExpr2', markerfacecolor='k' )
-plt.plot( arraySizes/1024, times_ne3_F, '.-', label='NumExpr3', markerfacecolor='k' )
-plt.legend( loc='best' )
-plt.xlabel( 'Array size (kElements)' )
-plt.ylabel( 'Computation time (s)' )
-plt.xlim( [0, np.max(arraySizes/1024)] )
-plt.ylim( [0, np.max(times_np)] )
-plt.title( "'a*b + c' with complex-64" )
-plt.savefig( "NE2vsNE3_complex64.png", dpi=200 )
+            times_ne2[I,J] = timeit.timeit( "ne.evaluate('{0}', out=out)".format(expr),
+                                        setup_ne2, number=tries )
+
+        # times_np /= tries
+        # times_ne2 /= tries
+        # times_ne3 /= tries
+
+        fit_np = np.polyfit(arraySizes, times_np[I,:], 1)
+        fit_ne2 = np.polyfit(arraySizes, times_ne2[I,:], 1)
+        fit_ne3 = np.polyfit(arraySizes, times_ne3[I,:], 1)
 
 
+        plt.figure()
+        plt.plot( arraySizes/1024, times_np[I,:], '.-', label='NumPy', markerfacecolor='k' )
+        plt.plot( arraySizes/1024, times_ne2[I,:], '.-',  label='NumExpr2', markerfacecolor='k' )
+        plt.plot( arraySizes/1024, times_ne3[I,:], '.-', label='NumExpr3', markerfacecolor='k' )
+        plt.legend( loc='best' )
+        plt.xlabel( 'Array size (kElements)' )
+        plt.ylabel( 'Computation time (s)' )
+        plt.xlim( [0, np.max(arraySizes/1024)] )
+        plt.ylim( [0, np.max(times_np)] )
+        plt.title( "'{0}' with {1}".format(expr, dtype) )
+        plt.savefig( "NE2vsNE3_{}.png".format(dtype), dpi=200 )
+
+        print( "===RESULTS for {} for dtype {}===".format(expr,dtype) )
+        print( "    Mean speedup for NE3 versus NumPy: {:.1f} %".format( 100.0*fit_np[0]/fit_ne3[0] ) )
+        print( "    Mean speedup for NE3 versus NE2: {:.1f} %".format( 100.0*fit_ne2[0]/fit_ne3[0] ) )
+
+
+N_threads = 4
+expr = 'sqrt(A*B + 2*C)'
+arraySizes = np.logspace(14,22,25,base=2).astype('int64')
+dtypes = ['float32', 'float64', 'complex128']
+bench( expr, arraySizes, dtypes, N_threads=N_threads, tries=5 )

@@ -36,21 +36,28 @@ Changes from 3.0.0 to 3.0.1
   and are instead singleton arrays with a `numpy.nditer` stride of zero.
 * Complex division with float-32 is now explicitly a fast but lower precision
   implementation compared to NumPy.
+* Benchmark profile points can be set with the macros in `benchmark.hpp`
 
 TODO List:
 ^^^^^^^^^^
 
 * consider renaming KIND_SCALAR to KIND_CONST
 * **fix seg-faults found by new test cases**
-    1. test_inplace_intermediate
-    2. test_inplace_intermediate_magic_output
     3. test_zerodim1d
     4. test_zerodim3d
 * Don't overwrite PyObject_HEAD in pickling
-* module-level properties for ncores, nthreads
+* module-level properties for ncores, nthreads (???)
 * documentation and tutorial RSTs
-* better benchmarking
-
+* optimization
+  1.) BLOCK_SIZE
+    - Optimize by dtype.itemsize?
+  2.) TASKS_PER_THREAD 
+    - (optimize to reduce thread barrier encounters?)
+    - Largish-values seem to work well for larger arrays
+  3.) benchmark keeping the GIL; releasing it doesn't serve much purpose.
+  4.) Seperate branches for stride=0 operations against scalars.
+    - Use a switch-case with a pre-computed mask
+  5.) Generally MSVC is mediocre at auto-vectorization compared to GCC
 
 
 ======================================

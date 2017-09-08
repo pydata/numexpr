@@ -111,11 +111,9 @@ int pthread_cond_wait(pthread_cond_t *cond, CRITICAL_SECTION *mutex)
 {
     int last_waiter;
 
-    //printf( "cond_wait #1\n" );
     EnterCriticalSection(&cond->waiters_lock);
     cond->waiters++;
     LeaveCriticalSection(&cond->waiters_lock);
-    //printf( "cond_wait #2\n" );
     /*
      * Unlock external mutex and wait for signal.
      * NOTE: we've held mutex locked long enough to increment
@@ -124,7 +122,6 @@ int pthread_cond_wait(pthread_cond_t *cond, CRITICAL_SECTION *mutex)
      */
     LeaveCriticalSection(mutex);
 
-    //printf( "cond_wait #3, cond = %p, cond->sema = %d\n", cond, cond->sema );
     /* let's wait - ignore return value */
     WaitForSingleObject(cond->sema, INFINITE);
 
@@ -134,13 +131,10 @@ int pthread_cond_wait(pthread_cond_t *cond, CRITICAL_SECTION *mutex)
      * But if we continued due to cond_signal, we do not have to do that
      * because the signaling thread knows that only one waiter continued.
      */
-    //printf( "cond_wait #4\n" );
     EnterCriticalSection(&cond->waiters_lock);
     cond->waiters--;
-    //printf( "cond_wait #5\n" );
     last_waiter = cond->was_broadcast && cond->waiters == 0;
     LeaveCriticalSection(&cond->waiters_lock);
-    //printf( "cond_wait #6\n" );
     if (last_waiter) {
         /*
          * cond_broadcast was issued while mutex was held. This means
@@ -152,7 +146,6 @@ int pthread_cond_wait(pthread_cond_t *cond, CRITICAL_SECTION *mutex)
          * The last waiter must tell the broadcasting thread that it
          * can go on.
          */
-        //printf( "cond_wait #7\n" ); 
         SetEvent(cond->continue_broadcast);
         /*
          * Now we go on to contend with all other waiters for
@@ -160,7 +153,6 @@ int pthread_cond_wait(pthread_cond_t *cond, CRITICAL_SECTION *mutex)
          */
     }
     /* lock external mutex again */
-    //printf( "cond_wait #8\n" );
     EnterCriticalSection(mutex);
 
     return 0;

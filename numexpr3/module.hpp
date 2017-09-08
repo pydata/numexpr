@@ -30,8 +30,6 @@ struct global_state {
     int n_thread;                    // number of desired threads in pool
     int init_threads_done;           // pool of threads initialized?
     int end_threads;                 // should exisiting threads end?
-    // RAM: these fixed length arrays will have to become pointers if we 
-    // want to get rid of MAX_THREADS
     pthread_t* threads;              // ARRAY, opaque structure for threads
     int* tids;                       // ARRAY, ID per each thread
     npy_intp gindex;                 // global index for all threads
@@ -42,11 +40,12 @@ struct global_state {
 
     // Program control and registry structs
     NumExprObject* params;           // ARRAY, copies the programs and registers for each thread.
+    char* registerArena;             // Holds n_threads * MAXARGS * sizeof(NumExprReg) memory in a block
 
     // Temporaries in a pre-allocated block
-    // A private pool/stack for temporaries so the interpreter does not have to 
+    // A private pool/arena for temporaries so the interpreter does not have to 
     // allocate and deallocate memory with each execution.
-    char* tempStack;                 // The pointer to the temporary memory region
+    char* tempArena;                 // The pointer to the temporary memory region
     Py_ssize_t tempSize;             // The size of the temporary memory region
 
     // Syncronization variables 
@@ -73,23 +72,31 @@ struct global_state {
     char **errorMessage;
 
     global_state() {
+        // Initialize mutex and condition variable objects
+        pthread_mutex_init(&count_mutex, NULL);
         pthread_mutex_init(&global_mutex, NULL);
+        // Barrier initialization
+        pthread_mutex_init(&count_threads_mutex, NULL);
+        pthread_cond_init(&count_threads_cv, NULL);
         n_thread = DEFAULT_THREADS;
         init_threads_done = 0;
         end_threads = 0;
         pid = 0;
+
+        // Dynamic thread storage
         threads = (pthread_t *)calloc( DEFAULT_THREADS, sizeof(pthread_t) );
         tids = (int *)calloc( DEFAULT_THREADS, sizeof(int) );
         params = (NumExprObject *)calloc( DEFAULT_THREADS, sizeof(NumExprObject) );
+        registerArena = (char *)calloc( DEFAULT_THREADS, NPY_MAXARGS*sizeof(NumExprReg) );
         for( int I = 0; I < DEFAULT_THREADS; I++ ) {
-            params[I].registers = (NumExprReg *)calloc( NPY_MAXARGS,  sizeof(NumExprReg) );
+            params[I].registers = (NumExprReg *)( registerArena + I*NPY_MAXARGS*sizeof(NumExprReg) );
         }
         stridesArray = (npy_intp *)calloc( DEFAULT_THREADS, sizeof(npy_intp) );
         iter = (NpyIter **)calloc( DEFAULT_THREADS, sizeof(NpyIter*) );
         reduce_iter = (NpyIter **)calloc( DEFAULT_THREADS, sizeof(NpyIter*) );
 
         tempSize = 0;
-        tempStack = NULL;
+        tempArena = NULL;
         task_size = DEFAULT_BLOCK;
     }
 };

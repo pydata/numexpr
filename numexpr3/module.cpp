@@ -9,14 +9,25 @@
 
 #define DO_NUMPY_IMPORT_ARRAY
 
+#define CHECK_END_COND if(gs.end_threads) return(0);
+
 #include "module.hpp"
 #include "interp_header_GENERATED.hpp"
 #include "numexpr_object.hpp"
+#include "benchmark.hpp"
 
 using namespace std;
 
 // Global state definition. Also includes what used to be in th_params.
 global_state gs;
+#if defined(_WIN32) && defined(BENCHMARKING)
+    LARGE_INTEGER TIMES[512];
+    double FREQ;
+#elif defined(BENCHMARKING) // Linux
+    timespec TIMES[512];
+#endif
+
+
 
 // Do the worker job for a certain thread
 void* th_worker(void *tidptr) {
@@ -40,21 +51,17 @@ void* th_worker(void *tidptr) {
         }
 
         // Meeting point for all threads (wait for initialization)
+        CHECK_END_COND;
         pthread_mutex_lock(&gs.count_threads_mutex);
         if( gs.count_threads < gs.n_thread ) {
             gs.count_threads++;
+            // printf( "Count threads start %d\n", gs.count_threads );
             pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
         }
         else { // Every thread is ready, go...
             pthread_cond_broadcast(&gs.count_threads_cv);
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
-
-        // Check if thread has been asked to return
-        if( gs.end_threads ) {
-            return(0);
-        }
-
         // Get parameters for this thread before entering the main loop 
         start = gs.start;
         vlen = gs.vlen;
@@ -65,6 +72,7 @@ void* th_worker(void *tidptr) {
         errorMessage = gs.errorMessage;
 
         // Loop over blocks
+        CHECK_END_COND;
         pthread_mutex_lock(&gs.count_mutex);
         if( !gs.init_sentinels_done ) {
             // Set sentinels and other global variables
@@ -90,19 +98,22 @@ void* th_worker(void *tidptr) {
             gs.ret_code = -1;
             gs.giveup = 1;
         }
-        
         pthread_mutex_unlock(&gs.count_mutex);
 
+        BENCH_TIME(100+tid);
         while( istart < vlen && !gs.giveup ) {
             // Reset the iterator to the range for this task
             ret = NpyIter_ResetToIterIndexRange(iter, istart, iend,
                                                 errorMessage);
             // Execute the task 
             if( ret >= 0 ) {
+                
                 ret = vm_engine_iter_task(iter, neObj, pc_error, errorMessage);
+                
             }
 
             if( ret < 0 ) {
+                CHECK_END_COND;
                 pthread_mutex_lock(&gs.count_mutex);
                 gs.giveup = 1;
                 // Propagate error to main thread
@@ -110,7 +121,7 @@ void* th_worker(void *tidptr) {
                 pthread_mutex_unlock(&gs.count_mutex);
                 break;
             }
-
+            CHECK_END_COND;
             pthread_mutex_lock(&gs.count_mutex);
             gs.gindex += task_size;
             istart = gs.gindex;
@@ -120,17 +131,20 @@ void* th_worker(void *tidptr) {
             }
             pthread_mutex_unlock(&gs.count_mutex);
         }
+        BENCH_TIME(200+tid);
 
         // Meeting point for all threads (wait for finalization)
+        CHECK_END_COND;
         pthread_mutex_lock(&gs.count_threads_mutex);
         if (gs.count_threads > 0) { // Not the last thread to join
             gs.count_threads--;
+            // printf( "Count threads finalize %d\n", gs.count_threads );
             pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
         } else { // We're the last thread, get out of here.
             pthread_cond_broadcast(&gs.count_threads_cv);
+            
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
-
     }  // closes while(1)
 
     // This should never be reached
@@ -141,17 +155,6 @@ void* th_worker(void *tidptr) {
 int reinit_threads(int n_thread_old) {
     int tid, rc;
 
-    // Free old params registers
-    for( int I=0; I < n_thread_old; I++ ) {
-        free( gs.params[I].registers );
-    }
-
-    // Initialize mutex and condition variable objects
-    pthread_mutex_init(&gs.count_mutex, NULL);
-
-    // Barrier initialization
-    pthread_mutex_init(&gs.count_threads_mutex, NULL);
-    pthread_cond_init(&gs.count_threads_cv, NULL);
     gs.count_threads = 0;      // Reset threads counter
 
     // Allocate memory
@@ -160,10 +163,13 @@ int reinit_threads(int n_thread_old) {
 
     gs.params = (NumExprObject*)realloc( gs.params, gs.n_thread  * sizeof(NumExprObject) );
     // params[R].program is shared.
+
+    // Allocate an arena for the registers
+    // Since NPY_MAXARGS=32, we can just allocate a maximum space and only 
+    // consume a kB or so of RAM.
+    gs.registerArena = (char *)realloc( gs.registerArena, gs.n_thread * NPY_MAXARGS * sizeof(NumExprReg) );
     for( int I=0; I < gs.n_thread; I++ ) {
-        // Since NPY_MAXARGS=32, we can just allocate a maximum space and only 
-        // consume a kB or so of RAM.
-        gs.params[I].registers = (NumExprReg*)malloc( NPY_MAXARGS * sizeof(NumExprReg) );
+        gs.params[I].registers = (NumExprReg*)(gs.registerArena + I*NPY_MAXARGS*sizeof(NumExprReg) );
     }
 
     gs.stridesArray = (npy_intp*)realloc( gs.stridesArray, gs.n_thread * sizeof(npy_intp) );
@@ -173,8 +179,8 @@ int reinit_threads(int n_thread_old) {
     // Finally, create the threads
     for (tid = 0; tid < gs.n_thread; tid++) {
         gs.tids[tid] = tid;
-        rc = pthread_create(&gs.threads[tid], NULL, th_worker,
-                            (void *)&gs.tids[tid]);
+        rc = pthread_create(&gs.threads[tid], NULL, th_worker, (void *)&gs.tids[tid]);
+
         if (rc) {
             fprintf(stderr,
                     "ERROR; return code from pthread_create() is %d\n", rc);
@@ -196,50 +202,52 @@ int numexpr_set_nthreads(int n_thread_new) {
     int T, rc;
     void *status;
 
-    pthread_mutex_lock(&gs.global_mutex);
-
+    // printf("numexpr_set_nthreads #1, old =%d, new =%d\n", n_thread_old, n_thread_new );
     if( n_thread_new <= 0 ) {
-        fprintf(stderr, "Error.  nthreads must be a positive integer");
+        fprintf(stderr, "Error. `nthreads` must be a positive integer");
         return -1;
+    }
+    if( n_thread_new == n_thread_old ) {
+        return n_thread_old;
     }
 
     // Only join threads if they are not initialized or if our PID is
     //   different from that in pid var (probably means that we are a
     //   subprocess, and thus threads are non-existent).
-    if( n_thread_old > 1 && gs.init_threads_done && gs.pid == getpid() ) {
+    if( gs.init_threads_done && gs.pid == getpid() ) {
         // Tell all existing threads to finish 
         gs.end_threads = 1;
-
-        // Tell all threads to start, so they see the gs.end_threads flag.
+        pthread_mutex_lock(&gs.count_threads_mutex);
+        // Ensure that workers never wait on the condition variable
+        gs.count_threads = n_thread_old; 
+        // Wake all workers
         pthread_cond_broadcast(&gs.count_threads_cv);
-
-        // Join exiting threads 
-        // Since we're calling pthread_join we don't need mutex protection.
-        // pthread_mutex_lock(&gs.count_threads_mutex);
+        pthread_mutex_unlock(&gs.count_threads_mutex);
         for( T=0; T < n_thread_old; T++ ) {
+            // Join exiting threads 
             rc = pthread_join(gs.threads[T], &status);
             if (rc) {
-                fprintf(stderr,
-                        "ERROR; return code from pthread_join() is %d\n",
-                        rc);
-                fprintf(stderr, "\tError detail: %s\n", strerror(rc));
+                printf( "JOIN ERROR %d\n", rc );
+                fprintf(stderr, "ERROR; return code from pthread_join() is %d\n", rc);
+                fprintf(stderr, "    Error detail: %s\n", strerror(rc));
                 exit(-1);
             }
+            
         }
+        pthread_mutex_unlock(&gs.count_threads_mutex);
+        pthread_mutex_unlock(&gs.count_mutex);
         gs.count_threads = 0;
         gs.n_thread = n_thread_new;
         gs.init_threads_done = 0;
         gs.end_threads = 0;
     } 
     else {
-        // printf( "set_n_threads NOT JOING OLD THREADS.\n ");
+        gs.n_thread = n_thread_new;
     }
 
     // Launch a new pool of threads
-    if( gs.n_thread > 1 ) {
-        reinit_threads(n_thread_old);
-    }
-    pthread_mutex_unlock(&gs.global_mutex);
+    reinit_threads(n_thread_old);
+    
     return n_thread_old;
 }
 PyDoc_STRVAR(SetNumThreads__doc__,
@@ -249,31 +257,32 @@ PySet_num_threads(PyObject *self, PyObject *args) {
     int n_threads_new, n_threads_old;
     if (!PyArg_ParseTuple(args, "i", &n_threads_new))
     return NULL;
+    pthread_mutex_lock(&gs.global_mutex);
     n_threads_old = numexpr_set_nthreads(n_threads_new);
+    pthread_mutex_unlock(&gs.global_mutex);
     return Py_BuildValue("i", n_threads_old);
 }
 
 Py_ssize_t numexpr_set_tempsize(Py_ssize_t newSize) {
-    pthread_mutex_lock(&gs.global_mutex);
 
+    // printf( "DEBUG: setting temporary space to %d bytes.\n", newSize );
     // The bytes of pre-allocated space for temporaries PER THREAD.
     Py_ssize_t oldSize = gs.tempSize;
     if( newSize <= 0) {
         // Free space for hibernation
         gs.tempSize = 0;
-        free( gs.tempStack );
+        free( gs.tempArena );
 
     } else if( oldSize <= 0 ) {
         // Space was deallocated or never initialized.
         gs.tempSize = newSize;
-        gs.tempStack = (char *)malloc(gs.tempSize * gs.n_thread);
+        gs.tempArena = (char *)malloc(gs.tempSize);
 
     } else {
         // We can use realloc here.
         gs.tempSize = newSize;
-        gs.tempStack = (char *)realloc(gs.tempStack, gs.tempSize * gs.n_thread);
+        gs.tempArena = (char *)realloc(gs.tempArena, gs.tempSize);
     }
-    pthread_mutex_unlock(&gs.global_mutex);
     return oldSize;
 }
 
@@ -286,7 +295,11 @@ PySet_tempsize(PyObject *self, PyObject *args) {
     Py_ssize_t newSize, oldSize;
     if (!PyArg_ParseTuple(args, "n", &newSize))
     return NULL;
+
+    pthread_mutex_lock(&gs.global_mutex);
     oldSize = numexpr_set_tempsize(newSize);
+    pthread_mutex_unlock(&gs.global_mutex);
+
     return Py_BuildValue("n", oldSize );
 }
 

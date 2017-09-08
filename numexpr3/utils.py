@@ -93,7 +93,6 @@ def set_num_threads(new_nthreads):
     During initialization time Numexpr sets this number to the number
     of detected cores in the system (see `detect_number_of_cores()`).
     """
-
     old_nthreads = numexpr3.interpreter.set_num_threads(new_nthreads)
     numexpr3.nthreads = new_nthreads
     return old_nthreads

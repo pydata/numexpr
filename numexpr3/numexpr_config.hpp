@@ -24,15 +24,17 @@
 // Each program is an opword, followed by 4 registers (return,arg1,arg2,arg3)
 #define NE_PROG_LEN (Py_ssize_t)(sizeof(NE_WORD) + NUMEXPR_MAX_ARGS*sizeof(NE_REGISTER))
 //This is in vm_engine_iter_parallel() and is a potential source for future optimization
-#define TASKS_PER_THREAD 16 
+#define TASKS_PER_THREAD 16
     // RAM: old comment: Try to make it so each thread gets 16 tasks.  This is 
     // a compromise between 1 task per thread and one block per task.
-
 
 // RAM: This is also an arbitrary for reductions
 #define INNER_LOOP_MAX_SIZE 64
 // The default block size on module load.
 #define DEFAULT_BLOCK 4096
+// The number of threads on module load.  The Python module detects the number 
+// of cores and increase the number of threads if the platform allows it.
+#define DEFAULT_THREADS 1
 
 #define OP_NOOP 0
 // TODO: OP_REDUCTION will need to be inserted by the code generator.
@@ -43,20 +45,22 @@
 
 
 
-// The maximum number of threads (for some static arrays).
-// Choose this large enough for most monsters out there.
-// Keep in sync this with the number in __init__.py. 
-//#define MAX_THREADS 256
-#define DEFAULT_THREADS 1
-
 #if defined(_WIN32)
   #include "win32/pthread.h" 
   #include <process.h>
   #define getpid _getpid
+  #ifndef __MINGW32__
+    #include "missing_posix_functions.hpp"
+  #endif
+  #include "msvc_function_stubs.hpp"
 #else
   #include <pthread.h>
   #include "unistd.h"
 #endif
+
+
+
+
 
 // So apparently this _only_ works if SciPy was built with MKL?
 // This should also go into the generator.
@@ -69,11 +73,5 @@
 //#include "mkl_service.h"
 //#endif
 
-#ifdef _WIN32
-  #ifndef __MINGW32__
-    #include "missing_posix_functions.hpp"
-  #endif
-  #include "msvc_function_stubs.hpp"
-#endif
 
 #endif // NUMEXPR_CONFIG_HPP

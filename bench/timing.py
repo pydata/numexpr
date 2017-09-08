@@ -11,8 +11,8 @@
 from __future__ import print_function
 import timeit, numpy
 
-array_size = 1e6
-iterations = 2
+array_size = 2**20
+iterations = 4
 
 # Choose the type you want to benchmark
 #dtype = 'int8'

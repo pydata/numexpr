@@ -33,18 +33,49 @@ with open( 'numexpr3/__version__.py', 'w' ) as fh:
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()    
     
-# Unique Windows / Linux / OSX flags
-# TODO: compile detections of AVX2 and SSE2 using numpy.distutils
+# Unique MSVC / GCC / LLVM flags
+# TODO: compile detections of AVX2 and SSE2 using cpuinfo
+extra_compile_args = {}
+extra_libraries = {}
+extra_link_args = {}
+#### GCC (default) ####
 # Turned off funroll, doesn't seem to affect speed.
-# https://gcc.gnu.org/onlinedocs/gcc-5.4.0/gcc/Optimize-Options.html
-extra_compile_args = []
-if os.name == 'posix':
-    # Turn off '-fdiagnostics-color=always' for TravisCI
-    extra_compile_args += [ '-fopt-info-vec' ]
-elif os.name == 'nt':
-    extra_compile_args += [ '/Qvec-report:2' ]
+# https://gcc.gnu.org/onlinedocs/gcc-6.4.0/gcc/AArch64-Options.html#AArch64-Options
+# For GCC -fopt-info-vec-missed adds a ton of information that's a little too much
+# to easily process.
+# extra_compile_args['default'] = [  '-fopt-info-vec', '-fopt-info-vec-missed', '-fdiagnostics-color=always' ]
+# Try turning off march=native for these complex function errors.
+extra_compile_args['default'] = [ '-march=native', '-fopt-info-vec' ]
+extra_libraries['default'] = ['m']
+extra_link_args['default'] = []
 
-    
+#### MSVC ####
+# Due to distutils using os.spawnv(), we don't get back the auto-vectorization messages
+# from MSVC. Manually running the compile command by hand can show the 
+# results.
+'''"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\BIN\\amd64\\cl.exe" /c
+/nologo /O2 /fp:fast /Qvec-report:2 /arch:AVX2 /W3 /GS- /DNDEBUG /MD
+-IC:\Anaconda3\lib\site-packages\numpy\core\include -IC:\\Anaconda3\\include
+-IC:\Anaconda3\include -I"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\INCLUDE"
+-I"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\ATLMFC\\INCLUDE"
+-I"C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.10240.0\\ucrt"
+-I"C:\\Program Files (x86)\\Windows Kits\\NETFXSDK\\4.6.1\\include\\um"
+-I"C:\\Program Files (x86)\\Windows Kits\\8.1\\include\\shared"
+-I"C:\\Program Files (x86)\\Windows Kits\\8.1\\include\\um"
+-I"C:\\Program Files (x86)\\Windows Kits\\8.1\\include\\winrt"
+/EHsc /Tpnumexpr3\interpreter.cpp /Fobuild\\temp.win-amd64-3.6\\Release\\numexpr3\\interpreter.obj /Zm1000'''
+# Windows auto-vectorization error messages:
+# https://blogs.msdn.microsoft.com/nativeconcurrency/2012/05/22/auto-vectorizer-in-visual-studio-2012-did-it-work/
+# Overall the the degree of auto-vectorization is fairly poor in MSVC compared to GCC.
+# We also have a problem whenever the stride is zero (i.e. scalar constants): 
+# these cases could use different paths with explicit array[0] indexing.
+# Other options for arch are '/arch:AVX512', '/arch:AVX2'
+# '/fp:fast' was tried and caused accuracy problems.
+extra_compile_args['msvc'] =  [ '/Qvec-report:2'  ]
+extra_libraries['msvc'] = []
+extra_link_args['msvc'] = [ '/Qvec-report:2'  ]
+
+
 
 def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     # Do not generate new files if the GENERATED files are all newer than
@@ -53,8 +84,14 @@ def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     generator_time  = os.path.getmtime( 'code_generators/interp_generator.py' )
     if all( [generator_time < os.path.getmtime(GEN_file) for GEN_file in GENERATED_files] ) \
         and os.path.isfile('numexpr3/lookup.pkl'):
-        print( "---===Generation not required===---" )
-        return
+
+        # Open the 
+        import pickle
+        with open( 'numexpr3/lookup.pkl', 'rb' ) as lookup:
+            OPTABLE = pickle.load( lookup )
+            if 'os.name' in OPTABLE and OPTABLE['os.name'] == os.name:
+                print( "---===Generation not required===---" )
+                return
     # Python 2.7 cannot do relative imports here so we need to use inspect to 
     # modify the PYTHONPATH.
     setup_fileName = inspect.getfile(inspect.currentframe())
@@ -74,7 +111,6 @@ def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     interp_generator.generate( blocksize=blocksize, mkl=mkl, C11=C11 )
     
 
-   
 def setup_package():
     metadata = dict(
                       description='Fast numerical expression evaluator for NumPy',
@@ -152,42 +188,38 @@ def setup_package():
             config = Configuration('numexpr3')
 
             #try to find configuration for MKL, either from environment or site.cfg
-            if os.path.exists('site.cfg'):
-                # RAM: argh, distutils...
-                # Probably here we should build custom build_mkl or build_icc 
-                # commands instead?
-                mkl_config = mkl_info() 
-
+            # if os.path.exists('site.cfg'):
+            #     # Probably here we should build custom build_mkl or build_icc 
+            #     # commands instead?
+            #     mkl_config = mkl_info() 
+            #
+            #     print( 'Found Intel MKL at: {}'.format( mkl_config.get_mkl_rootdir() ) )
+            #     # Check if the user mis-typed a directory
+            #     # mkl_include_dir = mkl_config.get_include_dirs()
+            #     # mkl_lib_dir = mkl_config.get_lib_dirs()
+            #     mkl_config_data = config.get_info('mkl') 
+            #
+            #     # some version of MKL need to be linked with libgfortran, for this, use
+            #     # entries of DEFAULT section in site.cfg
+            #     # default_config = system_info() # You don't work
+            #     # dict_append(mkl_config_data,
+            #     #            libraries=default_config.get_libraries(),
+            #     #            library_dirs=default_config.get_lib_dirs())
+            #     # RAM: mkl_info() doesn't see to populate get_libraries()...
+            #     dict_append(mkl_config_data,
+            #                 include_dirs=mkl_config.get_include_dirs(), 
+            #                 libraries=mkl_config.get_libraries(),
+            #                 library_dirs=mkl_config.get_lib_dirs() )
+            # else:
+            #     mkl_config_data = {}
                 
-                print( 'Found Intel MKL at: {}'.format( mkl_config.get_mkl_rootdir() ) )
-                # Check if the user mis-typed a directory
-#                mkl_include_dir = mkl_config.get_include_dirs()
-#                mkl_lib_dir = mkl_config.get_lib_dirs()
-                    
-                mkl_config_data = config.get_info('mkl') 
-                
-                # some version of MKL need to be linked with libgfortran, for this, use
-                # entries of DEFAULT section in site.cfg
-                # default_config = system_info() # You don't work
-#                dict_append(mkl_config_data,
-#                            libraries=default_config.get_libraries(),
-#                            library_dirs=default_config.get_lib_dirs())
-                # RAM: mkl_info() doesn't see to populate get_libraries()...
-                dict_append(mkl_config_data,
-                            include_dirs=mkl_config.get_include_dirs(), 
-                            libraries=mkl_config.get_libraries(),
-                            library_dirs=mkl_config.get_lib_dirs() )
-            else:
-                mkl_config_data = {}
-                
-            print( 'DEBUG: mkl_config_data: {}'.format(mkl_config_data) )
 
             #setup information for C extension
+            pthread_win = []
             if os.name == 'nt':
                 pthread_win = ['numexpr3/win32/pthread.c']
-            else:
-                pthread_win = []
-            # TODO: add support for -msse2 and -mavx2 flags via auto-detection?
+                
+
             # Maybe we need a newer cpuinfo.py
             extension_config_data = {
                 'sources': ['numexpr3/interpreter.cpp',
@@ -203,13 +235,15 @@ def setup_package():
                             'numexpr3/complex_functions.hpp',
                             'numexpr3/string_functions.hpp',
                             ],
-                'libraries': ['m'],
-                # Now how to get setuptools to actually pass arguments to MSVC?
-                'extra_compile_args': extra_compile_args,
+                'libraries': [],
+                # Compile args come in after the initial args, so I'm not sure 
+                # if we can over-ride the optimization flags.  For example
+                # Windows is using /Ox instead of /O2.
+                'extra_compile_args': [],
             }
-            dict_append(extension_config_data, **mkl_config_data)
-            if 'library_dirs' in mkl_config_data:
-                library_dirs = ':'.join(mkl_config_data['library_dirs'])
+            # dict_append(extension_config_data, **mkl_config_data)
+            # if 'library_dirs' in mkl_config_data:
+            #   library_dirs = ':'.join(mkl_config_data['library_dirs'])
             config.add_extension('interpreter', **extension_config_data)
             
             config.add_data_files( ('','numexpr3/lookup.pkl') )
@@ -265,14 +299,15 @@ def setup_package():
             ''' Identical to build_ext but without generation, for debugging.'''
 
             def build_extension(self, ext):
-            
-                # at this point we know what the C compiler is.
-                if self.compiler.compiler_type == 'msvc':
-                    ext.extra_compile_args = []
-                    # also remove extra linker arguments msvc doesn't understand
-                    ext.extra_link_args = []
-                    # also remove gcc math library
-                    ext.libraries.remove('m')
+                compiler = self.compiler.compiler_type
+
+                print( 'compiler_type is {}'.format(compiler ) )
+                if compiler in extra_compile_args:
+                    ext.extra_compile_args = extra_compile_args[compiler]
+                    ext.extra_libraries = extra_libraries[compiler]
+                else:
+                    ext.extra_compile_args = extra_compile_args['default']
+                    ext.extra_libraries = extra_libraries['default']
                 numpy_build_ext.build_extension(self, ext)
                 
         class build_ext(numpy_build_ext):
@@ -282,14 +317,34 @@ def setup_package():
             def build_extension(self, ext):
                 # Run Numpy to C generator 
                 run_generator()
-                    
-                # at this point we know what the C compiler is.
-                if self.compiler.compiler_type == 'msvc':
-                    ext.extra_compile_args = []
-                    # also remove extra linker arguments msvc doesn't understand
-                    ext.extra_link_args = []
-                    # also remove gcc math library
-                    ext.libraries.remove('m')
+                compiler = self.compiler.compiler_type
+                print( 'compiler_type is {}'.format(compiler ) )
+
+                if not compiler in extra_compile_args:
+                    compiler = 'default'
+
+                # for key, val in self.__dict__.items():
+                #     print( "self[{}] = {}".format(key,val) )
+                # cxx = self._cxx_compiler
+                # Normally the CXX is initialized late, but we can do it here.
+                # See line 347:
+                # https://github.com/python/cpython/blob/master/Lib/distutils/_msvccompiler.py
+                # if compiler == 'msvc':
+                #     cxx.initialize()
+                #     # cxx now has 'preprocess_options', 'compile_options', and 'ld_flags_???'
+                #     if '/Ox' in cxx.compile_options: # MSVC hack
+                #         cxx.compile_options.remove('/Ox')
+                #     cxx.compile_options.extend( extra_compile_args[compiler] )
+                #     cxx.ldflags_shared.extend( extra_link_args[compiler] )
+                # for key, val in cxx.__dict__.items():
+                #     print( 'cxx[{}] = {}'.format( key, val ) )
+                # for key, val in ext.__dict__.items():
+                #     print( "ext[{}] = {}".format(key,val) )
+
+                ext.extra_compile_args = extra_compile_args[compiler]
+                ext.extra_libraries = extra_libraries[compiler]
+                ext.extra_link_args = extra_link_args[compiler]
+
                 numpy_build_ext.build_extension(self, ext)
 
         if setuptools:
@@ -309,8 +364,8 @@ def setup_package():
 if __name__ == '__main__':
     # On cloning from GitHub the lookup dict doesn't exist so we always must run the generator.
     # Otherwise the numpy.distutils check for the file occurs before generation.
-    if not os.path.isfile('numexpr3/lookup.pkl'):
-        run_generator()
+    # if not os.path.isfile('numexpr3/lookup.pkl'):
+    #     run_generator()
 
     t0 = time.time()
     sp = setup_package()
