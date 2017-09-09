@@ -635,7 +635,6 @@ class test_strings(unittest.TestCase):
 # Cases for testing arrays with dimensions that can be zero.
 class test_zerodim(unittest.TestCase):
     def test_zerodim1d(self):
-        '''
         logger.info( 'Zerodim 1D' )
         a0 = np.array([], dtype='int32')
         a1 = np.array([], dtype='float64')
@@ -645,10 +644,8 @@ class test_zerodim(unittest.TestCase):
 
         npt.assert_array_equal(r0, a1)
         npt.assert_array_equal(r1, a1)
-        '''
 
     def test_zerodim3d(self):
-        '''
         logger.info( 'Zerodim 3D' )
         a0 = np.array([], dtype='int32').reshape(0, 2, 4)
         a1 = np.array([], dtype='float64').reshape(0, 2, 4)
@@ -658,7 +655,6 @@ class test_zerodim(unittest.TestCase):
 
         npt.assert_array_equal(r0, a1)
         npt.assert_array_equal(r1, a1)
-        '''
 
 
 # Tests for threading/multiprocessing/concurrent.futures

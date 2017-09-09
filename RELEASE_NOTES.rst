@@ -16,6 +16,7 @@ Changes from 3.0.0 to 3.0.1
 * Complex numbers can be reduced to real or imag as if attributes, e.g.
 
       imag_num = ne3.NumExpr( '(2.0*np.pi*sin(complex128(a,b))).imag' )()
+      
 * Transcendental functions (such as `sin`) will now automatically upcast 
   integers to floating-point, mimicing NumPy except for u/int-8 which is upcast
   to float-32 instead of float-16.
@@ -42,9 +43,6 @@ TODO List:
 ^^^^^^^^^^
 
 * consider renaming KIND_SCALAR to KIND_CONST
-* **fix seg-faults found by new test cases**
-    3. test_zerodim1d
-    4. test_zerodim3d
 * Don't overwrite PyObject_HEAD in pickling
 * module-level properties for ncores, nthreads (???)
 * documentation and tutorial RSTs
