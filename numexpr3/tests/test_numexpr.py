@@ -9,11 +9,8 @@
 ####################################################################
 from __future__ import absolute_import, print_function
 
-#import os
 import sys
 import platform
-#import warnings
-#from contextlib import contextmanager
 
 import numpy as np
 import numpy.testing as npt
@@ -666,20 +663,6 @@ class test_zerodim(unittest.TestCase):
 
 # Tests for threading/multiprocessing/concurrent.futures
 
-#@contextmanager
-#def _environment(key, value):
-#    old = os.environ.get(key)
-#    os.environ[key] = value
-#    try:
-#        yield
-#    finally:
-#        if old:
-#            os.environ[key] = old
-#        else:
-#            del os.environ[key]
-#
-#
-## Test cases for the threading configuration
 #class test_threading_config(unittest.TestCase):
 #    def test_numexpr_num_threads(self):
 #        with _environment('OMP_NUM_THREADS', '5'):
@@ -690,15 +673,10 @@ class test_zerodim(unittest.TestCase):
 #        with _environment('OMP_NUM_THREADS', '5'):
 #            self.assertEquals(5, numexpr.detect_number_of_threads())
 
-# The worker function for the subprocess (needs to be here because Windows
-# has problems pickling nested functions with the multiprocess module)
-def _worker(qout=None):
-    ra = np.arange(1e3)
-    rows = np.empty_like(ra)
-    ne3.evaluate('rows = ra > 0')
-    #logger.info 'Succeeded in evaluation!\n'
-    if qout is not None:
-        qout.put('Done')
+# Multiprocessing cannot deal with bound methods, as they aren't pickleable.
+def future_worker( neObj, dataDict, N_threads=2 ):
+    ne3.set_num_threads(N_threads)
+    return neObj( **dataDict )
 
 
 # Case test for subprocesses (via multiprocessing module)
@@ -728,6 +706,10 @@ class test_multicore(unittest.TestCase):
 
     
     def test_threading(self):
+        # The NumExpr module has a global state so it can only execute one 
+        # operate per process at a time.  Look to solutions such as `dask` 
+        # or `concurrent.futures` if you want to use NumExpr in distributed 
+        # computing.
         import threading
         logger.info( 'Testing threading' )
 
@@ -739,26 +721,24 @@ class test_multicore(unittest.TestCase):
         test = ThreadTest()
         test.start()
 
-    def test_multiprocess(self):
-        # logger.info( 'Testing multiprocessing' )
-        # # RAM: shouldn't we explicitely test the subprocess module and the 
-        # # multiprocessing module seperately?
-        # # The lock takes forever to time out, why?  
-        # try:
-        #     import multiprocessing as mp
-        # except ImportError:
-        #     return
-        # # Check for two threads at least
-        # ne3.set_num_threads(2)
-        # #logger.info '**** Running from main process:'
-        # _worker()
-        # #logger.info '**** Running from subprocess:'
-        # qout = mp.Queue()
-        # ps = mp.Process(target=_worker, args=(qout,))
-        # ps.daemon = True
-        # ps.start()
-        # qout.get()
-        pass
+    def test_futures(self):
+        # Run a hybrid calculation with two processes each running two pthreads 
+        # inside NumExpr.
+        logger.info( 'Testing concurrent.futures' )
+        try:
+            import concurrent.futures as cf
+        except ImportError:
+            return
+        a = np.linspace(1E-7, np.pi, 2*LARGE_SIZE)
+        splitA = np.array_split( a, 2 )
+
+        neObj = ne3.NumExpr( 'log(a)' )
+        asyncExecutor = cf.ProcessPoolExecutor( max_workers = 2 )   
+
+        workers = [asyncExecutor.submit( future_worker, neObj, {'a':chunkOfA}) for chunkOfA in splitA]
+        result =  np.hstack( [worker.result() for worker in workers] )
+
+        npt.assert_array_almost_equal( result, np.log(a) )
 
 
 def test( verbosity=2 ):
