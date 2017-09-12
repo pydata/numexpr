@@ -1,11 +1,11 @@
-======================================
+=====================================
  Release notes for Numexpr 2.6 series
-======================================
+=====================================
 
 Changes from 2.6.2 to 2.6.3
-===========================
+---------------------------
 
-#XXX version-specific blurb XXX#
+- Documentation now available at readthedocs.io_.
 
 - Support for floor() and ceil() functions added by Caleb P. Burns.
                    
@@ -23,8 +23,10 @@ Changes from 2.6.2 to 2.6.3
 - String literals are automatically encoded into 'ascii' bytes for 
   convience (see #281).
 
+.. _readthedocs.io: http://numexpr.readthedocs.io
+
 Changes from 2.6.1 to 2.6.2
-===========================
+---------------------------
 
 - Updates to keep with API changes in newer NumPy versions (#228).
   Thanks to Oleksandr Pavlyk.
@@ -45,7 +47,7 @@ Changes from 2.6.1 to 2.6.2
 
 
 Changes from 2.6.0 to 2.6.1
-===========================
+---------------------------
 
 - Fixed a performance regression in some situations as consequence of
   increasing too much the BLOCK_SIZE1 constant.  After more careful
@@ -58,7 +60,7 @@ Changes from 2.6.0 to 2.6.1
 
 
 Changes from 2.5.2 to 2.6.0
-===========================
+---------------------------
 
 - Introduced a new re_evaluate() function for re-evaluating the
   previous executed array expression without any check.  This is meant
@@ -77,7 +79,7 @@ Changes from 2.5.2 to 2.6.0
 
 
 Changes from 2.5.1 to 2.5.2
-===========================
+---------------------------
 
 - conj() and abs() actually added as VML-powered functions, preventing
   the same problems than log10() before (PR #212).  Thanks to Tom Kooij
@@ -85,7 +87,7 @@ Changes from 2.5.1 to 2.5.2
 
 
 Changes from 2.5 to 2.5.1
-=========================
+-------------------------
 
 - Fix for log10() and conj() functions.  These produced wrong results
   when numexpr was compiled with Intel's MKL (which is a popular build
@@ -98,7 +100,7 @@ Changes from 2.5 to 2.5.1
 
 
 Changes from 2.4.6 to 2.5
-=========================
+-------------------------
 
 - Added locking for allowing the use of numexpr in multi-threaded
   callers (this does not prevent numexpr to use multiple cores
@@ -108,7 +110,7 @@ Changes from 2.4.6 to 2.5
 
 
 Changes from 2.4.5 to 2.4.6
-===========================
+---------------------------
 
 - Fixed some UserWarnings in Solaris (PR #189, Graham Jones).
 
@@ -116,7 +118,7 @@ Changes from 2.4.5 to 2.4.6
 
 
 Changes from 2.4.4 to 2.4.5
-===========================
+---------------------------
 
 - Undone a 'fix' for a harmless data race.  (#185 Benedikt Reinartz,
   Francesc Alted).
@@ -128,13 +130,13 @@ Changes from 2.4.4 to 2.4.5
 
 
 Changes from 2.4.3 to 2.4.4
-===========================
+---------------------------
 
 - Fix bad #ifdef for including stdint on Windows (PR #186, Mike Sarahan).
 
 
 Changes from 2.4.3 to 2.4.4
-===========================
+---------------------------
 
 * Honor OMP_NUM_THREADS as a fallback in case NUMEXPR_NUM_THREADS is not
   set. Fixes #161. (PR #175, Stefan Erb).
@@ -151,19 +153,19 @@ Changes from 2.4.3 to 2.4.4
 
 
 Changes from 2.4.2 to 2.4.3
-===========================
+---------------------------
 
 * Comparisons with empty strings work correctly now.  Fixes #121 and
   PyTables #184.
 
 Changes from 2.4.1 to 2.4.2
-===========================
+---------------------------
 
 * Improved setup.py so that pip can query the name and version without
   actually doing the installation.  Thanks to Joris Borgdorff.
 
 Changes from 2.4 to 2.4.1
-=========================
+-------------------------
 
 * Added more configuration examples for compiling with MKL/VML
   support.  Thanks to Davide Del Vento.
@@ -181,7 +183,7 @@ Changes from 2.4 to 2.4.1
   Plesivčak.
 
 Changes from 2.3.1 to 2.4
-=========================
+-------------------------
 
 * A new `contains()` function has been added for detecting substrings
   in strings.  Only plain strings (bytes) are supported for now.  See
@@ -191,7 +193,7 @@ Changes from 2.3.1 to 2.4
   dependency.  See PR #133.  Thanks to Aleks Bunin.
 
 Changes from 2.3 to 2.3.1
-=========================
+-------------------------
 
 * Added support for shift-left (<<) and shift-right (>>) binary operators.
   See PR #131. Thanks to fish2000!
@@ -200,7 +202,7 @@ Changes from 2.3 to 2.3.1
   not necessary and it chokes to clang.
 
 Changes from 2.2.2 to 2.3
-=========================
+-------------------------
 
 * Site has been migrated to https://github.com/pydata/numexpr.  All
   new tickets and PR should be directed there.
@@ -208,12 +210,12 @@ Changes from 2.2.2 to 2.3
 * [ENH] A `conj()` function for computing the conjugate of complex
   arrays has been added.  Thanks to David Menéndez.  See PR #125.
 
-* [FIX] Fixed a DeprecationWarning derived of using oa_ndim == 0 and
-  op_axes == NULL when using NpyIter_AdvancedNew() and NumPy 1.8.
+* [FIX] Fixed a DeprecationWarning derived of using oa_ndim -- 0 and
+  op_axes -- NULL when using NpyIter_AdvancedNew() and NumPy 1.8.
   Thanks to Mark Wiebe for advise on how to fix this properly.
 
 Changes from 2.2.1 to 2.2.2
-===========================
+---------------------------
 
 * The `copy_args` argument of `NumExpr` function has been brought
   lack.  This has been mainly necessary for compatibility with
@@ -221,29 +223,29 @@ Changes from 2.2.1 to 2.2.2
   #115.
 
 * The `__nonzero__` method in `ExpressionNode` class has been
-  commented out.  This is also for compatibility with `PyTables <
-  3.0`.  See #24 for details.
+  commented out.  This is also for compatibility with `PyTables < 3.0`.  
+  See #24 for details.
 
 * Fixed the type of some parameters in the C extension so that s390
   architecture compiles.  Fixes #116.  Thank to Antonio Valentino for
   reporting and the patch.
 
 Changes from 2.2 to 2.2.1
-=========================
+-------------------------
 
 * Fixes a secondary effect of "from numpy.testing import `*`", where
   division is imported now too, so only then necessary functions from
   there are imported now.  Thanks to Christoph Gohlke for the patch.
 
 Changes from 2.1 to 2.2
-=======================
+-----------------------
 
 * [LICENSE] Fixed a problem with the license of the
   numexpr/win32/pthread.{c,h} files emulating pthreads on Windows
   platforms.  After persmission from the original authors is granted,
   these files adopt the MIT license and can be redistributed without
   problems.  See issue #109 for details
-  (https://code.google.com/p/numexpr/issues/detail?id=110).
+  (https://code.google.com/p/numexpr/issues/detail?id-110).
 
 * [ENH] Improved the algorithm to decide the initial number of threads
   to be used.  This was necessary because by default, numexpr was
@@ -271,13 +273,13 @@ Changes from 2.1 to 2.2
   (https://code.google.com/p/numexpr/wiki/UsersGuide).
 
 Changes from 2.0.1 to 2.1
-===========================
+---------------------------
 
 * Dropped compatibility with Python < 2.6.
 
 * Improve compatibiity with Python 3:
 
-  - switch from PyString to PyBytes API (requires Python >= 2.6).
+  - switch from PyString to PyBytes API (requires Python >- 2.6).
   - fixed incompatibilities regarding the int/long API
   - use the Py_TYPE macro
   - use the PyVarObject_HEAD_INIT macro instead of PyObject_HEAD_INIT
@@ -290,7 +292,7 @@ Changes from 2.0.1 to 2.1
   '~' should be used instead (fixes #24).
 
 Changes from 2.0 to 2.0.1
-=========================
+-------------------------
 
 * Added compatibility with Python 2.5 (2.4 is definitely not supported
   anymore).
@@ -305,7 +307,7 @@ Changes from 2.0 to 2.0.1
 
 
 Changes from 1.x series to 2.0
-==============================
+------------------------------
 
 - Added support for the new iterator object in NumPy 1.6 and later.
 
@@ -331,7 +333,7 @@ Changes from 1.x series to 2.0
 
 
 Changes from 1.4.1 to 1.4.2
-===========================
+---------------------------
 
 - Multithreaded operation is disabled for small arrays (< 32 KB).
   This allows to remove the overhead of multithreading for such a
@@ -360,7 +362,7 @@ Changes from 1.4.1 to 1.4.2
 
 
 Changes from 1.4 to 1.4.1
-=========================
+-------------------------
 
 - Mingw32 can also work with pthreads compatibility code for win32.
   Fixes #31.
@@ -375,7 +377,7 @@ Changes from 1.4 to 1.4.1
 
 
 Changes from 1.3.1 to 1.4
-=========================
+-------------------------
 
 - Added support for multi-threading in pure C.  This is to avoid the
   GIL and allows to squeeze the best performance in both multi-core
@@ -385,7 +387,7 @@ Changes from 1.3.1 to 1.4
   machinery for the virtual machine.  With this, it is really easy to
   add more opcodes.  See:
 
-  http://code.google.com/p/numexpr/issues/detail?id=28
+  http://code.google.com/p/numexpr/issues/detail?id-28
 
   as an example.
 
@@ -401,7 +403,7 @@ Changes from 1.3.1 to 1.4
 
 
 Changes from 1.3 to 1.3.1
-=========================
+-------------------------
 
 - Due to an oversight, ``uint32`` types were not properly supported.
   That has been solved.  Fixes #19.
@@ -413,7 +415,7 @@ Changes from 1.3 to 1.3.1
 
 
 Changes from 1.2 to 1.3
-=======================
+-----------------------
 
 - A new type called internally `float` has been implemented so as to
   be able to work natively with single-precision floating points.
@@ -437,7 +439,7 @@ Changes from 1.2 to 1.3
 
 
 Changes from 1.1.1 to 1.2
-=========================
+-------------------------
 
 - Support for Intel's VML (Vector Math Library) added, normally
   included in Intel's MKL (Math Kernel Library).  In addition, when
@@ -476,7 +478,7 @@ Changes from 1.1.1 to 1.2
 
 
 Changes from 1.1 to 1.1.1
-=========================
+-------------------------
 
 - The case for multidimensional array operands is properly accelerated
   now.  Added a new benchmark (based on a script provided by Andrew
@@ -492,7 +494,7 @@ Changes from 1.1 to 1.1.1
 
 
 Changes from 1.0 to 1.1
-=======================
+-----------------------
 
 - Numexpr can work now in threaded environments.  Fixes #2.
 

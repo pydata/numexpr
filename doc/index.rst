@@ -11,31 +11,13 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-Core module
-===========
+   intro
+   user_guide
+   vm2
+   mkl
+   api
+   release_notes
 
-.. automodule:: numexpr
-   :members: evaluate, re_evaluate, disassemble, NumExpr, get_vml_version, set_vml_accuracy_mode, set_vml_num_threads, set_num_threads, detect_number_of_cores, detect_number_of_threads
-   
-.. py:attribute:: ncores
-
-    The number of (virtual) cores detected.
-                  
-.. py:attribute:: nthreads
-
-    The number of available threads detected.  
-
-.. py:attribute:: version
-
-    The version of NumExpr.      
-                  
-    
-Tests submodule
-===============
-
-.. automodule:: numexpr.tests
-   :members: test, print_versions
-                  
 
 Indices and tables
 ==================
