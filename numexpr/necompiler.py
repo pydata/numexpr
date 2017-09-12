@@ -334,6 +334,8 @@ def convertConstantToKind(x, kind):
     # Exception for 'float' types that will return the NumPy float32 type
     if kind == 'float':
         return numpy.float32(x)
+    elif sys.version_info[0] >= 3 and isinstance(x,str):
+        return x.encode('ascii')
     return kind_to_type[kind](x)
 
 

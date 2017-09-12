@@ -20,6 +20,9 @@ Changes from 2.6.2 to 2.6.3
 - Fix for #277 whereby arrays of shape (1,...) would be reduced as 
   if they were full reduction. Behavoir now matches that of NumPy.
 
+- String literals are automatically encoded into 'ascii' bytes for 
+  convience (see #281).
+
 Changes from 2.6.1 to 2.6.2
 ===========================
 
