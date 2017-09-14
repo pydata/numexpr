@@ -8,4 +8,5 @@ numexpr.egg-info/
 *.swp
 *~
 doc/_build
+site.cfg
 

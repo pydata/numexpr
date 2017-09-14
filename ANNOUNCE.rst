@@ -9,9 +9,19 @@ Project documentation is now available at:
 
 http://numexpr.readthedocs.io/
 
+P.S. due to seg-faults occuring for MKL with ceil and floor we have pushed a 
+quick patch for 2.6.3 to 2.6.4. Thanks to Christoph Gohkle for the fixes.
+
 ==========================
- Announcing Numexpr 2.6.3
+ Announcing Numexpr 2.6.4
 ==========================
+
+Changes from 2.6.3 to 2.6.4
+---------------------------
+
+- Christoph Gohkle noticed a lack of coverage for the 2.6.3 
+  `floor` and `ceil` functions for MKL that caused seg-faults in 
+   test, so thanks to him for that.
 
 Changes from 2.6.2 to 2.6.3
 ---------------------------
