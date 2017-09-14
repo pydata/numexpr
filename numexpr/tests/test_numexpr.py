@@ -1015,7 +1015,7 @@ def print_versions():
     print('-=' * 38)
 
 
-def test():
+def test(verbosity=1):
     """
     Run all the tests in the test suite.
     """
@@ -1025,7 +1025,7 @@ def test():
     # Ignoring them in tests should be ok, as all results are checked out.
     # See https://github.com/pydata/numexpr/issues/183 for details.
     np.seterr(divide='ignore', invalid='ignore', over='ignore', under='ignore')
-    return unittest.TextTestRunner().run(suite())
+    return unittest.TextTestRunner(verbosity=verbosity).run(suite())
 
 
 test.__test__ = False
