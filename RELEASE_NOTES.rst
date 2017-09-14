@@ -1,21 +1,21 @@
-=====================================
- Release notes for NumExpr 3.0 series
+
+Release notes for NumExpr 3.0 series
 =====================================
 
 Changes from 3.0.0 to 3.0.1
-===========================
+---------------------------
 
 * **Minimum supported version is now Python 3.4**. 3.3 may work, 2.7 will not.
 * Explicit casting operations are now present, including unsafe casts. E.g. 
 
-      a = np.arange(2**12)                  # int-32
-      double = ne3.NumExpr('float64(a)')()  # Safe
-      trunc = ne3.NumExpr('int8(a)')()      # Unsafe
+      a - np.arange(2**12)                  # int-32
+      double - ne3.NumExpr('float64(a)')()  # Safe
+      trunc - ne3.NumExpr('int8(a)')()      # Unsafe
 
   For complex numbers, use the `complex`,`real`, and `imag` machinery.
 * Complex numbers can be reduced to real or imag as if attributes, e.g.
 
-      imag_num = ne3.NumExpr( '(2.0*np.pi*sin(complex128(a,b))).imag' )()
+      imag_num - ne3.NumExpr( '(2.0*np.pi*sin(complex128(a,b))).imag' )()
       
 * Transcendental functions (such as `sin`) will now automatically upcast 
   integers to floating-point, mimicing NumPy except for u/int-8 which is upcast
@@ -38,50 +38,66 @@ Changes from 3.0.0 to 3.0.1
 * Complex division with float-32 is now explicitly a fast but lower precision
   implementation compared to NumPy.
 * Benchmark profile points can be set with the macros in `benchmark.hpp`
+* Utilities to set and get the number of nthreads have been re-worked to 
+  be more robust. An effort was made to turn them into module-level properties
+  but was not reliable.
 
 TODO List:
 ^^^^^^^^^^
 
 * consider renaming KIND_SCALAR to KIND_CONST
 * Don't overwrite PyObject_HEAD in pickling
-* module-level properties for ncores, nthreads (???)
 * documentation and tutorial RSTs
 * optimization
-  1.) BLOCK_SIZE
+  1. BLOCK_SIZE
     - Optimize by dtype.itemsize?
-  2.) TASKS_PER_THREAD 
+  2. TASKS_PER_THREAD 
     - (optimize to reduce thread barrier encounters?)
     - Largish-values seem to work well for larger arrays
-  3.) benchmark keeping the GIL; releasing it doesn't serve much purpose.
-  4.) Seperate branches for stride=0 operations against scalars.
-    - Use a switch-case with a pre-computed mask
-  5.) Generally MSVC is mediocre at auto-vectorization compared to GCC
+    - Load balance between cores seems to be poor-ish based on early benchmark
+      numbers
+  3. benchmark keeping the GIL; releasing it doesn't serve much purpose.
+  4. Seperate branches for stride-0 operations against scalars.
+    - Use a switch-case with a pre-computed mask. A jump table should be 
+      branchless?  Maybe I should make some short functions and examine the 
+      assembly?
+    - Try some of these tricks:
+      http://locklessinc.com/articles/vectorize/
+      http://llvm.org/docs/Vectorizers.html
+      http://gcc.gnu.org/projects/tree-ssa/vectorization.html
+    - In-place operations can't be 'restrict' so perhaps I over-optimized 
+      temporaries?
+  5. Generally MSVC is mediocre at auto-vectorization compared to GCC
+    - Can we build with LLVM? Is there a `distutils` extension somewhere?
+  6. Try `-ffast-math` for GCC and `/fp:fast` for MSVC.  
+     - Might kill NaN and Inf support.
+     - Guided optimization via profiling? (`-fprofile-arcs`)
 
 
-======================================
- Release notes for Numexpr 2.4 series
-======================================
+
+Release notes for Numexpr 2.4 series
+====================================
 
 Changes from 2.4.3 to 2.4.4
-===========================
+---------------------------
 
 * Honor OMP_NUM_THREADS as a fallback in case NUMEXPR_NUM_THREADS is not
   set. Fixes #161.
 
 Changes from 2.4.2 to 2.4.3
-===========================
+---------------------------
 
 * Comparisons with empty strings work correctly now.  Fixes #121 and
   PyTables #184.
 
 Changes from 2.4.1 to 2.4.2
-===========================
+---------------------------
 
 * Improved setup.py so that pip can query the name and version without
   actually doing the installation.  Thanks to Joris Borgdorff.
 
 Changes from 2.4 to 2.4.1
-=========================
+-------------------------
 
 * Added more configuration examples for compiling with MKL/VML
   support.  Thanks to Davide Del Vento.
@@ -99,7 +115,7 @@ Changes from 2.4 to 2.4.1
   Plesivčak.
 
 Changes from 2.3.1 to 2.4
-=========================
+-------------------------
 
 * A new `contains()` function has been added for detecting substrings
   in strings.  Only plain strings (bytes) are supported for now.  See
@@ -109,7 +125,7 @@ Changes from 2.3.1 to 2.4
   dependency.  See PR #133.  Thanks to Aleks Bunin.
 
 Changes from 2.3 to 2.3.1
-=========================
+-------------------------
 
 * Added support for shift-left (<<) and shift-right (>>) binary operators.
   See PR #131. Thanks to fish2000!
@@ -118,7 +134,7 @@ Changes from 2.3 to 2.3.1
   not necessary and it chokes to clang.
 
 Changes from 2.2.2 to 2.3
-=========================
+-------------------------
 
 * Site has been migrated to https://github.com/pydata/numexpr.  All
   new tickets and PR should be directed there.
@@ -126,12 +142,12 @@ Changes from 2.2.2 to 2.3
 * [ENH] A `conj()` function for computing the conjugate of complex
   arrays has been added.  Thanks to David Menéndez.  See PR #125.
 
-* [FIX] Fixed a DeprecationWarning derived of using oa_ndim == 0 and
-  op_axes == NULL when using NpyIter_AdvancedNew() and NumPy 1.8.
+* [FIX] Fixed a DeprecationWarning derived of using oa_ndim -- 0 and
+  op_axes -- NULL when using NpyIter_AdvancedNew() and NumPy 1.8.
   Thanks to Mark Wiebe for advise on how to fix this properly.
 
 Changes from 2.2.1 to 2.2.2
-===========================
+---------------------------
 
 * The `copy_args` argument of `NumExpr` function has been brought
   lack.  This has been mainly necessary for compatibility with
@@ -147,21 +163,21 @@ Changes from 2.2.1 to 2.2.2
   reporting and the patch.
 
 Changes from 2.2 to 2.2.1
-=========================
+-------------------------
 
 * Fixes a secondary effect of "from numpy.testing import `*`", where
   division is imported now too, so only then necessary functions from
   there are imported now.  Thanks to Christoph Gohlke for the patch.
 
 Changes from 2.1 to 2.2
-=======================
+-----------------------
 
 * [LICENSE] Fixed a problem with the license of the
   numexpr/win32/pthread.{c,h} files emulating pthreads on Windows
   platforms.  After persmission from the original authors is granted,
   these files adopt the MIT license and can be redistributed without
   problems.  See issue #109 for details
-  (https://code.google.com/p/numexpr/issues/detail?id=110).
+  (https://code.google.com/p/numexpr/issues/detail?id-110).
 
 * [ENH] Improved the algorithm to decide the initial number of threads
   to be used.  This was necessary because by default, numexpr was
@@ -189,13 +205,13 @@ Changes from 2.1 to 2.2
   (https://code.google.com/p/numexpr/wiki/UsersGuide).
 
 Changes from 2.0.1 to 2.1
-===========================
+---------------------------
 
 * Dropped compatibility with Python < 2.6.
 
 * Improve compatibiity with Python 3:
 
-  - switch from PyString to PyBytes API (requires Python >= 2.6).
+  - switch from PyString to PyBytes API (requires Python >- 2.6).
   - fixed incompatibilities regarding the int/long API
   - use the Py_TYPE macro
   - use the PyVarObject_HEAD_INIT macro instead of PyObject_HEAD_INIT
@@ -208,7 +224,7 @@ Changes from 2.0.1 to 2.1
   '~' should be used instead (fixes #24).
 
 Changes from 2.0 to 2.0.1
-=========================
+-------------------------
 
 * Added compatibility with Python 2.5 (2.4 is definitely not supported
   anymore).
@@ -223,7 +239,7 @@ Changes from 2.0 to 2.0.1
 
 
 Changes from 1.x series to 2.0
-==============================
+------------------------------
 
 - Added support for the new iterator object in NumPy 1.6 and later.
 
@@ -249,7 +265,7 @@ Changes from 1.x series to 2.0
 
 
 Changes from 1.4.1 to 1.4.2
-===========================
+---------------------------
 
 - Multithreaded operation is disabled for small arrays (< 32 KB).
   This allows to remove the overhead of multithreading for such a
@@ -278,7 +294,7 @@ Changes from 1.4.1 to 1.4.2
 
 
 Changes from 1.4 to 1.4.1
-=========================
+-------------------------
 
 - Mingw32 can also work with pthreads compatibility code for win32.
   Fixes #31.
@@ -293,7 +309,7 @@ Changes from 1.4 to 1.4.1
 
 
 Changes from 1.3.1 to 1.4
-=========================
+-------------------------
 
 - Added support for multi-threading in pure C.  This is to avoid the
   GIL and allows to squeeze the best performance in both multi-core
@@ -303,7 +319,7 @@ Changes from 1.3.1 to 1.4
   machinery for the virtual machine.  With this, it is really easy to
   add more opcodes.  See:
 
-  http://code.google.com/p/numexpr/issues/detail?id=28
+  http://code.google.com/p/numexpr/issues/detail?id-28
 
   as an example.
 
@@ -319,7 +335,7 @@ Changes from 1.3.1 to 1.4
 
 
 Changes from 1.3 to 1.3.1
-=========================
+-------------------------
 
 - Due to an oversight, ``uint32`` types were not properly supported.
   That has been solved.  Fixes #19.
@@ -331,7 +347,7 @@ Changes from 1.3 to 1.3.1
 
 
 Changes from 1.2 to 1.3
-=======================
+-----------------------
 
 - A new type called internally `float` has been implemented so as to
   be able to work natively with single-precision floating points.
@@ -355,7 +371,7 @@ Changes from 1.2 to 1.3
 
 
 Changes from 1.1.1 to 1.2
-=========================
+-------------------------
 
 - Support for Intel's VML (Vector Math Library) added, normally
   included in Intel's MKL (Math Kernel Library).  In addition, when
@@ -394,7 +410,7 @@ Changes from 1.1.1 to 1.2
 
 
 Changes from 1.1 to 1.1.1
-=========================
+-------------------------
 
 - The case for multidimensional array operands is properly accelerated
   now.  Added a new benchmark (based on a script provided by Andrew
@@ -410,7 +426,7 @@ Changes from 1.1 to 1.1.1
 
 
 Changes from 1.0 to 1.1
-=======================
+-----------------------
 
 - Numexpr can work now in threaded environments.  Fixes #2.
 

@@ -12,9 +12,12 @@ Contents:
    :maxdepth: 2
 
    overview.rst
+
    faq.rst
    cython.rst
+   dev_guide.rst
    api.rst
+   release_notes.rst
 
 
 Indices and tables

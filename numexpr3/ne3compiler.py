@@ -112,8 +112,6 @@ LIB_STD = 0     # C++ cmath standard library
 CHECK_ALL = 0  # Normal operation in checking dtypes
 #CHECK_NONE = 1 # Disable all checks for dtypes if expr is in cache
 
-
-# TODO: could use bitmasks and int(1+np.isscalar( np.float32(0.0) ))
 _KIND_ARRAY = 1
 _KIND_SCALAR = 2
 _KIND_TEMP = 4
@@ -125,81 +123,63 @@ def evaluate( expr, name=None, lib=LIB_STD,
              local_dict=None, global_dict=None, out=None,
              order='K', casting=CAST_SAFE, optimization=OPT_MODERATE, 
              library=LIB_STD, checks=CHECK_ALL, stackDepth=1 ):
-    """
-    Evaluate a mutliline expression element-wise, using the a NumPy.iter
+    '''
+    Evaluate a mutli-line expression element-wise, using NumPy broadcasting 
+    rules. This function is provided as a convience for porting code from 
+    `numexpr` 2.6 to the new release. In general new users are advised to use 
+    the :code:`NumExpr` class instead.  
 
-    expr is a string forming an expression, like 
-        "c = 2*a + 3*b"
+    Arguments
+    ^^^^^^^^^
+
+    * :code:`expr`: expr is a string forming an expression, like :code:`c = 2*a + 3*b`.
         
-    The values for "a" and "b" will by default be taken from the calling 
-    function's frame (through use of sys._getframe()). Alternatively, they 
-    can be specifed using the 'local_dict' argument.
+      The values for :code:`a` and :code:`b` will by default be taken from the calling 
+      function's frame (through use of :code:`sys._getframe()`). Alternatively, they 
+      can be specifed using the :code:`local_dict` argument.
     
-    Multi-line statements, or semi-colon seperated statements, are supported.
-    
-    
-    Parameters
-    ----------
-    name : DEPRECATED
+      Multi-line statements, or semi-colon seperated statements, are supported.
+
+    Keyword Arguments
+    ^^^^^^^^^^^^^^^^^
+
+    :code:`name` : DEPRECATED
         use wisdom functions instead.
         
-    local_dict : dictionary, optional
+    :code:`local_dict` : dictionary, optional
         A dictionary that replaces the local operands in current frame. This is 
         generally required in Cython, as Cython does not populate the calling 
         frame variables according to Python standards.
 
-    global_dict : DEPRECATED
+    :code:`global_dict` : DEPRECATED
         A dictionary that replaces the global operands in current frame.
         Setting to {} can speed operations if you do not call globals.
         global_dict was deprecated as there is little reason for the 
         user to maintain two dictionaries of arrays.
         
-    out : DEPRECATED
-        use assignment in expr (i.e. 'out=a*b') instead.
+    :code:`out` : DEPRECATED
+        use assignment in expr (i.e. :code:`'out=a*b'`) instead.
 
-    order : {'C', 'F', 'A', or 'K'}, optional
-        Currently only 'K' is supported in NumExpr3.
+    :code:`order:code:`: { :code:`'K'`}, optional
+        Controls the iteration order for operands. Currently only :code:`'K'` 
+        (default NumPy array ordering) is supported in NumExpr3.
 
-        Controls the iteration order for operands. 'C' means C order, 'F'
-        means Fortran order, 'A' means 'F' order if all the arrays are
-        Fortran contiguous, 'C' order otherwise, and 'K' means as close to
-        the order the array elements appear in memory as possible.  For
-        efficient computations, typically 'K'eep order (the default) is
-        desired.
-
-    casting : {CAST_SAFE, CAST_NO, CAST_EQUIV, CAST_SAME_KIND, CAST_UNSAFE}, 
-               optional 
-               (NumPy string repr also accepted)
-
-        Currently only 'safe' is supported in NumExpr3.
+    :code:`casting:code:` : {:code:`CAST_SAFE`|:code:`'safe'`}, optional 
 
         Controls what kind of data casting may occur when making a copy or
-        buffering.  Setting this to 'unsafe' is not recommended, as it can
-        adversely affect accumulations.
+        buffering. Explicit cast functions are also supported, see the user guide.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
-
-    optimization: {OPT_MODERATE}, optional
+    :code:`optimization`: {:code:`OPT_MODERATE`}, optional
         Controls what level of optimization the compiler will attempt to 
-        perform on the expression to speed its execution.  This optimization
-        is performed both by python.compile and numexpr3
-        
-          * OPT_MODERATE performs simple optimizations, such as minimizing 
-            the number of temporary arrays
+        perform on the expression to speed its execution. :code:`OPT_MODERATE` 
+        performs simple optimizations, such as minimizing the number of temporary arrays
             
-    library: {LIB_STD}, optional
+    :code:`library`: {:code:`LIB_STD`}, optional
         Indicates which library to use for calculations.  The library must 
         have been linked during the C-extension compilation, such that the 
         associated operations are found in the opTable.
-          * LIB_STD is the standard C math.h / cmath.h library
-        
-        Falls-back to LIB_STD if the other library is not available.  
-    """
+          * :code:`LIB_STD` is the standard C math.h / cmath.h library
+    '''
     if not isinstance(expr, (str,bytes)):
         raise ValueError( "expr must be specified as a string or bytes." )
         
@@ -242,8 +222,10 @@ def evaluate( expr, name=None, lib=LIB_STD,
 # ('self' is not a reserved keyword in Python)
 def _assign(self, node):
     '''
-    This is for the assignment inside a code block.  The last assignment with 
-    magic output is _last_assign.
+    AST function handler for an intermediate assignment in a statement block. 
+    The convention is that intermediate targets are named targets if they do not 
+    exist in the calling namespace and secondary outputs if they have been 
+    pre-allocated.
     '''
     # print( '$ast.Assign' )
     # node.targets is a list; It must have a len=1 for NumExpr3 (i.e. no multiple returns)
@@ -257,6 +239,10 @@ def _assign(self, node):
     return _mutate(self, node.targets[0], valueReg)
 
 def _assign_last(self, node):
+    '''
+    AST function handler for the last assignment in a statement block. Promotes 
+    output magically if it has not been pre-allocated.
+    '''
     # info( '$ast.Assign, flow: LAST' )
     
     if len(node.targets) != 1:
@@ -289,9 +275,9 @@ def _mutate(self, targetNode, valueReg):
     mutates targetReg into it.
 
     Cases:
-    1.) targetReg is KIND_ARRAY or KIND_SCALAR in which case it has been
+      1. targetReg is KIND_ARRAY or KIND_SCALAR in which case it has been
         pre-allocated and is a secondary return.
-    2.) targetReg is KIND_TEMP in which case it's a _named_ temporary.
+      2. targetReg is KIND_TEMP in which case it's a _named_ temporary.
 
     In some cases this will require a new temporary.  For example, if the output 
     dtype is smaller than the valueReg.dchar it can't be mutated to a named 
@@ -351,10 +337,10 @@ def _mutate_last(self, targetNode, valueReg):
     an ast.Name or ast.Attribute 
 
     There's a few-ish cases:
-     1.) valueRegister is a temp, in which case see if it can mutate to a KIND_RETURN
-     2.) targetNode previously named, in which case program must be rewound
-     3.) valueRegister is an array or scalar, in which case we need to do a copy
-     4.) valueRegister is an attribute, which is the same as name but needs one level of indirection
+      1. valueRegister is a temp, in which case see if it can mutate to a KIND_RETURN
+      2. targetNode previously named, in which case program must be rewound
+      3. valueRegister is an array or scalar, in which case we need to do a copy
+      4. valueRegister is an attribute, which is the same as name but needs one level of indirection
     
     '''
     if isinstance( targetNode, ast.Name ):
@@ -410,16 +396,13 @@ def _mutate_last(self, targetNode, valueReg):
 
            
 def _name(self, node):
-    '''
-    _name(self, node)
-
-    This is a factory method for building new NumReg objects from names parsed
-    via the AST.
+    '''AST factory function for NumReg registers from variable names parsed
+    by the AST.
 
     Handles three cases:  
-        1. node.id is already in namesReg, in which case re-use it
-        2. node.id exists in the calling frame, in which case it's KIND_ARRAY, 
-        3. it doesn't, in which case it's a named temporary.
+      1. node.id is already in namesReg, in which case re-use it
+      2. node.id exists in the calling frame, in which case it's KIND_ARRAY, 
+      3. it doesn't, in which case it's a named temporary.
     '''
     # node.ctx (context) is not something that needs to be tracked
 
@@ -461,69 +444,55 @@ def _name(self, node):
             return register
     
 def _const(self, node):
-    constNo = next( self._regCount )
-    # regKey = pack( _PACK_REG, constNo )
-    # token = '$%d'%constNo
+    '''
+    AST factory function for building scalar constants from numbers or string
+    literals parsed by the AST.  
+
+    The constants are stored and cast such that they do not impose another cast
+    operation on the virtual machine. This is the opposite behavoir to NumExpr2 
+    where a float64 const could upcast an enormous array.
+    '''
     
     # It's easier to just use ndim==0 numpy arrays, since PyArrayScalar 
     # isn't in the API anymore.
-    # Use the _minimum _ dtype available so that we don't accidently upcast.
-
-    # TODO: we should try and force consts to be of the correct dtype in 
-    # Python, to avoid extraneous cast operations in the interpreter.
-    # This should be moved into _cast2
-    if np.mod( node.n, 1) == 0: # int
-        # Always try and used unsigned ints, but only up to half the 
-        # bit-width?
-        if node.n < 0:
-            if node.n > 128:
-                constArr = np.asarray(node.n, dtype='int8' )
-            elif node.n > 32768:
-                constArr = np.asarray(node.n, dtype='int16' )  
-            elif node.n > 32768:
-                constArr = np.asarray(node.n, dtype='int16' )  
-            elif node.n > 2147483648:
-                constArr = np.asarray(node.n, dtype='int32' )
-            elif node.n > 2305843009213693952:
-                constArr = np.asarray(node.n, dtype='int32' )
-            else:
-                constArr = np.asarray(node.n, dtype='float64' )
-        else: # unsigned
-            if node.n < 128:
-                constArr = np.asarray(node.n, dtype='uint8' )
-            elif node.n < 32768:
-                constArr = np.asarray(node.n, dtype='uint16' )  
-            elif node.n < 32768:
-                constArr = np.asarray(node.n, dtype='uint16' )  
-            elif node.n < 2147483648:
-                constArr = np.asarray(node.n, dtype='uint32' )
-            elif node.n < 2305843009213693952:
-                constArr = np.asarray(node.n, dtype='uint32' )
-            else:
-                constArr = np.asarray(node.n, dtype='float64' )
-        
-    elif type(node.n) == str or type(node.n) == bytes: 
-        constArr = np.asarray(node.n)
-    elif np.iscomplex(node.n):
-        constArr = np.complex64(node.n)
-    else: # float
-        constArr = np.asarray(node.n, dtype='float32' )
+    node_n = node.n
+    if np.iscomplex(node_n):
+        constArr = np.complex64(node_n)
+    elif isinstance(node_n, int): 
+        constArr = np.asarray(node_n, dtype=int)
+    elif isinstance(node_n, float):
+        constArr = np.asarray(node_n, dtype=float)
+    elif type(node_n) == str or type(node_n) == bytes: 
+        constArr = np.asarray(node_n)
+    else: 
+        raise TypeError( 
+            "Unknown constant type for NE3 literal: {} of type {}".format( 
+                node_n, type(node_n) ) )
 
     # Const arrays shouldn't be weak references as they are part of the 
     # program and unmutable.
+    constNo = next( self._regCount )
     self.registers[constNo] = register = NumReg( constNo, constNo, constArr, 
                     constArr.dtype.char, _KIND_SCALAR )
     return register
         
 
 def _attribute(self, node):
-    # An attribute has a .value node which is a Name, and .value.id is the 
-    # module/class reference. Then .attr is the attribute reference that 
-    # we need to resolve.
-    # WE CAN ONLY DEREFERENCE ONE LEVEL ('.').  To go deeper we need some 
-    # recursive solution.
-    
-    # .real and .imag need special handling because they could be sliced views
+    '''
+    AST factory function for attributes, such as :code:`numpy.pi`. Other 
+    than the attribute handle these are always treated similar to 
+    :code:`_name()`.
+
+    An attribute has a .value node which is a Name, and .value.id is the 
+    module/class reference. Then .attr is the attribute reference that 
+    we need to resolve.
+
+    **Only a single deference level is supported** To go deeper would require
+    a recursive solution.
+
+    :code:`.real` and :code:`.imag` need special handling because they are actually 
+    mapped to function calls.
+    '''
     if node.attr == 'imag' or node.attr == 'real':
         return _real_imag( self, node)
 
@@ -538,8 +507,6 @@ def _attribute(self, node):
         # Get address
         arr = None
         
-        # Is there any tricky way to retrieve the local_dict as is rather than
-        # forcing the system to make a dict?
         if className in self.local_dict:
             classRef = self.local_dict[className]
             if node.attr in classRef.__dict__:
@@ -560,10 +527,16 @@ def _attribute(self, node):
     return register
     
 def _real_imag(self, node):
+    '''
+    This AST function handler builds :code:`_call()` program steps for the use 
+    of attribute-like access.
+
+    There is currently no difference between :code:`real(a)` and :code:`a.real`.
+    Having a seperate path for slicing existing arrays was considered but it is 
+    overly difficult to manage the weak reference.
+    '''
     viewName = node.attr
-    # Having a seperate path for slicing existing arrays was considered but 
-    # it is overly difficult to manage the weak reference.
-    # info( "Functionize ." + str(viewName)  )
+
 
     register = _ASTAssembler[type(node.value)](self, node.value)
 
@@ -583,6 +556,11 @@ def _real_imag(self, node):
     return outputRegister
 
 def _binop(self, node):
+    '''
+    AST function factory for binomial operations, such as :code:`+,-,*,` etc.
+
+    ast.Binop fields are :code:`(left,op,right)`
+    '''
     # info( '$ast.Binop: %s'%node.op )
     # (left,op,right)
     leftRegister = _ASTAssembler[type(node.left)](self, node.left)
@@ -594,7 +572,6 @@ def _binop(self, node):
     # Format: (opCode, lib, left_register, right_register)
     try:
         opWord, self.assignDChar = OPTABLE[  (type(node.op), self.lib, leftRegister.dchar, rightRegister.dchar ) ]
-        # warn( "binop {}_{}{} retChar: {}".format(type(node.op), leftRegister.dchar, rightRegister.dchar, self.assignDChar) )
     except KeyError as e:
         if leftRegister.dchar == None or rightRegister.dchar == None:
             raise ValueError( 
@@ -615,8 +592,23 @@ def _binop(self, node):
     return outputRegister
            
 def _call(self, node):
-    # ast.Call has the following fields: (in Python <= 3.4)
-    # ('func', 'args', 'keywords', 'starargs', 'kwargs')
+    '''
+    AST function factory for a callable, for one to three arguments.
+    
+    One-function arguments are typical, they may take many forms such as cast
+    operations (:code:`float32(x)`) or transcendentals (:code:`sin(x)`) for 
+    example.
+
+    Two-function arguments are rarer, an example being :code:`atan2(x, y)`. 
+    NE3 supports a number of two-function arguments found in :code:`scipy.misc`.
+
+    The only supported three-function argument is :code:`where(test, a, b)`
+
+    ast.Call fields are: (in Python >= 3.4)
+    :code:`('func', 'args', 'keywords', 'starargs', 'kwargs')`
+
+    Only `args` is examined.
+    '''
     # info( '$ast.Call: %s'%node.func.id )
 
     argRegisters = [_ASTAssembler[type(arg)](self, arg) for arg in node.args]
@@ -667,10 +659,18 @@ def _call(self, node):
     return outputRegister
     
 def _compare(self, node):
+    '''
+    The equivalent AST factory for :code:`ast.Compare` nodes to :code:`_binop`.
+
+    :code:`ast.Compare` node fields are :code:`(left,ops,comparators)`. Only one 
+    right-hand comparison is allowed, use brackets to break up multiple 
+    comparisons.
+
+    NumExpr3 does not handle comparisons :code:`[Is, IsNot, In, NotIn]`.
+    '''
     # info( 'ast.Compare: left: {}, ops:{}, comparators:{}'.format(node.left, node.ops, node.comparators) )
     # "Awkward... this ast.Compare node is," said Yoga disparagingly.  
-    # (left,ops,comparators)
-    # NumExpr3 does not handle [Is, IsNot, In, NotIn]
+
     if len(node.ops) > 1:
         raise NotImplementedError( 
                 'NumExpr3 only supports binary comparisons (between two elements); try inserting brackets' )
@@ -680,8 +680,15 @@ def _compare(self, node):
     return _binop(self, node)
    
 def _boolop(self, node):
-    # Functionally from the NumExpr perspective there's no difference 
-    # between boolean binary operations and binary operations
+    '''
+    The equivalent AST factory for :code:`ast.Boolop` nodes to :code:`_binop`.
+    :code:`ast.Boolop` nodes typically represent bitshift, bitand, and similar
+    operations on integers. 
+
+    :code:`ast.Boolop` node fields are :code:`(left,op,right)`. Only one 
+    right-hand comparison is allowed, use brackets to break up multiple 
+    comparisons.
+    '''
     if len(node.values) != 2:
         raise ValueError( "NumExpr3 supports binary logical operations only, please seperate operations with ()." )
     node.left = node.values[0]
@@ -689,8 +696,10 @@ def _boolop(self, node):
     _binop( self, node)
     
 def _unaryop(self, node):
-    # Currently only ast.USub is supported, and the node.operand is the 
-    # value acted upon.
+    '''
+    Currently only :code:`ast.USub`, i.e. the negation operation :code:`'-a', 
+    is supported, and the :code:`node.operand` is the value acted upon.
+    '''
     operandRegister = _ASTAssembler[type(node.operand)](self, node.operand)
     try:
         opWord, self.assignDChar = OPTABLE[  (type(node.op), self.lib, operandRegister.dchar ) ]
@@ -710,10 +719,11 @@ def _unaryop(self, node):
 
 def _list(self, node):
     '''
-    Parse a list literal into a numpy.array 
-    e.g. ne3.NumExpr( 'a < [1,2,3]' )
+    Parse a list literal into a numpy.array e.g. 
+    :code:`ne3.NumExpr( 'a < [1,2,3]' )`
 
-    Only numbers are supported
+    Only numbers are supported at present. Mixing floats and integers results 
+    in a float array.
     '''
     regToken = next( self._regCount )
 
@@ -723,7 +733,7 @@ def _list(self, node):
 
                 
 def _unsupported(self, node, outputRegisterle=None ):
-    raise KeyError( 'unimplmented ASTNode' + type(node) )
+    raise KeyError( 'unimplemented ASTNode: ' + type(node) )
 
 # _ASTAssembler is a function dictionary that is used for fast flow-control.
 # Think of it being equivalent to a switch-case flow control in C
@@ -749,6 +759,27 @@ class NumReg(object):
     Previously tuples were used for registers. Tuples are faster to build but 
     they can't contain logic which becomes a problem.  Also now we can use 
     None for name for temporaries instead of building values.
+
+    Attributes
+    ^^^^^^^^^^
+    * :code:`num`: The register number, an :code:`int`
+    * :code:`token`: The register number encoded as :code:`bytes`
+    * :code:`name`: The unicode representation of the variable name. For named   
+      variables this is a :code:`str` and for temporaries a :code:`int`
+    * :code:`dchar`: The :code:`numpy.dtype.char` representation of the underlying 
+      array or const datatype.  Cannot be mutated.
+      Note this changes from Linux to Windows.  Code generation must always be 
+    run on the appropriate platform.
+    * :code:`ref`: The reference to the passed array. Normally this is a 
+      :code:`weakref.ref` so that the :code:`NumExpr` object does not stop 
+      garbage collection.
+    * :code:`kind`: a bitmask used for flow-control.  One of:
+      - :code:`KIND_ARRAY` : A passed-in :code:`ndarray`
+      - :code:`KIND_TEMP`  : A named or unnamed temporary allocated by the 
+        virtual machine
+      - :code:`KIND_SCALAR`: A literal constant, such as :code:`1` 
+      - :code:`KIND_RETURN`: The last assignment target in a statement block. 
+        Can be pre-allocated or magically promoted to the calling frame.
     '''
     TYPENAME = { _KIND_ARRAY:'array', _KIND_SCALAR:'scalar', 
                  _KIND_TEMP:'temp', _KIND_RETURN:'return' }
@@ -765,23 +796,11 @@ class NumReg(object):
 
     def pack(self):
         '''
-        TODO: a faster way to get registers parsed? 
+        NOT IN USE
 
-        Packs self into something that can be copied directly into a NumExprReg
-
-        struct NumExprReg 
-        {
-            char          *mem;        // Pointer to array data for scalars and temps (npy_iter used for arrays)
-            char           dchar;      // numpy.dtype.char
-            npy_uint8      kind;       // 0 = array, 1 = scalar, 2 = temp
-            npy_intp       itemsize;   // element size in bytes   (was: memsizes)
-            npy_intp       stride;     // How many bytes until next element  (was: memsteps)
-        };
-
+        This is a potential prototype for more quickly building NumReg objects.
+        Most likely a pure C-api solution will be used instead.
         '''
-        #  Tricky part is passing in the numpy ndarrays...
-        # We have id(self.ref)?
-        # Actually why is .ref needed at all?  It's replaced on the NumExpr_run call
         return pack( 'BPcBPP', 
                     self.token, 
                     id(self.ref()) if isinstance(self.ref,weakref.ref) else id(self.ref), 
@@ -792,6 +811,9 @@ class NumReg(object):
 
     def to_tuple(self):
         '''
+        Packs a NumReg into a tuple capable of being parsed by the virtual machine
+        function :code:`NumExpr_init()`.
+
         Note that numpy.dtype.itemsize is np.int32 and not recognized by the 
         Python C-api parsing routines!
         '''
@@ -816,7 +838,8 @@ class NumReg(object):
             self.ref )
 
     def __getstate__(self):
-        ''' Can't pickle a weakref, and we don't want to pass full arrays. '''
+        ''' Pickling magic method. Array referemces are removed as one can't 
+        pickle a weakref, and we don't want to pass full arrays.'''
         pickleDict = self.__dict__.copy()
         # Remove weakrefs
         if isinstance( pickleDict['ref'], weakref.ref):
@@ -824,119 +847,108 @@ class NumReg(object):
         return pickleDict
 
     # def __setstate__(self, state):
-    #     ''' We don't need a __setstate__ magic method for NumReg
-    #     '''
+    #     We don't need a __setstate__ magic method for NumReg
     #     self.__dict__ = state
 
 
-
-
+_ASTAssembler
 class NumExpr(object):
     """
-    
-    The self.program attribute is a `bytes` object and consists of operations 
-    followed by registers with the form,
+    The :code:`NumExpr` class is the core encapsulation of the :code:`numexpr3` 
+    module. It encapsulates a `CompiledExec` object which is the virtual 
+    machine object from the C-api. It also handles all of the parsing of 
+    string statements via a functional dictionary that uses :code:`ast` module 
+    Nodes as keys.  This approach results in the Abstract Syntax Tree being 
+    parsed in a single-pass, whereas NumExpr 2 required multiple passes for 
+    different tasks.  See the :code:`_ASTAssembler` dictionary and its 
+    associated functions for implementation details.
+
+    Attributes
+    ^^^^^^^^^^
+
+    * :code:`program`: The self.program attribute is a `bytes` object and consists of operations 
+      followed by registers with the form::
     
         opcode + return_reg + arg1_reg + arg2_reg + arg3_reg
         
-    Currently opcode is a uint16 and the register numbers are uint8.  However,
-    note that numpy.iter limits the maximum number of arguments to 32.
-    
-    Register tuples have the format: 
-        
-        (regCode, object, dchar, KIND, name, <max_itemsize>)
-        
-    where
-        regCode: a single byte indicating the register number
-        object:   the actual object reference, is `None` for temporaries.
-        dchar:    the `object.dtype.char`, or for temporaries the expected value
-        KIND:  indicates ndarray, scalar, temporary
-        name:     the original name of the array.  It is not required for the 
-                  input arguments to run have the same names, just that they
-                  be in the same order and dtypes.
-        max_itemsize: the largest dtype used in temporary arrays, optional
+      Currently opcode is a uint16 and the register numbers are uint8. This means
+      there can be up to 64k operations in the virtual machine and up to 254 
+      registers/arguments (255 is reserved) in a code block. However,
+      note that the NumPy code :code:`#define NPY_MAXARGS 32` limits the maximum 
+      number of arguments to 32.
+
+    * :code:`_codeStream`: a :code:`BytesIO` buffer that is used to build the 
+      program. This was found to be the fastest way to construct the large byte
+      strings formed.
+
+    TODO: other NumExpr attribs
     """
 
     
     def __init__(self, expr, lib=LIB_STD, casting=CAST_SAFE, local_dict=None, 
                  stackDepth=1 ):
-        """Evaluate a mutliline expression element-wise, using the a NumPy.iter.
+        '''
+        Evaluate a mutli-line expression element-wise, using NumPy broadcasting 
+        rules::
 
-        `expr` is a string forming an expression, like 
+            neObj = NumExpr('c=2*a+3*b') # Builds an NumExpr object
+            neObj()                      # Executes with original arrays
+            neObj(verify=True)           # Checks the calling frame for the array names
+            neObj(a=foo, b=bar, c=moo)   # Executes the calculation with new arrays
+            neObj(**local_dict)          # Unpack a dictionary with variable names as keys
 
-            neObj = NumExpr( 'c = 2*a + 3*b )    # Builds an NumExpr object
-            neObj( a=a, b=b, c=c )       # Executes the calculation
-
-        The values for 'a', 'b', and 'c' will by default be taken from the calling 
-        function's frame (through use of sys._getframe()). Alternatively, they 
-        can be specifed using the 'local_dict' argument.
-        
         Multi-line statements, typically using triple-quote strings, or semi-colon 
-        seperated statements, are supported.
+        seperated statements, are supported. If an intermediate assignment target 
+        exists in the calling frame, it is treated by convention as a second 
+        (or third, ...) output.  Otherwise it is a named temporary, and it will 
+        never be a full-size array::
+
+            big = NumExpr('')
+            
+        TODO: example with 
         
+        Arguments
+        ^^^^^^^^^
+
+        * :code:`expr`: expr is a string forming an expression, like :code:`c = 2*a + 3*b`.
+            
+        The values for :code:`a` and :code:`b` will by default be taken from the calling 
+        function's frame (through use of :code:`sys._getframe()`). Alternatively, they 
+        can be specifed using the :code:`local_dict` argument.
         
-        Parameters
-        ----------
-        name : DEPRECATED
-            use wisdom functions instead.
-            
-        local_dict : dictionary, optional
-            A dictionary that replaces the local operands in current frame. This is 
-            generally required in Cython, as Cython does not populate the calling 
-            frame variables according to Python standards.
+        Multi-line statements, or semi-colon seperated statements, are supported.
 
-        global_dict : DEPRECATED
-            A dictionary that replaces the global operands in current frame.
-            Setting to {} can speed operations if you do not call globals.
-            global_dict was deprecated as there is little reason for the 
-            user to maintain two dictionaries of arrays.
-            
-        out : DEPRECATED
-            use assignment in expr (i.e. 'out=a*b') instead.
+        Keyword Arguments
+        ^^^^^^^^^^^^^^^^^
 
-        order : {'C', 'F', 'A', or 'K'}, optional
-            Currently only 'K' is supported in NumExpr3.
+        * :code:`local_dict` : dictionary, optional
+        A dictionary that replaces the local operands in current frame. This is 
+        generally required in Cython, as Cython does not populate the calling 
+        frame variables according to Python standards.
 
-            Controls the iteration order for operands. 'C' means C order, 'F'
-            means Fortran order, 'A' means 'F' order if all the arrays are
-            Fortran contiguous, 'C' order otherwise, and 'K' means as close to
-            the order the array elements appear in memory as possible.  For
-            efficient computations, typically 'K'eep order (the default) is
-            desired.
+        * :code:`order:code:`: { :code:`'K'`}, optional
+        Controls the iteration order for operands. Currently only :code:`'K'` 
+        (default NumPy array ordering) is supported in NumExpr3.
 
-        casting : {CAST_SAFE, CAST_NO, CAST_EQUIV, CAST_SAME_KIND, CAST_UNSAFE}, 
-                optional 
-                (NumPy string repr also accepted)
+        * :code:`casting` : {:code:`CAST_SAFE`|:code:`'safe'`}, optional 
+        Controls what kind of data casting may occur when making a copy or
+        buffering. Explicit cast functions are also supported, see the user guide.
 
-            Currently only 'safe' is supported in NumExpr3.
-
-            Controls what kind of data casting may occur when making a copy or
-            buffering.  Setting this to 'unsafe' is not recommended, as it can
-            adversely affect accumulations.
-
-            * 'no' means the data types should not be cast at all.
-            * 'equiv' means only byte-order changes are allowed.
-            * 'safe' means only casts which can preserve values are allowed.
-            * 'same_kind' means only safe casts or casts within a kind,
-                like float64 to float32, are allowed.
-            * 'unsafe' means any data conversions may be done.
-
-        optimization: {OPT_MODERATE}, optional
-            Controls what level of optimization the compiler will attempt to 
-            perform on the expression to speed its execution.  This optimization
-            is performed both by python.compile and numexpr3
-            
-            * OPT_MODERATE performs simple optimizations, such as minimizing 
-                the number of temporary arrays
+        * :code:`optimization`: {:code:`OPT_MODERATE`}, optional
+        Controls what level of optimization the compiler will attempt to 
+        perform on the expression to speed its execution. :code:`OPT_MODERATE` 
+        performs simple optimizations, such as minimizing the number of temporary arrays
                 
-        library: {LIB_STD}, optional
-            Indicates which library to use for calculations.  The library must 
-            have been linked during the C-extension compilation, such that the 
-            associated operations are found in the opTable.
-            * LIB_STD is the standard C math.h / cmath.h library
-            
-            Falls-back to LIB_STD if the other library is not available.  
-        """
+        * :code:`library`: {:code:`LIB_STD`}, optional
+        Indicates which library to use for calculations.  The library must 
+        have been linked during the C-extension compilation, such that the 
+        associated operations are found in the opTable.
+        - :code:`LIB_STD` is the standard C math.h / cmath.h library
+
+        * :code:`stackDepth`: How many frames up to promote any magic outputs. 
+        This should only be relevant if you are doing fancy tricks with 
+        :code:`functools.partial` or other functional programming approachs.
+        '''
         # Public
         self.expr = expr
         self.program = None
@@ -974,14 +986,15 @@ class NumExpr(object):
             self.local_dict = local_dict
             # self._global_dict = _global_dict
 
-        self.assemble()
+        self._assemble()
 
     def __getstate__(self):
         '''
-        Preserves NumExpr object via `pickledBytes = pickle.dumps(neObj)`
+        Preserves NumExpr object via :code:`pickledBytes = pickle.dumps(neObj)`
 
-        For pickling, we have to remove the local_dict and _global_dict 
-        attributes as they aren't pickleable.
+        For pickling, we have to remove the local_dict attribute as it is not 
+        pickleable.  Weak-references to arrays are handled appropriately by
+        the NumReg class.
         '''
         pickleDict = self.__dict__.copy()
         # Remove non-needed and non-pickelable attributes
@@ -1001,21 +1014,16 @@ class NumExpr(object):
         # self._global_dict = call_frame.f_globals
        
 
-    def assemble(self):
+    def _assemble(self):
         ''' 
-        NumExpr.assemble() can be used in the context of having a pool of 
-        NumExpr objects; it is always called by __init__().
+        NumExpr._assemble() is always called by __init__().
         '''
-        # Here we assume the local/global_dicts have been populated with 
-        # __init__.  
-        # Otherwise we have issues with stackDepth being different depending 
-        # on where the method is called from.
-        
+        # Here we assume the local_dict has been populated with 
+        # __init__. Otherwise we have issues with stackDepth being different 
+        # depending on where the method is called from.
         forest = ast.parse( self.expr ) 
-        # N_forest_m1 = len(forest.body) - 1
                          
         # Iterate over the all trees except the last one, which has magic_output
-        # for I, bodyItem in enumerate( forest.body[:-1] ):
         for bodyItem in forest.body[:-1]:
             _ASTAssembler[type(bodyItem)](self, bodyItem)
 
@@ -1023,31 +1031,29 @@ class NumExpr(object):
         bodyItem = forest.body[-1]
         _ASTAssembler[type(bodyItem),-1](self,bodyItem)
 
-        # Mutate the registers into a sorted, unmutable tuple
+        # Mutate the registers into a sorted, unmutable tuple that the C-api understands
         self.registers = tuple( [reg for reg in sorted(self.registers.values())] )
         regsToInterpreter = tuple( [reg.to_tuple() for reg in self.registers] )
 
         # Collate the inputNames as well as the the required outputs
-        # self.program view is formed in _assign_last now
         self.program = self._codeStream.getvalue()
         
         # Add self to the wisdom
         wisdom[(self.expr, self.lib, self.casting)] = self
+        # If crashing in the C-api calling disassemble here gives good clues
         # self.disassemble() # DEBUG
 
-        # warn( "%%%%regsToInterpreter%%%%")
-        # for I, reg in enumerate(regsToInterpreter):
-        #     warn( '{}::{}'.format(I,reg) )
-        # warn( '%%%%')
-
         self._compiled_exec = interpreter.CompiledExec( self.program, regsToInterpreter )
-        # packedRegs = [reg.pack() for reg in self.registers]
-        # self._compiled_exec = interpreter.CompiledExec( self.program, packedRegs )
-        # Clean up
+
+        # Clean up unneeded attributes and resources
         self._codeStream.close()
         
     
     def disassemble( self ):
+        '''
+        Prints a formatted representation of the program and registers for 
+        debugging purposes.
+        '''
         global _PACK_REG, _PACK_OP, _NULL_REG
         
         blockLen = calcsize(_PACK_OP) + 4*calcsize(_PACK_REG)
@@ -1066,7 +1072,6 @@ class NumExpr(object):
         for reg in regs:
             print( reg.__str__() )
 
-
         print( "DISASSEMBLED PROGRAM: " )
         for J, block in enumerate(progBlocks):
             opCode, ret, arg1, arg2, arg3 = unpack( _UNPACK, block )
@@ -1077,7 +1082,6 @@ class NumExpr(object):
             register = reverseOps[ pack(_PACK_OP, opCode) ]
     
             # For the ast.Nodes we want a 'pretty' name in the output
-            # give 
             if hasattr( register[0], '__name__' ):
                 opString = register[0].__name__ + "_" + "".join( [str(dchar) for dchar in register[2:] ] ).lower()
             else:
@@ -1089,8 +1093,8 @@ class NumExpr(object):
         
     def __call__(self, stackDepth=None, verify=False, **kwargs):
         '''
-        A convenience shortcut for `NumExpr.run()`.  Keyword arguments are 
-        similar except `verify` defaults to False.  
+        A convenience shortcut for :code:`NumExpr.run()`. Keyword arguments are 
+        identical.
         '''
         if not stackDepth:
             stackDepth = self._stackDepth + 1
@@ -1099,24 +1103,19 @@ class NumExpr(object):
         
     def run(self, stackDepth=None, verify=False, **kwargs):
         '''
-        `run()` is called with keyword arguments as the order of 
+        :code:`run()` is typicall called with keyword arguments as the order of 
         args is based on the Abstract Syntax Tree parse and may be 
-        non-intuitive.
+        non-intuitive. See the class definition for calling semantics.
         
-            e.g. self.run( a=a1, b=b1, out=out_new )
-        
-        where {a,b,out} were the original names in the expression. The 
-        `disassemble()` method can be used to see the original expression names.
-        
-        Additional keyword arguments are:
+        Keyword Arguments
+        ^^^^^^^^^^^^^^^^^
             
-            stackDepth {None}: Tells the function how 
+        * :code:`stackDepth` {None}: Tells the function how 
               many stacks up it was called from. Generally not altered unless
               one is using functional programming.
-        
-            verify {False}: Resamples the calling frame to grab arrays. 
+        * :code:`verify` {False}: Resamples the calling frame to grab arrays. 
               There is some overhead associated with grabbing the frames so 
-              if inside a loop and using run on the same arrays repeatedly 
+              if inside a loop and using :code:`run()` on the same arrays repeatedly 
               then operate without arguments. 
 
         '''
@@ -1166,7 +1165,6 @@ class NumExpr(object):
                         args.append(None)
 
         else: # Grab arrays from existing weak references
-            # info( "run case use weakrefs" )
             # We have to __call__ the weakrefs to get the original arrays
             # args = [reg.ref() for reg in self.registers.values() if reg.kind == _KIND_ARRAY]
             for reg in self.registers:
@@ -1180,13 +1178,9 @@ class NumExpr(object):
                         arg = reg.ref
                     args.append(arg)
             
-        # debug( "run args::")
-        # for arg in args:
-        #     debug('    {}'.format(arg) )
         unalloc = self._compiled_exec( *args, **kwargs )
 
         # Promotion of magic output
-        # debug( "self.assignTarget = {}".format(self.assignTarget) )
         if self.assignTarget.ref is None and isinstance(self.assignTarget.name, str):
             # Insert result into calling frame
             if call_frame is None:
@@ -1200,9 +1194,10 @@ class NumExpr(object):
     def _newTemp(self, dchar, name ):
         '''
         Either creates a new temporary register, or if possible re-uses an old 
-        one. 
-            'dchar' is the ndarray.dtype.char, set to `None` if unknown
-            'name' is the NumReg.name, which is either a `int` or `str`
+        one.
+
+        * :code:`'dchar'` is the :code:`ndarray.dtype.char`, set to :code:`None` if unknown
+        * :code:`'name'` is the :code:`NumReg.name`, which is either a :code:`int` or :code:`str`
         '''
 
         if len(self._freeTemps) > 0:
@@ -1248,9 +1243,8 @@ class NumExpr(object):
             
 
     def _releaseTemp(self, tempReg, outputReg):
-        # Free a temporary
-        # This should not release named temporaries, the user may re-use them 
-        # at any point in the program
+        '''Free a temporary. This should not release named temporaries, the 
+        user may re-use them at any point in the program.'''
         if tempReg.token in self._occupiedTemps and tempReg.token != outputReg.token:
             self._occupiedTemps.remove( register )
             self._freeTemps.add( register )
@@ -1274,7 +1268,6 @@ class NumExpr(object):
         of the previous operation is held), and returns an outputReg where
         the output of the operation may be saved.
         '''
-
         if inputReg1.kind != _KIND_TEMP:
             if inputReg2.kind != _KIND_TEMP:
                 return self._newTemp( self.assignDChar, None )
@@ -1314,6 +1307,9 @@ class NumExpr(object):
         return inputReg1
 
     def _copy(self, targetReg, valueReg ):
+        '''
+        A copy operation. Can happen with trival ops such as :code:`NumExpr('x=a')`.
+        '''
         # debug( "copying valueReg (%s) to targetReg (%s)"%(valueReg.dchar, targetReg.dchar) )
         opCode, self.assignDChar = OPTABLE[ ('copy', self.lib,
                                 valueReg.dchar) ]
@@ -1323,12 +1319,19 @@ class NumExpr(object):
         return targetReg
 
     def _func_cast(self, unaryRegister, opSig):
+        '''
+        A helper cast for functions called with integer arguments but where only 
+        floating-point versions exist.  Example::
+
+            a = np.arange(32)
+            ne3.NumExpr('sqrt(a)')()
+
+        will cast :code:`a` to :code:`np.float64`, the same as NumPy. Generally 
+        most functions are available as float32 and float64, occassionally
+        complex64 and complex128
+        '''
         if opSig in OPTABLE:
             return unaryRegister, opSig
-        
-        # If a function with appropriate dtype doesn't exist, make a new temporary
-        # Generally most functions are available as float32 and float64, occassionally
-        # complex64 and complex128
 
         funcName, castConvention, dchar = opSig
         castDchar = _CAST1_SUGGEST[dchar]
@@ -1351,7 +1354,11 @@ class NumExpr(object):
         
 
     def _cast2(self, leftRegister, rightRegister ): 
-
+        '''
+        Search for a valid 'safe' cast between two registers, such as in a 
+        binomial operation.  If one of the registers is a constant scalar, it
+        will be forced to be the pairwise array's type, even if the cast is unsafe.
+        '''
         leftD = leftRegister.dchar; rightD = rightRegister.dchar
         # print( "_cast2: %s dtype :%s, \n %s dtype: %s"%(leftRegister.name,leftD, rightRegister.name,rightD) ) 
         
@@ -1407,16 +1414,19 @@ class NumExpr(object):
             
     
     def _cast3(self, leftRegister, midRegister, rightRegister ):
-        # _cast3 isn't called by where/tenary so no need for an implementation
-        # at present.
+        '''_cast3 isn't called by where/tenary so no need for an implementation
+        at present.'''
         self._messages.append( 'TODO: implement 3-argument casting' )
         return leftRegister, midRegister, rightRegister
 
-# The wisdomBank connects strings to their NumExpr objects, so if the same 
-# expression pattern is called, it will be retrieved from the bank.
-# Also this permits serialization via pickle.
+
 class _WisdomBankSingleton(dict):
-    
+    '''
+    The wisdomBank connects strings to their NumExpr objects, so if the same 
+    expression pattern is called, it will be retrieved from the bank.
+    Also this permits serialization via pickle.
+    '''
+
     def __init__(self, wisdomFile="", maxEntries=256 ):
         # Call super
         super(_WisdomBankSingleton, self).__init__( self )
@@ -1447,32 +1457,38 @@ class _WisdomBankSingleton(dict):
         if len(self) > self.maxEntries:
             # Remove a 10% of random elements from the cache
             entries_to_remove = self.maxEntries // 10
-            # This code doesn't work in Python 3.
+
             keysView = list(self.keys())
             for I, cull in enumerate(keysView):
-                # super(_WisdomBankSingleton, self).__delitem__(cull)
                 self.pop(cull)
                 if I >= entries_to_remove: 
                     break
                 
-        #self.__dict__[key] = value
         super(_WisdomBankSingleton, self).__setitem__(key, value)
          
-    # Pickling support for wisdom:
-    # Pickling still needs some work.  Possibly the WisdomBankSingleton also needs 
-    # __getstate__ and __setstate__ magic functions.
-    # def load( self, wisdomFile=None ):
-    #     if wisdomFile == None:
-    #         wisdomFile = self.wisdomFile
-            
-    #     with open( wisdomFile, 'rb' ) as fh:
-    #         self = pickle.load(fh)
 
-    # def dump( self, wisdomFile=None ):
-    #     if wisdomFile == None:
-    #         wisdomFile = self.wisdomFile
+    def load( self, wisdomFile=None ):
+        '''
+        Load the wisdom from a file on disk (or otherwise file-like object).
+
+        wisdomFile should support the :code:`io.IOBase` or similar interface.
+        '''
+        if wisdomFile == None:
+            wisdomFile = self.wisdomFile
+            
+        with open( wisdomFile, 'rb' ) as fh:
+            self = pickle.load(fh)
+
+    def dump( self, wisdomFile=None ):
+        '''
+        Dump the wisdom into a file on disk (or otherwise file-like object). 
+
+        wisdomFile should support the :code:`io.IOBase` or similar interface.
+        '''
+        if wisdomFile == None:
+            wisdomFile = self.wisdomFile
   
-    #     with open( wisdomFile, 'wb' ) as fh:
-    #         pickle.dump(self, fh)
+        with open( wisdomFile, 'wb' ) as fh:
+            pickle.dump(self, fh)
 
 wisdom = _WisdomBankSingleton()
