@@ -715,11 +715,12 @@ class Operation(object):
                                 # print( "Found {} in {}".format(funcName, optMod) ) 
                                 break
 
-                        except ModuleNotFoundError:
-                            print( "Did not find module {}, not writing optional tests for".format(modName) )
+                        except: # This changed from an ImportError <= 3.5 to a ModuleNotFoundError in 3.6
+                            pass
                         
                     else:
-                        # print( "Didn't find function {} in {}".format(funcName, OPTIONAL_TEST_MODULES) )
+                        if not funcName.startswith('unsafe'):
+                            print( "Could not generate test for function {} in numpy, {}".format(funcName, OPTIONAL_TEST_MODULES) )
                         return ''
                 
                 funcNameUnique = ''.join( [funcName,'_',retChar.replace('?','1') ] + idArgs )
