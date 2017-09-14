@@ -158,7 +158,7 @@ class test_numexpr(unittest.TestCase):
         npt.assert_array_almost_equal( x, y*np.pi*2 )
 
     def test_simple_strides(self):
-        # It may make more sense to do strided operations on all functions `
+        # It may make more sense to do strided operations on all functions
         # in autotest_GENERATED
         logger.info( 'Test simple strides' )
         a = np.arange(self.ssize)[::3]

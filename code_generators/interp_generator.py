@@ -11,6 +11,7 @@ import numpy as np
 from collections import OrderedDict, defaultdict
 from itertools import count
 import struct
+import importlib
 
 # The operations are saved on disk as a pickled dict
 try: import cPickle as pickle
@@ -566,6 +567,9 @@ AUTOTEST_DICT = defaultdict( bool, {
              # There's no equivalent for ne's complex() array builder in NumPy
              'complex': '',
              } )
+# Additional modules to search for autotests. They will be embedded in a 
+# try block in-case the Python install does not have them present.
+OPTIONAL_TEST_MODULES = ['scipy.special', ]
 
 #  Functions which have significantly lower precision than their NumPy counterparts:
 LOW_PRECISION_FUNCS = ('div_FFF','pow_FFF')
@@ -682,27 +686,41 @@ class Operation(object):
             funcName = self.py_Name.__name__.lower()
         else: # Function name
             funcName = self.py_Name
-            
+        
+        required = None  # Do we require anything other than numpy for this test block?
         testCode = ['']
         evalFunc = None
         # There are a number of sample arrays in the autotest stub,
         # A_x, B_x, and C_x where 'x' is the dchar.
         
+        
         for lib in self.libs:
             for I, retChar in enumerate( self.retFam ):
+                required = 'np'  # The default module to test again is NumPy
                 passedArgs = [ arg[I] for arg in self.argFams ]
                 idArgs = [ arg.replace('?','1') for arg in passedArgs ]
                 
                 if funcName == 'cast' or funcName == 'copy':
                     return ''
                     
-                
                 if AUTOTEST_DICT[funcName]:
                     evalFunc = AUTOTEST_DICT[funcName]
                 elif not hasattr( np, funcName ):
-                    # print( "test_Auto could not find NumPy function for: {}".format(funcName) )
-                    # TODO: add optional tests for scipy.misc functions
-                    return ''
+                    # Cycle through optional modules like scipy.special
+                    for modName in OPTIONAL_TEST_MODULES:
+                        try:
+                            optMod = importlib.import_module(modName)
+                            if hasattr( optMod, funcName ):
+                                required = modName
+                                # print( "Found {} in {}".format(funcName, optMod) ) 
+                                break
+
+                        except ModuleNotFoundError:
+                            print( "Did not find module {}, not writing optional tests for".format(modName) )
+                        
+                    else:
+                        # print( "Didn't find function {} in {}".format(funcName, OPTIONAL_TEST_MODULES) )
+                        return ''
                 
                 funcNameUnique = ''.join( [funcName,'_',retChar.replace('?','1') ] + idArgs )
                 # I wonder if it would be easier to build the program by hand
@@ -717,7 +735,7 @@ class Operation(object):
                        evalFunc = '{0}( self.A_{1}, self.B_{2} )'.format(funcName, idArgs[0], idArgs[1] )     
                     elif len(idArgs) == 3:
                        evalFunc = '{0}( self.A_{1}, self.B_{2}, self.C_{3} )'.format(funcName, idArgs[0], idArgs[1], idArgs[2] )
-                    numpyFunc = 'np.' + evalFunc
+                    externFunc = '.'.join( [required, evalFunc] )
                 else:
                     try: evalFunc = evalFunc.replace( '$DTYPE1', idArgs[0] )
                     except: pass
@@ -725,33 +743,36 @@ class Operation(object):
                     except: pass
                     # Check if evalFunc is a call or a binop/boolop/comparison.
                     # In the case of a call we need to prepend a 'np.'
-                    numpyFunc = evalFunc
-                    #if '(' in numpyFunc:
-                        # Probably it's better just to make the AUTOTEST_DICT 
-                        # values into tuples, one for each syntax.  
-                        # Or import the exceptions direclty into the 
-                        # autotest namespace? 
-                        #numpyFunc = 'np.' + numpyFunc
+                    externFunc = evalFunc
                 
                 ##### SPECIAL CASES #####
                 if funcName == 'complex':
                     evalFunc = 'complex( self.A_{}, self.B_{} )'.format(idArgs[0], idArgs[1] ) 
-                    numpyFunc = 'self.A_{} + 1j*self.B_{}'.format(idArgs[0], idArgs[1] ) 
+                    externFunc = 'self.A_{} + 1j*self.B_{}'.format(idArgs[0], idArgs[1] ) 
                 
+                
+
                 testCode.append( "    def test_{}(self):\n".format(
                         funcNameUnique) )
+                if required != 'np':
+                    testCode.append( "        import {}\n".format(required) )
                 testCode.append( "        out = ne3.NumExpr('{0}')()\n".format(
                         evalFunc ) )
 
                 if funcNameUnique in LOW_PRECISION_FUNCS: # A fast but lower-precision function, e.g. complex div_FFF
                     testCode.append( "        np.testing.assert_array_almost_equal(out,{},decimal=4)\n".format( 
-                            numpyFunc ) )
+                            externFunc ) )
                 else: # Expect similar precision to NumPy
                     testCode.append( "        np.testing.assert_array_almost_equal(out,{})\n".format( 
-                            numpyFunc ) )
+                            externFunc ) )
 
                 evalFunc = None
-                
+
+        if required != 'np': 
+            # Embed test in a try block
+            testCode = [ line + '    ' for line in testCode]
+            testCode.insert(0, '    try:\n'.format(required) )
+            testCode.append('except ImportError: pass\n')
         return ''.join(testCode)
     
     def __repr__(self):
@@ -786,6 +807,8 @@ def CastFactory( opsList, casting='safe' ):
          bytes = 'S'
          str/unicode = 'U'
          
+    NOTE: Windows is different for ints.
+
     longfloat and clongfloat are disabled at present.
     """
     global OP_COUNT
@@ -1296,8 +1319,8 @@ def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.
     with open( os.path.join( NE_DIR, 'tests/autotest_GENERATED.py'), 'w' ) as f_test:
         f_test.write( autotestHead )
         for op in opsList:
-            #for I, opNum in enumerate( op.opNums ):
-            f_test.write( op.test_Auto )
+            f_test.write(op.test_Auto)
+            
             
         f_test.write( autotestTail )
             
