@@ -63,6 +63,8 @@ vml_functions = [
     "conjugate",
     "arctan2",
     "fmod",
+    "ceil",
+    "floor"
     ]
 
 # Final addtions for Python 3 (mainly for PyTables needs)
