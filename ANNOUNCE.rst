@@ -1,9 +1,4 @@
-=========================
- Announcing Numexpr 2.6.3
-=========================
-
-What's new
-==========
+Hi everyone, 
 
 This is primarily a maintenance release that fixes a number of newly discovered
 bugs. The NumPy requirement has increased from 1.6 to 1.7 due to changes with 
@@ -14,14 +9,27 @@ Project documentation is now available at:
 
 http://numexpr.readthedocs.io/
 
-In case you want to know more in detail what has changed in this
-version, see:
+==========================
+ Announcing Numexpr 2.6.3
+==========================
 
-https://github.com/pydata/numexpr/blob/master/RELEASE_NOTES.rst
+Changes from 2.6.2 to 2.6.3
+---------------------------
 
+- Documentation now available at numexpr.readthedocs.io
+- Support for floor() and ceil() functions added by Caleb P. Burns.
+- NumPy requirement increased from 1.6 to 1.7 due to changes in iterator
+  flags (#245).
+- Sphinx autodocs support added for documentation on readthedocs.org.
+- Fixed a bug where complex constants would return an error, fixing 
+  problems with `sympy` when using NumExpr as a backend.
+- Fix for #277 whereby arrays of shape (1,...) would be reduced as 
+  if they were full reduction. Behavoir now matches that of NumPy.
+- String literals are automatically encoded into 'ascii' bytes for 
+  convience (see #281).
 
-What's Numexpr
-==============
+What's Numexpr?
+---------------
 
 Numexpr is a fast numerical expression evaluator for NumPy.  With it,
 expressions that operate on arrays (like "3*a+4*b") are accelerated
@@ -40,7 +48,7 @@ easy-to-deploy, easy-to-use, computational engine for projects that
 don't want to adopt other solutions requiring more heavy dependencies.
 
 Where I can find Numexpr?
-=========================
+-------------------------
 
 The project is hosted at GitHub in:
 
@@ -50,8 +58,12 @@ You can get the packages from PyPI as well (but not for RC releases):
 
 http://pypi.python.org/pypi/numexpr
 
+Documentation is hosted at:
+
+http://numexpr.readthedocs.io/en/latest/
+
 Share your experience
-=====================
+---------------------
 
 Let us know of any bugs, suggestions, gripes, kudos, etc. you may
 have.
