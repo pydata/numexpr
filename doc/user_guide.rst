@@ -22,12 +22,16 @@ Building
 *NumExpr* requires Python_ 2.6 or greater, and NumPy_ 1.7 or greater.  It is 
 built in the standard Python way:
 
+.. code-block:: bash
+
     $ python setup.py build
     $ python setup.py install
 
 You must have a C-compiler (i.e. MSVC on Windows and GCC on Linux) installed.
 
 You can test :code:`numexpr` with:
+
+.. code-block:: bash
 
     $ python -c "import numexpr; numexpr.test()"
 
@@ -284,16 +288,7 @@ to use some additional functions for controlling its use. These are:
 Authors
 -------
 
-*NumExpr* was initially written by David Cooke, and extended to more types by 
-Tim Hochberg.  Francesc Alted contributed support for boolean types, single 
-precision floating point types, efficient strided and unaligned array operations 
-and multi-threading code. Ivan Vilata contributed support for strings.  Gregor 
-Thalhammer implemented the support for Intel VML (Vector Math Library).  Mark 
-Wiebe added support for the new iterator in NumPy, which allows for better 
-performance in more scenarios (like broadcasting, fortran-ordered or non-native 
-byte orderings).  Gaëtan de Menten contributed important bug fixes and speed 
-enhancements.  Antonio Valentino contributed the port for Python 3.
-
+.. include:: ../AUTHORS.txt
 
 License
 -------
