@@ -9,15 +9,20 @@
 ####################################################################
 
 """
-Numexpr is a fast numerical expression evaluator for NumPy.  With it,
-expressions that operate on arrays (like "3*a+4*b") are accelerated
-and use less memory than doing the same calculation in Python.
+Numexpr3 is a fast numerical expression evaluator for NumPy.  With it,
+expressions that operate on arrays (such as "3*a+4*b") are multi-threaded 
+and blocked within a virtual machine to achieve memory-bound computing 
+performance and less memory than doing the same calculation in NumPy.
 
 See:
 
 https://github.com/pydata/numexpr
 
-for more info about it.
+and 
+
+https://numexpr.readthedocs.io
+
+for more infomotion.
 """
 
 from __future__ import absolute_import
@@ -25,44 +30,14 @@ from __future__ import absolute_import
 from .__config__ import show as _show_config
 from .__config__ import get_info as _get_info
 
-
 from numexpr3.ne3compiler import NumExpr, evaluate, OPTABLE, wisdom
-from numexpr3.utils import (
-    print_info, 
-    set_num_threads, detect_number_of_cores, detect_number_of_threads
-)
-from numexpr3.interpreter import ( 
-    MAX_ARGS, set_tempsize
-)
-try: # VML functions are no longer created if NumExpr was not compiled with VML
-    from numexpr3.utils import ( 
-            get_vml_version, set_vml_accuracy_mode, set_vml_num_threads )
-    # The default for VML is 1 thread (see #39)
-    set_vml_num_threads(1)
-except ImportError: pass
+from numexpr3.interpreter import MAX_ARGS, set_tempsize
 from numexpr3.tests import test
 
-# Detect the number of cores
-# the functions in util doesn't update numexpr.ncores or numexpr.nthreads
-# TODO: replace nthreads, ncores with module properties?
-# I know modules can't have properties but maybe we can hack it with a 
-# state class that's hidden? 
-ncores = detect_number_of_cores()
-nthreads = detect_number_of_threads()
-
-# Initialize the number of threads to be used
-import platform as __platform
-if 'sparc' in __platform.machine():
-    import warnings as __warnings
-
-    __warnings.warn('The number of threads have been set to 1 because problems related '
-                  'to threading have been reported on some sparc machine. '
-                  'The number of threads can be changed using the "set_num_threads" '
-                  'function.')
-    set_num_threads(1)
-else:
-    set_num_threads(nthreads)
-
+# Do not import cpuinfo, it needs a major overhaul to fix various 
+# multiprocessing bugs on Windows
+# from numexpr3.cpuinfo import get_cpu_info
+from numexpr3.utils import get_ncores, get_nthreads, set_nthreads, print_info, str_info
 
 
 from . import __version__

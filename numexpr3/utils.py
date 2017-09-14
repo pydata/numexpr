@@ -8,132 +8,130 @@
 #  rights to use.
 ####################################################################
 
-import os, sys
+import os, sys, platform
 import subprocess
 import numpy as np
 import numexpr3.interpreter
 import numexpr3
-
-try:
-    from numexpr3.interpreter import _get_vml_version, _set_vml_accuracy_mode, _set_vml_num_threads
-    def get_vml_version():
-        """Get the VML/MKL library version."""
-        return get_vml_version()
-
-    def set_vml_accuracy_mode(mode):
-        """
-        Set the accuracy mode for VML operations.
-    
-        The `mode` parameter can take the values:
-        - 'high': high accuracy mode (HA), <1 least significant bit
-        - 'low': low accuracy mode (LA), typically 1-2 least significant bits
-        - 'fast': enhanced performance mode (EP)
-        - None: mode settings are ignored
-    
-        This call is equivalent to the `vmlSetMode()` in the VML library.
-        See:
-    
-        http://www.intel.com/software/products/mkl/docs/webhelp/vml/vml_DataTypesAccuracyModes.html
-    
-        for more info on the accuracy modes.
-    
-        Returns old accuracy settings.
-        """
-        acc_dict = {None: 0, 'low': 1, 'high': 2, 'fast': 3}
-        acc_reverse_dict = {1: 'low', 2: 'high', 3: 'fast'}
-        if mode not in acc_dict.keys():
-            raise ValueError(
-                "mode argument must be one of: None, 'high', 'low', 'fast'")
-        retval = set_vml_accuracy_mode(acc_dict.get(mode, 0))
-        return acc_reverse_dict.get(retval)
+# from numexpr3.cpuinfo import get_cpu_info
+import time
 
 
-
-    def set_vml_num_threads(new_nthreads):
-        """
-        Suggests a maximum number of threads to be used in VML operations.
-    
-        This function is equivalent to the call
-        `mkl_domain_set_num_threads(nthreads, MKL_DOMAIN_VML)` in the MKL
-        library.  See:
-    
-        http://www.intel.com/software/products/mkl/docs/webhelp/support/functn_mkl_domain_set_num_threads.html
-    
-        for more info about it.
-        """
-        set_vml_num_threads(new_nthreads)
-        
-except ImportError: 
-    pass # End of VML utility function import block
-
-def print_info():
-    """Print the versions of software that numexpr relies on."""
-    print('-=' * 38)
-    print("Numexpr version:   %s" % numexpr3.__version__)
-    print("NumPy version:     %s" % np.__version__)
-    print('Python version:    %s' % sys.version)
-    if os.name == 'posix':
-        (sysname, nodename, release, version, machine) = os.uname()
-        print('Platform:          %s-%s' % (sys.platform, machine))
-    # print("VML available?     %s" % use_vml)
-    # try: print("VML/MKL version:   %s" % numexpr3.get_vml_version())
-    # except NameError: pass
-    print("Number of threads used by default: %d "
-          "(out of %d detected cores)" % (numexpr3.nthreads, numexpr3.ncores))
-    print('-=' * 38)
-    
+_nthreads = 1     
+_ncores =   1     
+_cpu_info = None
 
 
-def set_num_threads(new_nthreads):
-    """
-    Sets a number of threads to be used in operations.
-
-    Returns the previous setting for the number of threads.
-
-    During initialization time Numexpr sets this number to the number
-    of detected cores in the system (see `detect_number_of_cores()`).
-    """
-    old_nthreads = numexpr3.interpreter.set_num_threads(new_nthreads)
-    numexpr3.nthreads = new_nthreads
-    return old_nthreads
-
-# TODO: replace with cpuinfo.py equivalent.
-def detect_number_of_cores():
-    """
-    Detects the number of cores on a system. Cribbed from pp.
-    """
+def _detect_ncores():
+    # Check for number of cores.
+    # TODO: we would prefer physical cores.
     # Linux, Unix and MacOS:
+    global _ncores
     if hasattr(os, "sysconf"):
         if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
             # Linux & Unix:
             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
             if isinstance(ncpus, int) and ncpus > 0:
-                return ncpus
+                _ncores = ncpus
         else:  # OSX:
-            return int(subprocess.check_output(["sysctl", "-n", "hw.ncpu"]))
+            _ncores = int(subprocess.check_output(["sysctl", "-n", "hw.ncpu"]))
     # Windows:
     if "NUMBER_OF_PROCESSORS" in os.environ:
-        ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
+        ncpus = int(os.environ["NUMBER_OF_PROCESSORS"])
         if ncpus > 0:
-            return ncpus
-    return 1  # Default
+            _ncores = ncpus
 
-def detect_number_of_threads():		
-    """		
-    If this is modified, please update the note in: https://github.com/pydata/numexpr/wiki/Numexpr-Users-Guide		
-    """		
-    try:		
-        nthreads = int(os.environ['NUMEXPR_NUM_THREADS'])		
-    except KeyError:		
-        nthreads = int(os.environ.get('OMP_NUM_THREADS', detect_number_of_cores()))		
-        # Check that we don't activate too many threads at the same time.		
-        # 8 seems a sensible value.
-        max_sensible_threads = 8
-        if nthreads > max_sensible_threads:	# RAM: add a notification
-            print( "NumExpr3 notification: n_threads set to " + str(max_sensible_threads) 
-				  + ", increase with util.set_num_threads(n)" )
-            nthreads = max_sensible_threads		
+def _detect_nthreads():
+    # Detect number of threads, if set in an environment variable
+    # Otherwise use number of detected cores.
+    global _nthreads, _ncores
+    if 'sparc' in platform.machine():
+        import warnings as __warnings
+        __warnings.warn('''The number of threads have been set to 1 because problems 
+related to threading have been reported on some sparc machines.
+The number of threads can be changed using the "set_num_threads"
+function.''')
+        _nthreads = 1
+    elif 'NUMEXPR_NUM_THREADS' in os.environ:
+        _nthreads = int( os.environ['NUMEXPR_NUM_THREADS'] )
+    elif 'OMP_NUM_THREADS' in os.environ:
+        _nthreads = int( os.environ['OMP_NUM_THREADS'] )
+    else:
+        _nthreads = _ncores
 
-    return nthreads		
+# More module initialization
+_detect_ncores()
+_detect_nthreads()
+_nthreads = numexpr3.interpreter.set_num_threads( _nthreads )
 
+def get_nthreads():
+    global _nthreads
+    _nthreads = numexpr3.interpreter.get_num_threads()
+    return _nthreads
+
+def set_nthreads(new_nthreads):
+    '''
+    Sets a number of threads to be used in operations.  Argument 
+    :code:`new_nthreads` should be of type `int`.  Generally speaking one should
+    use less than the number of physical cores.  NumExpr does not benefit from 
+    Hyperthreading.
+
+    During initialization time Numexpr sets the thread count by 
+    the :code:`_detect_number_of_threads()` function.
+    '''
+    global _nthreads
+    _nthreads = int(new_nthreads)
+    numexpr3.interpreter.set_num_threads(_nthreads)
+
+def get_ncores():
+    global _ncores
+    return _ncores
+# There's no setter for ncores
+
+def str_info():
+    '''Print the software versions that NumExpr imports and CPU information.'''
+    global _nthreads, _ncores
+    
+    repr = []
+    repr.append('-=' * 38)
+    repr.append("Numexpr version:   %s" % numexpr3.__version__)
+    repr.append("NumPy version:     %s" % np.__version__)
+    repr.append('Python version:    %s' % sys.version)
+    try:
+        (sysname, nodename, release, version, machine) = os.uname()
+        repr.append('Platform:          %s-%s' % (sys.platform, machine))
+    except AttributeError:
+        repr.append('Platform:          %s-%s' % (sys.platform, os.name))
+    # repr.append("VML available?     %s" % use_vml)
+    # try: repr.append("VML/MKL version:   %s" % numexpr3.get_vml_version())
+    # except NameError: pass
+    repr.append("Number of threads used by default: %d "
+        "(out of %d detected cores)" % (_nthreads, _ncores))
+
+    ## Unfortuantely cpuinfo is too slow, this doubles the test time (!!!) on Windows.
+    # repr.append( "CPU information: " )
+    # repr.append( "_"*78 )
+    # _cpu_info = _cpu_info
+    # if _cpu_info:
+    #     repr.append('Vendor ID: {0}'.format(_cpu_info.get('vendor_id', '')))
+    #     repr.append('Brand: {0}'.format(_cpu_info.get('brand', '')))
+    #     repr.append('Hz Actual: {0}'.format(_cpu_info.get('hz_actual', '')))
+    #     repr.append('Arch: {0}'.format(_cpu_info.get('arch', '')))
+    #     repr.append('Bits: {0}'.format(_cpu_info.get('bits', '')))
+    #     repr.append('Core Count: {0}'.format(_cpu_info.get('count', '')))
+    #     repr.append('L2 Cache Size: {0}'.format(_cpu_info.get('l2_cache_size', '')))
+    #     repr.append('L2 Cache Line Size: {0}'.format(_cpu_info.get('l2_cache_line_size', '')))
+    #     repr.append('L2 Cache Associativity: {0}'.format(_cpu_info.get('l2_cache_associativity', '')))
+    #     repr.append('Stepping: {0}'.format(_cpu_info.get('stepping', '')))
+    #     repr.append('Model: {0}'.format(_cpu_info.get('model', '')))
+    #     repr.append('Family: {0}'.format(_cpu_info.get('family', '')))
+    #     repr.append('Processor Type: {0}'.format(_cpu_info.get('processor_type', '')))
+    #     repr.append('Extended Model: {0}'.format(_cpu_info.get('extended_model', '')))
+    #     repr.append('Extended Family: {0}'.format(_cpu_info.get('extended_family', '')))
+    #     repr.append('Flags: {0}'.format(', '.join(_cpu_info.get('flags', ''))))
+    repr.append('-=' * 38)
+    return ''.join(repr)
+
+def print_info():
+    print( str_info() )
 

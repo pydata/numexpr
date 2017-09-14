@@ -263,6 +263,19 @@ PySet_num_threads(PyObject *self, PyObject *args) {
     return Py_BuildValue("i", n_threads_old);
 }
 
+PyDoc_STRVAR(GetNumThreads__doc__,
+"Gets a maximum number of threads to be used in operations.\n");
+static PyObject*
+PyGet_num_threads(PyObject *self, PyObject *args) {
+        int n_thread;
+
+        pthread_mutex_lock(&gs.global_mutex);
+        n_thread = gs.n_thread;
+        pthread_mutex_unlock(&gs.global_mutex);
+        return Py_BuildValue("i", n_thread);
+    }
+    
+
 Py_ssize_t numexpr_set_tempsize(Py_ssize_t newSize) {
 
     // printf( "DEBUG: setting temporary space to %d bytes.\n", newSize );
@@ -347,7 +360,7 @@ static PyMethodDef module_methods[] = {
 #endif
     {"set_num_threads",       PySet_num_threads,       METH_VARARGS, SetNumThreads__doc__   },
     {"set_tempsize",          PySet_tempsize,          METH_VARARGS, SetTempSize__doc__     },
-
+    {"get_num_threads",       PyGet_num_threads,       METH_VARARGS, GetNumThreads__doc__   },
     {NULL}
 };
 

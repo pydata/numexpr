@@ -34,7 +34,7 @@ class test_numexpr(unittest.TestCase):
 
     def setUp(self, N_threads=1, ssize=SMALL_SIZE):
         logger.info( "**Run NumExpr() tests with {} thread(s) over {} element arrays**".format(N_threads, ssize) )
-        ne3.set_num_threads(N_threads)
+        ne3.set_nthreads(N_threads)
         self.ssize = ssize
 
     def test_scalars(self):
@@ -282,16 +282,16 @@ class test_numexpr_max(test_numexpr):
     
     def setUp(self, N_threads=-1, ssize=LARGE_SIZE):
         if N_threads < 0:
-            N_threads = ne3.detect_number_of_cores()
+            N_threads = ne3.get_ncores()
         logger.info( "**Run NumExpr() tests with {} thread(s) over {} element arrays**".format(N_threads, ssize) )
-        ne3.set_num_threads(N_threads)
+        ne3.set_nthreads(N_threads)
         self.ssize = ssize
 
 class test_evaluate(unittest.TestCase):
 
     def setUp(self, N_threads=1, ssize=SMALL_SIZE):
         logger.info( "**Run evaluate() tests with {} thread(s) over {} element arrays**".format(N_threads, ssize) )
-        ne3.set_num_threads(N_threads)
+        ne3.set_nthreads(N_threads)
         self.ssize = ssize
 
     def test_eval_versus_run(self):
@@ -671,7 +671,7 @@ class test_zerodim(unittest.TestCase):
 
 # Multiprocessing cannot deal with bound methods, as they aren't pickleable.
 def future_worker( neObj, dataDict, N_threads=2 ):
-    ne3.set_num_threads(N_threads)
+    ne3.set_nthreads(N_threads)
     return neObj( **dataDict )
 
 
@@ -683,7 +683,7 @@ class test_multicore(unittest.TestCase):
         b = ((0.25 * a + 0.75) * a - 1.5) * a - 2
         c = np.empty_like(a)
         for nthreads in [1,2,3,2,1,2,3]:
-            ne3.set_num_threads(nthreads)
+            ne3.set_nthreads(nthreads)
             ne3.evaluate('c=((0.25*a + 0.75)*a - 1.5)*a - 2')
             npt.assert_array_almost_equal(b, c)
 
