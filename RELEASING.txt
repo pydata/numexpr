@@ -53,20 +53,27 @@ Releasing
   $ git push
   $ git push --tags
 
-Uploading
----------
+Build wheels
+------------
+
+Matthew Brett has a repository for building for hosting wheels at
+http://github.com/MacPython/numexpr-wheels).  For the procedure to trigger and
+upload the built wheels, see the README at that repo.
+
+Build and upload the wheels before uploading the source distribution, to make
+sure that people who do not have compilers do not get breakage while the
+release is being uploaded.
+
+Any problems, feel free to ask @matthew-brett for help - or indeed, pass the
+whole task to him.
+
+Uploading the source distribution
+---------------------------------
 
 - Upload it in the PyPi repository:
 
   $ python setup.py sdist upload
 
-Build wheels
-------------
-
-Matthew Brett has a nice wheels repository for hosting wheels at
-http://wheels.scipy.org/).  For triggering a build do:
-
-  $ git commit --allow-empty -m"Triggering a build for X.Y.Z release"
 
 Announcing
 ----------
