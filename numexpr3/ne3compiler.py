@@ -31,7 +31,7 @@ except ImportError: from io import BytesIO
 # struct.pack is the quickest way to build the program as structs
 # All important format characters: https://docs.python.org/3/library/struct.html
 from struct import pack, unpack, calcsize
-
+from time import perf_counter
 
 # DEBUG:
 try:
@@ -784,6 +784,8 @@ class NumReg(object):
     TYPENAME = { _KIND_ARRAY:'array', _KIND_SCALAR:'scalar', 
                  _KIND_TEMP:'temp', _KIND_RETURN:'return' }
 
+    __slots__ = '_num', 'token', 'name', 'ref', 'dchar', 'kind', 'itemsize'
+
     def __init__(self, num, name, ref, dchar, kind, itemsize=0 ):
         self._num = num                     # The number of the register, must be unique
         self.token = pack(_PACK_REG, num)  # I.e. b'\x00' for 0, etc.
@@ -838,20 +840,16 @@ class NumReg(object):
             self.ref )
 
     def __getstate__(self):
-        ''' Pickling magic method. Array referemces are removed as one can't 
+        ''' Pickling magic method. Array references are removed as one can't 
         pickle a weakref, and we don't want to pass full arrays.'''
-        pickleDict = self.__dict__.copy()
-        # Remove weakrefs
-        if isinstance( pickleDict['ref'], weakref.ref):
-            pickleDict['ref'] = None
-        return pickleDict
+        return (self._num, self.token, self.name, 
+                None if isinstance( self.ref, weakref.ref) else self.ref, 
+                self.dchar, self.kind, self.itemsize)
 
-    # def __setstate__(self, state):
-    #     We don't need a __setstate__ magic method for NumReg
-    #     self.__dict__ = state
+    def __setstate__(self, state):
+        self._num, self.token, self.name, self.ref, self.dchar, self.kind, self.itemsize = state
 
 
-_ASTAssembler
 class NumExpr(object):
     """
     The :code:`NumExpr` class is the core encapsulation of the :code:`numexpr3` 
@@ -975,6 +973,7 @@ class NumExpr(object):
         self._messages = []           # For debugging
         self._compiled_exec = None    # Handle to the C-api NumExprObject
 
+        self.bench = {}               # For benchmarking
 
         # Get references to frames
         call_frame = sys._getframe( self._stackDepth ) 
@@ -1119,6 +1118,7 @@ class NumExpr(object):
               then operate without arguments. 
 
         '''
+        t0 = perf_counter()
         # Not supporting Python 2.7 anymore, so we can mix named keywords and kw_args
         if not stackDepth:
             stackDepth = self._stackDepth
@@ -1178,7 +1178,9 @@ class NumExpr(object):
                         arg = reg.ref
                     args.append(arg)
             
+        self.bench['run_pre'] = perf_counter() - t0
         unalloc = self._compiled_exec( *args, **kwargs )
+        t0 = perf_counter()
 
         # Promotion of magic output
         if self.assignTarget.ref is None and isinstance(self.assignTarget.name, str):
@@ -1188,6 +1190,7 @@ class NumExpr(object):
             else:
                 local_dict[self.assignTarget.name] = unalloc
 
+        self.bench['run_post'] = perf_counter() - t0
         return unalloc # end NumExpr.run()
 
 
