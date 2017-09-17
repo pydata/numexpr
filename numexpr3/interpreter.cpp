@@ -42,9 +42,11 @@ using namespace std;
 extern global_state gs;
 #if defined(_WIN32) && defined(BENCHMARKING)
     extern LARGE_INTEGER TIMES[512];
+    extern LARGE_INTEGER T_NOW;
     extern double FREQ;
 #elif defined(BENCHMARKING) // Linux
     extern timespec TIMES[512];
+    extern timespec T_NOW;
 #endif
 
 int
@@ -246,7 +248,7 @@ finishThreads(NpyIter *iter) {
 
 // Serial/parallel task iterator version of the VM engine
 int vm_engine_iter_task(NpyIter *iter, 
-                    const NumExprObject *params,
+                    const NumExprObject *params, int tid,
                     int *pc_error, char **errorMessage)
 {
     NpyIter_IterNextFunc *iterNext;
@@ -350,8 +352,11 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *self,
     if (errorMessage == NULL) return -1;
 
     // Threads are prepared for execution in prepareThreads()
+    BENCH_TIME(8);
     Py_BEGIN_ALLOW_THREADS;
+    DIFF_TIME(8);
 
+    BENCH_TIME(4);
     // Synchronization point for all threads (wait for initialization)
     pthread_mutex_lock(&gs.count_threads_mutex);
     if (gs.count_threads < gs.n_thread) {
@@ -360,11 +365,13 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *self,
         pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
     }
     else {
+        BENCH_TIME(99);
         pthread_cond_broadcast(&gs.count_threads_cv);
         
     }
     pthread_mutex_unlock(&gs.count_threads_mutex);
-
+    DIFF_TIME(4);
+    BENCH_TIME(5);
     // Synchronization point for all threads (wait for finalization)
     pthread_mutex_lock(&gs.count_threads_mutex);
     if (gs.count_threads > 0) {
@@ -377,8 +384,12 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *self,
         
     }
     pthread_mutex_unlock(&gs.count_threads_mutex);
-    Py_END_ALLOW_THREADS;
+    DIFF_TIME(5);
 
+    BENCH_TIME(9);
+    Py_END_ALLOW_THREADS;
+    DIFF_TIME(9);
+   
     return gs.ret_code;
 }
 
@@ -391,6 +402,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     int returnValue;
 
     char *errorMessage = NULL;
+    
 
     *pc_error = -1;
     
@@ -404,14 +416,15 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
             // prepareSerial is a faster variant on prepareThreads.
             BENCH_TIME(0);
             returnValue = prepareSerial( self, iter, pc_error, &errorMessage );
-            BENCH_TIME(1);
+            DIFF_TIME(0);
+            // BENCH_TIME(1);
             if( returnValue != 0 ) return -1;
 
             // printf( "run_interpreter #3\n" );
             Py_BEGIN_ALLOW_THREADS
-            BENCH_TIME(100);
-            returnValue = vm_engine_iter_task(iter, self, pc_error, &errorMessage); 
-            BENCH_TIME(200);                           
+            BENCH_TIME(200);
+            returnValue = vm_engine_iter_task(iter, self, 0, pc_error, &errorMessage); 
+            DIFF_TIME(200);                           
             Py_END_ALLOW_THREADS
             // printf( "run_interpreter #5\n" );
             // finishThreads(iter);
@@ -420,7 +433,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
             if (reduction_outer_loop) { // Reduction on outer loop 
                 char **dataPtr;
                 NpyIter_IterNextFunc *iterNext;
-
+                
                 dataPtr = NpyIter_GetDataPtrArray(reduce_iter);
                 iterNext = NpyIter_GetIterNext(reduce_iter, NULL);
                 if (iterNext == NULL) {
@@ -463,7 +476,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
                                                                     &errorMessage);
                     if (returnValue >= 0) {
                         returnValue = vm_engine_iter_task(reduce_iter, 
-                                                self, pc_error, &errorMessage);
+                                                self, 0, pc_error, &errorMessage);
                     }
                     if (returnValue < 0) {
                         break;
@@ -480,7 +493,8 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
         if (reduce_iter == NULL) {
             BENCH_TIME(0);
             returnValue = prepareThreads( self, iter, pc_error, &errorMessage );
-            BENCH_TIME(1);
+            // BENCH_TIME(1);
+            DIFF_TIME(0);
             if( returnValue != 0 ) return -1;
             returnValue = vm_engine_iter_parallel(iter, self, need_output_buffering,
                         pc_error, &errorMessage);
@@ -556,7 +570,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     int **op_axes = NULL;
 
     
-
+    BENCH_TIME(1);
     n_input = (int)PyTuple_Size(args);
 
     memset(operands, 0, sizeof(operands));
@@ -658,6 +672,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         
         arrayCounter++;
     }
+    DIFF_TIME(1);
             
     // Output array allocation (from NumPy ufuncs documentation)
     //
@@ -683,6 +698,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     //     The arrays all have the same number of dimensions and the length of each dimensions is either a common length or 1.
     //     The arrays that have too few dimensions can have their shapes prepended with a dimension of length 1 to satisfy property 2.
     if( allocOutput ) {
+        BENCH_TIME(2);
         arrayCounter = 0;
         
         // printf( "MAXDIMS = %d\n", maxDims );
@@ -777,6 +793,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                                     NPY_ITER_NBO;
 
         free( broadcastShape );
+        DIFF_TIME(2);
     }
 
     // printf( "NumExpr_run() #6, arrayCounter = %d\n", arrayCounter ); 
@@ -934,7 +951,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     */
 
     
-
+    
     // printf( "NumExpr_run() #8\n" ); 
     // A case with a single constant output
     if (n_input == 0) {
@@ -987,6 +1004,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     // printf( "NumExpr_run() #9\n" ); 
     // Allocate the iterator or nested iterators
     if (reduction_size == 1) {
+        BENCH_TIME(3);
         // When there's no reduction, reduction_size is 1 as well
         // printf( "NumExpr_run() #9A, arrayCounter = %d\n", arrayCounter+allocOutput ); 
 
@@ -1006,7 +1024,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                             BLOCK_SIZE1);
         // printf( "NumExpr_run() #9A2\n" );                           
         if (iter == NULL) { goto fail; }
-
+        DIFF_TIME(3);
     } else {
         // printf( "NumExpr_run() #9B\n" );
         npy_uint32 op_flags_outer[NPY_MAXDIMS];
@@ -1129,8 +1147,9 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     //////////// NO ACCESS to global_state above this point //////////////
     // printf("Accessing global lock.\n");
+    BENCH_TIME(6);
     pthread_mutex_lock(&gs.global_mutex);
-
+    DIFF_TIME(6);
     // Check whether we need to restart threads
     if (!gs.init_threads_done || gs.pid != getpid())
         numexpr_set_nthreads(gs.n_thread);
@@ -1155,7 +1174,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     r = run_interpreter(self, iter, reduce_iter,
                              reduction_outer_loop, need_output_buffering,
                              &pc_error);
-                        
+    BENCH_TIME(7);                    
     pthread_mutex_unlock(&gs.global_mutex);
     //////////// NO ACCESS to global_state below this point //////////////
 
@@ -1197,9 +1216,7 @@ cleanup_and_exit:
     //     Py_XDECREF(dtypes[I]);
     // }
     // printf( "NumExpr_run() #16: returnArray = %p\n", returnArray ); 
-#ifdef BENCHMARKING
-    printBenchmarks();
-#endif
+    DIFF_TIME(7);
     return returnArray;
 
 fail:

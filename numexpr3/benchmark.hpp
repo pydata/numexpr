@@ -3,68 +3,46 @@
 
 #define MILLION 1000000L
 #define BILLION 1000000000L
+#define BCOUNT 512
 
-// BENCHMARKING, Comment out to disable benchmarking code
-// #define BENCHMARKING 1
+// Use the --bench flag to enable benchmark results
+// (Some uncommenting in ne3compiler.py may also be necessary to get Python 
+//  benchmarks, I know of no zero-overhead way to avoid that.)
+// e.g.
+//    python setup.py install --bench
 
 #if defined(_WIN32) && defined(BENCHMARKING)
-    extern LARGE_INTEGER TIMES[512];
+
+    extern LARGE_INTEGER TIMES[BCOUNT];
+    extern LARGE_INTEGER T_NOW;
     extern double FREQ;
 
+    // Get a single time mark
     #define BENCH_TIME(index) QueryPerformanceCounter(&TIMES[index])
 
-    double inline
-    GetDiff( int startIndex, int endIndex ) {
-        // Returns time elapsed between two benchmark points in microseconds
-        LARGE_INTEGER elapsed;
-        elapsed.QuadPart = TIMES[endIndex].QuadPart - TIMES[startIndex].QuadPart;
-        return (MILLION*(double)elapsed.QuadPart) / FREQ;
-    }
+    #define DIFF_TIME(index) QueryPerformanceCounter(&T_NOW); TIMES[index].QuadPart=T_NOW.QuadPart-TIMES[index].QuadPart
 
-    void inline
-    printBenchmarks() {
-        LARGE_INTEGER cpu_freq;
-        QueryPerformanceFrequency( &cpu_freq );
-        FREQ = (double)cpu_freq.QuadPart;
+    // Find the accumulated time between index start and now, and accumulate that value in end
+    #define ACCUM_TIME(start,end) QueryPerformanceCounter(&T_NOW); TIMES[end].QuadPart+=T_NOW.QuadPart-TIMES[start].QuadPart
 
-        printf( "---===BENCHMARK RESULTS===---\n" );
-        printf( "  Clock frequency:  %f GHz\n", (FREQ/1e6) );
-        printf( "  N_threads:        %d\n", gs.n_thread );
-        printf( "  Temporary arena:  %d KB\n", (double)gs.tempSize/1024.0 );
-        printf( "__________________________________________________________\n" );
-        printf( "  Prepare threads/serial tasks:  %.3f us\n", GetDiff(0,1)  );
-        for( int T=0; T < gs.n_thread; T++ ) {
-            printf( "  Thread #%d task loop:  %.3f us\n", T, GetDiff(100+T,200+T) );
-        }
-        printf( "\n" );
-    }
-# elif defined(BENCHMARKING) // Linux
+#elif defined(BENCHMARKING) // Linux
 #include <time.h>
-    extern timespec TIMES[512];
+    extern timespec TIMES[BCOUNT];
+    extern timespec T_NOW;
 
+    // Get a single time mark
     #define BENCH_TIME(index) clock_gettime(CLOCK_REALTIME, &TIMES[index] )
 
-    double inline
-    GetDiff( int startIndex, int endIndex ) {
-        // Returns time elapsed between two benchmark points in nanoseconds
-        return 0.001*(double)( BILLION*(TIMES[endIndex].tv_sec - TIMES[startIndex].tv_sec) + TIMES[endIndex].tv_nsec - TIMES[startIndex].tv_nsec );
-    }
+    #define DIFF_TIME(index) clock_gettime(CLOCK_REALTIME, &T_NOW); TIMES[index].tv_nsec=T_NOW.tv_nsec-TIMES[index].tv_nsec; TIMES[index].tv_sec=T_NOW.tv_sec-TIMES[index].tv_sec
 
-    void inline
-    printBenchmarks() {
-        printf( "---===BENCHMARK RESULTS===---\n" );
-        // printf( "  Clock frequency:  %f GHz\n", (FREQ/1e6) );
-        printf( "  N_threads:        %d\n", gs.n_thread );
-        printf( "  Temporary arena:  %.0f KB\n", (double)(gs.tempSize)/1024.0 );
-        printf( "__________________________________________________________\n" );
-        printf( "  Prepare threads/serial tasks:  %.3f us\n", GetDiff(0,1)  );
-        for( int T=0; T < gs.n_thread; T++ ) {
-            printf( "  Thread #%d task loop:  %.3f us\n", T, GetDiff(100+T,200+T) );
-        }
-        printf( "\n" );
-    }
+    // Find the accumulated time between index start and now, and accumulate that value in end
+    #define ACCUM_TIME(start, end) clock_gettime(CLOCK_REALTIME, &T_NOW); TIMES[end].tv_nsec+=T_NOW.tv_nsec-TIMES[start].tv_nsec; TIMES[end].tv_sec+=T_NOW.tv_sec-TIMES[start].tv_sec
+
 #else  // No benchmarking
     #define BENCH_TIME(index)  // Do nothing
+    #define DIFF_TIME(index)
+    #define ACCUM_TIME(start, end)
+
 #endif 
 
 #endif // NUMEXPR_BENCH_FUNC

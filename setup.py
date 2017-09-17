@@ -32,12 +32,26 @@ with open( 'numexpr3/__version__.py', 'w' ) as fh:
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()    
-    
+
+# Process additional command-line arguments before distutils gets them
+NOGEN = False
+BENCHMARKING = False
+args = sys.argv[1:]
+for arg in args:
+    if arg == '--nogen':
+        NOGEN = True
+        sys.argv.remove(arg)
+    elif arg == '--bench':
+        BENCHMARKING = True
+        sys.argv.remove(arg)
+
 # Unique MSVC / GCC / LLVM flags
 # TODO: compile detections of AVX2 and SSE2 using cpuinfo
 extra_compile_args = {}
 extra_libraries = {}
 extra_link_args = {}
+define_macros = {}
+
 #### GCC (default) ####
 # Turned off funroll, doesn't seem to affect speed.
 # https://gcc.gnu.org/onlinedocs/gcc-6.4.0/gcc/AArch64-Options.html#AArch64-Options
@@ -48,6 +62,7 @@ extra_link_args = {}
 extra_compile_args['default'] = [ '-march=native', '-fopt-info-vec' ]
 extra_libraries['default'] = ['m']
 extra_link_args['default'] = []
+define_macros['default'] = []
 
 #### MSVC ####
 # Due to distutils using os.spawnv(), we don't get back the auto-vectorization messages
@@ -73,8 +88,8 @@ extra_link_args['default'] = []
 # '/fp:fast' was tried and caused accuracy problems.
 extra_compile_args['msvc'] =  [ '/Qvec-report:2'  ]
 extra_libraries['msvc'] = []
-extra_link_args['msvc'] = [ '/Qvec-report:2'  ]
-
+extra_link_args['msvc'] = []
+define_macros['msvc'] = []
 
 
 def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
@@ -224,7 +239,8 @@ def setup_package():
             extension_config_data = {
                 'sources': ['numexpr3/interpreter.cpp',
                             'numexpr3/module.cpp',
-                            'numexpr3/numexpr_object.cpp'] + pthread_win,
+                            'numexpr3/numexpr_object.cpp',
+                            'numexpr3/benchmarking.hpp'] + pthread_win,
                 'depends': ['numexpr3/functions_GENERATED.cpp',
                             'numexpr3/interp_body_GENERATED.cpp',
                             'numexpr3/interp_header_GENERATED.hpp',
@@ -295,55 +311,29 @@ def setup_package():
 
                 clean.run(self)
 
-        class no_gen(numpy_build_ext):
-            ''' Identical to build_ext but without generation, for debugging.'''
-
-            def build_extension(self, ext):
-                compiler = self.compiler.compiler_type
-
-                print( 'compiler_type is {}'.format(compiler ) )
-                if compiler in extra_compile_args:
-                    ext.extra_compile_args = extra_compile_args[compiler]
-                    ext.extra_libraries = extra_libraries[compiler]
-                else:
-                    ext.extra_compile_args = extra_compile_args['default']
-                    ext.extra_libraries = extra_libraries['default']
-                numpy_build_ext.build_extension(self, ext)
-                
         class build_ext(numpy_build_ext):
             ''' Builds the interpreter shared/dynamic library.'''
                 
-            
             def build_extension(self, ext):
-                # Run Numpy to C generator 
-                run_generator()
+
+                if not NOGEN:
+                    # Run Numpy to C generator 
+                    run_generator()
+                
                 compiler = self.compiler.compiler_type
-                print( 'compiler_type is {}'.format(compiler ) )
+                # print( 'compiler_type is {}'.format(compiler ) )
 
                 if not compiler in extra_compile_args:
                     compiler = 'default'
 
-                # for key, val in self.__dict__.items():
-                #     print( "self[{}] = {}".format(key,val) )
-                # cxx = self._cxx_compiler
-                # Normally the CXX is initialized late, but we can do it here.
-                # See line 347:
-                # https://github.com/python/cpython/blob/master/Lib/distutils/_msvccompiler.py
-                # if compiler == 'msvc':
-                #     cxx.initialize()
-                #     # cxx now has 'preprocess_options', 'compile_options', and 'ld_flags_???'
-                #     if '/Ox' in cxx.compile_options: # MSVC hack
-                #         cxx.compile_options.remove('/Ox')
-                #     cxx.compile_options.extend( extra_compile_args[compiler] )
-                #     cxx.ldflags_shared.extend( extra_link_args[compiler] )
-                # for key, val in cxx.__dict__.items():
-                #     print( 'cxx[{}] = {}'.format( key, val ) )
-                # for key, val in ext.__dict__.items():
-                #     print( "ext[{}] = {}".format(key,val) )
+                if BENCHMARKING:
+                    print( "--BENCHMARKING IS ON--" )
+                    define_macros[compiler] += [('BENCHMARKING', 1)]
 
                 ext.extra_compile_args = extra_compile_args[compiler]
                 ext.extra_libraries = extra_libraries[compiler]
                 ext.extra_link_args = extra_link_args[compiler]
+                ext.define_macros = define_macros[compiler]
 
                 numpy_build_ext.build_extension(self, ext)
 
@@ -354,7 +344,6 @@ def setup_package():
             'build_ext': build_ext,
             'clean': cleaner,
             'build_py': build_py,
-            'no_gen': no_gen,
         }
         metadata['configuration'] = configuration
 

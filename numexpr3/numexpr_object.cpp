@@ -13,8 +13,16 @@
 #include "numexpr_config.hpp"
 #include "interp_header_GENERATED.hpp"
 #include "numexpr_object.hpp"
+#include "benchmark.hpp"
 
-
+#if defined(_WIN32) && defined(BENCHMARKING)
+    extern LARGE_INTEGER TIMES[512];
+    extern LARGE_INTEGER T_NOW;
+    extern double FREQ;
+#elif defined(BENCHMARKING) // Linux
+    extern timespec TIMES[512];
+    extern timespec T_NOW;
+#endif
 
 static void
 NumExpr_dealloc(NumExprObject *self)
@@ -99,6 +107,8 @@ NumExpr_init(NumExprObject *self, PyObject *args)
     // Build const blocks variables
     npy_intp total_scalar_itemsize = 0, mem_offset = 0, total_temp_itemsize = 0;
     char *scalar_mem = NULL, *mem_loc;
+
+    BENCH_TIME(50);
     
     if( ! PyArg_ParseTuple(args, "SO", &bytes_prog, &reg_tuple ) ) { 
         PyErr_Format(PyExc_RuntimeError,
@@ -265,10 +275,8 @@ NumExpr_init(NumExprObject *self, PyObject *args)
     //         (int)self->program[I].op, (int)self->program[I].ret, (int)self->program[I].arg1, 
     //         (int)self->program[I].arg2, (int)self->program[I].arg3 );
     // }
-
+    DIFF_TIME(50);
     return 0;
-
-
 }
 
 

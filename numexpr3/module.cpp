@@ -20,11 +20,14 @@ using namespace std;
 
 // Global state definition. Also includes what used to be in th_params.
 global_state gs;
+// Benchmarking data containers
 #if defined(_WIN32) && defined(BENCHMARKING)
     LARGE_INTEGER TIMES[512];
+    LARGE_INTEGER T_NOW;
     double FREQ;
 #elif defined(BENCHMARKING) // Linux
     timespec TIMES[512];
+    timespec T_NOW;
 #endif
 
 
@@ -99,8 +102,9 @@ void* th_worker(void *tidptr) {
             gs.giveup = 1;
         }
         pthread_mutex_unlock(&gs.count_mutex);
+        ACCUM_TIME(99, 150+tid); // 99 is set just before the broadcast to unlock
 
-        BENCH_TIME(100+tid);
+        BENCH_TIME(200+tid);
         while( istart < vlen && !gs.giveup ) {
             // Reset the iterator to the range for this task
             ret = NpyIter_ResetToIterIndexRange(iter, istart, iend,
@@ -108,7 +112,7 @@ void* th_worker(void *tidptr) {
             // Execute the task 
             if( ret >= 0 ) {
                 
-                ret = vm_engine_iter_task(iter, neObj, pc_error, errorMessage);
+                ret = vm_engine_iter_task(iter, neObj, tid, pc_error, errorMessage);
                 
             }
 
@@ -131,8 +135,8 @@ void* th_worker(void *tidptr) {
             }
             pthread_mutex_unlock(&gs.count_mutex);
         }
-        BENCH_TIME(200+tid);
-
+        DIFF_TIME(200+tid);
+        BENCH_TIME(250+tid);
         // Meeting point for all threads (wait for finalization)
         CHECK_END_COND;
         pthread_mutex_lock(&gs.count_threads_mutex);
@@ -145,6 +149,7 @@ void* th_worker(void *tidptr) {
             
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
+        DIFF_TIME(250+tid);
     }  // closes while(1)
 
     // This should never be reached
@@ -422,6 +427,23 @@ PyInit_interpreter(void)
 
     PyModule_AddIntConstant(m, "MAX_ARGS", NPY_MAXARGS );
     PyModule_AddIntConstant(m, "MAX_DIMS", NPY_MAXDIMS );
+
+    PyModule_AddIntConstant(m, "BENCHMARKING", BENCHMARKING );
+#ifdef BENCHMARKING
+    // Make NumPy arrays from the timing arrays.
+#if defined(_WIN32) // On Windows x64: LARGE_INTEGER is a union and LARGE_INTEGER.QuadPart is int64. 
+    npy_intp dims = BCOUNT;
+    QueryPerformanceFrequency( &T_NOW );
+    PyModule_AddIntConstant(m, "cpu_freq", T_NOW.QuadPart );
+    PyObject* bench_times = PyArray_SimpleNewFromData( 1, &dims, NPY_INT64, TIMES );
+#else  // On Linux: struct timespec { long ts_sec; long ts_nsec };
+       // So the array is 2*BCOUNT long and will need to be sliced on the Python end
+    npy_intp dims = 2*BCOUNT;
+    PyObject* bench_times = PyArray_SimpleNewFromData( 1, &dims, NPY_INT64, TIMES );
+#endif
+    PyModule_AddObject(m, "bench_times", bench_times );
+    // Py_INCREF(bench_times); // Not sure if reference counting is needed, docs say it steals a reference.
+#endif
 
     // The OpTable is loaded via pickle now.
     // d = PyDict_New();

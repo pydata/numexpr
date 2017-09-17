@@ -948,15 +948,13 @@ class NumExpr(object):
         :code:`functools.partial` or other functional programming approachs.
         '''
         # Public
+        t0 = perf_counter()
         self.expr = expr
         self.program = None
         self.lib = lib
         self.casting = casting
-        # self.outputTarget = None
         # registers is a dict of NumReg objects but it later mutates into a tuple
         self.registers = {}
-        # self.unallocatedOutput = False  # sentinel
-        # self.isExpression = False # normally we do assignments now.
         self.assignDChar = ''    # The assignment target's dtype.char
         self.assignTarget = None # The current assignment target
         
@@ -964,27 +962,29 @@ class NumExpr(object):
         # The maximum arguments is 32 due to NumPy, we have space for 254 in NE_REG
         # One can recompile NumPy after changing NPY_MAXARGS to use the full 
         # argument space.
+        # TODO: some of these could become class-level and be re-used?
         self._regCount = iter(range(interpreter.MAX_ARGS))
         self._stackDepth = stackDepth # How many frames 'up' to promote outputs
         
         self._codeStream = BytesIO()
         self._occupiedTemps = set()
         self._freeTemps = set()
-        self._messages = []           # For debugging
         self._compiled_exec = None    # Handle to the C-api NumExprObject
 
-        self.bench = {}               # For benchmarking
+        self.timings = {}               # For benchmarking
 
         # Get references to frames
-        call_frame = sys._getframe( self._stackDepth ) 
-       
+        t1 = perf_counter()
         if local_dict is None:
+            call_frame = sys._getframe( self._stackDepth ) 
             self.local_dict = call_frame.f_locals
             # self._global_dict = call_frame.f_globals
         else:
             self.local_dict = local_dict
             # self._global_dict = _global_dict
 
+        self.timings['frame_call'] = perf_counter() - t1
+        self.timings['__init__']   = t1-t0
         self._assemble()
 
     def __getstate__(self):
@@ -1020,8 +1020,10 @@ class NumExpr(object):
         # Here we assume the local_dict has been populated with 
         # __init__. Otherwise we have issues with stackDepth being different 
         # depending on where the method is called from.
+        t0 = perf_counter()
         forest = ast.parse( self.expr ) 
-                         
+
+        t1 = perf_counter()
         # Iterate over the all trees except the last one, which has magic_output
         for bodyItem in forest.body[:-1]:
             _ASTAssembler[type(bodyItem)](self, bodyItem)
@@ -1030,6 +1032,7 @@ class NumExpr(object):
         bodyItem = forest.body[-1]
         _ASTAssembler[type(bodyItem),-1](self,bodyItem)
 
+        t2 = perf_counter()
         # Mutate the registers into a sorted, unmutable tuple that the C-api understands
         self.registers = tuple( [reg for reg in sorted(self.registers.values())] )
         regsToInterpreter = tuple( [reg.to_tuple() for reg in self.registers] )
@@ -1041,11 +1044,17 @@ class NumExpr(object):
         wisdom[(self.expr, self.lib, self.casting)] = self
         # If crashing in the C-api calling disassemble here gives good clues
         # self.disassemble() # DEBUG
-
+        t3 = perf_counter()
         self._compiled_exec = interpreter.CompiledExec( self.program, regsToInterpreter )
 
         # Clean up unneeded attributes and resources
         self._codeStream.close()
+        t4 = perf_counter()
+        
+        self.timings['ast_parse']    = t1-t0
+        self.timings['ast_walk']     = t2-t1
+        self.timings['to_tuple']     = t3-t2
+        self.timings['obj_construct']= t4-t3
         
     
     def disassemble( self ):
@@ -1178,7 +1187,7 @@ class NumExpr(object):
                         arg = reg.ref
                     args.append(arg)
             
-        self.bench['run_pre'] = perf_counter() - t0
+        self.timings['run_pre'] = perf_counter() - t0
         unalloc = self._compiled_exec( *args, **kwargs )
         t0 = perf_counter()
 
@@ -1190,7 +1199,7 @@ class NumExpr(object):
             else:
                 local_dict[self.assignTarget.name] = unalloc
 
-        self.bench['run_post'] = perf_counter() - t0
+        self.timings['run_post'] = perf_counter() - t0
         return unalloc # end NumExpr.run()
 
 

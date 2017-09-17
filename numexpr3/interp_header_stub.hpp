@@ -29,7 +29,7 @@ char get_return_sig(NumExprObject *self);
 int get_temps_space(NumExprObject *self, size_t task_size);
 void free_temps_space(const NumExprObject *self);
 int prepareThreads( NumExprObject* self, NpyIter *iter, int *pc_error, char **errorMessage );
-int vm_engine_iter_task(NpyIter *iter, const NumExprObject *params, 
+int vm_engine_iter_task(NpyIter *iter, const NumExprObject *params, int tid,
                         int *pc_error, char **errorMessage);
 NumExprObject* NumExprObject_copy_threadsafe( const NumExprObject *self );                
 
