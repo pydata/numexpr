@@ -2,6 +2,12 @@
  Release notes for Numexpr 2.6 series
 =====================================
 
+Changes from 2.6.4 to 2.6.5
+---------------------------
+
+- Fixed a bug whereby all-constant power operations would lead to infinite 
+  recursion.
+
 Changes from 2.6.3 to 2.6.4
 ---------------------------
 

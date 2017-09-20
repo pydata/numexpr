@@ -291,7 +291,7 @@ def pow_op(a, b):
             'Integers to negative integer powers are not allowed.')
 
     if allConstantNodes([a, b]):
-        return ConstantNode(a ** b)
+        return ConstantNode(a.value ** b.value)
     if isinstance(b, ConstantNode):
         x = b.value
         if get_optimization() == 'aggressive':
