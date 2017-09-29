@@ -216,8 +216,7 @@ def func(func, minkind=None, maxkind=None):
 @ophelper
 def where_func(a, b, c):
     if isinstance(a, ConstantNode):
-        #FIXME: This prevents where(True, a, b)
-        raise ValueError("too many dimensions")
+        return b if a.value else c
     if allConstantNodes([a, b, c]):
         return ConstantNode(numpy.where(a, b, c))
     return FuncNode('where', [a, b, c])

@@ -295,6 +295,16 @@ class test_numexpr(TestCase):
         b = b'a' * 40
         res = evaluate('contains(a, b)')
         assert_equal(res, True)
+        
+    def test_where_scalar_bool(self):
+        a = True
+        b = array([1, 2])
+        c = array([3, 4])
+        res = evaluate('where(a, b, c)')
+        assert_array_equal(res, b)
+        a = False
+        res = evaluate('where(a, b, c)')
+        assert_array_equal(res, c)
 
 
 class test_numexpr2(test_numexpr):
