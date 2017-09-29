@@ -300,10 +300,10 @@ class test_numexpr(TestCase):
         a = True
         b = array([1, 2])
         c = array([3, 4])
-        res = evaluate('if(a, b, c)')
+        res = evaluate('where(a, b, c)')
         assert_equal(res, b)
         a = False
-        res = evaluate('if(a, b, c)')
+        res = evaluate('where(a, b, c)')
         assert_equal(res, b)
 
 
