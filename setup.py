@@ -86,7 +86,8 @@ define_macros['default'] = []
 # these cases could use different paths with explicit array[0] indexing.
 # Other options for arch are '/arch:AVX512', '/arch:AVX2'
 # '/fp:fast' was tried and caused accuracy problems.
-extra_compile_args['msvc'] =  [ '/Qvec-report:2'  ]
+# extra_compile_args['msvc'] =  [ '/Qvec-report:2'  ]
+extra_compile_args['msvc'] =  []
 extra_libraries['msvc'] = []
 extra_link_args['msvc'] = []
 define_macros['msvc'] = []

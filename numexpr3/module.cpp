@@ -428,21 +428,22 @@ PyInit_interpreter(void)
     PyModule_AddIntConstant(m, "MAX_ARGS", NPY_MAXARGS );
     PyModule_AddIntConstant(m, "MAX_DIMS", NPY_MAXDIMS );
 
-    PyModule_AddIntConstant(m, "BENCHMARKING", BENCHMARKING );
+    
 #ifdef BENCHMARKING
-    // Make NumPy arrays from the timing arrays.
-#if defined(_WIN32) // On Windows x64: LARGE_INTEGER is a union and LARGE_INTEGER.QuadPart is int64. 
-    npy_intp dims = BCOUNT;
-    QueryPerformanceFrequency( &T_NOW );
-    PyModule_AddIntConstant(m, "cpu_freq", T_NOW.QuadPart );
-    PyObject* bench_times = PyArray_SimpleNewFromData( 1, &dims, NPY_INT64, TIMES );
-#else  // On Linux: struct timespec { long ts_sec; long ts_nsec };
-       // So the array is 2*BCOUNT long and will need to be sliced on the Python end
-    npy_intp dims = 2*BCOUNT;
-    PyObject* bench_times = PyArray_SimpleNewFromData( 1, &dims, NPY_INT64, TIMES );
-#endif
-    PyModule_AddObject(m, "bench_times", bench_times );
-    // Py_INCREF(bench_times); // Not sure if reference counting is needed, docs say it steals a reference.
+    PyModule_AddIntConstant(m, "BENCHMARKING", 1 );  
+    #if defined(_WIN32) // On Windows x64: LARGE_INTEGER is a union and LARGE_INTEGER.QuadPart is int64. 
+        npy_intp dims = BCOUNT;
+        QueryPerformanceFrequency( &T_NOW );
+        PyModule_AddIntConstant(m, "cpu_freq", T_NOW.QuadPart );
+        PyObject* bench_times = PyArray_SimpleNewFromData( 1, &dims, NPY_INT64, TIMES );
+    #else  // On Linux: struct timespec { long ts_sec; long ts_nsec };
+        // So the array is 2*BCOUNT long and will need to be sliced on the Python end
+        npy_intp dims = 2*BCOUNT;
+        PyObject* bench_times = PyArray_SimpleNewFromData( 1, &dims, NPY_INT64, TIMES );
+    #endif
+    PyModule_AddObject(m, "bench_times", bench_times ); // Make NumPy arrays from the timing arrays.
+#else // No BENCHMARKING
+    PyModule_AddIntConstant(m, "BENCHMARKING", 0 );  
 #endif
 
     // The OpTable is loaded via pickle now.
