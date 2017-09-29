@@ -53,7 +53,7 @@ test_script:
   # installed library.
   - "mkdir empty_folder"
   - "cd empty_folder"
-  - "python -c \"import numexpr3; numexpr3.test()\""
+  - "python -c \"import sys;import numexpr;sys.exit(0 if numexpr.test().wasSuccessful() else 1)\""
   - "cd .."
 
 artifacts:
