@@ -296,6 +296,17 @@ class test_numexpr(TestCase):
         res = evaluate('contains(a, b)')
         assert_equal(res, True)
 
+    def test_if_constant_bool(self):
+        a = True
+        b = array([1, 2])
+        c = array([3, 4])
+        res = evaluate('if(a, b, c)')
+        assert_equal(res, b)
+        a = False
+        res = evaluate('if(a, b, c)')
+        assert_equal(res, b)
+
+
 
 class test_numexpr2(test_numexpr):
     """Testing with 2 threads"""
