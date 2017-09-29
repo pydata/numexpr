@@ -304,7 +304,7 @@ class test_numexpr(TestCase):
         assert_equal(res, b)
         a = False
         res = evaluate('where(a, b, c)')
-        assert_equal(res, b)
+        assert_equal(res, c)
 
 
 
