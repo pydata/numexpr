@@ -5,7 +5,6 @@ language: python
 python:
   - 2.6
   - 2.7
-  - 3.3
   - 3.4
   - 3.5
   - 3.6
@@ -24,5 +23,5 @@ install:
 script:
   - mkdir empty
   - cd empty
-  - python -c "import sys;import numexpr;sys.exit(0 if numexpr.test() else 1)"
+  - python -c "import sys;import numexpr;sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
 

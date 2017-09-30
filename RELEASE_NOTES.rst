@@ -5,6 +5,9 @@
 Changes from 2.6.4 to 2.6.5
 ---------------------------
 
+- Travis and AppVeyor now fail if the test module fails or errors.
+- Thanks to Mahdi Ben Jelloul for a patch that removed a bug where constants 
+  in `where` calls would raise a ValueError.
 - Fixed a bug whereby all-constant power operations would lead to infinite 
   recursion.
 
