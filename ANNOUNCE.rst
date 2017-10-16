@@ -19,9 +19,9 @@ quick patch for 2.6.3 to 2.6.4. Thanks to Christoph Gohkle for the fixes.
 Changes from 2.6.3 to 2.6.4
 ---------------------------
 
-- Christoph Gohkle noticed a lack of coverage for the 2.6.3 
+- Christoph Gohlke noticed a lack of coverage for the 2.6.3 
   `floor` and `ceil` functions for MKL that caused seg-faults in 
-   test, so thanks to him for that.
+  test, so thanks to him for that.
 
 Changes from 2.6.2 to 2.6.3
 ---------------------------
