@@ -44,7 +44,7 @@ second return. Otherwise it is a named temporary array that may be re-referenced
 within later lines::
 
   >>> neObj = NumExp( '''a2 = a*a; b2 = b*b
-out_magic = exp( -sin(2*a2) - cos(2*b2) - 2*a2*b2''' ) 
+  out_magic = exp( -sin(2*a2) - cos(2*b2) - 2*a2*b2''' ) 
 
 Note: The last assignment target is 'magic'. So-called 'magic' outputs are 
 promoted to the calling frame if they do not already exist. 
