@@ -15,8 +15,10 @@ import sys
 import threading
 
 import numpy
-from pkg_resources import parse_version
-_np_version = parse_version(numpy.__version__)
+# numpy's behavoir sometimes changes with versioning, especially in regard as 
+# to when ints are cast to floats.
+# _np_version will be similar to ('1', '13', '1') for which we can use simple comparisons
+_np_version = tuple( ver for ver in numpy.__version__.split('.') )
 
 # Declare a double type that does not exist in Python space
 double = numpy.double
@@ -281,7 +283,7 @@ def rtruediv_op(a, b):
 
 @ophelper
 def pow_op(a, b):
-    if (_np_version >= parse_version('1.12.0b1') and
+    if (_np_version >= ('1', '12', '0b1') and
         b.astKind in ('int', 'long') and
         a.astKind in ('int', 'long') and
         numpy.any(b.value < 0)):

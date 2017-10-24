@@ -13,7 +13,8 @@ import sys
 import numpy
 import threading
 
-from numexpr import interpreter, expressions, use_vml, is_cpu_amd_intel
+# from numexpr import interpreter, expressions, use_vml, is_cpu_amd_intel
+from numexpr import interpreter, expressions, use_vml
 from numexpr.utils import CacheDict
 
 # Declare a double type that does not exist in Python space

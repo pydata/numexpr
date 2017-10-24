@@ -28,12 +28,8 @@ if get_info('mkl'):
 else:
     use_vml = False
 
-from cpuinfo import cpu
-
-if cpu.is_AMD() or cpu.is_Intel():
-    is_cpu_amd_intel = True
-else:
-    is_cpu_amd_intel = False
+# cpuinfo imports were moved into the test submodule function that calls them 
+# to improve import times.
 
 import os, os.path
 import platform
