@@ -1,20 +1,29 @@
 Hi everyone, 
 
 This is primarily a maintenance release that fixes a number of newly discovered
-bugs. The NumPy requirement has increased from 1.6 to 1.7 due to changes with 
-`numpy.nditer` flags. Thanks to Caleb P. Burns `ceil` and `floor` functions are 
-now supported.
+bugs. <INSERT VERSION SPECIFIC INFORMATION HERE PRIOR TO RELEASE>
 
 Project documentation is now available at:
 
 http://numexpr.readthedocs.io/
 
-P.S. due to seg-faults occuring for MKL with ceil and floor we have pushed a 
-quick patch for 2.6.3 to 2.6.4. Thanks to Christoph Gohkle for the fixes.
 
 ==========================
  Announcing Numexpr 2.6.4
 ==========================
+
+Changes from 2.6.4 to 2.6.5
+---------------------------
+
+- Constants in `where` no longer generate an exception. Thanks to 
+  Mahdi Ben Jelloul for the fix.
+- Github user 'mamrehn' found and fixed several typos in the documentation, 
+  so thanks for that.
+- Import time was reduced from about 0.27 s to 0.1 s in order to speed 
+  imports for dependant modules such as `pandas` and `pytables`.  Imports 
+  of `pkg_resources` were removed, and `numexpr.cpu` is now lazily imported. 
+  If you need CPU information, import `numexpr.cpu_info.cpu as cpu`. 
+  Thanks to Jason Sachs for pointing out the source of the slow-down.
 
 Changes from 2.6.3 to 2.6.4
 ---------------------------
