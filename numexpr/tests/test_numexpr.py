@@ -35,7 +35,8 @@ import unittest
 TestCase = unittest.TestCase
 
 double = np.double
-
+if sys.version_info[0] >= 3:
+    long = int
 
 # Recommended minimum versions
 minimum_numpy_version = "1.6"
