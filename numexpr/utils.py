@@ -11,7 +11,7 @@
 import os
 import subprocess
 
-from numexpr.interpreter import _set_num_threads
+from numexpr.interpreter import _set_num_threads, MAX_THREADS
 from numexpr import use_vml
 
 if use_vml:
@@ -128,8 +128,8 @@ def detect_number_of_threads():
         if nthreads > 8:
             nthreads = 8
     # Check that we don't surpass the MAX_THREADS in interpreter.cpp
-    if nthreads > 4096:
-        nthreads = 4096
+    if nthreads > MAX_THREADS:
+        nthreads = MAX_THREADS
     return nthreads
 
 

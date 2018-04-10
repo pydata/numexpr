@@ -9,4 +9,4 @@ numexpr.egg-info/
 *~
 doc/_build
 site.cfg
-
+.vscode

@@ -21,6 +21,7 @@ using namespace std;
 // Global state. The file interpreter.hpp also has some global state
 // in its 'th_params' variable
 global_state gs;
+long global_max_threads=DEFAULT_MAX_THREADS;
 
 
 /* Do the worker job for a certain thread */
@@ -220,10 +221,16 @@ int numexpr_set_nthreads(int nthreads_new)
     int t, rc;
     void *status;
 
-    if (nthreads_new > MAX_THREADS) {
+    // if (nthreads_new > MAX_THREADS) {
+    //     fprintf(stderr,
+    //             "Error.  nthreads cannot be larger than MAX_THREADS (%d)",
+    //             MAX_THREADS);
+    //     return -1;
+    // }
+    if (nthreads_new > global_max_threads) {
         fprintf(stderr,
-                "Error.  nthreads cannot be larger than MAX_THREADS (%d)",
-                MAX_THREADS);
+                "Error.  nthreads cannot be larger than environment variable \"NUMEXPR_MAX_THREADS\" (%d)",
+                global_max_threads);
         return -1;
     }
     else if (nthreads_new <= 0) {
@@ -383,6 +390,33 @@ initinterpreter()
 #endif
 {
     PyObject *m, *d;
+    // TODO: try and load `global_max_threads` from environment variable 'NUMEXPR_MAX_THREADS'
+#if defined(_WIN32)
+    // Example of using GetEnvironmentVariable() on Windows:
+    // https://msdn.microsoft.com/en-us/library/ms682009(v=vs.85).aspx
+    int dwRet;
+    char max_thread_buffer[128];
+    char *end;
+    dwRet = GetEnvironmentVariable("NUMEXPR_MAX_THREADS", max_thread_buffer, 128);
+    if (dwRet > 0) {
+        global_max_threads = strtol(max_thread_buffer, &end, 10);
+    }
+#else // Linux/OSX
+    char *max_thread_str = getenv("NUMEXPR_MAX_THREADS");
+    char *end;
+    if (max_thread_str != NULL) {
+        global_max_threads = strtol(max_thread_str, &end, 10);
+    }
+#endif
+    printf("DEBUG: global_max_threads = %d\n", global_max_threads);
+
+    th_params.memsteps    = (npy_intp**)calloc(sizeof(npy_intp*), global_max_threads);
+    th_params.iter        = (NpyIter**)calloc(sizeof(NpyIter*),   global_max_threads);
+    th_params.reduce_iter = (NpyIter**)calloc(sizeof(NpyIter*),   global_max_threads);
+    gs.threads            = (pthread_t*)calloc(sizeof(pthread_t), global_max_threads);
+    gs.tids               = (int*)calloc(sizeof(int),             global_max_threads);
+    // TODO: for Py3, deallocate: https://docs.python.org/3/c-api/module.html#c.PyModuleDef.m_free
+    // For Python 2.7, people have to exit the process to reclaim the memory.
 
     if (PyType_Ready(&NumExprType) < 0)
         INITERROR;
@@ -436,6 +470,8 @@ initinterpreter()
 
     if (PyModule_AddObject(m, "allaxes", PyLong_FromLong(255)) < 0) INITERROR;
     if (PyModule_AddObject(m, "maxdims", PyLong_FromLong(NPY_MAXDIMS)) < 0) INITERROR;
+
+    if(PyModule_AddIntConstant(m, "MAX_THREADS", global_max_threads) < 0) INITERROR;
 
 #if PY_MAJOR_VERSION >= 3
     return m;

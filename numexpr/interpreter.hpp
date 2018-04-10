@@ -75,12 +75,17 @@ struct thread_data {
     int ret_code;
     int *pc_error;
     char **errmsg;
+    // NOTE: memsteps, iter, and reduce_iter are arrays, they MUST be allocated 
+    // to length `global_max_threads` before module load.
     // One memsteps array per thread
-    npy_intp *memsteps[MAX_THREADS];
+    // npy_intp *memsteps[MAX_THREADS];
+    npy_intp **memsteps;
     // One iterator per thread */
-    NpyIter *iter[MAX_THREADS];
+    // NpyIter *iter[MAX_THREADS];
+    NpyIter **iter;
     // When doing nested iteration for a reduction
-    NpyIter *reduce_iter[MAX_THREADS];
+    // NpyIter *reduce_iter[MAX_THREADS]
+    NpyIter **reduce_iter;
     // Flag indicating reduction is the outer loop instead of the inner
     bool reduction_outer_loop;
     // Flag indicating whether output buffering is needed

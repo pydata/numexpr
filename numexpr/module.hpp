@@ -21,8 +21,12 @@ struct global_state {
     int nthreads;                    /* number of desired threads in pool */
     int init_threads_done;           /* pool of threads initialized? */
     int end_threads;                 /* should exisiting threads end? */
-    pthread_t threads[MAX_THREADS];  /* opaque structure for threads */
-    int tids[MAX_THREADS];           /* ID per each thread */
+    // pthread_t threads[MAX_THREADS];  /* opaque structure for threads */
+    // int tids[MAX_THREADS];           /* ID per each thread */
+    /* NOTE: threads and tids are arrays, they MUST be allocated to length 
+       `global_max_threads` before module load. */
+    pthread_t *threads;              /* opaque structure for threads */
+    int *tids;                       /* ID per each thread */
     npy_intp gindex;                 /* global index for all threads */
     int init_sentinels_done;         /* sentinels initialized? */
     int giveup;                      /* should parallel code giveup? */
