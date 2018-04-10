@@ -48,7 +48,7 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
                         
 // RAM: these functions were redeclaring variables that the compiler was 
 // hopefully turning into registers, but perhaps an easier approach is to 
-// make them explicitely vectorized, similar to how VML works.
+// make them explicitly vectorized, similar to how VML works.
 //
 // This means we also need some functions that add a scalar to a vector, 
 // which are denoted with a _scalar postfix.
@@ -64,7 +64,7 @@ after the first *r has been overwritten.
 *********************************************************************/
 
 // Deleted nc_assign as memcpy is used for copying and struct assignment
-// works fine for inline varient.
+// works fine for inline variant.
 
 // TODO: apparently the inline _should_ be returning the value instead of 
 // pushing to &r.  Make a backup before you try it.   
@@ -73,7 +73,7 @@ after the first *r has been overwritten.
 // the case for the Intel compiler, but for modern gcc 5.4?  
 
 
-// abs() has beeen changed to return npy_float and npy_double, like NumPy
+// abs() has been changed to return npy_float and npy_double, like NumPy
 
 static void
 nc_real( npy_intp n, npy_complex64 *x, npy_intp sb1, npy_float32 *r)
@@ -321,7 +321,7 @@ nc_neg( npy_intp n,npy_complex128 *a, npy_intp sb1, npy_complex128 *r)
 }
 
 static void
-nc_conj( npy_intp n,npy_complex64 *a, npy_intp sb1, npy_complex64 *r)
+nc_conj(npy_intp n,npy_complex64 *a, npy_intp sb1, npy_complex64 *r)
 {
     if( sb1 == sizeof(npy_complex64) ) { // Aligned
         for( npy_intp I = 0; I < n; I++ ) {
@@ -339,7 +339,7 @@ nc_conj( npy_intp n,npy_complex64 *a, npy_intp sb1, npy_complex64 *r)
 }
 
 static void
-nc_conj( npy_intp n,npy_complex128 *a, npy_intp sb1, npy_complex128 *r)
+nc_conj(npy_intp n,npy_complex128 *a, npy_intp sb1, npy_complex128 *r)
 {
     if( sb1 == sizeof(npy_complex128) ) { // Aligned
         for( npy_intp I = 0; I < n; I++ ) {
@@ -471,7 +471,7 @@ nc_mul( npy_intp n, npy_complex128 *a, npy_intp sb1, npy_complex128 *b, npy_intp
 static inline void
 _inline_div( npy_complex64 a, npy_complex64 b, npy_complex64 &r)
 {
-    npy_float32 d = 1.0/(b.real*b.real + b.imag*b.imag);
+    npy_float32 d = 1.0f/(b.real*b.real + b.imag*b.imag);
     r.real = (a.real*b.real + a.imag*b.imag)*d;
     r.imag = (a.imag*b.real - a.real*b.imag)*d;
  
@@ -488,7 +488,7 @@ static inline npy_complex64
 _return_div( npy_complex64 a, npy_complex64 b )
 {
     npy_complex64 r;
-    npy_float32 d = 1.0 / (b.real*b.real + b.imag*b.imag);
+    npy_float32 d = 1.0f / (b.real*b.real + b.imag*b.imag);
     r.real = (a.real*b.real + a.imag*b.imag)*d;
     r.imag = (a.imag*b.real - a.real*b.imag)*d;
     return r;
@@ -643,13 +643,13 @@ nc_abs( npy_intp n, npy_complex128 *x, npy_intp sb1, npy_float64 *r )
 {
     if( sb1 == sizeof(npy_complex128) ) { // Aligned
         for( npy_intp I = 0; I < n; I++ ) {
-             r[I] = sqrtf( x[I].real*x[I].real + x[I].imag*x[I].imag);
+             r[I] = sqrt( x[I].real*x[I].real + x[I].imag*x[I].imag);
         }
     }
     else {
         sb1 /= sizeof(npy_complex128);
         for( npy_intp I = 0; I < n; I++ ) {
-             r[I] = sqrtf( x[I*sb1].real*x[I*sb1].real + x[I*sb1].imag*x[I*sb1].imag);
+             r[I] = sqrt( x[I*sb1].real*x[I*sb1].real + x[I*sb1].imag*x[I*sb1].imag);
         }
     }
 }
@@ -737,15 +737,15 @@ nc_log1p( npy_intp n, npy_complex64 *x, npy_intp sb1, npy_complex64 *r)
 {
     if( sb1 == sizeof(npy_complex64) ) { // Aligned
         for( npy_intp I = 0; I < n; I++ ) {
-            r[I].imag = atan2f(x[I].imag, x[I].real + 1.0);
-            r[I].real = logf( hypotf(x[I].real + 1.0,x[I].imag) );
+            r[I].imag = atan2f(x[I].imag, x[I].real + 1.0f);
+            r[I].real = logf( hypotf(x[I].real + 1.0f,x[I].imag) );
         }
     } 
     else {
         sb1 /= sizeof(npy_complex64);
         for( npy_intp I = 0; I < n; I++ ) {
-            r[I].imag = atan2f(x[I*sb1].imag, x[I*sb1].real + 1.0);
-            r[I].real = logf( hypotf(x[I*sb1].real + 1.0,x[I*sb1].imag) );
+            r[I].imag = atan2f(x[I*sb1].imag, x[I*sb1].real + 1.0f);
+            r[I].real = logf( hypotf(x[I*sb1].real + 1.0f,x[I*sb1].imag) );
         }
     }
 }
@@ -756,14 +756,14 @@ nc_log1p( npy_intp n, npy_complex128 *x, npy_intp sb1, npy_complex128 *r)
     if( sb1 == sizeof(npy_complex128) ) { // Aligned
         for( npy_intp I = 0; I < n; I++ ) {
             r[I].imag = atan2(x[I].imag, x[I].real + 1.0);
-            r[I].real = logf( hypot(x[I].real + 1.0,x[I].imag) );
+            r[I].real = log( hypot(x[I].real + 1.0,x[I].imag) );
         }
     } 
     else {
         sb1 /= sizeof(npy_complex128);
         for( npy_intp I = 0; I < n; I++ ) {
             r[I].imag = atan2(x[I*sb1].imag, x[I*sb1].real + 1.0);
-            r[I].real = logf( hypot(x[I*sb1].real + 1.0,x[I*sb1].imag) );
+            r[I].real = log( hypot(x[I*sb1].real + 1.0,x[I*sb1].imag) );
         }
     }
 }
@@ -824,7 +824,7 @@ nc_expm1( npy_intp n, npy_complex64 *x, npy_intp sb1, npy_complex64 *r)
     if( sb1 == sizeof(npy_complex64) ) { // Aligned
         for( npy_intp I = 0; I < n; I++ ) {
             a = expf(x[I].real);
-            r[I].real = a*cosf(x[I].imag) - 1.0;
+            r[I].real = a*cosf(x[I].imag) - 1.0f;
             r[I].imag = a*sinf(x[I].imag);
         }
     }
@@ -832,7 +832,7 @@ nc_expm1( npy_intp n, npy_complex64 *x, npy_intp sb1, npy_complex64 *r)
         sb1 /= sizeof(npy_complex64);    
         for( npy_intp I = 0; I < n; I++ ) {
             a = expf(x[I*sb1].real);
-            r[I].real = a*cosf(x[I*sb1].imag) - 1.0;
+            r[I].real = a*cosf(x[I*sb1].imag) - 1.0f;
             r[I].imag = a*sinf(x[I*sb1].imag);
         }     
     }
@@ -1394,6 +1394,7 @@ nc_cosh( npy_intp n, npy_complex128 *x, npy_intp sb1, npy_complex128 *r)
 }
 
 #define M_LOG10_E 0.434294481903251827651128918916605082294397
+#define M_LOG10_EF 0.434294481903251827651128918916605082294397f
 
 static void
 nc_log10( npy_intp n, npy_complex64 *x, npy_intp sb1, npy_complex64 *r)
@@ -1401,16 +1402,16 @@ nc_log10( npy_intp n, npy_complex64 *x, npy_intp sb1, npy_complex64 *r)
     if( sb1 == sizeof(npy_complex64) ) { // Aligned
         for( npy_intp I = 0; I < n; I++ ) {
             _inline_log( x[I], r[I] );
-            r[I].real *= M_LOG10_E;          
-            r[I].imag *= M_LOG10_E;
+            r[I].real *= M_LOG10_EF;          
+            r[I].imag *= M_LOG10_EF;
         }
     }
     else {
         sb1 /= sizeof(npy_complex64);
         for( npy_intp I = 0; I < n; I++ ) {
             _inline_log( x[I*sb1], r[I] );
-            r[I].real *= M_LOG10_E;          
-            r[I].imag *= M_LOG10_E;
+            r[I].real *= M_LOG10_EF;          
+            r[I].imag *= M_LOG10_EF;
         }
     }
 }
@@ -1494,15 +1495,15 @@ nc_sinh( npy_intp n, npy_complex128 *x, npy_intp sb1, npy_complex128 *r)
 {
     if( sb1 == sizeof(npy_complex128) ) { // Aligned
         for( npy_intp I = 0; I < n; I++ ) {
-            r[I].real = cos(x[I].imag)*sinhf(x[I].real);
-            r[I].imag = sin(x[I].imag)*coshf(x[I].real);
+            r[I].real = cos(x[I].imag)*sinh(x[I].real);
+            r[I].imag = sin(x[I].imag)*cosh(x[I].real);
         }
     }
     else {
         sb1 /= sizeof(npy_complex128);
         for( npy_intp I = 0; I < n; I++ ) {
-            r[I].real = cos(x[I].imag)*sinhf(x[I].real);
-            r[I].imag = sin(x[I].imag)*coshf(x[I].real);
+            r[I].real = cos(x[I].imag)*sinh(x[I].real);
+            r[I].imag = sin(x[I].imag)*cosh(x[I].real);
         }
     }
 }
@@ -1587,7 +1588,7 @@ nc_tan( npy_intp n, npy_complex128 *x, npy_intp sb1, npy_complex128 *r)
 }
 
 static void
-nc_tanh( npy_intp n, npy_complex64 *x, npy_intp sb1, npy_complex64 *r)
+nc_tanh(npy_intp n, npy_complex64 *x, npy_intp sb1, npy_complex64 *r)
 {
     npy_float32 si,ci,shr,chr;
     npy_float32 rs,is,rc,ic;
@@ -1626,7 +1627,7 @@ nc_tanh( npy_intp n, npy_complex64 *x, npy_intp sb1, npy_complex64 *r)
 }
 
 static void
-nc_tanh( npy_intp n, npy_complex128 *x, npy_intp sb1, npy_complex128 *r)
+nc_tanh(npy_intp n, npy_complex128 *x, npy_intp sb1, npy_complex128 *r)
 {
     npy_float64 si,ci,shr,chr;
     npy_float64 rs,is,rc,ic;
@@ -1665,6 +1666,72 @@ nc_tanh( npy_intp n, npy_complex128 *x, npy_intp sb1, npy_complex128 *r)
     }
 }
 
+// RAM: cross-power-spectrum (for Phase Correlation).
+// https://en.wikipedia.org/wiki/Phase_correlation
+static void
+nc_crosspower(npy_intp n, npy_complex64 *a, npy_intp sb1, npy_complex64 *b, npy_intp sb2, npy_complex64 *r) {
+    npy_float32 mag;
+    npy_complex64 prod; // Not-inlining this into r should improve SIMD performance.
 
+    if( sb1 == sizeof(npy_complex64) && sb2 == sizeof(npy_complex64) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            // Take product of A and complex conjugate of B
+            prod.real =  a[I].real*b[I].real + a[I].imag*b[I].imag;
+            prod.imag = -a[I].real*b[I].imag + a[I].imag*b[I].real;
+            // Compute magnitude 
+            mag = 1.0f/sqrtf(prod.real*prod.real + prod.imag*prod.imag);
+            // Normalize
+            r[I].real = prod.real*mag;
+            r[I].imag = prod.imag*mag;
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_complex64);
+        sb2 /= sizeof(npy_complex64);
+        for( npy_intp I = 0; I < n; I++ ) {
+            // Take product of A and complex conjugate of B
+            prod.real =  a[I*sb1].real*b[I*sb2].real + a[I*sb1].imag*b[I*sb2].imag;
+            prod.imag = -a[I*sb1].real*b[I*sb2].imag + a[I*sb1].imag*b[I*sb2].real;
+            // Compute magnitude 
+            mag = 1.0f/sqrtf(prod.real*prod.real + prod.imag*prod.imag);
+            // Normalize
+            r[I].real = prod.real*mag;
+            r[I].imag = prod.imag*mag;
+        }
+    }
+}
+
+static void
+nc_crosspower(npy_intp n, npy_complex128 *a, npy_intp sb1, npy_complex128 *b, npy_intp sb2, npy_complex128 *r) {
+    npy_float64 mag;
+    npy_complex128 prod; // Not-inlining this into r should improve SIMD performance.
+
+    if( sb1 == sizeof(npy_complex128) && sb2 == sizeof(npy_complex128) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            // Take product of A and complex conjugate of B
+            prod.real =  a[I].real*b[I].real + a[I].imag*b[I].imag;
+            prod.imag = -a[I].real*b[I].imag + a[I].imag*b[I].real;
+            // Compute magnitude 
+            mag = 1.0/sqrt(prod.real*prod.real + prod.imag*prod.imag);
+            // Normalize
+            r[I].real = prod.real*mag;
+            r[I].imag = prod.imag*mag;
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_complex128);
+        sb2 /= sizeof(npy_complex128);
+        for( npy_intp I = 0; I < n; I++ ) {
+            // Take product of A and complex conjugate of B
+            prod.real =  a[I*sb1].real*b[I*sb2].real + a[I*sb1].imag*b[I*sb2].imag;
+            prod.imag = -a[I*sb1].real*b[I*sb2].imag + a[I*sb1].imag*b[I*sb2].real;
+            // Compute magnitude 
+            mag = 1.0/sqrt(prod.real*prod.real + prod.imag*prod.imag);
+            // Normalize
+            r[I].real = prod.real*mag;
+            r[I].imag = prod.imag*mag;
+        }
+    }
+}
 
 #endif // NUMEXPR_COMPLEX_FUNCTIONS_HPP

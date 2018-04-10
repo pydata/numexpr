@@ -884,22 +884,16 @@ def OpsFactory( opsList ):
     # * In NE2 division tried to out-smart the compiler with a ternary
     #   operation but it's easier to let the compiler determine when a 
     #   INFINITY or NAN result is generated.
-    if sys.version_info.major >= 3:
-        opsList +=[Operation( ast.Div, '$DEST = (npy_float64)$ARG1 / (npy_float64)$ARG2',
-                              (LIB_STD,), ['d']*len(BOOL+ALL_INT), [BOOL+ALL_INT, BOOL+ALL_INT] )]
-        opsList +=[Operation( ast.Div, '$DEST = $ARG1 / $ARG2', (LIB_STD,),
-                          DECIMAL, [DECIMAL, DECIMAL] )]
-        # Floor division
-        # Now C++ integer division is truncation and Python is floor, so 
-        # probably this does need to be floordiv instead...
-        opsList += [Operation(ast.FloorDiv, '$DEST = $ARG2 ? ($ARG1 / $ARG2) : 0',
-                               (LIB_STD,), ALL_INT, [ALL_INT,ALL_INT] )]
-    else: # Python 2.7
-        # Divide-by-zero is fine for float but not for integer division
-        opsList +=[Operation( ast.Div, '$DEST = $ARG2 ? ($ARG1 / $ARG2) : 0', (LIB_STD,),
-                          REAL_NUM, [REAL_NUM, REAL_NUM] )]
-        opsList +=[Operation( 'truediv', '$DEST = (npy_float64)$ARG1 / (npy_float64)$ARG2',
-                              (LIB_STD,), ['d']*len(BOOL+ALL_INT), [BOOL+ALL_INT, BOOL+ALL_INT] )]
+    opsList +=[Operation( ast.Div, '$DEST = (npy_float64)$ARG1 / (npy_float64)$ARG2',
+                            (LIB_STD,), ['d']*len(BOOL+ALL_INT), [BOOL+ALL_INT, BOOL+ALL_INT] )]
+    opsList +=[Operation( ast.Div, '$DEST = $ARG1 / $ARG2', (LIB_STD,),
+                        DECIMAL, [DECIMAL, DECIMAL] )]
+    # Floor division
+    # Now C++ integer division is truncation and Python is floor, so 
+    # probably this does need to be floordiv instead...
+    opsList += [Operation(ast.FloorDiv, '$DEST = $ARG2 ? floor($ARG1 / $ARG2) : 0',
+                            (LIB_STD,), REAL_NUM, [REAL_NUM, REAL_NUM] )]
+
     
     ###### Mathematical functions ######
     # TODO: How to handle integer pow in a 'nice' way? We don't want to do it 
@@ -1202,7 +1196,8 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
                           LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ] 
     opsList += [ Operation( 'tanh', 'nc_tanh(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
-
+    opsList += [ Operation( 'crosspower', 'nc_crosspower(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED ) ]
                
     ##################################################################
     # Intel Vector Math Library functions (from mkl_vml_functions.h) #
