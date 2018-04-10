@@ -48,6 +48,9 @@ TODO List:
 * consider renaming KIND_SCALAR to KIND_CONST
 * Don't overwrite PyObject_HEAD in pickling
 * documentation and tutorial RSTs
+  - Probably we will have to tag to get a seperate branch docs?
+    http://docs.readthedocs.io/en/latest/versions.html
+    
 * optimization
   1. BLOCK_SIZE
     - Optimize by dtype.itemsize?
