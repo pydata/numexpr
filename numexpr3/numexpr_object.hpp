@@ -10,9 +10,10 @@
 **********************************************************************/
 
 #define KIND_ARRAY  1
-#define KIND_SCALAR 2
-#define KIND_TEMP   4
-#define KIND_RETURN 8
+#define KIND_RETURN 2
+#define KIND_SCALAR 4
+#define KIND_TEMP   8
+
 
 // self is a struct NumExprObject
 #define GET_RETURN_REG(self) self->registers[ self->program[self->n_reg-1].ret ]

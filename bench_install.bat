@@ -1,0 +1,1 @@
+pip uninstall numexpr3 -y & pip install -v --global-option "--bench" .

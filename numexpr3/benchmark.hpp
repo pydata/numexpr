@@ -19,11 +19,11 @@
 
     // Get a single time mark
     #define BENCH_TIME(index) QueryPerformanceCounter(&TIMES[index])
-
+    #define BENCH_RANGE(index, count) for(int T=0;T<count;T++){BENCH_TIME(index+T);}
     #define DIFF_TIME(index) QueryPerformanceCounter(&T_NOW); TIMES[index].QuadPart=T_NOW.QuadPart-TIMES[index].QuadPart
 
     // Find the accumulated time between index start and now, and accumulate that value in end
-    #define ACCUM_TIME(start,end) QueryPerformanceCounter(&T_NOW); TIMES[end].QuadPart+=T_NOW.QuadPart-TIMES[start].QuadPart
+    //#define ACCUM_TIME(start,end) QueryPerformanceCounter(&T_NOW); TIMES[end].QuadPart+=T_NOW.QuadPart-TIMES[start].QuadPart
 
 #elif defined(BENCHMARKING) // Linux
 #include <time.h>
@@ -32,16 +32,17 @@
 
     // Get a single time mark
     #define BENCH_TIME(index) clock_gettime(CLOCK_REALTIME, &TIMES[index] )
+    #define BENCH_RANGE(index, count) for(int T=0;T<count;T++){BENCH_TIME(index+T);}
 
     #define DIFF_TIME(index) clock_gettime(CLOCK_REALTIME, &T_NOW); TIMES[index].tv_nsec=T_NOW.tv_nsec-TIMES[index].tv_nsec; TIMES[index].tv_sec=T_NOW.tv_sec-TIMES[index].tv_sec
 
     // Find the accumulated time between index start and now, and accumulate that value in end
-    #define ACCUM_TIME(start, end) clock_gettime(CLOCK_REALTIME, &T_NOW); TIMES[end].tv_nsec+=T_NOW.tv_nsec-TIMES[start].tv_nsec; TIMES[end].tv_sec+=T_NOW.tv_sec-TIMES[start].tv_sec
+    //#define ACCUM_TIME(start, end) clock_gettime(CLOCK_REALTIME, &T_NOW); TIMES[end].tv_nsec+=T_NOW.tv_nsec-TIMES[start].tv_nsec; TIMES[end].tv_sec+=T_NOW.tv_sec-TIMES[start].tv_sec
 
 #else  // No benchmarking
     #define BENCH_TIME(index)  // Do nothing
     #define DIFF_TIME(index)
-    #define ACCUM_TIME(start, end)
+    #define BENCH_RANGE(index, count)
 
 #endif 
 

@@ -102,7 +102,7 @@ void* th_worker(void *tidptr) {
             gs.giveup = 1;
         }
         pthread_mutex_unlock(&gs.count_mutex);
-        ACCUM_TIME(99, 150+tid); // 99 is set just before the broadcast to unlock
+        DIFF_TIME(150+tid);
 
         BENCH_TIME(200+tid);
         while( istart < vlen && !gs.giveup ) {

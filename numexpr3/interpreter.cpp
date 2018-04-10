@@ -147,7 +147,6 @@ prepareThreads( NumExprObject* self, NpyIter *iter, int *pc_error, char **errorM
     // Variables
     int I = 0, R = 0; 
     npy_intp memOffset = 0, taskFactor, numBlocks;
-    NumExprReg* saveRegister;
 
     // Setup error tracking
     gs.ret_code = 0;
@@ -206,14 +205,11 @@ prepareThreads( NumExprObject* self, NpyIter *iter, int *pc_error, char **errorM
             // }
             return -1;
         }
-        // Save reference to gs.params[I].registers as memcpy overwrites it.
-        // saveRegister = gs.params[I].registers;
 
         // Copy the NumExprObjects in gs.params
         memcpy( &gs.params[I], self, sizeof(NumExprObject) );
         // Determine the start location for the registers in the arena
 
-        // gs.params[I].registers = saveRegister;
         // printf( "Setting thread [%d] to point to %p\n", I, gs.registerArena + I*NPY_MAXARGS*sizeof(NumExprReg) );
         gs.params[I].registers = (NumExprReg *)( gs.registerArena + I*NPY_MAXARGS*sizeof(NumExprReg) );
 
@@ -359,13 +355,13 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *self,
     BENCH_TIME(4);
     // Synchronization point for all threads (wait for initialization)
     pthread_mutex_lock(&gs.count_threads_mutex);
+    BENCH_RANGE(150, gs.n_thread);
     if (gs.count_threads < gs.n_thread) {
         gs.count_threads++; 
         // printf( "Main thread init %d\n", gs.count_threads );
         pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
     }
     else {
-        BENCH_TIME(99);
         pthread_cond_broadcast(&gs.count_threads_cv);
         
     }
@@ -546,7 +542,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     NE_REGISTER arrayCounter = 0, n_input;
     int allocOutput = 0;
-    npy_intp maxDims = 0;              // The largest dimensionality in any of the passed arguments
+    int maxDims = 0;              // The largest dimensionality in any of the passed arguments
     npy_intp arrayOffset = 0;
     npy_intp* broadcastShape = NULL;   // An array tracking the broadcasted dimensions of the output
     npy_intp* arrayShape = NULL;
@@ -574,7 +570,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     n_input = (int)PyTuple_Size(args);
 
     memset(operands, 0, sizeof(operands));
-    memset(dtypes, 0, sizeof(dtypes));
+    memset(dtypes,   0, sizeof(dtypes));
     // Moving away from kwds
     // if (kwds) {
     //     // Parse standard keyword arguments
@@ -613,21 +609,35 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     // Run through all the registers and match the input arguments to that
     // parsed by NumExpr_init
     for (I = 0; I < self->n_reg; I++) {
-        // printf( "reg#%d:: arrayCounter=%d, n_input=%d, kind=%d\n", I, arrayCounter, n_input, self->registers[I].kind );
+        // printf("reg#%d:: arrayCounter=%d, n_input=%d, kind=%d\n", I, arrayCounter, n_input, self->registers[I].kind);
 
         if( arrayCounter > n_input + allocOutput ) { 
             PyErr_SetString(PyExc_ValueError, 
                 "Too many input arrays for program: arrayCounter > n_input" );
             goto fail; 
         }
+
+        // printf("Continue test #[%d]: %d\n", I, self->registers[I].kind & (KIND_SCALAR|KIND_TEMP));
         if( self->registers[I].kind & (KIND_SCALAR|KIND_TEMP) )
             continue;
         
         // if a array is missing
         objectRef = PyTuple_GET_ITEM(args, arrayCounter);
-        if( objectRef == Py_None ) { // Unallocated output of KIND_RETURN
+        if(objectRef == Py_None) { 
+            // Unallocated output of KIND_RETURN
+            // I.e. this is often a named temporary, or it may be an assignment.
             // printf( "NumExpr_run got Py_None, assuming unallocated output\n" );
             allocOutput = 1;
+            
+            op_flags[arrayCounter] = NPY_ITER_READWRITE|
+// #ifdef USE_VML
+//                         (ex_uses_vml ? (NPY_ITER_CONTIG|NPY_ITER_ALIGNED) : 0)|
+// #endif
+#ifndef USE_UNALIGNED_ACCESS
+                        NPY_ITER_ALIGNED|
+#endif
+                        NPY_ITER_NBO|
+                        NPY_ITER_VIRTUAL;
             arrayCounter++;
             continue;
         }
@@ -654,13 +664,13 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         operands[arrayCounter] = (PyArrayObject *)arrayRef;
         dtypes[arrayCounter] = PyArray_DescrFromType(typecode);
         
-              
         if (operands[arrayCounter] == NULL || dtypes[arrayCounter] == NULL) { 
             PyErr_SetString(PyExc_ValueError, 
                 "operands[arrayCounter] == NULL or dtypes[arrayCounter] == NULL" );
             goto fail; 
         }
         
+        // printf("Setting array[%d] operand flags to READONLY\n", arrayCounter);
         op_flags[arrayCounter] = NPY_ITER_READONLY|
 // #ifdef USE_VML
 //                         (ex_uses_vml ? (NPY_ITER_CONTIG|NPY_ITER_ALIGNED) : 0)|
@@ -781,8 +791,9 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         // }
         // printf( " ]\n" );
         // This should be the arrayCounter, not the registers index!
-        operands[self->returnOperand] = (PyArrayObject*)PyArray_SimpleNewFromDescr( maxDims, broadcastShape + retIndex*maxDims, outputType );
+        operands[self->returnOperand] = (PyArrayObject*)PyArray_SimpleNewFromDescr(maxDims, broadcastShape + retIndex*maxDims, outputType);
         dtypes[self->returnOperand] = outputType;
+        // printf("Setting returnOperand (%d) to NPY_ITER_READYONLY\n", self->returnOperand);
         op_flags[self->returnOperand] = NPY_ITER_READONLY|
         // #ifdef USE_VML
         //                         (ex_uses_vml ? (NPY_ITER_CONTIG|NPY_ITER_ALIGNED) : 0)|
@@ -1011,6 +1022,15 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         // Docs recommend the flags:
         // https://docs.scipy.org/doc/numpy/reference/c-api.iterator.html
         // NPY_ITER_EXTERNAL_LOOP, NPY_ITER_RANGED, NPY_ITER_BUFFERED, NPY_ITER_DELAY_BUFALLOC, and possibly NPY_ITER_GROWINNER
+        // for(int i=0; i<arrayCounter; i++) {
+        //     printf("operands[%d]:: %p\n", i, operands[i]);
+        //     printf("op_flags[%d]:: READONLY: %d, READWRITE: %d, WRITEONLY: %d\n", 
+        //             i, 
+        //             op_flags[i]&NPY_ITER_READONLY, 
+        //             op_flags[i]&NPY_ITER_READWRITE,
+        //             op_flags[i]&NPY_ITER_WRITEONLY);
+        // }
+        
         iter = NpyIter_AdvancedNew(arrayCounter, operands,
                             NPY_ITER_BUFFERED|
                             NPY_ITER_REDUCE_OK|
