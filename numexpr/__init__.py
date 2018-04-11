@@ -36,6 +36,7 @@ import platform
 from numexpr.expressions import E
 from numexpr.necompiler import NumExpr, disassemble, evaluate, re_evaluate
 from numexpr.tests import test, print_versions
+from numexpr.interpreter import MAX_THREADS
 from numexpr.utils import (
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
     set_num_threads, detect_number_of_cores, detect_number_of_threads)

@@ -39,7 +39,7 @@ if sys.version_info[0] >= 3:
     long = int
 
 # Recommended minimum versions
-minimum_numpy_version = "1.6"
+minimum_numpy_version = ('1', '7', '0')
 
 
 class test_numexpr(TestCase):
@@ -1006,30 +1006,36 @@ class test_subprocess(TestCase):
 
 def print_versions():
     """Print the versions of software that numexpr relies on."""
-    from pkg_resources import parse_version
-    from numexpr.cpuinfo import cpu
+    # from pkg_resources import parse_version
+    from numexpr.cpuinfo import get_cpu_info
+    import platform
 
-    if cpu.is_AMD() or cpu.is_Intel():
-        is_cpu_amd_intel = True
-    else:
-        is_cpu_amd_intel = False
+    np_version = tuple( ver for ver in np.__version__.split('.') )
 
-    if parse_version(np.__version__) < parse_version(minimum_numpy_version):
+    cpu = get_cpu_info()
+
+    if minimum_numpy_version < np_version:
         print("*Warning*: NumPy version is lower than recommended: %s < %s" % \
               (np.__version__, minimum_numpy_version))
     print('-=' * 38)
     print("Numexpr version:   %s" % numexpr.__version__)
     print("NumPy version:     %s" % np.__version__)
     print('Python version:    %s' % sys.version)
-    if os.name == 'posix':
-        (sysname, nodename, release, version, machine) = os.uname()
-        print('Platform:          %s-%s' % (sys.platform, machine))
-    print("AMD/Intel CPU?     %s" % is_cpu_amd_intel)
+    (sysname, nodename, release, os_version, machine, processor) = platform.uname()
+    print('Platform:          %s-%s-%s' % (sys.platform, machine, os_version))
+    print("Architecture:      %s" % cpu.get('arch', ''))
+    print("CPU vendor:        %s" % cpu.get('vendor_id', ''))    
+    print("CPU model:         %s" % cpu.get('brand', ''))
+    print("CPU clock speed:   %s" % cpu.get('hz_actual', ''))
+    print("CPU L2 cache size: %s" % cpu.get('l2_cache_size', ''))
+    print("CPU L3 cache size: %s" % cpu.get('l3_cache_size', ''))
     print("VML available?     %s" % use_vml)
     if use_vml:
         print("VML/MKL version:   %s" % numexpr.get_vml_version())
     print("Number of threads used by default: %d "
           "(out of %d detected cores)" % (numexpr.nthreads, numexpr.ncores))
+    print("Number of cores detected by `cpuinfo`: %s" % cpu.get('count', ''))
+    print("Maximum number of threads: %s" % numexpr.MAX_THREADS)
     print('-=' * 38)
 
 
