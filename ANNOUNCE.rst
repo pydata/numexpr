@@ -1,29 +1,40 @@
+==========================
+ Announcing Numexpr 2.6.5
+==========================
+
 Hi everyone, 
 
-This is primarily a maintenance release that fixes a number of newly discovered
-bugs. <INSERT VERSION SPECIFIC INFORMATION HERE PRIOR TO RELEASE>
+This is primarily an incremental performance improvement release, especially 
+with regards to improving import times of downstream packages.  
+
+The maximum number of threads is now set at import-time, as with `numba` by 
+setting an environment variable 'NUMEXPR_MAX_THREADS'.  The runtime number 
+of threads can still be reduced by calling `numexpr.set_num_threads(N)`.  A 
+number of imports were either removed completely, or made lazy inside function 
+calls.  As a result NumExpr 2.6.5 loads almost 4x faster than before.  
 
 Project documentation is now available at:
 
 http://numexpr.readthedocs.io/
 
-
-==========================
- Announcing Numexpr 2.6.4
-==========================
-
 Changes from 2.6.4 to 2.6.5
 ---------------------------
 
-- Constants in `where` no longer generate an exception. Thanks to 
-  Mahdi Ben Jelloul for the fix.
-- Github user 'mamrehn' found and fixed several typos in the documentation, 
-  so thanks for that.
-- Import time was reduced from about 0.27 s to 0.1 s in order to speed 
-  imports for dependant modules such as `pandas` and `pytables`.  Imports 
-  of `pkg_resources` were removed, and `numexpr.cpu` is now lazily imported. 
-  If you need CPU information, import `numexpr.cpu_info.cpu as cpu`. 
-  Thanks to Jason Sachs for pointing out the source of the slow-down.
+- The maximum thread count can now be set at import-time by setting the 
+  environment variable 'NUMEXPR_MAX_THREADS'.  The default number of 
+  max threads was lowered from 4096 (which was deemed excessive) to 64.
+- A number of imports were removed (pkg_resources) or made lazy (cpuinfo) in 
+  order to speed load-times for downstream packages (such as `pandas`, `sympy`, 
+  and `tables`). Import time has dropped from about 330 ms to 90 ms. Thanks to 
+  Jason Sachs for pointing out the source of the slow-down.
+- Thanks to Alvaro Lopez Ortega for updates to benchmarks to be compatible with 
+  Python 3.
+- Travis and AppVeyor now fail if the test module fails or errors.
+- Thanks to Mahdi Ben Jelloul for a patch that removed a bug where constants 
+  in `where` calls would raise a ValueError.
+- Fixed a bug whereby all-constant power operations would lead to infinite 
+  recursion.
+
 
 Changes from 2.6.3 to 2.6.4
 ---------------------------
