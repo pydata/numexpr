@@ -7,4 +7,5 @@ recursive-include numexpr3/win32 *.c *.h
 exclude numexpr3/__config__.py
 exclude RELEASING.txt
 
+recursive-include code_generators *.py
 recursive-include bench *.py

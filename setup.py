@@ -2,7 +2,7 @@
 ###################################################################
 #  Numexpr - Fast numerical array expression evaluator for NumPy.
 #
-#      License: BSD
+#      License: BSD 3-clause
 #      Author:  See AUTHORS.txt
 #
 #  See LICENSE.txt and LICENSES/*.txt for details about copyright and
@@ -23,7 +23,7 @@ if sys.version_info.major == 3 and sys.version_info.minor < 3:
 major_ver = 3
 minor_ver = 0
 nano_ver = 1
-branch = 'a0'
+branch = 'a2'
 version = '%d.%d.%d%s' % (major_ver, minor_ver, nano_ver, branch)
 
 # Write __version__.py
@@ -138,6 +138,7 @@ def setup_package():
                       install_requires=requirements,
                       setup_requires=requirements,
                       classifiers=['Programming Language :: Python :: 3'],
+                      zip_safe=False
     )
     if (len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
     in ('--help-commands', 'egg_info', '--version', 'clean'))):
