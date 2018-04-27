@@ -13,7 +13,7 @@ import sys
 import numpy
 import threading
 
-# from numexpr import interpreter, expressions, use_vml, is_cpu_amd_intel
+is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
 from numexpr import interpreter, expressions, use_vml
 from numexpr.utils import CacheDict
 

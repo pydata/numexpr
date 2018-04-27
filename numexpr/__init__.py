@@ -28,6 +28,8 @@ if get_info('mkl'):
 else:
     use_vml = False
 
+is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
+
 # cpuinfo imports were moved into the test submodule function that calls them 
 # to improve import times.
 

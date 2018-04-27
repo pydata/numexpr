@@ -32,6 +32,7 @@ import warnings
 import platform
 import inspect
 
+is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
 
 def getoutput(cmd, successful_status=(0,), stacklevel=1):
     try:
