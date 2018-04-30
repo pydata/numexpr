@@ -5,15 +5,19 @@
 Hi everyone, 
 
 This is primarily an incremental performance improvement release, especially 
-with regards to improving import times of downstream packages.  
+with regards to improving import times of downstream packages (e.g. 
+`pandas`, `tables`, `sympy`).  Import times have been reduced from ~300 ms 
+to ~100 ms through removing a `pkg_resources` import and making the `cpuinfo`
+import lazy.
 
-The maximum number of threads is now set at import-time, as with `numba` by 
+The maximum number of threads is now set at import-time, similar to `numba`, by 
 setting an environment variable 'NUMEXPR_MAX_THREADS'.  The runtime number 
-of threads can still be reduced by calling `numexpr.set_num_threads(N)`.  A 
-number of imports were either removed completely, or made lazy inside function 
-calls.  As a result NumExpr 2.6.5 loads almost 4x faster than before.  
+of threads can still be reduced by calling `numexpr.set_num_threads(N)`. 
 
-Project documentation is now available at:
+DEPRECATION WARNING: The variable `numexpr.is_cpu_amd_intel` has been set to a 
+dummy value of `False`. This variable may be removed in the future.
+
+Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
@@ -21,7 +25,7 @@ Changes from 2.6.4 to 2.6.5
 ---------------------------
 
 - The maximum thread count can now be set at import-time by setting the 
-  environment variable 'NUMEXPR_MAX_THREADS'.  The default number of 
+  environment variable 'NUMEXPR_MAX_THREADS'. The default number of 
   max threads was lowered from 4096 (which was deemed excessive) to 64.
 - A number of imports were removed (pkg_resources) or made lazy (cpuinfo) in 
   order to speed load-times for downstream packages (such as `pandas`, `sympy`, 
@@ -34,29 +38,6 @@ Changes from 2.6.4 to 2.6.5
   in `where` calls would raise a ValueError.
 - Fixed a bug whereby all-constant power operations would lead to infinite 
   recursion.
-
-
-Changes from 2.6.3 to 2.6.4
----------------------------
-
-- Christoph Gohlke noticed a lack of coverage for the 2.6.3 
-  `floor` and `ceil` functions for MKL that caused seg-faults in 
-  test, so thanks to him for that.
-
-Changes from 2.6.2 to 2.6.3
----------------------------
-
-- Documentation now available at numexpr.readthedocs.io
-- Support for floor() and ceil() functions added by Caleb P. Burns.
-- NumPy requirement increased from 1.6 to 1.7 due to changes in iterator
-  flags (#245).
-- Sphinx autodocs support added for documentation on readthedocs.org.
-- Fixed a bug where complex constants would return an error, fixing 
-  problems with `sympy` when using NumExpr as a backend.
-- Fix for #277 whereby arrays of shape (1,...) would be reduced as 
-  if they were full reduction. Behavoir now matches that of NumPy.
-- String literals are automatically encoded into 'ascii' bytes for 
-  convience (see #281).
 
 What's Numexpr?
 ---------------

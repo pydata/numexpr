@@ -6,7 +6,7 @@ Changes from 2.6.4 to 2.6.5
 ---------------------------
 
 - The maximum thread count can now be set at import-time by setting the 
-  environment variable 'NUMEXPR_MAX_THREADS'.  The default number of 
+  environment variable 'NUMEXPR_MAX_THREADS'. The default number of 
   max threads was lowered from 4096 (which was deemed excessive) to 64.
 - A number of imports were removed (pkg_resources) or made lazy (cpuinfo) in 
   order to speed load-times for downstream packages (such as `pandas`, `sympy`, 
