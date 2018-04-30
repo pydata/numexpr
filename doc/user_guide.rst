@@ -229,7 +229,7 @@ General routines
   * :code:`print_versions()`:  Print the versions of software that numexpr relies on.
   * :code:`set_num_threads(nthreads)`: Sets a number of threads to be used in operations.  
     Returns the previous setting for the number of threads.  See note below to see 
-    how the number of threads is set initially in NumExpr.
+    how the number of threads is set via environment variables.
 
     If you are using VML, you may want to use *set_vml_num_threads(nthreads)* to 
     perform the parallel job with VML instead.  However, you should get very 
@@ -239,14 +239,20 @@ General routines
 
   * :code:`detect_number_of_cores()`: Detects the number of cores on a system.
 
-*Note on the initial number of threads:* The initial number of threads will be 
-set to the number of cores detected in the system or 8, whichever is *lower*. 
-The :code:`NUMEXPR_MUM_THREADS` environment variable is also honored at 
-initialization time and, if defined, the initial number of threads will be set 
-to this value instead.  Alternatively, the `OMP_NUM_THREADS` environment 
-variable is also honored, but beware because that might affect to other OpenMP 
-applications too. Finally, and because of internal limitations, the number of 
-threads cannot be larger than 4096 (there is an internal protection for this).
+**Note on the maximum number of threads:** Threads are spawned at import-time, 
+with the number being set by the environment variable ``NUMEXPR_MAX_THREADS``.
+Example:
+
+    :code:`import os; os.environ['NUMEXPR_MAX_THREADS'] = '16'`
+
+The default maximum thread count is 64. The initial number of threads _that are 
+used_ will be set to the number of cores detected in the system or 8, whichever 
+is **lower**. For historical reasons, the :code:`NUMEXPR_NUM_THREADS` environment 
+variable is also honored at initialization time and, if defined, the initial 
+number of threads will be set to this value instead.  Alternatively, the 
+`OMP_NUM_THREADS` environment variable is also honored, but beware because that 
+might affect to other OpenMP applications too. 
+
 
 
 Intel's VML specific support routines

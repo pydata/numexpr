@@ -10,7 +10,11 @@ NumExpr API
                   
 .. py:attribute:: nthreads
 
-    The number of available threads detected.  
+    The number of threads currently in-use.
+
+.. py:attribute:: MAX_THREADS
+
+    The maximum number of threads, as set by the environment variable ``NUMEXPR_MAX_THREADS``
 
 .. py:attribute:: version
 
