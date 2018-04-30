@@ -229,7 +229,7 @@ int numexpr_set_nthreads(int nthreads_new)
     // }
     if (nthreads_new > global_max_threads) {
         fprintf(stderr,
-                "Error.  nthreads cannot be larger than environment variable \"NUMEXPR_MAX_THREADS\" (%d)",
+                "Error.  nthreads cannot be larger than environment variable \"NUMEXPR_MAX_THREADS\" (%ld)",
                 global_max_threads);
         return -1;
     }
@@ -390,25 +390,14 @@ initinterpreter()
 #endif
 {
     PyObject *m, *d;
-    // TODO: try and load `global_max_threads` from environment variable 'NUMEXPR_MAX_THREADS'
-#if defined(_WIN32)
-    // Example of using GetEnvironmentVariable() on Windows:
-    // https://msdn.microsoft.com/en-us/library/ms682009(v=vs.85).aspx
-    int dwRet;
-    char max_thread_buffer[128];
-    char *end;
-    dwRet = GetEnvironmentVariable("NUMEXPR_MAX_THREADS", max_thread_buffer, 128);
-    if (dwRet > 0) {
-        global_max_threads = strtol(max_thread_buffer, &end, 10);
-    }
-#else // Linux/OSX
+
+
     char *max_thread_str = getenv("NUMEXPR_MAX_THREADS");
     char *end;
     if (max_thread_str != NULL) {
         global_max_threads = strtol(max_thread_str, &end, 10);
     }
-#endif
-    printf("DEBUG: global_max_threads = %d\n", global_max_threads);
+
 
     th_params.memsteps    = (npy_intp**)calloc(sizeof(npy_intp*), global_max_threads);
     th_params.iter        = (NpyIter**)calloc(sizeof(NpyIter*),   global_max_threads);

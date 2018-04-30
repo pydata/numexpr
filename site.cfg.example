@@ -13,7 +13,7 @@
 [DEFAULT]
 #libraries = gfortran
 
-[mkl]
+#[mkl]
 # Example for the MKL included in Intel C 11.0 compiler
 # (you may need a recent NumPy version for being able to search libraries
 # in different directories at a time)
@@ -46,6 +46,6 @@
 # Please note that the valid os.pathsep is ';' on Windows and ':' on Linux
 # and that numpy.distutils.system_info only accepts the first instance of library_dirs
 [mkl]
-library_dirs=/Program Files (x86)/IntelSWTools/compilers_and_libraries_2018.0.124/windows/mkl/lib/intel64;/Program Files (x86)/IntelSWTools/compilers_and_libraries_2018.0.124/windows/compiler/lib/intel64_win
-include_dirs=/Program Files (x86)/IntelSWTools/compilers_and_libraries_2018.0.124/windows/mkl/include
+library_dirs=/Program Files (x86)/IntelSWTools/compilers_and_libraries_2018.0.156/windows/mkl/lib/intel64;/Program Files (x86)/IntelSWTools/compilers_and_libraries_2018.0.156/windows/compiler/lib/intel64_win
+include_dirs=/Program Files (x86)/IntelSWTools/compilers_and_libraries_2018.0.156/windows/mkl/include
 mkl_libs = mkl_intel_lp64, mkl_intel_thread, mkl_core, libiomp5md
