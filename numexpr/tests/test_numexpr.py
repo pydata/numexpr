@@ -1011,7 +1011,6 @@ def print_versions():
     import platform
 
     np_version = tuple( ver for ver in np.__version__.split('.') )
-    cpu_info = cpu.info[0]
 
     if minimum_numpy_version < np_version:
         print('*Warning*: NumPy version is lower than recommended: %s < %s' % \
@@ -1022,9 +1021,15 @@ def print_versions():
     print('Python version:    %s' % sys.version)
     (sysname, nodename, release, os_version, machine, processor) = platform.uname()
     print('Platform:          %s-%s-%s' % (sys.platform, machine, os_version))
-    print('CPU vendor:        %s' % cpu_info.get('VendorIdentifier', ''))
-    print('CPU model:         %s' % cpu_info.get('ProcessorNameString', ''))
-    print('CPU clock speed:   %s MHz' % cpu_info.get('~MHz',''))
+    try:
+        # cpuinfo doesn't work on OSX well it seems, so protect these outputs 
+        # with a try block
+        cpu_info = cpu.info[0]
+        print('CPU vendor:        %s' % cpu_info.get('VendorIdentifier', ''))
+        print('CPU model:         %s' % cpu_info.get('ProcessorNameString', ''))
+        print('CPU clock speed:   %s MHz' % cpu_info.get('~MHz',''))
+    except KeyError:
+        pass
     print('VML available?     %s' % use_vml)
     if use_vml:
         print('VML/MKL version:   %s' % numexpr.get_vml_version())
