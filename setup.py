@@ -10,11 +10,8 @@
 ####################################################################
 
 import shutil
-import os
-import sys
-import os.path as op
+import sys, os, os.path as op, io
 from distutils.command.clean import clean
-
 
 if sys.version_info < (2, 6):
     raise RuntimeError("must use python 2.6 or greater")
@@ -27,6 +24,9 @@ except ImportError:
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
+with io.open('README.rst', encoding='utf-8') as f:
+    LONG_DESCRIPTION = f.read()
+
 # Fetch the version for numexpr (will be put in variable `version`)
 with open(os.path.join('numexpr', 'version.py')) as f:
     exec(f.read())
@@ -37,6 +37,7 @@ def setup_package():
                       author='David M. Cooke, Francesc Alted and others',
                       author_email='david.m.cooke@gmail.com, faltet@gmail.com',
                       url='https://github.com/pydata/numexpr',
+                      long_description=LONG_DESCRIPTION,
                       license='MIT',
                       packages=['numexpr'],
                       install_requires=requirements,
