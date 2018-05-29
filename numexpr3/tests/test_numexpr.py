@@ -737,12 +737,12 @@ class test_multicore(unittest.TestCase):
         npt.assert_array_almost_equal( result, np.log(a) )
 
 
-def test( verbosity=2 ):
+def test(verbosity=2):
     '''
     Run all the tests in the test suite.
     '''
     ne3.print_info()
-    return unittest.TextTestRunner( verbosity=verbosity ).run( suite() )
+    return unittest.TextTestRunner(verbosity=verbosity).run( suite() )
 
 
 test.__test__ = False

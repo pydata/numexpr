@@ -25,19 +25,23 @@ https://numexpr.readthedocs.io
 for more infomotion.
 """
 
-from __future__ import absolute_import
-
 from .__config__ import show as _show_config
 from .__config__ import get_info as _get_info
 
-from numexpr3.ne3compiler import NumExpr, evaluate, OPTABLE, wisdom
-from numexpr3.interpreter import MAX_ARGS, set_tempsize
-from numexpr3.tests import test
+from .ne3compiler import NumExpr, evaluate, OPTABLE, wisdom
+from .interpreter import MAX_ARGS, set_tempsize
 
-# Do not import cpuinfo, it needs a major overhaul to fix various 
-# multiprocessing bugs on Windows
-# from numexpr3.cpuinfo import get_cpu_info
-from numexpr3.utils import get_ncores, get_nthreads, set_nthreads, print_info, str_info
+def test(verbosity=1):
+    # Lazy import test via stub
+    try:
+        from .tests import test
+    except ImportError as e:
+        raise ImportError('Could not import `numexpr3.tests`, was it included with the distribution?') from e
+    else:
+        test(verbosity=verbosity)
+
+
+from .utils import get_ncores, get_nthreads, set_nthreads, print_info, str_info
 
 
 from . import __version__

@@ -108,23 +108,19 @@ def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
             if 'os.name' in OPTABLE and OPTABLE['os.name'] == os.name:
                 print( "---===Generation not required===---" )
                 return
-    # Python 2.7 cannot do relative imports here so we need to use inspect to 
-    # modify the PYTHONPATH.
-    setup_fileName = inspect.getfile(inspect.currentframe())
-    GEN_dir = os.path.join( os.path.abspath( os.path.dirname(setup_fileName)), 'code_generators' )
-    sys.path.insert(0,GEN_dir) 
-    
+
+ 
     # This no-generated could cause problems if people clone from GitHub and 
     # we insert configuration tricks into the code_generator directory.
     # TODO: It also needs to see if the stubs have been incremented.
-    import interp_generator
+    import code_generators.interp_generator as generator
     print( '---===GENERATING INTERPRETER CODE===---' )
     # Try to auto-detect MKL and C++/11 here.
     # mkl=True 
     
     # TODO: pass a configuration dict instead of a list of parameters.  For 
     # example ICC might be another one...
-    interp_generator.generate( blocksize=blocksize, mkl=mkl, C11=C11 )
+    generator.generate(blocksize=blocksize, mkl=mkl, C11=C11)
     
 
 def setup_package():
@@ -191,7 +187,7 @@ def setup_package():
 
         _DEBUG = False
         def localpath(*args):
-            return os.path.abspath(os.pathjoin(*((os.path.dirname(__file__),) + args)))
+            return os.path.abspath(os.path.join(*((os.path.dirname(__file__),) + args)))
 
         def debug(instring):
             if _DEBUG:
