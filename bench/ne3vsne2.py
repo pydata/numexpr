@@ -101,6 +101,6 @@ out = np.zeros( {1}, dtype='{2}' )
 
 N_threads = 4
 expr = 'sqrt(A*B + 2*C)'
-arraySizes = np.logspace(14,22,25,base=2).astype('int32')
+arraySizes = np.logspace(14,22,25,base=2)
 dtypes = ['float64', 'complex128']
 bench( expr, arraySizes, dtypes, N_threads=N_threads, tries=5 )
