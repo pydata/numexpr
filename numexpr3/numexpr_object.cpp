@@ -216,6 +216,13 @@ NumExpr_init(NumExprObject *self, PyObject *args)
                 returnOperand = n_array;
                 n_array++;
                 break;
+                // Can't we just drop through the case here?
+            case KIND_NAMED:
+                printf("Found named temporary at register %d\n", I);
+                total_temp_itemsize += registers[I].itemsize;
+                registers[I].stride = registers[I].itemsize;
+                n_temp++;
+                break;
             default:
                 PyErr_Format(PyExc_RuntimeError,
                         "numexpr_object.cpp: register[%d] has unknown register type %d.\n", I, registers[I].kind );

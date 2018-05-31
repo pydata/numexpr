@@ -14,7 +14,6 @@ https://greentreesnakes.readthedocs.io
 The goal is to only parse the AST tree once to reduce the amount of time spent
 in pure Python compared to NE2.
 '''
-import __future__
 
 import os, inspect, sys
 import ast
@@ -67,10 +66,10 @@ _RET_LOC = -4
 
 # Map np.dtype.char to np.dtype.itemsize
 _DCHAR_ITEMSIZE = {dchar:np.dtype(dchar).itemsize for dchar in np.typecodes['All']}
-#    gives 0s for strings and unicode.
+#    gives 0s for strings and unicode, so set them by hand:
 _DCHAR_ITEMSIZE['S'] = 1
 _DCHAR_ITEMSIZE['U'] = 4
-# Also we need a default value for None
+# Also we need a default value for None:
 _DCHAR_ITEMSIZE[None] = 0
 
 
@@ -81,10 +80,10 @@ CAST_EQUIV = 2
 CAST_SAME_KIND = 3
 CAST_UNSAFE = 4
 _CAST_TRANSLATIONS = {CAST_SAFE:CAST_SAFE, 'safe':CAST_SAFE, 
-                        CAST_NO:CAST_NO, 'no':CAST_NO, 
-                        CAST_EQUIV:CAST_EQUIV, 'equiv':CAST_EQUIV, 
-                        CAST_SAME_KIND:CAST_SAME_KIND, 'same_kind':CAST_SAME_KIND,
-                        CAST_UNSAFE:CAST_UNSAFE, 'unsafe':CAST_UNSAFE}
+                      CAST_NO:CAST_NO, 'no':CAST_NO, 
+                      CAST_EQUIV:CAST_EQUIV, 'equiv':CAST_EQUIV, 
+                      CAST_SAME_KIND:CAST_SAME_KIND, 'same_kind':CAST_SAME_KIND,
+                      CAST_UNSAFE:CAST_UNSAFE, 'unsafe':CAST_UNSAFE}
 
 # Casting suggestions for functions that don't support integers, such as
 # all the transcendentals. NumPy actually returns float-16 for u/int8 but 
@@ -107,15 +106,16 @@ OPT_MODERATE = 0
 # Defaults to LIB_STD
 LIB_STD = 0     # C++ cmath standard library
 #LIB_VML = 1    # Intel Vector Math library
-#LIB_YEPPP = 2  # Yeppp! math library
+#LIB_YEP = 2  # Yeppp! math library
 
 CHECK_ALL = 0  # Normal operation in checking dtypes
 #CHECK_NONE = 1 # Disable all checks for dtypes if expr is in cache
 
-_KIND_ARRAY = 1
+_KIND_ARRAY  = 1
 _KIND_RETURN = 2
 _KIND_SCALAR = 4
-_KIND_TEMP = 8
+_KIND_TEMP   = 8
+_KIND_NAMED  = 16
 
 
 # TODO: implement non-default casting, optimization, library, checks
@@ -271,19 +271,21 @@ def _expression_last(self, node):
         
 def _mutate(self, targetNode, valueReg):
     '''
-    Used for intermediate assignment targets.  This takes the valueReg and 
+    Used for intermediate assignment targets. This takes the valueReg and 
     mutates targetReg into it.
 
     Cases:
       1. targetReg is KIND_ARRAY or KIND_SCALAR in which case it has been
-        pre-allocated and is a secondary return.
-      2. targetReg is KIND_TEMP in which case it's a _named_ temporary.
+         pre-allocated and is a secondary return.
+      2. targetReg is KIND_NAMED in which case it's a _named_ temporary. I.e. 
+         a temporary that we cannot re-use because it was assigned as an 
+         intermediate assignment target.
 
     In some cases this will require a new temporary.  For example, if the output 
     dtype is smaller than the valueReg.dchar it can't be mutated to a named 
     output.
     '''
-    print(f'Mutating: {targetNode} and {valueReg}')
+    # print(f'Mutating: {targetNode} and {valueReg}')
 
     if isinstance(targetNode, ast.Name):
         if valueReg.kind & (_KIND_ARRAY|_KIND_SCALAR):
@@ -291,7 +293,7 @@ def _mutate(self, targetNode, valueReg):
             targetReg = _ASTAssembler[type(targetNode)](self, targetNode)
             targetReg.dchar = valueReg.dchar
             return self._copy(targetReg, valueReg)
-
+        # else KIND_TEMP|KIND_NAMED
         nodeId = targetNode.id
         if nodeId in self.registers:
             # Pre-existing, pre-known output.
@@ -762,28 +764,29 @@ class NumReg(object):
     None for name for temporaries instead of building values.
 
     Attributes
-    ^^^^^^^^^^
-    * :code:`num`: The register number, an :code:`int`
-    * :code:`token`: The register number encoded as :code:`bytes`
-    * :code:`name`: The unicode representation of the variable name. For named   
-      variables this is a :code:`str` and for temporaries a :code:`int`
-    * :code:`dchar`: The :code:`numpy.dtype.char` representation of the underlying 
+    ----------
+    * ``num``: The register number, an ``int``
+    * ``token``: The register number encoded as ``bytes``
+    * ``name``: The unicode representation of the variable name. For named   
+      variables this is a ``str`` and for temporaries a ``int``
+    * ``dchar``: The ``numpy.dtype.char`` representation of the underlying 
       array or const datatype.  Cannot be mutated.
       Note this changes from Linux to Windows.  Code generation must always be 
     run on the appropriate platform.
-    * :code:`ref`: The reference to the passed array. Normally this is a 
-      :code:`weakref.ref` so that the :code:`NumExpr` object does not stop 
+    * ``ref``: The reference to the passed array. Normally this is a 
+      ``weakref.ref`` so that the ``NumExpr`` object does not stop 
       garbage collection.
-    * :code:`kind`: a bitmask used for flow-control.  One of:
-      - :code:`KIND_ARRAY` : A passed-in :code:`ndarray`
-      - :code:`KIND_TEMP`  : A named or unnamed temporary allocated by the 
+    * ``kind``: a bitmask used for flow-control.  One of:
+      - ``_KIND_ARRAY`` : a passed-in ``ndarray``
+      - ``_KIND_TEMP``  : a named or unnamed temporary allocated by the 
         virtual machine
-      - :code:`KIND_SCALAR`: A literal constant, such as :code:`1` 
-      - :code:`KIND_RETURN`: The last assignment target in a statement block. 
+      - ``_KIND_SCALAR``: a literal constant, such as ``1``
+      - ``_KIND_RETURN``: the last assignment target in a statement block. 
+      - ``_KIND_NAMED`` : a 
         Can be pre-allocated or magically promoted to the calling frame.
     '''
     TYPENAME = {_KIND_ARRAY:'array', _KIND_SCALAR:'scalar', 
-                _KIND_TEMP:'temp', _KIND_RETURN:'return'}
+                _KIND_TEMP:'temp', _KIND_RETURN:'return', _KIND_NAMED:'named'}
 
     __slots__ = '_num', 'token', 'name', 'ref', 'dchar', 'kind', 'itemsize'
 
@@ -793,7 +796,7 @@ class NumReg(object):
         self.name = name                    # The key, can be an int or a str
         self.ref = ref                      # A reference to the underlying scalar, or a weakref
         self.dchar = dchar                  # The dtype.char of the underlying array
-        self.kind = kind                    # one of KIND_ARRAY, KIND_TEMP, KIND_SCALAR, or KIND_RETURN
+        self.kind = kind                    # one of {KIND_ARRAY, KIND_TEMP, KIND_SCALAR, KIND_RETURN, KIND_NAMED}
         self.itemsize = itemsize            # For temporaries, we track the itemsize for allocation efficiency
 
 

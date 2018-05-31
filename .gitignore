@@ -15,7 +15,9 @@ numexpr3/__config__.py
 doc/_build/
 code_generators/ex_include
 bench/*.png
+temp/
 .eggs
 *.vscode
+
 
 

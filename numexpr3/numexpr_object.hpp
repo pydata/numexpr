@@ -9,10 +9,11 @@
   See LICENSE.txt for details about copyright and rights to use.
 **********************************************************************/
 
-#define KIND_ARRAY  1
-#define KIND_RETURN 2
-#define KIND_SCALAR 4
-#define KIND_TEMP   8
+#define KIND_ARRAY   1
+#define KIND_RETURN  2
+#define KIND_SCALAR  4
+#define KIND_TEMP    8
+#define KIND_NAMED  16
 
 
 // self is a struct NumExprObject
