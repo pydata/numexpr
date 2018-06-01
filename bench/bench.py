@@ -57,7 +57,9 @@ class Case(object):
         self.stats      = defaultdict(self.initZeros, {})
 
 
-    def run(self):
+    def run(self) -> None:
+        """
+        """
         # Setup variables x1, x2, x3, x4
         # print( "Running benchmark for '{}' x {} times".format(self.expr, self.tries))
         args = []

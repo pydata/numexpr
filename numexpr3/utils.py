@@ -13,17 +13,14 @@ import subprocess
 import numpy as np
 import numexpr3.interpreter
 import numexpr3
-# from numexpr3.cpuinfo import get_cpu_info
 import time
-
 
 _nthreads = 1     
 _ncores =   1     
 _cpu_info = None
 
-
-def _detect_ncores():
-    # Check for number of cores.
+def _detect_ncores() -> None:
+    """Check for number of cores."""
     # TODO: we would prefer physical cores.
     # Linux, Unix and MacOS:
     global _ncores
@@ -41,8 +38,8 @@ def _detect_ncores():
         if ncpus > 0:
             _ncores = ncpus
 
-def _detect_nthreads():
-    # Detect number of threads, if set in an environment variable
+def _detect_nthreads() -> None:
+    """Detect number of threads, if set in an environment variable."""
     # Otherwise use number of detected cores.
     global _nthreads, _ncores
     if 'sparc' in platform.machine():
@@ -64,32 +61,32 @@ _detect_ncores()
 _detect_nthreads()
 _nthreads = numexpr3.interpreter.set_num_threads( _nthreads )
 
-def get_nthreads():
+def get_nthreads() -> int:
+    """Get the number of threads currently being used by the virtual machine."""
     global _nthreads
     _nthreads = numexpr3.interpreter.get_num_threads()
     return _nthreads
 
-def set_nthreads(new_nthreads):
-    '''
-    Sets a number of threads to be used in operations.  Argument 
-    :code:`new_nthreads` should be of type `int`.  Generally speaking one should
-    use less than the number of physical cores.  NumExpr does not benefit from 
+def set_nthreads(new_nthreads: int) -> None:
+    """
+    Sets a number of threads to be used in operations. Generally speaking one should
+    use >= the number of physical cores.  NumExpr does not benefit from 
     Hyperthreading.
 
     During initialization time Numexpr sets the thread count by 
-    the :code:`_detect_number_of_threads()` function.
-    '''
+    the ``_detect_number_of_threads()`` function.
+    """
     global _nthreads
     _nthreads = int(new_nthreads)
     numexpr3.interpreter.set_num_threads(_nthreads)
 
-def get_ncores():
+def get_ncores() -> int:
     global _ncores
     return _ncores
 # There's no setter for ncores
 
-def str_info():
-    '''Print the software versions that NumExpr imports and CPU information.'''
+def str_info() -> str:
+    """String representation of software versions that NumExpr imports and CPU information."""
     global _nthreads, _ncores
     
     repr = []
@@ -132,6 +129,7 @@ def str_info():
     repr.append('-=' * 38)
     return ''.join(repr)
 
-def print_info():
-    print( str_info() )
+def print_info() -> None:
+    """Print software versions that NumExpr imports and CPU information."""
+    print(str_info())
 

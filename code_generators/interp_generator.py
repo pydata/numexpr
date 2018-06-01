@@ -7,6 +7,10 @@ Created on Thu Jan  5 12:46:25 2017
 @email: robbmcleod@gmail.com
 
 """
+from typing import Sequence, List, Tuple, Union
+
+import ast
+import os,sys,inspect
 import numpy as np
 from collections import OrderedDict, defaultdict
 from itertools import count
@@ -14,14 +18,11 @@ import struct
 import importlib
 
 # The operations are saved on disk as a pickled dict
-try: import cPickle as pickle
-except: import pickle
+import pickle
 
-import ast
-import os,sys,inspect
 CURR_DIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-NE_DIR = os.path.join( os.path.dirname(CURR_DIR), 'numexpr3' )
-sys.path.insert(0,NE_DIR) 
+NE_DIR = os.path.join(os.path.dirname(CURR_DIR), 'numexpr3')
+sys.path.insert(0, NE_DIR) 
 
 NE_STRUCT = 'H'
 
@@ -39,14 +40,14 @@ WARNING_END = """// End of GENERATED CODE BLOCK"""
 # Note: LIB_XXX and CAST_XXX could be imported  from necompiler.py, or maybe
 # they should be in __init__.py?  Either way only define them in one place.
 LIB_DEFAULT = 0
-LIB_STD = 0
-LIB_VML = 1
+LIB_STD     = 0
+LIB_VML     = 1
 
-CAST_SAFE = 0
-CAST_NO = 1
-CAST_EQUIV = 2
+CAST_SAFE      = 0
+CAST_NO        = 1
+CAST_EQUIV     = 2
 CAST_SAME_KIND = 3
-CAST_UNSAFE = 4
+CAST_UNSAFE    = 4
 
 BLOCKSIZE = 4096 # Will be set as a global by generate()
 
@@ -57,11 +58,7 @@ BLOCKSIZE = 4096 # Will be set as a global by generate()
 #BLOCKSIZE_8 = 4096
 #BLOCKSIZE_16 = 2048
 
-# If we start the operations at a value of 256 we provide space for all the
-# Python op codes within the NumExpr3 operation space. We should be careful
-# to make sure the C jump table is full though.
-# OP_COUNT = count( start=256 )
-OP_COUNT = count( start=1 ) # Leave space for NOOP=0
+OP_COUNT = count(start = 1) # Leave space for NOOP=0
 
 
 DCHAR_TO_CTYPE = { 
@@ -87,52 +84,55 @@ DCHAR_TO_CTYPE = {
 #    # TODO
 #    pass
 
-def DEST( index='J' ):
+def DEST(index: str='J') -> str:
     # Real return is the default
-    return 'dest[{0}]'.format( index )
+    return 'dest[{0}]'.format(index)
     
 #def DEST_STR( dchar ):
 #    # TODO: difference between npy_string and npy_unicode?
 #    return '({0} *)dest + J*memsteps[store_in]'.format( DCHAR_TO_CTYPE[dchar] )
 
-def ARG( num, index='J' ):
-    return 'x{0}[{1}]'.format( num, index )
+def ARG(num: int, index:str='J') -> str:
+    return 'x{0}[{1}]'.format(num, index)
 
-def ARG_STRIDE( num, index='J' ):
-    return 'x{0}[{1}*sb{0}]'.format( num, index )
+def ARG_STRIDE(num: int, index: str='J') -> str:
+    return 'x{0}[{1}*sb{0}]'.format(num, index)
 
 #def ARG_STR( dchar, num ):
 #    return '(({0} *)( x{1} + J*sb{1} ))'.format( DCHAR_TO_CTYPE[dchar], num )
 
-def REDUCE( dchar, outerLoop=False ):
+def REDUCE(dchar: str, outerLoop: bool=False) -> str:
     if outerLoop:
-        return DEST( dchar )
+        return DEST(dchar)
     # INNER LOOP
-    return '*({0} *)dest'.format( DCHAR_TO_CTYPE[dchar] )
+    return '*({0} *)dest'.format(DCHAR_TO_CTYPE[dchar])
 
-def VEC_LOOP( expr ):
-    expr = expr.replace( '$ARG3', ARG(3) )
-    expr = expr.replace( '$ARG2', ARG(2) )
-    expr = expr.replace( '$ARG1', ARG(1) )
+def VEC_LOOP(expr: str) -> str:
+    expr = expr.replace('$ARG3', ARG(3))
+    expr = expr.replace('$ARG2', ARG(2))
+    expr = expr.replace('$ARG1', ARG(1))
     return '''for(npy_intp J = 0; J < task_size; J++) { 
             EXPR; 
-        }'''.replace( 'EXPR', expr ) 
+        }'''.replace('EXPR', expr) 
  
-def STRIDED_LOOP( expr ):
-    expr = expr.replace( '$ARG3', ARG_STRIDE(3) )
-    expr = expr.replace( '$ARG2', ARG_STRIDE(2) )
-    expr = expr.replace( '$ARG1', ARG_STRIDE(1) )
+def STRIDED_LOOP(expr: str) -> str:
+    expr = expr.replace( '$ARG3', ARG_STRIDE(3))
+    expr = expr.replace( '$ARG2', ARG_STRIDE(2))
+    expr = expr.replace( '$ARG1', ARG_STRIDE(1))
     retStr = ''
-    if 'x3' in expr: retStr += '    sb3 /= sizeof($DTYPE3);\n';
-    if 'x2' in expr: retStr += '    sb2 /= sizeof($DTYPE2);\n';
-    if 'x1' in expr: retStr += '    sb1 /= sizeof($DTYPE1);\n';
+    if 'x3' in expr: 
+        retStr += '    sb3 /= sizeof($DTYPE3);\n'
+    if 'x2' in expr: 
+        retStr += '    sb2 /= sizeof($DTYPE2);\n'
+    if 'x1' in expr: 
+        retStr += '    sb1 /= sizeof($DTYPE1);\n'
     retStr += '''    for(npy_intp J = 0; J < task_size; J++) { 
         EXPR; 
-    }'''.replace( 'EXPR', expr ) 
+    }'''.replace('EXPR', expr) 
     return retStr
 
 
-def VEC_ARG0( expr ):
+def VEC_ARG0(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -143,13 +143,13 @@ def VEC_ARG0( expr ):
     VEC_LOOP(expr);
     return 0;
 }
-'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) )
+'''.replace('VEC_LOOP(expr);', VEC_LOOP(expr))
 
 # We could write a more general function suitable for any number of arguments,
 # but that would make the generator code more opaque
 
 
-def VEC_ARG1(expr):
+def VEC_ARG1(expr: str) -> str:
     return '''
 {   
     NE_REGISTER store_in = params->program[pc].ret;
@@ -169,9 +169,9 @@ def VEC_ARG1(expr):
     STRIDED_LOOP(expr)
     return 0;
 }
-'''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
+'''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr)).replace('VEC_LOOP(expr)', VEC_LOOP(expr))
 
-def VEC_ARG2(expr):
+def VEC_ARG2(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -195,10 +195,10 @@ def VEC_ARG2(expr):
     STRIDED_LOOP(expr)
     return 0;
 }
-'''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
+'''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr)).replace('VEC_LOOP(expr)', VEC_LOOP(expr))
 
 
-def VEC_ARG3(expr):
+def VEC_ARG3(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -226,30 +226,29 @@ def VEC_ARG3(expr):
     STRIDED_LOOP(expr)
     return 0;
 }
-'''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr) ).replace( 'VEC_LOOP(expr)', VEC_LOOP(expr) )
+'''.replace('STRIDED_LOOP(expr)', STRIDED_LOOP(expr)).replace('VEC_LOOP(expr)', VEC_LOOP(expr))
 
 # This is a function lookup helper dict
-VEC_ARGN = { 0: VEC_ARG0, 1: VEC_ARG1, 2: VEC_ARG2, 3: VEC_ARG3 }
+VEC_ARGN = {0: VEC_ARG0, 1: VEC_ARG1, 2: VEC_ARG2, 3: VEC_ARG3}
 
-
-#def VEC_ARG1_STRING(expr):
+# def VEC_ARG1_STRING(expr: str) -> str:
 #    # Version with itemsize is _only_ needed for strings
 #    return '''
 #    {   
 #        NE_REGISTER arg1 = params->program[pc].arg1;
 #        BOUNDS_CHECK(store_in);
 #        BOUNDS_CHECK(arg1);
-#
+
 #        char *dest = params->registers[store_in].mem;
 #        char *x1 = params->registers[arg1].mem;
 #        npy_intp ss1 = params->registers[arg1].itemsize;
 #        npy_intp sb1 = params->registers[arg1].stride;
-#        
+       
 #        VEC_LOOP(expr);
 #    } break;
-#'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) )
+# '''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) )
 
-#def VEC_ARG2_STRING(expr):
+# def VEC_ARG2_STRING(expr: str) -> str:
 #    # Version with itemsize is _only_ needed for strings
 #    return '''
 #    { 
@@ -267,9 +266,9 @@ VEC_ARGN = { 0: VEC_ARG0, 1: VEC_ARG1, 2: VEC_ARG2, 3: VEC_ARG3 }
 #        npy_intp sb2 = params->registers[arg2].stride;
 #        VEC_LOOP(expr);
 #    } break;
-#'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) ) 
+# '''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) ) 
 
-#def VEC_ARG3_STRING(expr):
+# def VEC_ARG3_STRING(expr: str) -> str:
 #    # Version with itemsize is _only_ needed for strings
 #    return '''
 #    {
@@ -280,7 +279,7 @@ VEC_ARGN = { 0: VEC_ARG0, 1: VEC_ARG1, 2: VEC_ARG2, 3: VEC_ARG3 }
 #        BOUNDS_CHECK(arg1);
 #        BOUNDS_CHECK(arg2);
 #        BOUNDS_CHECK(arg3);
-#        
+       
 #        char *dest = params->registers[store_in].mem;
 #        char *x1 = params->registers[arg1].mem;
 #        npy_intp ss1 = params->registers[arg1].itemsize;
@@ -291,19 +290,17 @@ VEC_ARGN = { 0: VEC_ARG0, 1: VEC_ARG1, 2: VEC_ARG2, 3: VEC_ARG3 }
 #        char *x3 = params->registers[arg3].mem;
 #        npy_intp ss3 = params->registers[arg3].itemsize;
 #        npy_intp sb3 = params->registers[arg3].stride;
-#        
+       
 #        VEC_LOOP(expr);
 #    } break;
-#'''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) ) 
-
+# '''.replace( 'VEC_LOOP(expr);', VEC_LOOP(expr) ) 
 
 
 # The Intel VML calls, or any vectorized library that takes the BLOCK_SIZE as  
 # an argument, such as complex_functions.hpp, and doesn't allow for a 
 # stride
 
-
-def VEC_ARG0_ALIGNED(expr):
+def VEC_ARG0_ALIGNED(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -313,9 +310,9 @@ def VEC_ARG0_ALIGNED(expr):
     EXPR;
     return 0;
 }
-'''.replace( 'EXPR', expr )
+'''.replace('EXPR', expr)
 
-def VEC_ARG1_ALIGNED(expr):
+def VEC_ARG1_ALIGNED(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -328,9 +325,9 @@ def VEC_ARG1_ALIGNED(expr):
     EXPR;
     return 0;
 }
-'''.replace( 'EXPR', expr )
+'''.replace('EXPR', expr)
 
-def VEC_ARG2_ALIGNED(expr):
+def VEC_ARG2_ALIGNED(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -346,9 +343,9 @@ def VEC_ARG2_ALIGNED(expr):
     EXPR;
     return 0;
 }
-'''.replace( 'EXPR', expr )
+'''.replace('EXPR', expr)
 
-def VEC_ARG3_ALIGNED(expr):
+def VEC_ARG3_ALIGNED(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -368,13 +365,13 @@ def VEC_ARG3_ALIGNED(expr):
     EXPR;
     return 0;
 }
-'''.replace( 'EXPR', expr )
-VEC_ARGN_ALIGNED = { 0: VEC_ARG0_ALIGNED, 1: VEC_ARG1_ALIGNED, 2: VEC_ARG2_ALIGNED, 3: VEC_ARG3_ALIGNED }
+'''.replace('EXPR', expr)
+VEC_ARGN_ALIGNED = {0: VEC_ARG0_ALIGNED, 1: VEC_ARG1_ALIGNED, 2: VEC_ARG2_ALIGNED, 3: VEC_ARG3_ALIGNED}
 
 # Strided expressions can iterate over non-unity steps, i.e. 2,4,3, 
 # which is significantly slower, so in general it's best if there's a branch 
 # inside each function: one for strided and one for aligned data.
-def VEC_ARG0_STRIDED(expr):
+def VEC_ARG0_STRIDED(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -385,9 +382,9 @@ def VEC_ARG0_STRIDED(expr):
     EXPR;
     return 0;
 }
-'''.replace( 'EXPR', expr )
+'''.replace('EXPR', expr)
 
-def VEC_ARG1_STRIDED(expr):
+def VEC_ARG1_STRIDED(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -402,9 +399,9 @@ def VEC_ARG1_STRIDED(expr):
     EXPR;
     return 0;
 }
-'''.replace( 'EXPR', expr )
+'''.replace('EXPR', expr)
 
-def VEC_ARG2_STRIDED(expr):
+def VEC_ARG2_STRIDED(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -423,9 +420,9 @@ def VEC_ARG2_STRIDED(expr):
     EXPR;
     return 0;
     }
-'''.replace( 'EXPR', expr )
+'''.replace('EXPR', expr)
 
-def VEC_ARG3_STRIDED(expr):
+def VEC_ARG3_STRIDED(expr: str) -> str:
     return '''
 {
     NE_REGISTER store_in = params->program[pc].ret;
@@ -448,16 +445,16 @@ def VEC_ARG3_STRIDED(expr):
     EXPR;
     return 0;
 } 
-'''.replace( 'EXPR', expr )
-VEC_ARGN_STRIDED = { 0:VEC_ARG0_STRIDED, 1:VEC_ARG1_STRIDED, 2:VEC_ARG2_STRIDED, 3:VEC_ARG3_STRIDED }
+'''.replace('EXPR', expr)
+VEC_ARGN_STRIDED = {0:VEC_ARG0_STRIDED, 1:VEC_ARG1_STRIDED, 2:VEC_ARG2_STRIDED, 3:VEC_ARG3_STRIDED}
 
 
-TYPE_LOOP = 0
-TYPE_STRING = 1
+TYPE_LOOP    = 0
+TYPE_STRING  = 1
 TYPE_ALIGNED = 2
 TYPE_STRIDED = 3
-def EXPR( opNum, expr, retChar, 
-         arg1Dchar=None, arg2Dchar=None, arg3Dchar=None, vecType = TYPE_LOOP ):
+def EXPR(opNum: int, expr: str, retChar: str, 
+         arg1Dchar: str=None, arg2Dchar: str=None, arg3Dchar: str=None, vecType: int=TYPE_LOOP) -> str:
     '''
     '''
     argChars = [item for item in (arg1Dchar, arg2Dchar, arg3Dchar) if item != None]
@@ -566,13 +563,14 @@ AUTOTEST_DICT = defaultdict( bool, {
              'noteq': 'self.A_$DTYPE1 != self.B_$DTYPE2',
              # There's no equivalent for ne's complex() array builder in NumPy
              'complex': '',
-             } )
+        })
 # Additional modules to search for autotests. They will be embedded in a 
 # try block in-case the Python install does not have them present.
-OPTIONAL_TEST_MODULES = ['scipy.special', ]
+OPTIONAL_TEST_MODULES = ['scipy.special',]
 
-#  Functions which have significantly lower precision than their NumPy counterparts:
-LOW_PRECISION_FUNCS = ('div_FFF','pow_FFF')
+# Functions which have significantly lower precision than their NumPy counterparts.
+# These functions have very relaxed testing precision.
+LOW_PRECISION_FUNCS = ('div_FFF', 'pow_FFF')
 
 # This is the red meat of the generator, where we give the code stubs and the
 # valid data type families.  Eventually the actual operation lists should be 
@@ -592,17 +590,16 @@ class Operation(object):
            $ARG3, $DTYPE3
     '''
     
-    # Ooph, this is annoying here.  *argFams has to occur after kwargs in 
-    # Python 2.7... that breaks all the operations.  The keyword could be 
-    # manditory, but that is stupid.  
-    # Can make args a list of lists I guess... ergh
-    def __init__(self, py_Name, c_Template, libs, retFam, argFams, 
-                 vecType=TYPE_LOOP, alias=None, ):
+    # Could revert back to using *argFams here now that Python 2.7 support is 
+    # dropped.
+    def __init__(self, py_Name: Union[ast.AST, str], c_Template: str, 
+                 libs: Sequence, retFam: List[str], argFams: List[List[str]], 
+                 vecType: int=TYPE_LOOP, alias: str=None):
         # py_Name is either an ast.Node or a string such as 'sqrt'
         self.py_Name = py_Name
-        # c_Template is the
-
+        # c_Template is the actual C-code that will be generated.
         self.c_Template = c_Template
+
         self.vecType = vecType
         
         # libs is a list, valid libraries are LIB_STD and LIB_VML, possibly 
@@ -626,7 +623,7 @@ class Operation(object):
         
         self.build()
         
-    def build(self):
+    def build(self) -> None:
         global OP_COUNT
         
         for lib in self.libs:
@@ -680,7 +677,7 @@ class Operation(object):
                 #print( cTable[opNum] )
        
     @property
-    def test_Auto(self):
+    def test_Auto(self) -> str:
         # Try to write a test function that compares our function to NumPy.
         if type(self.py_Name) == type: # Ast  node
             funcName = self.py_Name.__name__.lower()
@@ -720,10 +717,10 @@ class Operation(object):
                         
                     else:
                         if not funcName.startswith('unsafe'):
-                            print( "Could not generate test for function {} in numpy, {}".format(funcName, OPTIONAL_TEST_MODULES) )
+                            print( "Could not generate test for function {} in numpy, {}".format(funcName, OPTIONAL_TEST_MODULES))
                         return ''
                 
-                funcNameUnique = ''.join( [funcName,'_',retChar.replace('?','1') ] + idArgs )
+                funcNameUnique = ''.join([funcName,'_',retChar.replace('?','1') ] + idArgs)
                 # I wonder if it would be easier to build the program by hand
                 # and not parse anything?  Or maybe I should put aliases 
                 # in the OPTABLE?
@@ -731,16 +728,16 @@ class Operation(object):
                     if len(idArgs) == 0:
                        evalFunc = '{0}()'.format(funcName)
                     elif len(idArgs) == 1:
-                       evalFunc = '{0}( self.A_{1} )'.format(funcName, idArgs[0] )
+                       evalFunc = '{0}(self.A_{1})'.format(funcName, idArgs[0])
                     elif len(idArgs) == 2:
-                       evalFunc = '{0}( self.A_{1}, self.B_{2} )'.format(funcName, idArgs[0], idArgs[1] )     
+                       evalFunc = '{0}(self.A_{1}, self.B_{2})'.format(funcName, idArgs[0], idArgs[1])     
                     elif len(idArgs) == 3:
-                       evalFunc = '{0}( self.A_{1}, self.B_{2}, self.C_{3} )'.format(funcName, idArgs[0], idArgs[1], idArgs[2] )
+                       evalFunc = '{0}(self.A_{1}, self.B_{2}, self.C_{3})'.format(funcName, idArgs[0], idArgs[1], idArgs[2])
                     externFunc = '.'.join( [required, evalFunc] )
                 else:
-                    try: evalFunc = evalFunc.replace( '$DTYPE1', idArgs[0] )
+                    try: evalFunc = evalFunc.replace('$DTYPE1', idArgs[0])
                     except: pass
-                    try: evalFunc = evalFunc.replace( '$DTYPE2', idArgs[1] )
+                    try: evalFunc = evalFunc.replace('$DTYPE2', idArgs[1])
                     except: pass
                     # Check if evalFunc is a call or a binop/boolop/comparison.
                     # In the case of a call we need to prepend a 'np.'
@@ -748,38 +745,38 @@ class Operation(object):
                 
                 ##### SPECIAL CASES #####
                 if funcName == 'complex':
-                    evalFunc = 'complex( self.A_{}, self.B_{} )'.format(idArgs[0], idArgs[1] ) 
-                    externFunc = 'self.A_{} + 1j*self.B_{}'.format(idArgs[0], idArgs[1] ) 
+                    evalFunc = 'complex( self.A_{}, self.B_{} )'.format(idArgs[0], idArgs[1]) 
+                    externFunc = 'self.A_{} + 1j*self.B_{}'.format(idArgs[0], idArgs[1]) 
                 
                 
 
-                testCode.append( "    def test_{}(self):\n".format(
-                        funcNameUnique) )
+                testCode.append("    def test_{}(self):\n".format(
+                        funcNameUnique))
                 if required != 'np':
                     testCode.append( "        import {}\n".format(required) )
-                testCode.append( "        out = ne3.NumExpr('{0}')()\n".format(
-                        evalFunc ) )
+                testCode.append("        out = ne3.NumExpr('{0}')()\n".format(
+                        evalFunc ))
 
                 if funcNameUnique in LOW_PRECISION_FUNCS: # A fast but lower-precision function, e.g. complex div_FFF
                     testCode.append( "        np.testing.assert_array_almost_equal(out,{},decimal=4)\n".format( 
-                            externFunc ) )
+                            externFunc ))
                 else: # Expect similar precision to NumPy
                     testCode.append( "        np.testing.assert_array_almost_equal(out,{})\n".format( 
-                            externFunc ) )
+                            externFunc ))
 
                 evalFunc = None
 
         if required != 'np': 
             # Embed test in a try block
-            testCode = [ line + '    ' for line in testCode]
-            testCode.insert(0, '    try:\n'.format(required) )
+            testCode = [line + '    ' for line in testCode]
+            testCode.insert(0, '    try:\n{}'.format(required))
             testCode.append('except ImportError: pass\n')
         return ''.join(testCode)
     
-    def __repr__(self):
-        return ''.join( [str(self.py_Name),'_',str(self.libs)] )
+    def __repr__(self) -> str:
+        return ''.join( [str(self.py_Name),'_',str(self.libs)])
     
-def CastFactory( opsList, casting='safe' ):
+def CastFactory(opsList: List[Operation], casting: str='safe') -> None:
     """
     Builds all the possible cast operations. Currently all casts are based on 
     the numpy framework. I'm unaware of any potential competiting standards 
@@ -855,10 +852,10 @@ def CastFactory( opsList, casting='safe' ):
                 opsList += [Operation( 'cast', 
                             '$DEST = ($DTYPE0)($ARG1)', 
                             CAST_SAFE, castChar, [dChar], alias=np.dtype(castChar).name )]
-    pass
+    return
 
 
-def OpsFactory( opsList ):
+def OpsFactory(opsList: List[Operation]) -> None:
     """
     For anything that doesn't need special function handling.
     """
@@ -869,30 +866,30 @@ def OpsFactory( opsList ):
     #              [arg1_dchars], {[arg2_dchars], ... } )
     
     ###### Copy ######
-    opsList += [ Operation( 'copy', '$DEST = $ARG1', (LIB_STD,), ALL_NUM, [ALL_NUM] ) ]
+    opsList += [Operation('copy', '$DEST = $ARG1', (LIB_STD,), ALL_NUM, [ALL_NUM])]
     # Casts are built in CastFactory().
 
     ###### Standard arithmatic operations ######
-    opsList += [Operation( ast.Add, '$DEST = $ARG1 + $ARG2', (LIB_STD,),
+    opsList += [Operation(ast.Add, '$DEST = $ARG1 + $ARG2', (LIB_STD,),
                       REAL_NUM, [REAL_NUM, REAL_NUM] )]
-    opsList += [Operation( ast.Sub, '$DEST = $ARG1 - $ARG2', (LIB_STD,),
-                      ALL_INT+DECIMAL, [ALL_INT+DECIMAL, ALL_INT+DECIMAL] )]
-    opsList += [Operation( ast.Mult ,'$DEST = $ARG1 * $ARG2', (LIB_STD,),
-                      REAL_NUM, [REAL_NUM, REAL_NUM] )]
+    opsList += [Operation(ast.Sub, '$DEST = $ARG1 - $ARG2', (LIB_STD,),
+                      ALL_INT+DECIMAL, [ALL_INT+DECIMAL, ALL_INT+DECIMAL])]
+    opsList += [Operation(ast.Mult ,'$DEST = $ARG1 * $ARG2', (LIB_STD,),
+                      REAL_NUM, [REAL_NUM, REAL_NUM])]
     
     # Division in NumPy (Py3+) typically returns float64 for integers.
     # * In NE2 division tried to out-smart the compiler with a ternary
     #   operation but it's easier to let the compiler determine when a 
     #   INFINITY or NAN result is generated.
-    opsList +=[Operation( ast.Div, '$DEST = (npy_float64)$ARG1 / (npy_float64)$ARG2',
-                            (LIB_STD,), ['d']*len(BOOL+ALL_INT), [BOOL+ALL_INT, BOOL+ALL_INT] )]
-    opsList +=[Operation( ast.Div, '$DEST = $ARG1 / $ARG2', (LIB_STD,),
-                        DECIMAL, [DECIMAL, DECIMAL] )]
+    opsList +=[Operation(ast.Div, '$DEST = (npy_float64)$ARG1 / (npy_float64)$ARG2',
+                            (LIB_STD,), ['d']*len(BOOL+ALL_INT), [BOOL+ALL_INT, BOOL+ALL_INT])]
+    opsList +=[Operation(ast.Div, '$DEST = $ARG1 / $ARG2', (LIB_STD,),
+                        DECIMAL, [DECIMAL, DECIMAL])]
     # Floor division
     # Now C++ integer division is truncation and Python is floor, so 
     # probably this does need to be floordiv instead...
     opsList += [Operation(ast.FloorDiv, '$DEST = $ARG2 ? floor($ARG1 / $ARG2) : 0',
-                            (LIB_STD,), REAL_NUM, [REAL_NUM, REAL_NUM] )]
+                            (LIB_STD,), REAL_NUM, [REAL_NUM, REAL_NUM])]
 
     
     ###### Mathematical functions ######
@@ -902,52 +899,52 @@ def OpsFactory( opsList ):
                       DECIMAL, [DECIMAL, DECIMAL])]
     
     # The fancy method for floating-point modulo does not work nicely for 
-    # integers.  In fact even the C-standard 'x1 % x2' is faulting.
+    # integers. In fact even the C-standard 'x1 % x2' is faulting.
     #opsList += [Operation( ast.Mod, '$DEST = $ARG1 % $ARG2', (LIB_STD,),
     #                  ALL_INT, ALL_INT, ALL_INT )]
-    opsList += [Operation( ast.Mod, '$DEST = $ARG1 - floor($ARG1/$ARG2) * $ARG2', (LIB_STD,),
-                      DECIMAL, [DECIMAL, DECIMAL] )]
+    opsList += [Operation(ast.Mod, '$DEST = $ARG1 - floor($ARG1/$ARG2) * $ARG2', (LIB_STD,),
+                      DECIMAL, [DECIMAL, DECIMAL])]
 
-    opsList += [Operation( 'where', '$DEST = $ARG1 ? $ARG2 : $ARG3', (LIB_STD,),
-                      ALL_NUM, [['?']*len(ALL_NUM), ALL_NUM, ALL_NUM] )]
+    opsList += [Operation('where', '$DEST = $ARG1 ? $ARG2 : $ARG3', (LIB_STD,),
+                      ALL_NUM, [['?']*len(ALL_NUM), ALL_NUM, ALL_NUM])]
     
-    opsList += [Operation( 'ones_like', '$DEST = 1', (LIB_STD,),
-                     REAL_NUM, [REAL_NUM] )]
+    opsList += [Operation('ones_like', '$DEST = 1', (LIB_STD,),
+                     REAL_NUM, [REAL_NUM])]
     
     opsList += [Operation( ast.USub, '$DEST = -$ARG1', (LIB_STD,),
                      SIGNED_NUM, [SIGNED_NUM])]
     
     ###### Bitwise Operations ######
-    opsList += [Operation( ast.LShift, '$DEST = $ARG1 << $ARG2', (LIB_STD,), 
-                      ALL_INT, [ALL_INT, ALL_INT] )]
-    opsList += [Operation( ast.RShift, '$DEST = $ARG1 >> $ARG2', (LIB_STD,), 
-                      ALL_INT, [ALL_INT, ALL_INT] )]
+    opsList += [Operation(ast.LShift, '$DEST = $ARG1 << $ARG2', (LIB_STD,), 
+                      ALL_INT, [ALL_INT, ALL_INT])]
+    opsList += [Operation(ast.RShift, '$DEST = $ARG1 >> $ARG2', (LIB_STD,), 
+                      ALL_INT, [ALL_INT, ALL_INT])]
 
-    opsList += [Operation( ast.BitAnd, '$DEST = ($ARG1 & $ARG2)', (LIB_STD,),
-                      BITWISE_NUM, [BITWISE_NUM, BITWISE_NUM] )]
-    opsList += [Operation( ast.BitOr, '$DEST = ($ARG1 | $ARG2)', (LIB_STD,),
-                      BITWISE_NUM, [BITWISE_NUM, BITWISE_NUM]  )]
-    opsList += [Operation( ast.BitXor, '$DEST = ($ARG1 ^ $ARG2)', (LIB_STD,),
-                      BITWISE_NUM, [BITWISE_NUM, BITWISE_NUM]  )]
+    opsList += [Operation(ast.BitAnd, '$DEST = ($ARG1 & $ARG2)', (LIB_STD,),
+                      BITWISE_NUM, [BITWISE_NUM, BITWISE_NUM])]
+    opsList += [Operation(ast.BitOr, '$DEST = ($ARG1 | $ARG2)', (LIB_STD,),
+                      BITWISE_NUM, [BITWISE_NUM, BITWISE_NUM])]
+    opsList += [Operation(ast.BitXor, '$DEST = ($ARG1 ^ $ARG2)', (LIB_STD,),
+                      BITWISE_NUM, [BITWISE_NUM, BITWISE_NUM])]
     
     ###### Logical Operations ######
-    opsList += [Operation( 'logical_and', '$DEST = ($ARG1 && $ARG2)', (LIB_STD,),
-                      BOOL, [BOOL, BOOL], alias=ast.And )]
-    opsList += [Operation( 'logical_or', '$DEST = ($ARG1 || $ARG2)', (LIB_STD,),
-                      BOOL, [BOOL, BOOL], alias=ast.Or )]
+    opsList += [Operation('logical_and', '$DEST = ($ARG1 && $ARG2)', (LIB_STD,),
+                      BOOL, [BOOL, BOOL], alias=ast.And)]
+    opsList += [Operation('logical_or', '$DEST = ($ARG1 || $ARG2)', (LIB_STD,),
+                      BOOL, [BOOL, BOOL], alias=ast.Or)]
     # TODO: complex and string comparisons
-    opsList += [Operation( ast.Gt, '$DEST = ($ARG1 > $ARG2)', (LIB_STD,), 
-                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM] )]
-    opsList += [Operation( ast.GtE, '$DEST = ($ARG1 >= $ARG2)', (LIB_STD,), 
-                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM] )]
-    opsList += [Operation( ast.Lt, '$DEST = ($ARG1 < $ARG2)', (LIB_STD,), 
-                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM] )]
-    opsList += [Operation( ast.LtE, '$DEST = ($ARG1 <= $ARG2)', (LIB_STD,), 
-                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM] )]
-    opsList += [Operation( ast.Eq, '$DEST = ($ARG1 == $ARG2)', (LIB_STD,), 
-                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM] )]
-    opsList += [Operation( ast.NotEq, '$DEST = ($ARG1 != $ARG2)', (LIB_STD,), 
-                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM] )]
+    opsList += [Operation(ast.Gt, '$DEST = ($ARG1 > $ARG2)', (LIB_STD,), 
+                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM])]
+    opsList += [Operation(ast.GtE, '$DEST = ($ARG1 >= $ARG2)', (LIB_STD,), 
+                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM])]
+    opsList += [Operation(ast.Lt, '$DEST = ($ARG1 < $ARG2)', (LIB_STD,), 
+                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM])]
+    opsList += [Operation(ast.LtE, '$DEST = ($ARG1 <= $ARG2)', (LIB_STD,), 
+                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM])]
+    opsList += [Operation(ast.Eq, '$DEST = ($ARG1 == $ARG2)', (LIB_STD,), 
+                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM])]
+    opsList += [Operation(ast.NotEq, '$DEST = ($ARG1 != $ARG2)', (LIB_STD,), 
+                     ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM])]
     
     ###### Complex operations ######
     # All all in function format
@@ -964,7 +961,7 @@ def OpsFactory( opsList ):
 
 
 NUMPY_VML_PRE = { 'd': 'vd', 'f':'vs', 'F':'vz', 'D':'vc' }
-def FunctionFactory( opsList, C11=True, mkl=False ):
+def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) -> None:
     '''
     Functions are declinated from operations in cases where the name of the 
     function might change with the library and the dtype.  Therefore where 
@@ -1214,8 +1211,9 @@ def FunctionFactory( opsList, C11=True, mkl=False ):
     return
 
     
-def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.hpp', 
-             blocksize=(4096,32), bounds_check=True, mkl=False, C11=True ):
+def generate(body_stub: str='interp_body_stub.cpp', header_stub: str='interp_header_stub.hpp', 
+             blocksize: Tuple[int]=(4096,32), bounds_check: bool=True, 
+             mkl: bool=False, C11: bool=True) -> Tuple[OrderedDict, OrderedDict, List]:
     """
     generate() is called by setup.py, it generates interp_body_GENERATED.cpp, 
     which  contains all the expanded operations and the jump table used by the 
@@ -1231,94 +1229,92 @@ def generate( body_stub='interp_body_stub.cpp', header_stub='interp_header_stub.
     # Not sure what blocksize[1] is actually used for in NumExpr2
     BLOCKSIZE = blocksize[0]
     
-    INTERP_HEADER_DEFINES= "".join( [INTERP_HEADER_DEFINES,
+    INTERP_HEADER_DEFINES= "".join([INTERP_HEADER_DEFINES,
                              '#define BLOCK_SIZE1 {}\n'.format(blocksize[0]), 
-                             '#define BLOCK_SIZE2 {}\n'.format(blocksize[1])] )
+                             '#define BLOCK_SIZE2 {}\n'.format(blocksize[1])])
     
     # MKL support
     if bool(mkl):
-        INTERP_HEADER_DEFINES= "".join( [INTERP_HEADER_DEFINES,
-                             '#define USE_VML\n' ] )
+        INTERP_HEADER_DEFINES= "".join([INTERP_HEADER_DEFINES, '#define USE_VML\n' ])
 
     ###### Insert bounds-check #######
     # BOUNDS_CHECK is used in interp_body.cpp
     if bool( bounds_check ):
         #INTERP_HEADER_DEFINES= "".join( [INTERP_HEADER_DEFINES,
         #'#define BOUNDS_CHECK(arg) if ((arg) >= params->n_reg) { *pc_error = pc; return -2; }\n',] )
-        INTERP_HEADER_DEFINES= "".join( [INTERP_HEADER_DEFINES,
-           '#define BOUNDS_CHECK(arg) if ((arg) >= params->n_reg) { return -2; }\n',] )
+        INTERP_HEADER_DEFINES= "".join([INTERP_HEADER_DEFINES,
+           '#define BOUNDS_CHECK(arg) if ((arg) >= params->n_reg) { return -2; }\n',])
     else:
         INTERP_HEADER_DEFINES= "".join( [INTERP_HEADER_DEFINES,
-        '#define BOUNDS_CHECK(arg)\n',] )
+        '#define BOUNDS_CHECK(arg)\n',])
     
+
     pythonTable = OrderedDict()
-    # NO_OP
+    # NO_OP is the zeroth operation
     pythonTable[('',LIB_STD,'')] = (struct.pack(NE_STRUCT, 0), '')
+
     cTable = OrderedDict()
     cFuncs = []
     opsList = []
-    CastFactory( opsList )
-    OpsFactory( opsList )
-    FunctionFactory( opsList, mkl=mkl, C11=C11 )
+    CastFactory(opsList)
+    OpsFactory(opsList)
+    FunctionFactory(opsList, mkl=mkl, C11=C11)
     
     for op in opsList:
         for I, opNum in enumerate(op.opNums):
             cTable[opNum] = op.c_OpTableEntrys[opNum]
-            cFuncs.append( op.c_FunctionImpls[opNum] )
+            cFuncs.append(op.c_FunctionImpls[opNum])
             for alias in op.py_TupleKeys[opNum]:
-                pythonTable[alias] = (struct.pack( NE_STRUCT, opNum ), op.retFam[I])
+                pythonTable[alias] = (struct.pack(NE_STRUCT, opNum), op.retFam[I])
                 
-                
-    
     # Write #define OP_END 
-    OP_END = next(OP_COUNT) -1
-    INTERP_HEADER_DEFINES= "".join( [INTERP_HEADER_DEFINES,
-        '#define OP_END {}\n'.format(OP_END) ] )
+    OP_END = next(OP_COUNT) - 1
+    INTERP_HEADER_DEFINES= "".join([INTERP_HEADER_DEFINES,
+        '#define OP_END {}\n'.format(OP_END)])
 
     ###### Write to functions_GENERATED.cpp ######        
-    with open( os.path.join( NE_DIR, 'functions_GENERATED.cpp'), 'w' ) as f_body:
-        f_body.write( '#include "numexpr_object.hpp"\n\n' )
+    with open(os.path.join(NE_DIR, 'functions_GENERATED.cpp'), 'w') as f_body:
+        f_body.write('#include "numexpr_object.hpp"\n\n')
         for funcBody in cFuncs:
-            f_body.write( funcBody + '\n\n' )
+            f_body.write(funcBody + '\n\n')
             
     ###### Write to interp_body_stub.cpp ######
-    with open( os.path.join(NE_DIR, body_stub ), 'r' ) as stub:
-        bodyPrior, bodyPost = stub.read().split( INSERT_POINT )
+    with open(os.path.join(NE_DIR, body_stub), 'r' ) as stub:
+        bodyPrior, bodyPost = stub.read().split( INSERT_POINT)
     
-    generatedBody = ''.join( [fragment for fragment in cTable.values()] )
-    generatedBody = ''.join( [WARNING_EDIT, bodyPrior, generatedBody, 
+    generatedBody = ''.join([fragment for fragment in cTable.values()])
+    generatedBody = ''.join([WARNING_EDIT, bodyPrior, generatedBody, 
                               WARNING_END, bodyPost,] )
     
-    with open( os.path.join(NE_DIR, 'interp_body_GENERATED.cpp' ), 'wb' ) as body:
-        body.write( generatedBody.encode('ascii') )
+    with open(os.path.join(NE_DIR, 'interp_body_GENERATED.cpp' ), 'wb') as body:
+        body.write(generatedBody.encode('ascii'))
         
     ###### Write to interpreter_stub.hpp ######
-    with open( os.path.join(NE_DIR, header_stub ), 'r' ) as stub:
-        headerPrior, headerPost = stub.read().split( INSERT_POINT )
+    with open(os.path.join(NE_DIR, header_stub ), 'r') as stub:
+        headerPrior, headerPost = stub.read().split(INSERT_POINT)
     
-    generatedHeader = ''.join( [WARNING_EDIT, headerPrior, 
+    generatedHeader = ''.join([WARNING_EDIT, headerPrior, 
                                 INTERP_HEADER_DEFINES, WARNING_END, 
-                                headerPost, ] )
+                                headerPost])
     
-    with open( os.path.join(NE_DIR, 'interp_header_GENERATED.hpp' ), 'wb' ) as body:
-        body.write( generatedHeader.encode('ascii') )
+    with open(os.path.join(NE_DIR, 'interp_header_GENERATED.hpp'), 'wb') as body:
+        body.write(generatedHeader.encode('ascii'))
         
     ###### Save the lookup dict for Python ######
-    with open( os.path.join(NE_DIR, 'lookup.pkl' ), 'wb' ) as lookup:
+    with open(os.path.join(NE_DIR, 'lookup.pkl' ), 'wb') as lookup:
         pythonTable['os.name'] = os.name
-        pickle.dump( pythonTable, lookup )
+        pickle.dump(pythonTable, lookup)
         
     ###### Write autotest_GENERATED.py ######
-    with open( os.path.join( NE_DIR, 'tests/autotest_stub.py'), 'r' ) as f_test:
-        autotestHead, autotestTail = f_test.read().split( PY_INSERT_POINT )
+    with open(os.path.join(NE_DIR, 'tests/autotest_stub.py'), 'r') as f_test:
+        autotestHead, autotestTail = f_test.read().split(PY_INSERT_POINT)
         
-    with open( os.path.join( NE_DIR, 'tests/autotest_GENERATED.py'), 'w' ) as f_test:
-        f_test.write( autotestHead )
+    with open(os.path.join(NE_DIR, 'tests/autotest_GENERATED.py'), 'w') as f_test:
+        f_test.write(autotestHead)
         for op in opsList:
             f_test.write(op.test_Auto)
             
-            
-        f_test.write( autotestTail )
+        f_test.write(autotestTail)
             
     return pythonTable, cTable, cFuncs
 
