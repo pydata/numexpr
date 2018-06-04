@@ -22,8 +22,10 @@ and
 
 https://numexpr.readthedocs.io
 
-for more infomotion.
+for more information.
 """
+
+import unittest
 
 from .__config__ import show as _show_config
 from .__config__ import get_info as _get_info
@@ -31,15 +33,18 @@ from .__config__ import get_info as _get_info
 from .ne3compiler import NumExpr, evaluate, OPTABLE, wisdom
 from .interpreter import MAX_ARGS, set_tempsize
 
-def test(verbosity=1):
-    # Lazy import test via stub
+def test(verbosity: int=1) -> unittest.TextTestResult:
+    '''
+    Run the test suite.
+
+    This function is a stub that redirects to `numexpr3.tests.test_numexpr.test()`
+    '''
     try:
         from .tests import test
     except ImportError as e:
         raise ImportError('Could not import `numexpr3.tests`, was it included with the distribution?') from e
     else:
-        test(verbosity=verbosity)
-
+        return test(verbosity=verbosity)
 
 from .utils import get_ncores, get_nthreads, set_nthreads, print_info, str_info
 

@@ -659,23 +659,16 @@ class test_zerodim(unittest.TestCase):
 
 # Tests for threading/multiprocessing/concurrent.futures
 
-#class test_threading_config(unittest.TestCase):
-#    def test_numexpr_num_threads(self):
-#        with _environment('OMP_NUM_THREADS', '5'):
-#            with _environment('NUMEXPR_NUM_THREADS', '3'):
-#                self.assertEquals(3, numexpr.detect_number_of_threads())
-#
-#    def test_omp_num_threads(self):
-#        with _environment('OMP_NUM_THREADS', '5'):
-#            self.assertEquals(5, numexpr.detect_number_of_threads())
-
-# Multiprocessing cannot deal with bound methods, as they aren't pickleable.
-def future_worker( neObj, dataDict, N_threads=2 ):
+def future_worker(neObj: ne3.NumExpr, data: dict, N_threads: int=2):
+    '''
+    Multiprocessing cannot deal with bound methods, as they aren't pickleable.
+    '''
     ne3.set_nthreads(N_threads)
-    return neObj( **dataDict )
+    return neObj(**data)
 
 
 # Case test for subprocesses (via multiprocessing module)
+'''
 class test_multicore(unittest.TestCase):
 
     def test_changing_nthreads_increment(self):
@@ -699,6 +692,7 @@ class test_multicore(unittest.TestCase):
         y2 = np.arange(LARGE_SIZE)
         out2 = func2(y=y2)
         npt.assert_array_equal(out1, out2)
+        return
 
     
     def test_threading(self):
@@ -735,7 +729,7 @@ class test_multicore(unittest.TestCase):
         result =  np.hstack( [worker.result() for worker in workers] )
 
         npt.assert_array_almost_equal( result, np.log(a) )
-
+'''
 
 def test(verbosity=2):
     '''
@@ -769,8 +763,8 @@ def suite():
         theSuite.addTest( unittest.makeSuite( test_zerodim ) )
 
         # multiprocessing module is not supported on Hurd/kFreeBSD
-        if pl.system().lower() not in ('gnu', 'gnu/kfreebsd'):
-            theSuite.addTest( unittest.makeSuite( test_multicore ) )
+        # if pl.system().lower() not in ('gnu', 'gnu/kfreebsd'):
+        #     theSuite.addTest( unittest.makeSuite( test_multicore ) )
 
     return theSuite
 

@@ -8,5 +8,4 @@
 #  rights to use.
 ####################################################################
 
-from numexpr3.tests.test_numexpr import test
-
+from .test_numexpr import test
