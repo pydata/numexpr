@@ -16,6 +16,7 @@
 
 #include "numexpr_config.hpp"
 #include "complex_functions.hpp"
+#include "real_functions.hpp"
 #include "string_functions.hpp"
 #include "interp_header_GENERATED.hpp"
 #include "numexpr_object.hpp"

@@ -66,6 +66,7 @@ set(numexpr_SRC
     numexpr/module.cpp
     numexpr/numexpr_object.cpp
     numexpr/complex_functions.hpp
+    numexpr/real_functions.hpp
     numexpr/functions.hpp
     numexpr/interpreter.hpp
     numexpr/module.hpp

@@ -431,9 +431,9 @@ class NumExpr(object):
         if local_dict is None:
             call_frame = sys._getframe(self._stackDepth) 
             self.local_dict = call_frame.f_locals
+            self._global_dict = call_frame.f_globals
         else:
             self.local_dict = local_dict
-        self._global_dict = call_frame.f_globals
 
         self.timings['frame_call'] = perf_counter() - t1
         self.timings['__init__']   = t1-t0

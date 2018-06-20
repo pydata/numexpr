@@ -29,6 +29,8 @@ version = '%d.%d.%d%s' % (major_ver, minor_ver, nano_ver, branch)
 # Write __version__.py
 with open( 'numexpr3/__version__.py', 'w' ) as fh:
     fh.write( "__version__ = '{}'\n".format(version) )
+with open( 'doc/__version__.py', 'w' ) as fh:
+    fh.write( "__version__ = '{}'\n".format(version) )   
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()    
@@ -37,6 +39,16 @@ with open('requirements.txt') as f:
 NOGEN = False
 BENCHMARKING = False
 args = sys.argv[1:]
+if len(args) == 1 and args[0] == '--help' or args[0] == '-h':
+    print('''
+Setup options for Numexpr3:
+    --bench         : enable benchmarking suite in virtual machine
+    --nogen         : forbid the generator from overwritting `*_GENERATED.py` files; useful for making manual modifications to these files for debugging.
+    --help-commands : display help on available commands
+    cmd --help      : display help on a specific command.
+''')
+    sys.exit()
+
 for arg in args:
     if arg == '--nogen':
         NOGEN = True
@@ -44,6 +56,7 @@ for arg in args:
     elif arg == '--bench':
         BENCHMARKING = True
         sys.argv.remove(arg)
+        
 
 # Unique MSVC / GCC / LLVM flags
 # TODO: compile detections of AVX2 and SSE2 using cpuinfo
@@ -238,7 +251,7 @@ def setup_package():
                 'sources': ['numexpr3/interpreter.cpp',
                             'numexpr3/module.cpp',
                             'numexpr3/numexpr_object.cpp',
-                            'numexpr3/benchmarking.hpp'] + pthread_win,
+                            'numexpr3/benchmark.hpp'] + pthread_win,
                 'depends': ['numexpr3/functions_GENERATED.cpp',
                             'numexpr3/interp_body_GENERATED.cpp',
                             'numexpr3/interp_header_GENERATED.hpp',
@@ -247,6 +260,7 @@ def setup_package():
                             'numexpr3/numexpr_config.hpp',
                             'numexpr3/numexpr_object.hpp',
                             'numexpr3/complex_functions.hpp',
+                            'numexpr3/real_functions.hpp',
                             'numexpr3/string_functions.hpp',
                             ],
                 'libraries': [],

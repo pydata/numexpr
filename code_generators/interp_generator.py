@@ -2,10 +2,75 @@
 """
 NumExpr3 interpreter function generator
 
-Created on Thu Jan  5 12:46:25 2017
 @author: Robert A. McLeod
 @email: robbmcleod@gmail.com
 
+A Brief Introduction
+====================
+
+NumExpr2 uses deeply nested C macros to generate C code for the virtual 
+machine's jump table and simple arithmetic operations. This has a number of 
+disadvantages. The C proprocessor is not very flexible, and the resulting 
+macro-ed code is highly unreadable. C++11 provides us with templates, but 
+generally speaking we desire to retain C99 compatibility as it makes 
+cross-platform building of the module far more robust.
+
+The approach taken here is to use Python as the pre-processor, to generate 
+very large C-files, prior to building the interpreter extension. Other math
+libraries, such as Blitz or Yeppp! take a similar approach to using Python
+to generate C-code, in place of templates. Generated files are all indicated 
+by a ``*_GENERATED.cpp`` suffix. They can browsed to understand how the virtual 
+machine works, and can be modified by hand if need-be (e.g. for debugging 
+iteration) although such changes will be lost the next time ``setup.py`` builds. 
+
+Any string that looks like a bash-variable (e.g. ``$ARG1``) will be replaced 
+in the generated code, i.e. it is a form of template. Alternative forms of 
+generation, such as using the `ast` module, were investigated but the simple
+string substitution works well and is simple to understand.
+
+Common variable names
+---------------------
+
+- ``$ARG?``  : The variable that represents the C-array variable name, where the 
+  index ``?`` is in the range [1-3]. NumExpr3 supports up to three arguments per 
+  function call, maximum.
+- ``$DTYPE?``: The NumPy character (``numpy.dtype.char``) that represents a 
+  data type for the associated argument index.
+- ``dest``   : The return variable.
+- ``DTYPE0`` : The dtype char of the return variable.
+
+Support data types
+------------------
+
+NumPy `dtype.char` are used to identify the various types available for building
+functions as well as the tuples used as keys to ID the opcodes.
+
+On Linux:
+- bool        = '?'
+- uint8       = 'B'
+- int8        = 'b'
+- uint16      = 'H'
+- int16       = 'h'
+- uint32      = 'I'
+- int32       = 'i'
+- uint64      = 'L'
+- int64       = 'l'
+- float32     = 'f'
+- float64     = 'd'
+- complex64   = 'F'
+- complex128  = 'D'
+- bytes       = 'S'
+- str/unicode = 'U'
+
+Note that as '?' is the ternary operator in C we map '?' -> '1' in C function
+and variable names
+
+Windows has different characters for some integers:
+
+- int32       = 'l'
+- uint32      = 'L'
+- int64       = 'q'
+- uint64      = 'Q'
 """
 from typing import Sequence, List, Tuple, Union
 
@@ -38,7 +103,7 @@ WARNING_EDIT = """// WARNING: THIS FILE IS AUTO-GENERATED PRIOR TO COMPILATION.
 WARNING_END = """// End of GENERATED CODE BLOCK"""
 
 # Note: LIB_XXX and CAST_XXX could be imported  from necompiler.py, or maybe
-# they should be in __init__.py?  Either way only define them in one place.
+# they should be in __init__.py?  Either way we want to define them in one place.
 LIB_DEFAULT = 0
 LIB_STD     = 0
 LIB_VML     = 1
@@ -52,13 +117,13 @@ CAST_UNSAFE    = 4
 BLOCKSIZE = 4096 # Will be set as a global by generate()
 
 # TODO: try different blocksizes for each itemsize
-#BLOCKSIZE_1 = 32768
-#BLOCKSIZE_2 = 16384
-#BLOCKSIZE_4 = 8192
-#BLOCKSIZE_8 = 4096
+#BLOCKSIZE_1  = 32768
+#BLOCKSIZE_2  = 16384
+#BLOCKSIZE_4  = 8192
+#BLOCKSIZE_8  = 4096
 #BLOCKSIZE_16 = 2048
 
-OP_COUNT = count(start = 1) # Leave space for NOOP=0
+OP_COUNT = count(start=1) # Leave space for NOOP=0
 
 
 DCHAR_TO_CTYPE = { 
@@ -456,6 +521,24 @@ TYPE_STRIDED = 3
 def EXPR(opNum: int, expr: str, retChar: str, 
          arg1Dchar: str=None, arg2Dchar: str=None, arg3Dchar: str=None, vecType: int=TYPE_LOOP) -> str:
     '''
+    `EXPR` is the core function use by the code generator to generate C-functions.
+    It encapsulates the expression to execute by the virtual machine, for each 
+    block.
+
+    Parameters
+    ----------
+    opNum
+        The index in the operation table, which is finalized as a C `switch-case`
+        statement block.
+    expr
+        A string expression with variables (all of which start with ``$``)
+
+    vecType
+        The vectorization enumerator (presently one of ``{TYPE_LOOP, TYPE_ALIGNED, TYPE_STRIDED}``).
+    Returns
+    -------
+    expr
+
     '''
     argChars = [item for item in (arg1Dchar, arg2Dchar, arg3Dchar) if item != None]
 
@@ -492,81 +575,55 @@ def EXPR(opNum: int, expr: str, retChar: str,
     return expr
 
 
-'''
-NumPy dtype.chars are used to identify the various types available for building
-functions as well as the tuples used as keys to ID the opcodes.
 
-On Linux:
-bool = '?'
-uint8 = 'B'
-int8 = 'b'
-uint16 = 'H'
-int16 = 'h'
-uint32 = 'I'
-int32 = 'i'
-uint64 = 'L'
-int64 = 'l'
-float32 = 'f'
-float64 = 'd'
-longfloat = 'g'   # Not supported
-complex64 = 'F'
-complex128 = 'D'
-bytes = 'S'
-str/unicode = 'U'
-
-Windows has different characters.
-
-int32 = 'l'
-uint32 = 'L'
-int64 = 'q'
-uint64 = 'Q'
-'''
-# These are some convience shortcuts for our operation hash-table below
-BOOL = [ np.dtype('bool').char ]
-SIGNED_INT = [ np.dtype('int8').char,np.dtype('int16').char,
-              np.dtype('int32').char,np.dtype('int64').char]
-UNSIGNED_INT = [ np.dtype('uint8').char,np.dtype('uint16').char,
-              np.dtype('uint32').char,np.dtype('uint64').char]
-DECIMAL  =  [np.dtype('float32').char,np.dtype('float64').char]
-COMPLEX = [np.dtype('complex64').char,np.dtype('complex128').char]
-BOOLx2 = [np.dtype('bool').char] * 2
-INTx2 = [np.dtype('int32').char] * 2
-LONGx2 = [np.dtype('int64').char] * 2       
-STRINGS = ['S','U']
-ALL_INT = SIGNED_INT + UNSIGNED_INT
-REAL_NUM = BOOL + ALL_INT + DECIMAL
-SIGNED_NUM = SIGNED_INT + DECIMAL
-BITWISE_NUM = BOOL + ALL_INT
-ALL_NUM = BOOL + ALL_INT + DECIMAL + COMPLEX    
-ALL_FAM = ALL_NUM + STRINGS
+# These are some convenience shortcuts for our operation hash-table below
+BOOL         = [np.dtype('bool').char]
+SIGNED_INT   = [np.dtype('int8').char, np.dtype('int16').char,
+              np.dtype('int32').char, np.dtype('int64').char]
+UNSIGNED_INT = [np.dtype('uint8').char, np.dtype('uint16').char,
+                np.dtype('uint32').char, np.dtype('uint64').char]
+DECIMAL      =  [np.dtype('float32').char, np.dtype('float64').char]
+FLOAT        = [np.dtype('float32').char]
+DOUBLE       = [np.dtype('float64').char]
+COMPLEX      = [np.dtype('complex64').char,np.dtype('complex128').char]
+# These *x2 lists are just convenience shortcuts for decimal returns, which are [float, double]
+BOOLx2       = [np.dtype('bool').char] * 2
+INTx2        = [np.dtype('int32').char] * 2
+INT8x4       = [np.dtype('int8').char] * 4
+LONGx2       = [np.dtype('int64').char] * 2       
+STRINGS      = ['S', 'U']
+ALL_INT      = SIGNED_INT + UNSIGNED_INT
+BIG_INT      = [np.dtype('int32').char, np.dtype('int64').char, np.dtype('uint32').char, np.dtype('uint64').char]
+REAL_NUM     = BOOL + ALL_INT + DECIMAL
+SIGNED_NUM   = SIGNED_INT + DECIMAL
+BITWISE_NUM  = BOOL + ALL_INT
+ALL_NUM      = BOOL + ALL_INT + DECIMAL + COMPLEX    
+ALL_FAM      = ALL_NUM + STRINGS
 
 # Map NumpPy functions that don't exist for the testing submodule
-# Any function that doesn't have a NumPy equivalent returns None.
+# Any function that doesn't have a NumPy equivalent returns None or ''.
 AUTOTEST_DICT = defaultdict( bool, {
-             'add': 'self.A_$DTYPE1 + self.B_$DTYPE2',
-             'sub': 'self.A_$DTYPE1 - self.B_$DTYPE2',
-             'mult': 'self.A_$DTYPE1 * self.B_$DTYPE2',
-             'div': 'self.A_$DTYPE1 / self.B_$DTYPE2',
-             'neg': '-self.A_$DTYPE1',
-             'mod': 'self.A_$DTYPE1 % self.B_$DTYPE2',
-             'pow': 'self.A_$DTYPE1 ** self.B_$DTYPE2',
-             'lshift': 'self.A_$DTYPE1 << self.B_$DTYPE2',
-             'rshift': 'self.A_$DTYPE1 >> self.B_$DTYPE2',
-             'bitand': 'self.A_$DTYPE1 & self.B_$DTYPE2',
-             'bitor': 'self.A_$DTYPE1 | self.B_$DTYPE2',
-             'bitxor': 'self.A_$DTYPE1 ^ self.B_$DTYPE2',
-             'gt': 'self.A_$DTYPE1 > self.B_$DTYPE2',
-             'gte':  'self.A_$DTYPE1 >= self.B_$DTYPE2',
-             'lt': 'self.A_$DTYPE1 < self.B_$DTYPE2',
-             'lte':  'self.A_$DTYPE1 <= self.B_$DTYPE2',
-             'eq': 'self.A_$DTYPE1 == self.B_$DTYPE2',
-             'noteq': 'self.A_$DTYPE1 != self.B_$DTYPE2',
-             # There's no equivalent for ne's complex() array builder in NumPy
-             'complex': '',
+             'add'    : 'self.A_$DTYPE1 + self.B_$DTYPE2',
+             'sub'    : 'self.A_$DTYPE1 - self.B_$DTYPE2',
+             'mult'   : 'self.A_$DTYPE1 * self.B_$DTYPE2',
+             'div'    : 'self.A_$DTYPE1 / self.B_$DTYPE2',
+             'neg'    : '-self.A_$DTYPE1',
+             'lshift' : 'self.A_$DTYPE1 << self.B_$DTYPE2',
+             'rshift' : 'self.A_$DTYPE1 >> self.B_$DTYPE2',
+             'bitand' : 'self.A_$DTYPE1 & self.B_$DTYPE2',
+             'bitor'  : 'self.A_$DTYPE1 | self.B_$DTYPE2',
+             'bitxor' : 'self.A_$DTYPE1 ^ self.B_$DTYPE2',
+             'gt'     : 'self.A_$DTYPE1 > self.B_$DTYPE2',
+             'gte'    :  'self.A_$DTYPE1 >= self.B_$DTYPE2',
+             'lt'     : 'self.A_$DTYPE1 < self.B_$DTYPE2',
+             'lte'    :  'self.A_$DTYPE1 <= self.B_$DTYPE2',
+             'eq'     : 'self.A_$DTYPE1 == self.B_$DTYPE2',
+             'noteq'  : 'self.A_$DTYPE1 != self.B_$DTYPE2',
+             'complex': '', # There's no equivalent for ne's complex() array builder in NumPy
         })
 # Additional modules to search for autotests. They will be embedded in a 
 # try block in-case the Python install does not have them present.
-OPTIONAL_TEST_MODULES = ['scipy.special',]
+OPTIONAL_TEST_MODULES = ['scipy.special', ]
 
 # Functions which have significantly lower precision than their NumPy counterparts.
 # These functions have very relaxed testing precision.
@@ -693,7 +750,7 @@ class Operation(object):
         
         for lib in self.libs:
             for I, retChar in enumerate( self.retFam ):
-                required = 'np'  # The default module to test again is NumPy
+                required = 'np'  # The default module to test against is NumPy
                 passedArgs = [ arg[I] for arg in self.argFams ]
                 idArgs = [ arg.replace('?','1') for arg in passedArgs ]
                 
@@ -748,8 +805,6 @@ class Operation(object):
                     evalFunc = 'complex( self.A_{}, self.B_{} )'.format(idArgs[0], idArgs[1]) 
                     externFunc = 'self.A_{} + 1j*self.B_{}'.format(idArgs[0], idArgs[1]) 
                 
-                
-
                 testCode.append("    def test_{}(self):\n".format(
                         funcNameUnique))
                 if required != 'np':
@@ -757,11 +812,18 @@ class Operation(object):
                 testCode.append("        out = ne3.NumExpr('{0}')()\n".format(
                         evalFunc ))
 
+                # if funcNameUnique in LOW_PRECISION_FUNCS: # A fast but lower-precision function, e.g. complex div_FFF
+                #     testCode.append( "        np.testing.assert_array_almost_equal(out,{},decimal=4)\n".format( 
+                #             externFunc ))
+                # else: # Expect similar precision to NumPy
+                #     testCode.append( "        np.testing.assert_array_almost_equal(out,{})\n".format( 
+                #             externFunc ))
+                # Switch to using np.isclose() for large-valued functions
                 if funcNameUnique in LOW_PRECISION_FUNCS: # A fast but lower-precision function, e.g. complex div_FFF
-                    testCode.append( "        np.testing.assert_array_almost_equal(out,{},decimal=4)\n".format( 
+                    testCode.append( "        assert(np.allclose(out, {}, rtol=1e-4, equal_nan=True))\n".format( 
                             externFunc ))
                 else: # Expect similar precision to NumPy
-                    testCode.append( "        np.testing.assert_array_almost_equal(out,{})\n".format( 
+                    testCode.append( "        assert(np.allclose(out, {}, rtol=1e-5, equal_nan=True))\n".format( 
                             externFunc ))
 
                 evalFunc = None
@@ -769,8 +831,8 @@ class Operation(object):
         if required != 'np': 
             # Embed test in a try block
             testCode = [line + '    ' for line in testCode]
-            testCode.insert(0, '    try:\n{}'.format(required))
-            testCode.append('except ImportError: pass\n')
+            testCode.insert(0, '    try:\n')
+            testCode.append('except ImportError:\n        pass\n')
         return ''.join(testCode)
     
     def __repr__(self) -> str:
@@ -807,7 +869,10 @@ def CastFactory(opsList: List[Operation], casting: str='safe') -> None:
          
     NOTE: Windows is different for ints.
 
-    longfloat and clongfloat are disabled at present.
+    Note
+    ----
+    ``longfloat`` and ``clongfloat`` are not implemented at present, as they 
+    do not have C-equivalents.
     """
     global OP_COUNT
     
@@ -888,23 +953,26 @@ def OpsFactory(opsList: List[Operation]) -> None:
     # Floor division
     # Now C++ integer division is truncation and Python is floor, so 
     # probably this does need to be floordiv instead...
-    opsList += [Operation(ast.FloorDiv, '$DEST = $ARG2 ? floor($ARG1 / $ARG2) : 0',
-                            (LIB_STD,), REAL_NUM, [REAL_NUM, REAL_NUM])]
+    opsList += [Operation('floordiv', '$DEST = $ARG2 ? ($DTYPE0)floor($ARG1 / $ARG2) : 0',
+                            (LIB_STD,), REAL_NUM, [REAL_NUM, REAL_NUM], alias=ast.FloorDiv)]
 
     
     ###### Mathematical functions ######
     # TODO: How to handle integer pow in a 'nice' way? We don't want to do it 
     # inside Python as with Ne2 as that's a big slow function.
-    opsList += [Operation( ast.Pow, '$DEST = pow($ARG1, $ARG2)', (LIB_STD,),
-                      DECIMAL, [DECIMAL, DECIMAL])]
+    opsList += [Operation('pow', '$DEST = pow($ARG1, $ARG2)', (LIB_STD,),
+                      DECIMAL, [DECIMAL, DECIMAL], alias=ast.Pow)]
     
+    # TODO: integer mod
     # The fancy method for floating-point modulo does not work nicely for 
     # integers. In fact even the C-standard 'x1 % x2' is faulting.
-    #opsList += [Operation( ast.Mod, '$DEST = $ARG1 % $ARG2', (LIB_STD,),
-    #                  ALL_INT, ALL_INT, ALL_INT )]
-    opsList += [Operation(ast.Mod, '$DEST = $ARG1 - floor($ARG1/$ARG2) * $ARG2', (LIB_STD,),
-                      DECIMAL, [DECIMAL, DECIMAL])]
-
+    # opsList += [Operation('mod', '$DEST = $ARG1 % $ARG2', (LIB_STD,),
+    #                  ALL_INT, [ALL_INT, ALL_INT], alias=ast.Mod )]
+    opsList += [Operation('mod', '$DEST = $ARG1 - floor($ARG1/$ARG2) * $ARG2', (LIB_STD,),
+                      DECIMAL, [DECIMAL, DECIMAL], alias=ast.Mod )]
+    
+    opsList += [ Operation( 'fmod', '$DEST = fmod($ARG1, $ARG2)', LIB_STD,
+                   DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP, alias=ast.Mod ) ] 
     opsList += [Operation('where', '$DEST = $ARG1 ? $ARG2 : $ARG3', (LIB_STD,),
                       ALL_NUM, [['?']*len(ALL_NUM), ALL_NUM, ALL_NUM])]
     
@@ -985,10 +1053,11 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
     global OP_COUNT
     
     ####################
-    # TODO: need to find a copy of cmath for MSVC compiler.
-    # TODO: extend msvc_function_stubs to add all the new functions as overloads.
     opsList += [ Operation( 'abs', '$DEST = $ARG1 < 0 ? -$ARG1 : $ARG1', LIB_STD,
-                   SIGNED_NUM, [SIGNED_NUM], vecType=TYPE_LOOP ) ]
+                   SIGNED_INT, [SIGNED_INT], vecType=TYPE_LOOP ) ]
+    # TODO: test if `fabs()` is faster than ternary
+    opsList += [ Operation( 'abs', '$DEST = fabs($ARG1)', LIB_STD,
+                   DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ] 
     opsList += [ Operation( 'arccos', '$DEST = acos($ARG1)', LIB_STD,
                    DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]       
     opsList += [ Operation( 'arcsin', '$DEST = asin($ARG1)', LIB_STD,
@@ -1005,26 +1074,45 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                    DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]       
     opsList += [ Operation( 'exp', '$DEST = exp($ARG1)', LIB_STD,
                    DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]         
-    opsList += [ Operation( 'fabs', '$DEST = fabs($ARG1)', LIB_STD,
-                   DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ] 
+
     opsList += [ Operation( 'floor', '$DEST = floor($ARG1)', LIB_STD,
                    DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ] 
-    opsList += [ Operation( 'fmod', '$DEST = fmod($ARG1, $ARG2)', LIB_STD,
-                   DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP ) ] 
+
+
+    # `scipy.special.factorial`` does _not_ round to the nearest integer
+    # Also we force int8 and int16 to be up-cast here, otherwise overflow
+    # happens very quickly.
+    opsList += [ Operation( 'factorial', '$DEST = $ARG1 >= 0 ? ($DTYPE0)exp(lgamma(($DTYPE0)$ARG1 + 1)) : 0', LIB_STD,
+                   [np.dtype('float64').char] * 6, [BIG_INT + DECIMAL], vecType=TYPE_LOOP) ] 
     
+    opsList += [ Operation( 'rad2deg', '$DEST = $ARG1 * ($DTYPE0)57.2957795130823229', LIB_STD,
+                   DECIMAL, [DECIMAL], vecType=TYPE_LOOP, alias='degrees' ) ] 
+    opsList += [ Operation( 'deg2rad', '$DEST = $ARG1 * ($DTYPE0)0.017453292519943295', LIB_STD,
+                   DECIMAL, [DECIMAL], vecType=TYPE_LOOP, alias='radians' ) ] 
+
     # These are tricky, frexp and ldexp are using ARG2 as return pointers... 
     # We don't support multiple returns at present.
     #opsList += [ Operation( 'frexp', '$DEST = frexp($ARG1, $ARG2)', LIB_STD,
     #               DECIMAL,DECIMAL, ['i','i'] ) ] 
     #opsList += [ Operation( 'ldexp', '$DEST = ldexp($ARG1, $ARG2)', LIB_STD,
     #               DECIMAL,DECIMAL, ['i','i'] ) ]     
+
     opsList += [ Operation( 'log', '$DEST = log($ARG1)', LIB_STD,
                    DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]    
     opsList += [ Operation( 'log10', '$DEST = log10($ARG1)', LIB_STD,
                    DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ] 
+    # This is signficantly different than the NumPy implementation: 
+    # https://github.com/numpy/numpy/blob/d407f24cb5ad85850a60b1be3dade3305ea30c98/numpy/core/src/npymath/npy_math_internal.h.src
+    # opsList += [ Operation( 'logaddexp', '$DEST = log(exp($ARG1) + exp($ARG2))', LIB_STD,
+    #                DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP ) ] 
+    opsList += [ Operation( 'logaddexp', 'nr_logaddexp(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', LIB_STD,
+                   DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_STRIDED ) ] 
+
     # Here ints are supported, which is something we don't have in our ast.Pow operation...
     #opsList += [ Operation( 'power', '$DEST = pow($ARG1, $ARG2)', LIB_STD,
     #                DECIMAL+DECIMAL, DECIMAL+DECIMAL, DECIMAL+INTx2, vecType=TYPE_LOOP ) ] 
+
+    
     
     opsList += [ Operation( 'sin', '$DEST = sin($ARG1)', LIB_STD,
                    DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]
@@ -1036,6 +1124,11 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                    DECIMAL,  [DECIMAL], vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'tanh', '$DEST = tanh($ARG1)', LIB_STD,
                    DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]
+
+    opsList += [ Operation( 'maximum', '$DEST = $ARG1 > $ARG2 ? $ARG1 : $ARG2', LIB_STD,
+                       REAL_NUM, [REAL_NUM, REAL_NUM], vecType=TYPE_LOOP ) ]    
+    opsList += [ Operation( 'minimum', '$DEST = $ARG1 < $ARG2 ? $ARG1 : $ARG2', LIB_STD,
+                       REAL_NUM, [REAL_NUM, REAL_NUM], vecType=TYPE_LOOP ) ]   
     opsList += [ Operation( 'fpclassify', '$DEST = fpclassify($ARG1)', LIB_STD,
                     INTx2, [DECIMAL], vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'isfinite', '$DEST = isfinite($ARG1)', LIB_STD,
@@ -1046,8 +1139,14 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                     BOOLx2, [DECIMAL], vecType=TYPE_LOOP ) ]
     opsList += [ Operation( 'isnormal', '$DEST = isnormal($ARG1)', LIB_STD,
                     BOOLx2, [DECIMAL], vecType=TYPE_LOOP ) ]
-    opsList += [ Operation( 'signbit', '$DEST = signbit($ARG1)', LIB_STD,
-                    BOOLx2, [DECIMAL], vecType=TYPE_LOOP ) ]
+
+    # sign returns -1 for negative values, 0 for 0, and +1 for positive values
+    opsList += [ Operation( 'sign', '$DEST = ($ARG1 == ($DTYPE1)0) ? ($DTYPE1)0 : (($ARG1 > ($DTYPE1)0) ? ($DTYPE1)1 : ($DTYPE1)-1)', LIB_STD,
+                    SIGNED_INT, [SIGNED_INT], vecType=TYPE_LOOP ) ]
+    opsList += [ Operation( 'sign', '$DEST = ($ARG1 == ($DTYPE1)0.0) ? ($DTYPE1)0.0 : (($ARG1 > ($DTYPE1)0.0) ? ($DTYPE1)1.0 : ($DTYPE1)-1.0)', LIB_STD,
+                    DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]
+
+
     
     ####################
     # C++/11 overloads #
@@ -1075,12 +1174,15 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                        DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'fma', '$DEST = fma($ARG1, $ARG2, $ARG3)', LIB_STD,
                        DECIMAL, [DECIMAL, DECIMAL,DECIMAL], vecType=TYPE_LOOP ) ]     
-        opsList += [ Operation( 'fmax', '$DEST = fmax($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP ) ]    
-        opsList += [ Operation( 'fmin', '$DEST = fmin($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP ) ] 
-        opsList += [ Operation( 'hypot', '$DEST = hypot($ARG1, $ARG2)', LIB_STD,
-                       DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP ) ] 
+
+
+        # C++ hypot is wrong, how???
+        # opsList += [ Operation( 'hypot', '$DEST = hypot($ARG1, $ARG2)', LIB_STD,
+        #                DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP ) ] 
+        opsList += [ Operation( 'hypot', '$DEST = sqrt($ARG1*$ARG1 + $ARG2*$ARG2)', LIB_STD,
+                       DOUBLE, [DOUBLE, DOUBLE], vecType=TYPE_LOOP ) ] 
+        opsList += [ Operation( 'hypot', '$DEST = sqrtf($ARG1*$ARG1 + $ARG2*$ARG2)', LIB_STD,
+                       FLOAT, [FLOAT, FLOAT], vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'ilogb', '$DEST = ilogb($ARG1)', LIB_STD,
                         INTx2, [DECIMAL], vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'lgamma', '$DEST = lgamma($ARG1)', LIB_STD,
@@ -1090,6 +1192,13 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                        DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'log2', '$DEST = log2($ARG1)', LIB_STD,
                        DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]
+
+        opsList += [ Operation( 'logaddexp2', '$DEST = log2(pow(($DTYPE0)2.0, $ARG1) + pow(($DTYPE0)2.0, $ARG2))', LIB_STD,
+                   DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP ) ] 
+        # heaviside needs C++11's `isnan`
+        opsList += [ Operation( 'heaviside', 'nr_heaviside(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', LIB_STD,
+                   DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_STRIDED ) ] 
+
         opsList += [ Operation( 'logb', '$DEST = logb($ARG1)', LIB_STD,
                        DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'lrint', '$DEST = lrint($ARG1)', LIB_STD,
@@ -1107,7 +1216,7 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
         # confusion.
         #opsList += [ Operation( 'remainder', '$DEST = remainder($ARG1, $ARG2)', LIB_STD,
         #               DECIMAL, DECIMAL, DECIMAL, vecType=TYPE_LOOP ) ] 
-        # Th int in remquo() is a return pointer that we don't support at present.
+        # The int in remquo() is a return pointer that we don't support at present.
         #opsList += [ Operation( 'remquo', '$DEST = remquo($ARG1, $ARG2, $ARG3)', LIB_STD,
         #               DECIMAL,DECIMAL,DECIMAL, ['i','i'] ) ] 
     
@@ -1117,7 +1226,7 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                         INTx2, [DECIMAL], vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'scalbln', '$DEST = scalbln($ARG1, $ARG2)', LIB_STD,
                        DECIMAL, [DECIMAL, LONGx2], vecType=TYPE_LOOP ) ] 
-        opsList += [ Operation( 'tgamma', '$DEST = tgamma($ARG1)', LIB_STD,
+        opsList += [ Operation( 'gamma', '$DEST = tgamma($ARG1)', LIB_STD,
                        DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'trunc', '$DEST = trunc($ARG1)', LIB_STD,
                        DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]    
@@ -1166,9 +1275,8 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                           LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]  
     opsList += [ Operation( 'expm1', 'nc_expm1(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ] 
-    # TODO: add aliases for 'power'
-    opsList += [ Operation( ast.Pow, 'nc_pow(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED ) ]  
+    opsList += [ Operation( 'pow', 'nc_pow(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
+                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED, alias=ast.Pow ) ]  
     opsList += [ Operation( 'arccos', 'nc_acos(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
     opsList += [ Operation( 'arccosh', 'nc_acosh(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
@@ -1193,6 +1301,8 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                           LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ] 
     opsList += [ Operation( 'tanh', 'nc_tanh(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
+    opsList += [ Operation( 'angle', 'nc_angle(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
+                          LIB_STD, DECIMAL, [COMPLEX], vecType=TYPE_STRIDED ) ]
     opsList += [ Operation( 'crosspower', 'nc_crosspower(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED ) ]
                
@@ -1212,16 +1322,52 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
 
     
 def generate(body_stub: str='interp_body_stub.cpp', header_stub: str='interp_header_stub.hpp', 
-             blocksize: Tuple[int]=(4096,32), bounds_check: bool=True, 
+             blocksize: Tuple[int]=(4096, 32), bounds_check: bool=True, 
              mkl: bool=False, C11: bool=True) -> Tuple[OrderedDict, OrderedDict, List]:
     """
-    generate() is called by setup.py, it generates interp_body_GENERATED.cpp, 
-    which  contains all the expanded operations and the jump table used by the 
-    interpreter. Similarly the opword_target is also included in the 
-    interpreter and it provides the enums.
-    
-    We want to call generate with each build so that we do not suffer any 
-    accidental gaps in the jump table.
+    Called by `setup.py`, it produces the generated code required by the 
+    virual machine.  Generated files are indicated by the ``*_GENERATED.cpp`` 
+    suffix.
+
+    Parameters
+    ----------
+    body_stub
+        The stub C++ source that the operation table is inserted into.
+    header_stub
+        The stub C++ header that contains build-time specific macros, such as 
+        the desired block size for calculations.
+    blocksize
+        The tuple defines the number of elements (**not bytes**) each blocked 
+        operation loops over. The second integer is for reductions which are 
+        not currently implemented.
+    bounds_check
+        whether the C-code should conduct bounds checks on each blocked operation.
+        The speed penalty for bounds checking is trivial.
+    mkl
+        Whether to link to the Intel MKL vector math library. **Presently not 
+        implemented.**
+    C11
+        whether to include functions generally only found in `cmath.h` in 
+        C++11 compatible compilers.
+
+    Returns
+    -------
+    pythonTable: OrderedDict
+        The hash table (dictionary) that ``necompiler3.py`` uses to map Python 
+        functions to codes for the virtual machine. The keys of `pythonTable` 
+        are tuples of the form `(id: Union[str,ast.AST], library: int, *dtypes: str)`
+        `id` is either a `str`, such as ``'sin'`` or it can also be an ast node,
+        such as ``ast.Add``. The library is one of the LIB enum values. Dtypes
+        is ``numpy.dtype.chars`` that represent the (arg1, arg2, arg3) 
+        data types. The values of `pythonTable` are also tuples of the form 
+        `(opcode: bytes, return_dtype: str)`.  This dictionary is written into
+        a pickle file, ``lookup.pkl`` which is then packaged with the build.
+    cTable: OrderedDict
+        The cases for the jump table that the virtual machine, that is written 
+        into `body_stub`. e.g. ``(349, 'case 349: arcsin_ff( task_size, pc, params ); break;\n'),``
+    cFuncs: list
+        The actual C-code for each function referenced in `cTable`, in order by
+        op-code. This code is presently written into ``functions_GENERATED.cpp``.
     """
     global INTERP_HEADER_DEFINES, BLOCKSIZE
     

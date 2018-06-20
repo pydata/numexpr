@@ -2,6 +2,33 @@
 Release notes for NumExpr 3.0 series
 =====================================
 
+Changes from 3.0.0 to 3.0.2
+---------------------------
+
+* At the suggestion of Jim Pivarski, added a number of functions to more 
+  fully cover the `numpy` namespace, including:
+  - `minimum`: maps to minimum values in two arrays, analog to `numpy.minimum`.
+     Replaces `fmin`.
+  - `maximum`: maps to maximum values in two arrays, analog to `numpy.maximum`.
+     Replaces `fmax`.
+  - `rad2deg`, `radians`, `deg2rad`, and `degrees`: as their `numpy` equivalents.
+  - `factorial`: analog to `scipy.special.factorial` with `exact=False`. Is not 
+    rounded to maintain the same behavoir as `scipy`.
+  - `heaviside`: heaviside function, analog to `numpy.heaviside`.
+  - `logaddexp`: logrithm of the sum of exponents, for comparing very small 
+     probabilities.
+  - `logaddexp2`: base-2 logrithm of the sum of exponents, for comparing very 
+     small probabilities.
+  - `sign`: returns -1 for negative numbers, +1 for positive, and 0 for unity, 
+     analog to `np.sign`.
+  - `tgamma` renamed to `gamma`.
+  - `pow` function added in addition to `**` operator.
+  - `mod` function added in addition to `%` operator.
+
+* Added complex functions:
+  - `angle`: computes the complex phase
+  - `crosspower`: computes the cross-power spetrum.
+
 Changes from 3.0.0 to 3.0.1
 ---------------------------
 

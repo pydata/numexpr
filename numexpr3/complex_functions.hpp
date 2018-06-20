@@ -29,43 +29,9 @@ static npy_complex128 C_J2 = {0., 0.5};
         compiler and platform
 #endif
 typedef struct { double real, imag; } npy_cdouble;
-
-#if NPY_SIZEOF_COMPLEX_FLOAT != 2 * NPY_SIZEOF_FLOAT
-#error npy_cfloat definition is not compatible with C99 complex definition ! \
-        Please contact NumPy maintainers and give detailed information about your \
-        compiler and platform
-#endif
-typedef struct { float real, imag; } npy_cfloat;
-
-#if NPY_SIZEOF_COMPLEX_LONGDOUBLE != 2 * NPY_SIZEOF_LONGDOUBLE
-#error npy_clongdouble definition is not compatible with C99 complex definition ! \
-        Please contact NumPy maintainers and give detailed information about your \
-        compiler and platform
-#endif
-typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 */
 
                         
-// RAM: these functions were redeclaring variables that the compiler was 
-// hopefully turning into registers, but perhaps an easier approach is to 
-// make them explicitly vectorized, similar to how VML works.
-//
-// This means we also need some functions that add a scalar to a vector, 
-// which are denoted with a _scalar postfix.
-
-
-// RAM: this warning seems to apply to transendental functions only.
-// The original arrays are never over-written, but r may be over-written.
-/* *************************** WARNING *****************************
-Due to the way Numexpr places the results of operations, the *x and *r
-pointers do point to the same address (apparently this doesn't happen
-in NumPy).  So, measures should be taken so as to not to reuse *x
-after the first *r has been overwritten.
-*********************************************************************/
-
-// Deleted nc_assign as memcpy is used for copying and struct assignment
-// works fine for inline variant.
-
 // TODO: apparently the inline _should_ be returning the value instead of 
 // pushing to &r.  Make a backup before you try it.   
 // http://www.gamasutra.com/view/feature/4248/designing_fast_crossplatform_simd_.php
@@ -1665,6 +1631,41 @@ nc_tanh(npy_intp n, npy_complex128 *x, npy_intp sb1, npy_complex128 *r)
         }
     }
 }
+
+static void 
+nc_angle(npy_intp n, npy_complex64 *a, npy_intp sb1, npy_float32 *r) {
+
+    if( sb1 == sizeof(npy_complex64) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            r[I] = atan2f(a[I].imag, a[I].real);
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_complex64);
+        for( npy_intp I = 0; I < n; I++ ) {
+            // Take product of A and complex conjugate of B
+            r[I*sb1] = atan2f(a[I*sb1].imag, a[I*sb1].real);
+        }
+    }
+}
+
+static void 
+nc_angle(npy_intp n, npy_complex128 *a, npy_intp sb1, npy_float64 *r) {
+
+    if( sb1 == sizeof(npy_complex128) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            r[I] = atan2(a[I].imag, a[I].real);
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_complex128);
+        for( npy_intp I = 0; I < n; I++ ) {
+            // Take product of A and complex conjugate of B
+            r[I*sb1] = atan2(a[I*sb1].imag, a[I*sb1].real);
+        }
+    }
+}
+
 
 // RAM: cross-power-spectrum (for Phase Correlation).
 // https://en.wikipedia.org/wiki/Phase_correlation

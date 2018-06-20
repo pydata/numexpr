@@ -21,6 +21,11 @@ import pickle
 import time
 logger = logging.getLogger('ne3.test')
 
+import warnings
+# Ignore RuntimeWarnings related to divide-by-zero, as we are intentionally 
+# dooing divide-by-zero
+warnings.filterwarnings("ignore")
+
 # Recommended minimum versions
 minimum_numpy_version = '1.7'
 
