@@ -36,6 +36,7 @@ struct global_state {
     /* Synchronization variables for threadpool state */
     pthread_mutex_t count_mutex;
     int count_threads;
+    int threads_ready;
     pthread_mutex_t count_threads_mutex;
     pthread_cond_t count_threads_cv;
 

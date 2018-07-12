@@ -56,9 +56,14 @@ void *th_worker(void *tidptr)
         pthread_mutex_lock(&gs.count_threads_mutex);
         if (gs.count_threads < gs.nthreads) {
             gs.count_threads++;
-            pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+            /* Beware of spurious wakeups. See issue pydata/numexpr#306. */
+            do {
+                pthread_cond_wait(&gs.count_threads_cv,
+                                  &gs.count_threads_mutex);
+            } while (!gs.threads_ready);
         }
         else {
+            gs.threads_ready = 1;
             pthread_cond_broadcast(&gs.count_threads_cv);
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
@@ -164,9 +169,13 @@ void *th_worker(void *tidptr)
         pthread_mutex_lock(&gs.count_threads_mutex);
         if (gs.count_threads > 0) {
             gs.count_threads--;
-            pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+            do {
+                pthread_cond_wait(&gs.count_threads_cv,
+                                  &gs.count_threads_mutex);
+            } while (gs.threads_ready);
         }
         else {
+            gs.threads_ready = 0;
             pthread_cond_broadcast(&gs.count_threads_cv);
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
@@ -194,6 +203,7 @@ int init_threads(void)
     pthread_mutex_init(&gs.count_threads_mutex, NULL);
     pthread_cond_init(&gs.count_threads_cv, NULL);
     gs.count_threads = 0;      /* Reset threads counter */
+    gs.threads_ready = 0;
 
     /* Finally, create the threads */
     for (tid = 0; tid < gs.nthreads; tid++) {
@@ -247,9 +257,13 @@ int numexpr_set_nthreads(int nthreads_new)
         pthread_mutex_lock(&gs.count_threads_mutex);
         if (gs.count_threads < gs.nthreads) {
             gs.count_threads++;
-            pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+            do {
+                pthread_cond_wait(&gs.count_threads_cv,
+                                  &gs.count_threads_mutex);
+            } while (!gs.threads_ready);
         }
         else {
+            gs.threads_ready = 1;
             pthread_cond_broadcast(&gs.count_threads_cv);
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
