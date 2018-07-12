@@ -60,10 +60,10 @@ void *th_worker(void *tidptr)
             do {
                 pthread_cond_wait(&gs.count_threads_cv,
                                   &gs.count_threads_mutex);
-            } while (!gs.threads_ready);
+            } while (!gs.barrier_passed);
         }
         else {
-            gs.threads_ready = 1;
+            gs.barrier_passed = 1;
             pthread_cond_broadcast(&gs.count_threads_cv);
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
@@ -172,10 +172,10 @@ void *th_worker(void *tidptr)
             do {
                 pthread_cond_wait(&gs.count_threads_cv,
                                   &gs.count_threads_mutex);
-            } while (gs.threads_ready);
+            } while (gs.barrier_passed);
         }
         else {
-            gs.threads_ready = 0;
+            gs.barrier_passed = 0;
             pthread_cond_broadcast(&gs.count_threads_cv);
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
@@ -195,6 +195,11 @@ int init_threads(void)
 {
     int tid, rc;
 
+    if ( !(gs.nthreads > 1 && (!gs.init_threads_done || gs.pid != getpid())) ) {
+        /* Thread pool must always be initialized once and once only. */
+        return(0);
+    }
+
     /* Initialize mutex and condition variable objects */
     pthread_mutex_init(&gs.count_mutex, NULL);
     pthread_mutex_init(&gs.parallel_mutex, NULL);
@@ -203,7 +208,7 @@ int init_threads(void)
     pthread_mutex_init(&gs.count_threads_mutex, NULL);
     pthread_cond_init(&gs.count_threads_cv, NULL);
     gs.count_threads = 0;      /* Reset threads counter */
-    gs.threads_ready = 0;
+    gs.barrier_passed = 0;
 
     /* Finally, create the threads */
     for (tid = 0; tid < gs.nthreads; tid++) {
@@ -260,10 +265,10 @@ int numexpr_set_nthreads(int nthreads_new)
             do {
                 pthread_cond_wait(&gs.count_threads_cv,
                                   &gs.count_threads_mutex);
-            } while (!gs.threads_ready);
+            } while (!gs.barrier_passed);
         }
         else {
-            gs.threads_ready = 1;
+            gs.barrier_passed = 1;
             pthread_cond_broadcast(&gs.count_threads_cv);
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
@@ -285,9 +290,7 @@ int numexpr_set_nthreads(int nthreads_new)
 
     /* Launch a new pool of threads (if necessary) */
     gs.nthreads = nthreads_new;
-    if (gs.nthreads > 1 && (!gs.init_threads_done || gs.pid != getpid())) {
-        init_threads();
-    }
+    init_threads();
 
     return nthreads_old;
 }

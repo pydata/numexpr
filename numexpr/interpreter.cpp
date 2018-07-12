@@ -775,10 +775,10 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
         /* Beware of spurious wakeups. See issue pydata/numexpr#306. */
         do {
             pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
-        } while (!gs.threads_ready);
+        } while (!gs.barrier_passed);
     }
     else {
-        gs.threads_ready = 1;
+        gs.barrier_passed = 1;
         pthread_cond_broadcast(&gs.count_threads_cv);
     }
     pthread_mutex_unlock(&gs.count_threads_mutex);
@@ -789,10 +789,10 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
         gs.count_threads--;
         do {
             pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
-        } while (gs.threads_ready);
+        } while (gs.barrier_passed);
     }
     else {
-        gs.threads_ready = 0;
+        gs.barrier_passed = 0;
         pthread_cond_broadcast(&gs.count_threads_cv);
     }
     pthread_mutex_unlock(&gs.count_threads_mutex);

@@ -5,7 +5,8 @@
 Changes from 2.6.5 to 2.6.6
 ---------------------------
 
-- TODO
+- Thanks to Mark Dickinson for a fix to the thread barrier that occassionally 
+  suffered from spurious wakeups on MacOSX.
 
 Changes from 2.6.4 to 2.6.5
 ---------------------------

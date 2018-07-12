@@ -1,21 +1,11 @@
 ==========================
- Announcing Numexpr 2.6.5
+ Announcing Numexpr 2.6.6
 ==========================
 
 Hi everyone, 
 
-This is primarily an incremental performance improvement release, especially 
-with regards to improving import times of downstream packages (e.g. 
-`pandas`, `tables`, `sympy`).  Import times have been reduced from ~300 ms 
-to ~100 ms through removing a `pkg_resources` import and making the `cpuinfo`
-import lazy.
-
-The maximum number of threads is now set at import-time, similar to `numba`, by 
-setting an environment variable 'NUMEXPR_MAX_THREADS'.  The runtime number 
-of threads can still be reduced by calling `numexpr.set_num_threads(N)`. 
-
-DEPRECATION WARNING: The variable `numexpr.is_cpu_amd_intel` has been set to a 
-dummy value of `False`. This variable may be removed in the future.
+This is a bug-fix release. Thanks to Mark Dickinson for a fix to the thread 
+barrier that occassionally suffered from spurious wakeups on MacOSX.
 
 Project documentation is available at:
 

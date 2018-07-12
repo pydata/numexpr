@@ -36,7 +36,8 @@ struct global_state {
     /* Synchronization variables for threadpool state */
     pthread_mutex_t count_mutex;
     int count_threads;
-    int threads_ready;
+    int barrier_passed;         /* indicates if the thread pool's thread barrier 
+                                   is unlocked and ready for the VM to process.*/
     pthread_mutex_t count_threads_mutex;
     pthread_cond_t count_threads_cv;
 
@@ -46,6 +47,7 @@ struct global_state {
     global_state() {
         nthreads = 1;
         init_threads_done = 0;
+        barrier_passed = 0;
         end_threads = 0;
         pid = 0;
     }
