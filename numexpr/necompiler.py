@@ -546,8 +546,7 @@ def getContext(kwargs, frame_depth=1):
         raise ValueError("Unknown keyword argument '%s'" % d.popitem()[0])
     if context['truediv'] == 'auto':
         caller_globals = sys._getframe(frame_depth + 1).f_globals
-        context['truediv'] = \
-            caller_globals.get('division', None) == __future__.division
+        context['truediv'] = caller_globals.get('division', None) == __future__.division
 
     return context
 
@@ -624,8 +623,7 @@ def NumExpr(ex, signature=(), **kwargs):
     # translated to either True or False).
 
     context = getContext(kwargs, frame_depth=1)
-    threeAddrProgram, inputsig, tempsig, constants, input_names = \
-        precompile(ex, signature, context)
+    threeAddrProgram, inputsig, tempsig, constants, input_names = precompile(ex, signature, context)
     program = compileThreeAddrForm(threeAddrProgram)
     return interpreter.NumExpr(inputsig.encode('ascii'),
                                tempsig.encode('ascii'),
@@ -812,8 +810,7 @@ def evaluate(ex, local_dict=None, global_dict=None,
     try:
         compiled_ex = _numexpr_cache[numexpr_key]
     except KeyError:
-        compiled_ex = _numexpr_cache[numexpr_key] = \
-                      NumExpr(ex, signature, **context)
+        compiled_ex = _numexpr_cache[numexpr_key] = NumExpr(ex, signature, **context)
     kwargs = {'out': out, 'order': order, 'casting': casting,
               'ex_uses_vml': ex_uses_vml}
     _numexpr_last = dict(ex=compiled_ex, argnames=names, kwargs=kwargs)
