@@ -122,7 +122,6 @@ def setup_package():
                 mkl_config_data = config.get_info('mkl')
                 # Some version of MKL needs to be linked with libgfortran.
                 # For this, use entries of DEFAULT section in site.cfg.
-                print(f'GOT MKL CONFIG: {mkl_config_data}')
                 default_config = system_info()
                 dict_append(mkl_config_data,
                             libraries=default_config.get_libraries(),
