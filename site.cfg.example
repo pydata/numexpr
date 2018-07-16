@@ -45,7 +45,8 @@
 # https://software.intel.com/en-us/articles/building-numpyscipy-with-intel-mkl-and-intel-fortran-on-windows
 # Please note that the valid os.pathsep is ';' on Windows and ':' on Linux
 # and that numpy.distutils.system_info only accepts the first instance of library_dirs
+# Last make sure you do `python setup.py install` instead of using pip.
 [mkl]
-library_dirs=/Program Files (x86)/IntelSWTools/compilers_and_libraries_2018.0.156/windows/mkl/lib/intel64;/Program Files (x86)/IntelSWTools/compilers_and_libraries_2018.0.156/windows/compiler/lib/intel64_win
-include_dirs=/Program Files (x86)/IntelSWTools/compilers_and_libraries_2018.0.156/windows/mkl/include
+library_dirs=/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl/lib/intel64;/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/compiler/lib/intel64
+include_dirs=/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl/include
 mkl_libs = mkl_intel_lp64, mkl_intel_thread, mkl_core, libiomp5md
