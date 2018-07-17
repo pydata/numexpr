@@ -140,14 +140,14 @@ class test_numexpr(unittest.TestCase):
 
     def test_inplace_intermediate(self):
         # When the return array is also a named intermediate assignment target
-        print( 'Test in-place named intermediate' )
+        logger.info( 'Test in-place named intermediate' )
         y = np.arange(self.ssize)
         x = np.empty_like(y)
         ne3.NumExpr( 'x = 3.5 * y; x = x - y' )()
         npt.assert_array_almost_equal( x, (3.5*y) - y )
 
     def test_named_intermediate_magic_output(self):
-        print( 'Test in-place named intermediate with magic output' )
+        logger.info( 'Test in-place named intermediate with magic output' )
         y = np.arange(self.ssize)
         ne3.NumExpr( 'x = 3.5 * y; x = x - y' )()
         npt.assert_array_almost_equal( locals()['x'], (3.5*y) - y )
