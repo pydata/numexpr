@@ -1,6 +1,10 @@
 #ifndef NUMEXPR_MODULE_HPP
 #define NUMEXPR_MODULE_HPP
 
+#define BARRIER_EXIT -1
+#define BARRIER_HALT  0
+#define BARRIER_PASS  1
+
 // Deal with the clunky numpy import mechanism
 // by inverting the logic of the NO_IMPORT_ARRAY symbol.
 #define PY_ARRAY_UNIQUE_SYMBOL numexpr_ARRAY_API
@@ -29,7 +33,6 @@ struct global_state {
     // Global variables for threads 
     int n_thread;                    // number of desired threads in pool
     int init_threads_done;           // pool of threads initialized?
-    int end_threads;                 // should exisiting threads end?
     pthread_t* threads;              // ARRAY, opaque structure for threads
     int* tids;                       // ARRAY, ID per each thread
     npy_intp gindex;                 // global index for all threads
@@ -52,6 +55,13 @@ struct global_state {
     pthread_mutex_t global_mutex;    // Previously was a Python threading.Lock()
     pthread_mutex_t count_mutex;
     int count_threads;
+    int barrier_passed;              // Indicates if the thread pool's thread barrier 
+                                     // is unlocked and ready for the VM to process
+                                     // to prevent spurious wakeups on `nix systems.
+                                     // 0 indicates not past barrier, 1 indicates
+                                     // the VM is running.
+                                     // -1 indicates the thread has been ordered to 
+                                     // exit, a function previously occupied by `end_threads`
     pthread_mutex_t count_threads_mutex;
     pthread_cond_t count_threads_cv;
 
@@ -80,7 +90,7 @@ struct global_state {
         pthread_cond_init(&count_threads_cv, NULL);
         n_thread = DEFAULT_THREADS;
         init_threads_done = 0;
-        end_threads = 0;
+        barrier_passed = BARRIER_HALT;
         pid = 0;
 
         // Dynamic thread storage

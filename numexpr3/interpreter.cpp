@@ -36,8 +36,6 @@
 #define DEBUG_TEST 0
 #endif
 
-
-
 using namespace std;
 
 extern global_state gs;
@@ -360,11 +358,13 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *self,
     if (gs.count_threads < gs.n_thread) {
         gs.count_threads++; 
         // printf( "Main thread init %d\n", gs.count_threads );
-        pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+        do {
+            pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+        } while (gs.barrier_passed == BARRIER_HALT);
     }
     else {
+        gs.barrier_passed = BARRIER_PASS;
         pthread_cond_broadcast(&gs.count_threads_cv);
-        
     }
     pthread_mutex_unlock(&gs.count_threads_mutex);
     DIFF_TIME(4);
@@ -374,11 +374,13 @@ vm_engine_iter_parallel(NpyIter *iter, const NumExprObject *self,
     if (gs.count_threads > 0) {
         gs.count_threads--; 
         // printf( "Main thread finalize %d\n", gs.count_threads );
-        pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+        do {
+            pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+        } while (gs.barrier_passed == BARRIER_PASS);
     }
     else {
+        gs.barrier_passed = BARRIER_HALT;
         pthread_cond_broadcast(&gs.count_threads_cv);
-        
     }
     pthread_mutex_unlock(&gs.count_threads_mutex);
     DIFF_TIME(5);

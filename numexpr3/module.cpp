@@ -9,7 +9,7 @@
 
 #define DO_NUMPY_IMPORT_ARRAY
 
-#define CHECK_END_COND if(gs.end_threads) return(0);
+#define CHECK_END_COND if(gs.barrier_passed == BARRIER_EXIT) return(0);
 
 #include "module.hpp"
 #include "interp_header_GENERATED.hpp"
@@ -29,7 +29,6 @@ global_state gs;
     timespec TIMES[512];
     timespec T_NOW;
 #endif
-
 
 
 // Do the worker job for a certain thread
@@ -59,9 +58,12 @@ void* th_worker(void *tidptr) {
         if( gs.count_threads < gs.n_thread ) {
             gs.count_threads++;
             // printf( "Count threads start %d\n", gs.count_threads );
-            pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+            do {
+                pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+            } while (gs.barrier_passed == BARRIER_HALT);
         }
         else { // Every thread is ready, go...
+            gs.barrier_passed = BARRIER_PASS;
             pthread_cond_broadcast(&gs.count_threads_cv);
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
@@ -143,10 +145,12 @@ void* th_worker(void *tidptr) {
         if (gs.count_threads > 0) { // Not the last thread to join
             gs.count_threads--;
             // printf( "Count threads finalize %d\n", gs.count_threads );
-            pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+            do {
+                pthread_cond_wait(&gs.count_threads_cv, &gs.count_threads_mutex);
+            } while (gs.barrier_passed == BARRIER_PASS);
         } else { // We're the last thread, get out of here.
+            gs.barrier_passed = BARRIER_HALT;
             pthread_cond_broadcast(&gs.count_threads_cv);
-            
         }
         pthread_mutex_unlock(&gs.count_threads_mutex);
         DIFF_TIME(250+tid);
@@ -161,6 +165,7 @@ int reinit_threads(int n_thread_old) {
     int tid, rc;
 
     gs.count_threads = 0;      // Reset threads counter
+    gs.barrier_passed = BARRIER_HALT;
 
     // Allocate memory
     gs.threads = (pthread_t*)realloc( gs.threads, gs.n_thread * sizeof(pthread_t) );
@@ -221,13 +226,14 @@ int numexpr_set_nthreads(int n_thread_new) {
     //   subprocess, and thus threads are non-existent).
     if( gs.init_threads_done && gs.pid == getpid() ) {
         // Tell all existing threads to finish 
-        gs.end_threads = 1;
+        gs.barrier_passed = BARRIER_EXIT;
         pthread_mutex_lock(&gs.count_threads_mutex);
         // Ensure that workers never wait on the condition variable
         gs.count_threads = n_thread_old; 
         // Wake all workers
         pthread_cond_broadcast(&gs.count_threads_cv);
         pthread_mutex_unlock(&gs.count_threads_mutex);
+
         for( T=0; T < n_thread_old; T++ ) {
             // Join exiting threads 
             rc = pthread_join(gs.threads[T], &status);
@@ -244,7 +250,7 @@ int numexpr_set_nthreads(int n_thread_new) {
         gs.count_threads = 0;
         gs.n_thread = n_thread_new;
         gs.init_threads_done = 0;
-        gs.end_threads = 0;
+        gs.barrier_passed = BARRIER_HALT;
     } 
     else {
         gs.n_thread = n_thread_new;
@@ -261,7 +267,8 @@ static PyObject*
 PySet_num_threads(PyObject *self, PyObject *args) {
     int n_threads_new, n_threads_old;
     if (!PyArg_ParseTuple(args, "i", &n_threads_new))
-    return NULL;
+        return NULL;
+
     pthread_mutex_lock(&gs.global_mutex);
     n_threads_old = numexpr_set_nthreads(n_threads_new);
     pthread_mutex_unlock(&gs.global_mutex);

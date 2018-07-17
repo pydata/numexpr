@@ -186,7 +186,7 @@ class test_numexpr(unittest.TestCase):
         npt.assert_array_equal( neObj3(), 2*a + 3*c )
 
     def test_all_scalar(self):
-        logger.info( 'Test all scalar' )
+        logger.info( 'Test all scalar: DEBUG' )
         import numpy as np
         a = 3.
         b = 4.
