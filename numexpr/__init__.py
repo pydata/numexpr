@@ -37,7 +37,7 @@ import os, os.path
 import platform
 from numexpr.expressions import E
 from numexpr.necompiler import NumExpr, disassemble, evaluate, re_evaluate
-from numexpr.tests import test, print_versions
+# from numexpr.tests import test, print_versions
 from numexpr.interpreter import MAX_THREADS
 from numexpr.utils import (
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
@@ -68,3 +68,20 @@ dirname = os.path.dirname(__file__)
 
 __version__ = version.version
 
+def print_versions():
+    """Print the versions of software that numexpr relies on."""
+    try:
+        import numexpr.tests
+        return numexpr.tests.print_versions()
+    except ImportError:
+        # To maintain Python 2.6 compatibility we have simple error handling
+        raise ImportError('`numexpr.tests` could not be imported, likely it was excluded from the distribution.')
+
+def test(verbosity=1):
+    """Run all the tests in the test suite."""
+    try:
+        import numexpr.tests
+        return numexpr.tests.test(verbosity=verbosity)
+    except ImportError:
+        # To maintain Python 2.6 compatibility we have simple error handling
+        raise ImportError('`numexpr.tests` could not be imported, likely it was excluded from the distribution.')

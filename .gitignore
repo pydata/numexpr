@@ -10,3 +10,5 @@ numexpr.egg-info/
 doc/_build
 site.cfg
 .vscode
+*.pyd
+__config__.py
