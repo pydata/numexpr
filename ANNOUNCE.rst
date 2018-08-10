@@ -1,21 +1,27 @@
 ==========================
- Announcing Numexpr 2.6.6
+ Announcing Numexpr 2.6.7
 ==========================
 
 Hi everyone, 
 
-This is a bug-fix release. Thanks to Mark Dickinson for a fix to the thread 
-barrier that occassionally suffered from spurious wakeups on MacOSX.
+This is a bug-fix release. Thanks to Lehman Garrison for a fix that could 
+result in memory leak-like behavior.
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.6.5 to 2.6.6
+Changes from 2.6.6 to 2.6.7
 ---------------------------
 
-- Thanks to Mark Dickinson for a fix to the thread barrier that occassionally 
-  suffered from spurious wakeups on MacOSX.
+- Thanks to Lehman Garrison for finding and fixing a bug that exhibited memory
+  leak-like behavior. The use in `numexpr.evaluate` of `sys._getframe` combined 
+  with `.f_locals` from that frame object results an extra refcount on objects 
+  in the frame that calls `numexpr.evaluate`, and not `evaluate`'s frame. So if 
+  the calling frame remains in scope for a long time (such as a procedural 
+  script where `numexpr` is called from the base frame) garbage collection would 
+  never occur.
+- Imports for the `numexpr.test` submodule were made lazy in the `numexpr` module.
 
 What's Numexpr?
 ---------------
