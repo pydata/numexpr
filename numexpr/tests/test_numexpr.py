@@ -643,8 +643,7 @@ def test_expressions():
                                                 neval, type(neval), shape(neval))
 
         method.description = ('test_expressions(%s, test_scalar=%r, '
-                              'dtype=%r, optimization=%r, exact=%r)') \
-                             % (expr, test_scalar, dtype.__name__, optimization, exact)
+                              'dtype=%r, optimization=%r, exact=%r)') % (expr, test_scalar, dtype.__name__, optimization, exact)
         test_no[0] += 1
         method.__name__ = 'test_scalar%d_%s_%s_%s_%04d' % (test_scalar,
                                                            dtype.__name__,
@@ -1020,8 +1019,7 @@ def print_versions():
     np_version = tuple( ver for ver in np.__version__.split('.') )
 
     if minimum_numpy_version < np_version:
-        print('*Warning*: NumPy version is lower than recommended: %s < %s' % \
-              (np.__version__, minimum_numpy_version))
+        print('*Warning*: NumPy version is lower than recommended: %s < %s' % (np.__version__, minimum_numpy_version))
     print('-=' * 38)
     print('Numexpr version:   %s' % numexpr.__version__)
     print('NumPy version:     %s' % np.__version__)
