@@ -307,6 +307,13 @@ class test_numexpr(TestCase):
         res = evaluate('where(a, b, c)')
         assert_array_equal(res, c)
 
+    # Regression test for issue #310
+    def test_refcount(self):
+        a = array([1])
+        assert sys.getrefcount(a) == 2
+        evaluate('1')
+        assert sys.getrefcount(a) == 2
+
 
 class test_numexpr2(test_numexpr):
     """Testing with 2 threads"""

@@ -724,18 +724,30 @@ def getExprNames(text, context):
 def getArguments(names, local_dict=None, global_dict=None):
     """Get the arguments based on the names."""
     call_frame = sys._getframe(2)
-    if local_dict is None:
-        local_dict = call_frame.f_locals
-    if global_dict is None:
-        global_dict = call_frame.f_globals
 
-    arguments = []
-    for name in names:
-        try:
-            a = local_dict[name]
-        except KeyError:
-            a = global_dict[name]
-        arguments.append(numpy.asarray(a))
+    local_dict_as_arg = local_dict is not None
+
+    if not local_dict_as_arg:
+        local_dict = call_frame.f_locals
+
+    try:
+        if global_dict is None:
+            global_dict = call_frame.f_globals
+
+        arguments = []
+        for name in names:
+            try:
+                a = local_dict[name]
+            except KeyError:
+                a = global_dict[name]
+            arguments.append(numpy.asarray(a))
+    finally:
+        # If we generated local_dict via an explicit reference to f_locals,
+        # clear the dict to prevent creating extra ref counts in the caller's scope
+        # See https://github.com/pydata/numexpr/issues/310
+        if not local_dict_as_arg:
+            local_dict.clear()
+
     return arguments
 
 
