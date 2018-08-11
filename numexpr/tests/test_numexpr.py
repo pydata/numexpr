@@ -39,7 +39,8 @@ if sys.version_info[0] >= 3:
     long = int
 
 # Recommended minimum versions
-minimum_numpy_version = ('1', '7', '0')
+from distutils.version import StrictVersion
+minimum_numpy_version = StrictVersion('1.7.0')
 
 
 class test_numexpr(TestCase):
@@ -1016,10 +1017,10 @@ def print_versions():
     from numexpr.cpuinfo import cpu
     import platform
 
-    np_version = tuple( ver for ver in np.__version__.split('.') )
+    np_version = StrictVersion(np.__version__)
 
     if minimum_numpy_version < np_version:
-        print('*Warning*: NumPy version is lower than recommended: %s < %s' % (np.__version__, minimum_numpy_version))
+        print('*Warning*: NumPy version is lower than recommended: %s < %s' % (np_version, minimum_numpy_version))
     print('-=' * 38)
     print('Numexpr version:   %s' % numexpr.__version__)
     print('NumPy version:     %s' % np.__version__)

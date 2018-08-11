@@ -53,6 +53,15 @@ Releasing
   $ git push
   $ git push --tags
 
+- If you happen to have to delete the tag, for example if the `manywheels` builds 
+  demonstrates a fault, first delete it locally,
+
+      git tag --delete vX.Y.Z
+  
+  and then remotely on Github,
+
+      git push --delete origin vX.Y.Z
+
 Build wheels
 ------------
 

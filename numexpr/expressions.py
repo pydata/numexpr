@@ -17,8 +17,8 @@ import threading
 import numpy
 # numpy's behavoir sometimes changes with versioning, especially in regard as 
 # to when ints are cast to floats.
-# _np_version will be similar to ('1', '13', '1') for which we can use simple comparisons
-_np_version = tuple( ver for ver in numpy.__version__.split('.') )
+from distutils.version import StrictVersion
+_np_version_forbids_neg_powint = StrictVersion(numpy.__version__) >= StrictVersion('1.12.0b1')
 
 # Declare a double type that does not exist in Python space
 double = numpy.double
@@ -283,7 +283,7 @@ def rtruediv_op(a, b):
 
 @ophelper
 def pow_op(a, b):
-    if (_np_version >= ('1', '12', '0b1') and
+    if (_np_version_forbids_neg_powint and
         b.astKind in ('int', 'long') and
         a.astKind in ('int', 'long') and
         numpy.any(b.value < 0)):
