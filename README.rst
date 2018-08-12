@@ -13,9 +13,9 @@ NumExpr: Fast numerical expression evaluator for NumPy
 
 .. |travis| image:: https://travis-ci.org/pydata/numexpr.png?branch=master
         :target: https://travis-ci.org/pydata/numexpr
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/pydata/numexpr
-        :target: https://ci.appveyor.com/project/pydata/numexpr
-.. |docs| image:: https://media.readthedocs.org/static/projects/badges/passing.svg
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/robbmcleod/numexpr
+        :target: https://ci.appveyor.com/project/robbmcleod/numexpr
+.. |docs| image:: https://readthedocs.org/projects/numexpr/badge/?version=latest
         :target: http://numexpr.readthedocs.io/en/latest
 .. |version| image:: https://img.shields.io/pypi/v/numexpr.png
         :target: https://pypi.python.org/pypi/numexpr

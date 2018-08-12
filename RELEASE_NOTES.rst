@@ -2,6 +2,11 @@
  Release notes for Numexpr 2.6 series
 =====================================
 
+Changes from 2.6.7 to 2.6.8
+---------------------------
+
+- #XXX version-specific blurb XXX#
+
 Changes from 2.6.6 to 2.6.7
 ---------------------------
 
