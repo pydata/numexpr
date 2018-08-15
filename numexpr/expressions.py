@@ -17,8 +17,8 @@ import threading
 import numpy
 # numpy's behavoir sometimes changes with versioning, especially in regard as 
 # to when ints are cast to floats.
-from distutils.version import StrictVersion
-_np_version_forbids_neg_powint = StrictVersion(numpy.__version__) >= StrictVersion('1.12.0b1')
+from distutils.version import LooseVersion
+_np_version_forbids_neg_powint = LooseVersion(numpy.__version__) >= LooseVersion('1.12.0b1')
 
 # Declare a double type that does not exist in Python space
 double = numpy.double

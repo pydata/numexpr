@@ -7,6 +7,8 @@ Changes from 2.6.7 to 2.6.8
 
 - Add check to make sure that `f_locals` is not actually `f_globals` when we 
   do the `f_locals` clear to avoid the #310 memory leak issue.
+- Compare NumPy versions using `distutils.version.LooseVersion` to avoid issue
+  #312 when working with NumPy development versions.
 
 Changes from 2.6.6 to 2.6.7
 ---------------------------
