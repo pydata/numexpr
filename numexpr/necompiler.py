@@ -725,11 +725,12 @@ def getArguments(names, local_dict=None, global_dict=None):
     """Get the arguments based on the names."""
     call_frame = sys._getframe(2)
 
-    local_dict_as_arg = local_dict is not None
+    # If `call_frame` is the top frame of the interpreter we can't clear its 
+    # `local_dict`, because it is actually the `global_dict`.
+    clear_local_dict = (local_dict is None) and (call_frame.f_back is not None)
 
-    if not local_dict_as_arg:
+    if local_dict is None:
         local_dict = call_frame.f_locals
-
     try:
         if global_dict is None:
             global_dict = call_frame.f_globals
@@ -745,7 +746,7 @@ def getArguments(names, local_dict=None, global_dict=None):
         # If we generated local_dict via an explicit reference to f_locals,
         # clear the dict to prevent creating extra ref counts in the caller's scope
         # See https://github.com/pydata/numexpr/issues/310
-        if not local_dict_as_arg:
+        if clear_local_dict:
             local_dict.clear()
 
     return arguments
