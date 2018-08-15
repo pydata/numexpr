@@ -39,9 +39,10 @@ if sys.version_info[0] >= 3:
     long = int
 
 # Recommended minimum versions
-from distutils.version import StrictVersion
-minimum_numpy_version = StrictVersion('1.7.0')
+from distutils.version import LooseVersion
+minimum_numpy_version = LooseVersion('1.7.0')
 
+issue313 = "test that local_dict.clear() does not delete globals"
 
 class test_numexpr(TestCase):
     """Testing with 1 thread"""
@@ -308,12 +309,19 @@ class test_numexpr(TestCase):
         res = evaluate('where(a, b, c)')
         assert_array_equal(res, c)
 
-    # Regression test for issue #310
+    
     def test_refcount(self):
+        # Regression test for issue #310
+
+        global issue313
+
         a = array([1])
         assert sys.getrefcount(a) == 2
         evaluate('1')
         assert sys.getrefcount(a) == 2
+
+        # Regression test for #313, ensure that globals is never `.clear`'d
+        issue313 += '.'
 
 
 class test_numexpr2(test_numexpr):
@@ -1017,7 +1025,7 @@ def print_versions():
     from numexpr.cpuinfo import cpu
     import platform
 
-    np_version = StrictVersion(np.__version__)
+    np_version = LooseVersion(np.__version__)
 
     if minimum_numpy_version < np_version:
         print('*Warning*: NumPy version is lower than recommended: %s < %s' % (np_version, minimum_numpy_version))
