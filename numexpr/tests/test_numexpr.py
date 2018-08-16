@@ -333,7 +333,7 @@ class test_numexpr(TestCase):
                 r"a += 1",
             ])
         # Raises CalledProcessError on a non-normal exit
-        check = subprocess.check_call('python -c "{}"'.format(script), shell=True)
+        check = subprocess.check_call('python -c "{0}"'.format(script), shell=True)
         # Ideally this test should also be done against ipython but it's not 
         # a requirement.
 
