@@ -320,20 +320,20 @@ class test_numexpr(TestCase):
         # if in the top-frame. This cannot be done inside `unittest` as it is always 
         # executing code in a child frame.
         import subprocess
-        script = ';'.join([
-                "import numexpr as ne",
-                "a=10",
-                "ne.evaluate('1')",
-                "a += 1",
+        script = r';'.join([
+                r"import numexpr as ne",
+                r"a=10",
+                r"ne.evaluate('1')",
+                r"a += 1",
                 r"ne.evaluate('2', local_dict={})",
-                "a += 1",
+                r"a += 1",
                 r"ne.evaluate('3', global_dict={})",
-                "a += 1",
+                r"a += 1",
                 r"ne.evaluate('4', local_dict={}, global_dict={})",
-                "a += 1",
+                r"a += 1",
             ])
         # Raises CalledProcessError on a non-normal exit
-        check = subprocess.check_call('python -c "{}"'.format(script))
+        check = subprocess.check_call('python -c "{}"'.format(script), shell=True)
         # Ideally this test should also be done against ipython but it's not 
         # a requirement.
 
