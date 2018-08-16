@@ -725,15 +725,18 @@ def getArguments(names, local_dict=None, global_dict=None):
     """Get the arguments based on the names."""
     call_frame = sys._getframe(2)
 
-    # If `call_frame` is the top frame of the interpreter we can't clear its 
-    # `local_dict`, because it is actually the `global_dict`.
-    clear_local_dict = (local_dict is None) and (call_frame.f_back is not None)
-
+    clear_local_dict = False
     if local_dict is None:
         local_dict = call_frame.f_locals
+        clear_local_dict = True
     try:
+        frame_globals = call_frame.f_globals
         if global_dict is None:
-            global_dict = call_frame.f_globals
+            global_dict = frame_globals
+
+        # If `call_frame` is the top frame of the interpreter we can't clear its 
+        # `local_dict`, because it is actually the `global_dict`.
+        clear_local_dict = clear_local_dict and not frame_globals is local_dict
 
         arguments = []
         for name in names:

@@ -321,7 +321,18 @@ class test_numexpr(TestCase):
         assert sys.getrefcount(a) == 2
 
         # Regression test for #313, ensure that globals is never `.clear`'d
+        # accidently when trying to remove the extraneous reference count 
+        # the call to f_locals generates.
         issue313 += '.'
+
+        # Try permutations of providing `local_dict` and `global_dict`
+        evaluate('2+2', local_dict={})
+        issue313 += '.'
+        evaluate('3+3', global_dict={})
+        issue313 += '.'
+        evaluate('4+4', local_dict={}, global_dict={})
+        issue313 += '.'
+
 
 
 class test_numexpr2(test_numexpr):
