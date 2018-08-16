@@ -42,8 +42,6 @@ if sys.version_info[0] >= 3:
 from distutils.version import LooseVersion
 minimum_numpy_version = LooseVersion('1.7.0')
 
-issue313 = "test that local_dict.clear() does not delete globals"
-
 class test_numexpr(TestCase):
     """Testing with 1 thread"""
     nthreads = 1
@@ -312,26 +310,32 @@ class test_numexpr(TestCase):
     
     def test_refcount(self):
         # Regression test for issue #310
-
-        global issue313
-
         a = array([1])
         assert sys.getrefcount(a) == 2
         evaluate('1')
         assert sys.getrefcount(a) == 2
 
-        # Regression test for #313, ensure that globals is never `.clear`'d
-        # accidently when trying to remove the extraneous reference count 
-        # the call to f_locals generates.
-        issue313 += '.'
-
-        # Try permutations of providing `local_dict` and `global_dict`
-        evaluate('2+2', local_dict={})
-        issue313 += '.'
-        evaluate('3+3', global_dict={})
-        issue313 += '.'
-        evaluate('4+4', local_dict={}, global_dict={})
-        issue313 += '.'
+    def test_locals_clears_globals(self):
+        # Check for issue #313, whereby clearing f_locals also clear f_globals
+        # if in the top-frame. This cannot be done inside `unittest` as it is always 
+        # executing code in a child frame.
+        import subprocess
+        script = ';'.join([
+                "import numexpr as ne",
+                "a=10",
+                "ne.evaluate('1')",
+                "a += 1",
+                r"ne.evaluate('2', local_dict={})",
+                "a += 1",
+                r"ne.evaluate('3', global_dict={})",
+                "a += 1",
+                r"ne.evaluate('4', local_dict={}, global_dict={})",
+                "a += 1",
+            ])
+        # Raises CalledProcessError on a non-normal exit
+        check = subprocess.check_call('python -c "{}"'.format(script))
+        # Ideally this test should also be done against ipython but it's not 
+        # a requirement.
 
 
 
