@@ -4,7 +4,12 @@
 
 Hi everyone, 
 
-#XXX version-specific blurb XXX#
+Our attempt to fix the memory leak in 2.6.7 had an unforseen consequence that 
+the `f_locals` from the top-most frame is actually `f_globals`, and clearing it 
+to fix the extra reference count deletes all global variables. Needless to say 
+this is undesired behavior. A check has been added to prevent clearing the 
+globals dict, tested against both `python` and `ipython`. As such, we recommend 
+skipping 2.6.7 and upgrading straight to 2.6.8 from 2.6.6. 
 
 Project documentation is available at:
 
@@ -13,7 +18,10 @@ http://numexpr.readthedocs.io/
 Changes from 2.6.7 to 2.6.8
 ---------------------------
 
-- #XXX version-specific blurb XXX#
+- Add check to make sure that `f_locals` is not actually `f_globals` when we 
+  do the `f_locals` clear to avoid the #310 memory leak issue.
+- Compare NumPy versions using `distutils.version.LooseVersion` to avoid issue
+  #312 when working with NumPy development versions.
 
 What's Numexpr?
 ---------------
