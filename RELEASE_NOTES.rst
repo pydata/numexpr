@@ -2,6 +2,11 @@
  Release notes for Numexpr 2.6 series
 =====================================
 
+Changes from 2.6.8 to 2.6.9
+---------------------------
+
+#XXX version-specific blurb XXX#
+
 Changes from 2.6.7 to 2.6.8
 ---------------------------
 
@@ -9,6 +14,8 @@ Changes from 2.6.7 to 2.6.8
   do the `f_locals` clear to avoid the #310 memory leak issue.
 - Compare NumPy versions using `distutils.version.LooseVersion` to avoid issue
   #312 when working with NumPy development versions.
+- As part of `multibuild`, wheels for Python 3.7 for Linux and MacOSX are now 
+  available on PyPI.
 
 Changes from 2.6.6 to 2.6.7
 ---------------------------
