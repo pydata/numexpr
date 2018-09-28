@@ -108,10 +108,12 @@ def detect_number_of_cores():
         else:  # OSX:
             return int(subprocess.check_output(["sysctl", "-n", "hw.ncpu"]))
     # Windows:
-    if os.environ.has_key("NUMBER_OF_PROCESSORS"):
-        ncpus = int(os.environ["NUMBER_OF_PROCESSORS"]);
+    try:
+        ncpus = int(os.environ.get("NUMBER_OF_PROCESSORS", ""))
         if ncpus > 0:
             return ncpus
+    except ValueError:
+        pass
     return 1  # Default
 
 
@@ -120,9 +122,12 @@ def detect_number_of_threads():
     If this is modified, please update the note in: https://github.com/pydata/numexpr/wiki/Numexpr-Users-Guide
     """
     try:
-        nthreads = int(os.environ['NUMEXPR_NUM_THREADS'])
-    except KeyError:
-        nthreads = int(os.environ.get('OMP_NUM_THREADS', detect_number_of_cores()))
+        nthreads = int(os.environ.get('NUMEXPR_NUM_THREADS', ''))
+    except ValueError:
+        try:
+            nthreads = int(os.environ.get('OMP_NUM_THREADS', ''))
+        except ValueError:
+            nthreads = detect_number_of_cores()
 
     # Check that we don't surpass the MAX_THREADS in interpreter.cpp
     if nthreads > MAX_THREADS:
