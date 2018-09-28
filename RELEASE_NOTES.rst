@@ -5,7 +5,8 @@
 Changes from 2.6.8 to 2.6.9
 ---------------------------
 
-#XXX version-specific blurb XXX#
+- Thanks to Mike Toews for more robust handling of the thread-setting 
+  environment variables.
 
 Changes from 2.6.7 to 2.6.8
 ---------------------------

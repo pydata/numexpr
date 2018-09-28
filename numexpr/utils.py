@@ -123,10 +123,7 @@ def detect_number_of_threads():
         nthreads = int(os.environ['NUMEXPR_NUM_THREADS'])
     except KeyError:
         nthreads = int(os.environ.get('OMP_NUM_THREADS', detect_number_of_cores()))
-        # Check that we don't activate too many threads at the same time.
-        # 8 seems a sensible value.
-        if nthreads > 8:
-            nthreads = 8
+
     # Check that we don't surpass the MAX_THREADS in interpreter.cpp
     if nthreads > MAX_THREADS:
         nthreads = MAX_THREADS
