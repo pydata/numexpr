@@ -719,12 +719,15 @@ class NumExpr(object):
         of the previous operation is held), and returns an outputReg where
         the output of the operation may be saved.
         '''
-        if inputReg1.kind != _KIND_TEMP:
-            return self._newTemp(self.assignDChar, None)
-        # Else we may be able to re-use the temporary
-        inputReg1.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg1.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
-        inputReg1.dchar = self.assignDChar
-        return inputReg1
+        # Actually for SIMD we probably do not want to do in-place operations
+        return self._newTemp(self.assignDChar, None)
+
+        # if inputReg1.kind != _KIND_TEMP:
+        #     return self._newTemp(self.assignDChar, None)
+        # # Else we may be able to re-use the temporary
+        # inputReg1.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg1.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
+        # inputReg1.dchar = self.assignDChar
+        # return inputReg1
     
     def _transmit2(self, inputReg1, inputReg2):
         '''
@@ -732,18 +735,20 @@ class NumExpr(object):
         of the previous operation is held), and returns an outputReg where
         the output of the operation may be saved.
         '''
-        if inputReg1.kind != _KIND_TEMP:
-            if inputReg2.kind != _KIND_TEMP:
-                return self._newTemp(self.assignDChar, None)
-            # Else we may be able to re-use register #2
-            inputReg2.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg2.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
-            inputReg2.dchar = self.assignDChar
-            return inputReg2    
+        # Actually for SIMD we probably do not want to do in-place operations
+        return self._newTemp(self.assignDChar, None)
 
-        # Else we may be able to re-use register #1
-        inputReg1.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg1.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
-        inputReg1.dchar = self.assignDChar
-        return inputReg1
+        # if inputReg1.kind != _KIND_TEMP:
+        #     if inputReg2.kind != _KIND_TEMP:
+        #         return self._newTemp(self.assignDChar, None)
+        #     # Else we may be able to re-use register #2
+        #     inputReg2.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg2.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
+        #     inputReg2.dchar = self.assignDChar
+        #     return inputReg2    
+        # # Else we may be able to re-use register #1
+        # inputReg1.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg1.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
+        # inputReg1.dchar = self.assignDChar
+        # return inputReg1
 
     def _transmit3(self, inputReg1, inputReg2, inputReg3):
         '''
@@ -751,24 +756,25 @@ class NumExpr(object):
         of the previous operation is held), and returns an outputReg where
         the output of the operation may be saved.
         '''
-        if inputReg1.kind != _KIND_TEMP:
-            if inputReg2.kind != _KIND_TEMP:
-                if inputReg3.kind != _KIND_TEMP:
-                    return self._newTemp(self.assignDChar, None)
-                # Else we may be able to re-use register #3
-                inputReg3.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg3.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
-                inputReg3.dchar = self.assignDChar
-                return inputReg3   
+        # Actually for SIMD we probably do not want to do in-place operations
+        return self._newTemp(self.assignDChar, None)
 
-            # Else we may be able to re-use register #2
-            inputReg2.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg2.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
-            inputReg2.dchar = self.assignDChar
-            return inputReg2    
-
-        # Else we may be able to re-use register #1
-        inputReg1.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg1.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
-        inputReg1.dchar = self.assignDChar
-        return inputReg1
+        # if inputReg1.kind != _KIND_TEMP:
+        #     if inputReg2.kind != _KIND_TEMP:
+        #         if inputReg3.kind != _KIND_TEMP:
+        #             return self._newTemp(self.assignDChar, None)
+        #         # Else we may be able to re-use register #3
+        #         inputReg3.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg3.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
+        #         inputReg3.dchar = self.assignDChar
+        #         return inputReg3   
+        #     # Else we may be able to re-use register #2
+        #     inputReg2.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg2.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
+        #     inputReg2.dchar = self.assignDChar
+        #     return inputReg2    
+        # # Else we may be able to re-use register #1
+        # inputReg1.itemsize = np.maximum(_DCHAR_ITEMSIZE[inputReg1.dchar], _DCHAR_ITEMSIZE[self.assignDChar])
+        # inputReg1.dchar = self.assignDChar
+        # return inputReg1
 
     def _copy(self, targetReg, valueReg ):
         '''
@@ -1298,8 +1304,8 @@ def _call(self: NumExpr, node: ast.AST) -> NumReg:
                             argReg0.token, _NULL_REG, _NULL_REG)))
         
     elif len(argRegisters) == 2:
-        argReg0, argReg1 = argRegisters
         argRegisters = self._cast2(*argRegisters)
+        argReg0, argReg1 = argRegisters
         opCode, self.assignDChar = OPTABLE[(node.func.id, self.lib,
                             argReg0.dchar, argReg1.dchar)]
         outputRegister = self._transmit2(argReg0, argReg1)

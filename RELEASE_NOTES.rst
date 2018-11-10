@@ -2,9 +2,11 @@
 Release notes for NumExpr 3.0 series
 =====================================
 
-Changes from 3.0.0 to 3.0.2
+Changes from 3.0.1 to 3.0.1a4
 ---------------------------
-
+* At the suggestion of Gowtham Sviaraman, added support for integer power.
+  As with NumPy, the integer power will overflow. Also added an analog of 
+  `numpy.float_power`.
 * At the suggestion of Jim Pivarski, added a number of functions to more 
   fully cover the `numpy` namespace, including:
   - `minimum`: maps to minimum values in two arrays, analog to `numpy.minimum`.
@@ -24,7 +26,6 @@ Changes from 3.0.0 to 3.0.2
   - `tgamma` renamed to `gamma`.
   - `pow` function added in addition to `**` operator.
   - `mod` function added in addition to `%` operator.
-
 * Added complex functions:
   - `angle`: computes the complex phase
   - `crosspower`: computes the cross-power spetrum.

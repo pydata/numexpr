@@ -55,6 +55,263 @@
 #define NPY_SQRT2l    1.414213562373095048801688724209698079L /* sqrt(2) */
 #define NPY_SQRT1_2l  0.707106781186547524400844362104849039L /* 1/sqrt(2) */
 
+// This integer power is a use case where templates would result in much less code.
+static inline void
+_inline_ipow(npy_uint8 base, npy_uint8 exponent, npy_uint8 &result) {
+    result = 1;
+    if (exponent <= 0) {
+        return;
+    }
+    npy_uint8 x = base;     // Don't modify input args
+    npy_uint8 n = exponent;
+    while(n) {
+        if (n & 1) 
+            result *= x;
+        n >>= 1;
+        x *= x;
+    }
+}
+
+static inline void
+_inline_ipow(npy_int8 base, npy_int8 exponent, npy_int8 &result) {
+    result = 1;
+    if (exponent <= 0) {
+        return;
+    }
+    npy_int8 x = base;     // Don't modify input args
+    npy_int8 n = exponent;
+    while(n) {
+        if (n & 1) 
+            result *= x;
+        n >>= 1;
+        x *= x;
+    }
+}
+
+static inline void
+_inline_ipow(npy_uint16 base, npy_uint16 exponent, npy_uint16 &result) {
+    result = 1;
+    if (exponent <= 0) {
+        return;
+    }
+    npy_uint16 x = base;     // Don't modify input args
+    npy_uint16 n = exponent;
+    while(n) {
+        if (n & 1) 
+            result *= x;
+        n >>= 1;
+        x *= x;
+    }
+}
+
+static inline void
+_inline_ipow(npy_int16 base, npy_int16 exponent, npy_int16 &result) {
+    result = 1;
+    if (exponent <= 0) {
+        return;
+    }
+    npy_int16 x = base;     // Don't modify input args
+    npy_int16 n = exponent;
+    while(n) {
+        if (n & 1) 
+            result *= x;
+        n >>= 1;
+        x *= x;
+    }
+}
+
+static inline void
+_inline_ipow(npy_uint32 base, npy_uint32 exponent, npy_uint32 &result) {
+    result = 1;
+    if (exponent <= 0) {
+        return;
+    }
+    npy_uint32 x = base;     // Don't modify input args
+    npy_uint32 n = exponent;
+    while(n) {
+        if (n & 1) 
+            result *= x;
+        n >>= 1;
+        x *= x;
+    }
+}
+
+static inline void
+_inline_ipow(npy_int32 base, npy_int32 exponent, npy_int32 &result) {
+    result = 1;
+    if (exponent <= 0) {
+        return;
+    }
+    npy_int32 x = base;     // Don't modify input args
+    npy_int32 n = exponent;
+    while(n) {
+        if (n & 1) 
+            result *= x;
+        n >>= 1;
+        x *= x;
+    }
+}
+
+static inline void
+_inline_ipow(npy_uint64 base, npy_uint64 exponent, npy_uint64 &result) {
+    result = 1;
+    if (exponent <= 0) {
+        return;
+    }
+    npy_uint64 x = base;     // Don't modify input args
+    npy_uint64 n = exponent;
+    while(n) {
+        if (n & 1) 
+            result *= x;
+        n >>= 1;
+        x *= x;
+    }
+}
+
+static inline void
+_inline_ipow(npy_int64 base, npy_int64 exponent, npy_int64 &result) {
+    result = 1;
+    if (exponent <= 0) {
+        return;
+    }
+    npy_int64 x = base;     // Don't modify input args
+    npy_int64 n = exponent;
+    do {
+        if (n & 1) 
+            result *= x;
+        n >>= 1;
+        x *= x;
+    } while(n);
+}
+
+static void
+nr_int_pow(npy_intp n, npy_uint8 *a, npy_intp sb1, npy_uint8 *b, npy_intp sb2, npy_uint8 *r) {
+    if( sb1 == sizeof(npy_uint8) && sb2 == sizeof(npy_uint8) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I], b[I], r[I]);
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_uint8);
+        sb2 /= sizeof(npy_uint8);
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I*sb1], b[I*sb2], r[I]);
+        }
+    }
+}
+
+static void
+nr_int_pow(npy_intp n, npy_int8 *a, npy_intp sb1, npy_int8 *b, npy_intp sb2, npy_int8 *r) {
+    if( sb1 == sizeof(npy_int8) && sb2 == sizeof(npy_int8) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I], b[I], r[I]);
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_int8);
+        sb2 /= sizeof(npy_int8);
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I*sb1], b[I*sb2], r[I]);
+        }
+    }
+}
+
+static void
+nr_int_pow(npy_intp n, npy_uint16 *a, npy_intp sb1, npy_uint16 *b, npy_intp sb2, npy_uint16 *r) {
+    if( sb1 == sizeof(npy_uint16) && sb2 == sizeof(npy_uint16) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I], b[I], r[I]);
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_uint16);
+        sb2 /= sizeof(npy_uint16);
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I*sb1], b[I*sb2], r[I]);
+        }
+    }
+}
+
+static void
+nr_int_pow(npy_intp n, npy_int16 *a, npy_intp sb1, npy_int16 *b, npy_intp sb2, npy_int16 *r) {
+    if( sb1 == sizeof(npy_int16) && sb2 == sizeof(npy_int16) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I], b[I], r[I]);
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_int16);
+        sb2 /= sizeof(npy_int16);
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I*sb1], b[I*sb2], r[I]);
+        }
+    }
+}
+
+static void
+nr_int_pow(npy_intp n, npy_uint32 *a, npy_intp sb1, npy_uint32 *b, npy_intp sb2, npy_uint32 *r) {
+    if( sb1 == sizeof(npy_uint32) && sb2 == sizeof(npy_uint32) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I], b[I], r[I]);
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_uint32);
+        sb2 /= sizeof(npy_uint32);
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I*sb1], b[I*sb2], r[I]);
+        }
+    }
+}
+
+static void
+nr_int_pow(npy_intp n, npy_int32 *a, npy_intp sb1, npy_int32 *b, npy_intp sb2, npy_int32 *r) {
+    if( sb1 == sizeof(npy_int32) && sb2 == sizeof(npy_int32) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I], b[I], r[I]);
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_int32);
+        sb2 /= sizeof(npy_int32);
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I*sb1], b[I*sb2], r[I]);
+        }
+    }
+}
+
+static void
+nr_int_pow(npy_intp n, npy_uint64 *a, npy_intp sb1, npy_uint64 *b, npy_intp sb2, npy_uint64 *r) {
+    if( sb1 == sizeof(npy_uint64) && sb2 == sizeof(npy_uint64) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I], b[I], r[I]);
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_uint64);
+        sb2 /= sizeof(npy_uint64);
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I*sb1], b[I*sb2], r[I]);
+        }
+    }
+}
+
+static void
+nr_int_pow(npy_intp n, npy_int64 *a, npy_intp sb1, npy_int64 *b, npy_intp sb2, npy_int64 *r) {
+    if( sb1 == sizeof(npy_int64) && sb2 == sizeof(npy_int64) ) { // Aligned
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I], b[I], r[I]);
+        }
+    }
+    else {
+        sb1 /= sizeof(npy_int64);
+        sb2 /= sizeof(npy_int64);
+        for( npy_intp I = 0; I < n; I++ ) {
+            _inline_ipow(a[I*sb1], b[I*sb2], r[I]);
+        }
+    }
+}
+
 // logaddexp
 static void
 nr_logaddexp( npy_intp n, npy_float32 *a, npy_intp sb1, npy_float32 *b, npy_intp sb2, npy_float32 *r )

@@ -278,8 +278,19 @@ class test_numexpr(unittest.TestCase):
         assert( sin_np.dtype == sin_ne.dtype )
         npt.assert_array_almost_equal( sin_np, sin_ne )
 
-    # Non-unit length multiple strides are not supported any more as it 
-    # isn't supported with the SIMD auto-vectorization.ion.
+    def test_ipow(self):
+        # Test integer powers; NumPy generates ValueErrors for negative exponents
+        # so simply avoid testing on those values
+        for dtype in (np.uint8, np.int8, np.uint16, np.int32, np.uint32, np.int32, np.uint64, np.int64):
+            ssize_clip = 64 # This is enough to overflow anything
+            base = np.arange(ssize_clip).astype(dtype)
+            exp = np.arange(ssize_clip).astype(dtype)
+            ipow_ne = ne3.evaluate('base**exp')
+            ipow_np = np.power(base, exp)
+            npt.assert_array_almost_equal(ipow_ne, ipow_np)
+
+    # NOTE: Non-unit length multiple strides are not supported any more as it 
+    # isn't supported with the SIMD auto-vectorizationion.
 
 
 class test_numexpr_max(test_numexpr):

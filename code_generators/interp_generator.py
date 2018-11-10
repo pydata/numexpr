@@ -582,7 +582,7 @@ SIGNED_INT   = [np.dtype('int8').char, np.dtype('int16').char,
               np.dtype('int32').char, np.dtype('int64').char]
 UNSIGNED_INT = [np.dtype('uint8').char, np.dtype('uint16').char,
                 np.dtype('uint32').char, np.dtype('uint64').char]
-DECIMAL      =  [np.dtype('float32').char, np.dtype('float64').char]
+DECIMAL      = [np.dtype('float32').char, np.dtype('float64').char]
 FLOAT        = [np.dtype('float32').char]
 DOUBLE       = [np.dtype('float64').char]
 COMPLEX      = [np.dtype('complex64').char,np.dtype('complex128').char]
@@ -593,6 +593,7 @@ INT8x4       = [np.dtype('int8').char] * 4
 LONGx2       = [np.dtype('int64').char] * 2       
 STRINGS      = ['S', 'U']
 ALL_INT      = SIGNED_INT + UNSIGNED_INT
+SMALL_INT    = [np.dtype('int8').char, np.dtype('int16').char, np.dtype('uint8').char, np.dtype('uint16').char]
 BIG_INT      = [np.dtype('int32').char, np.dtype('int64').char, np.dtype('uint32').char, np.dtype('uint64').char]
 REAL_NUM     = BOOL + ALL_INT + DECIMAL
 SIGNED_NUM   = SIGNED_INT + DECIMAL
@@ -651,13 +652,15 @@ class Operation(object):
     # dropped.
     def __init__(self, py_Name: Union[ast.AST, str], c_Template: str, 
                  libs: Sequence, retFam: List[str], argFams: List[List[str]], 
-                 vecType: int=TYPE_LOOP, alias: str=None):
+                 vecType: int=TYPE_LOOP, aliases: List[str]=[], autotest: bool=True):
         # py_Name is either an ast.Node or a string such as 'sqrt'
         self.py_Name = py_Name
         # c_Template is the actual C-code that will be generated.
         self.c_Template = c_Template
 
         self.vecType = vecType
+
+        self.autotest = autotest
         
         # libs is a list, valid libraries are LIB_STD and LIB_VML, possibly 
         # LIB_SIMD later.
@@ -671,7 +674,10 @@ class Operation(object):
         # List of lists of valid argument character identifiers
         self.argFams = argFams
         
-        self.alias = alias
+        if isinstance(aliases, (str, type)):
+            aliases = [aliases]
+        self.aliases = aliases
+
         self.opNums = []
         self.c_FunctionDeclares = {}
         self.py_TupleKeys = {}
@@ -696,14 +702,15 @@ class Operation(object):
                 # The format for the Python tuple is (name,{lib},arg1type,...)
                 # or for casts, ('cast',{cast_mode},cast_dtype,original_dtype )
                 if self.py_Name == 'cast':
-                    self.py_TupleKeys[opNum] = [tuple( [self.py_Name, lib, retChar] + passedArgs) ] 
-                    if bool(self.alias): # Cast aliases have the type explicit in the name
-                        self.py_TupleKeys[opNum].append( tuple( [self.alias, lib] + passedArgs) ) 
+                    self.py_TupleKeys[opNum] = [tuple( [self.py_Name, lib, retChar] + passedArgs) ]
+                    for alias in self.aliases:
+                        # Cast aliases have the type explicit in the name
+                        self.py_TupleKeys[opNum].append( tuple( [alias, lib] + passedArgs) ) 
 
                 else:
                     self.py_TupleKeys[opNum] = [ tuple( [self.py_Name, lib] + passedArgs) ]
-                    if bool(self.alias):
-                        self.py_TupleKeys[opNum].append( tuple( [self.alias, lib] + passedArgs) )
+                    for alias in self.aliases:
+                        self.py_TupleKeys[opNum].append( tuple( [alias, lib] + passedArgs) )
 
                 # Make a unique name for the function, of the form 
                 # {function}_{retchar}{argchar1,...}
@@ -893,7 +900,7 @@ def CastFactory(opsList: List[Operation], casting: str='safe') -> None:
                 # Unsafe casts
                 opsList += [Operation( 'unsafe_cast', 
                             '$DEST = ($DTYPE0)($ARG1)', 
-                            CAST_SAFE, castChar, [dChar], alias=np.dtype(castChar).name )]
+                            CAST_SAFE, castChar, [dChar], aliases=np.dtype(castChar).name )]
             
             # NumPy doesn't provide casts for real types to complex types so 
             # there are a number of special cases.
@@ -901,22 +908,22 @@ def CastFactory(opsList: List[Operation], casting: str='safe') -> None:
                 # 'F' -> 'D' is a special case, casting complex64 -> complex128
                 opsList += [Operation( 'cast', 
                             '$DEST.real = (npy_float64)($ARG1).real; $DEST.imag=(npy_float64)($ARG1).imag', 
-                            CAST_SAFE, castChar, [dChar], alias=None )]
+                            CAST_SAFE, castChar, [dChar])]
             elif castChar=='F':
                 # In 'safe' casting one can only cast to complex and not backward
                 # and this always is allocated as = dValue + 1i*0.0
                 opsList += [Operation( 'cast', 
                             '$DEST.real = (npy_float32)($ARG1); $DEST.imag=0.0', 
-                            CAST_SAFE, castChar, [dChar], alias=None )]
+                            CAST_SAFE, castChar, [dChar])]
             elif castChar=='D':
                 opsList += [Operation( 'cast', 
                             '$DEST.real = (npy_float64)($ARG1); $DEST.imag=0.0', 
-                            CAST_SAFE, castChar, [dChar], alias=None )]
+                            CAST_SAFE, castChar, [dChar])]
             else:
                 # castOp = Operation( 'cast', '$DEST = ($DTYPE0)($ARG1)', CAST_SAFE, castChar, dChar )
                 opsList += [Operation( 'cast', 
                             '$DEST = ($DTYPE0)($ARG1)', 
-                            CAST_SAFE, castChar, [dChar], alias=np.dtype(castChar).name )]
+                            CAST_SAFE, castChar, [dChar], aliases=np.dtype(castChar).name )]
     return
 
 
@@ -954,25 +961,31 @@ def OpsFactory(opsList: List[Operation]) -> None:
     # Now C++ integer division is truncation and Python is floor, so 
     # probably this does need to be floordiv instead...
     opsList += [Operation('floordiv', '$DEST = $ARG2 ? ($DTYPE0)floor($ARG1 / $ARG2) : 0',
-                            (LIB_STD,), REAL_NUM, [REAL_NUM, REAL_NUM], alias=ast.FloorDiv)]
+                            (LIB_STD,), REAL_NUM, [REAL_NUM, REAL_NUM], aliases=ast.FloorDiv)]
 
     
     ###### Mathematical functions ######
-    # TODO: How to handle integer pow in a 'nice' way? We don't want to do it 
-    # inside Python as with Ne2 as that's a big slow function.
-    opsList += [Operation('pow', '$DEST = pow($ARG1, $ARG2)', (LIB_STD,),
-                      DECIMAL, [DECIMAL, DECIMAL], alias=ast.Pow)]
+    # NumPy has `power`, which overflows for integers, and `float_power`, which
+    # casts to np.float64
+    opsList += [Operation('float_power', '$DEST = pow((npy_float64)$ARG1, (npy_float64)$ARG2)', (LIB_STD,),
+                      [np.dtype('float64').char] * 8, [ALL_INT, ALL_INT])]
+    # We can't autotest as NumPy generates ValueErrors for negative exponents on 
+    # integer powers                      
+    opsList += [Operation('power', 'nr_int_pow(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', (LIB_STD,),
+                      ALL_INT, [ALL_INT, ALL_INT], aliases=[ast.Pow, 'pow'], autotest=False)]
+    opsList += [Operation('power', '$DEST = pow($ARG1, $ARG2)', (LIB_STD,),
+                      DECIMAL, [DECIMAL, DECIMAL], aliases=[ast.Pow, 'pow'])]
     
     # TODO: integer mod
     # The fancy method for floating-point modulo does not work nicely for 
     # integers. In fact even the C-standard 'x1 % x2' is faulting.
     # opsList += [Operation('mod', '$DEST = $ARG1 % $ARG2', (LIB_STD,),
-    #                  ALL_INT, [ALL_INT, ALL_INT], alias=ast.Mod )]
+    #                  ALL_INT, [ALL_INT, ALL_INT], aliases=ast.Mod )]
     opsList += [Operation('mod', '$DEST = $ARG1 - floor($ARG1/$ARG2) * $ARG2', (LIB_STD,),
-                      DECIMAL, [DECIMAL, DECIMAL], alias=ast.Mod )]
+                      DECIMAL, [DECIMAL, DECIMAL], aliases=ast.Mod )]
     
     opsList += [ Operation( 'fmod', '$DEST = fmod($ARG1, $ARG2)', LIB_STD,
-                   DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP, alias=ast.Mod ) ] 
+                   DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP, aliases=ast.Mod ) ] 
     opsList += [Operation('where', '$DEST = $ARG1 ? $ARG2 : $ARG3', (LIB_STD,),
                       ALL_NUM, [['?']*len(ALL_NUM), ALL_NUM, ALL_NUM])]
     
@@ -997,9 +1010,9 @@ def OpsFactory(opsList: List[Operation]) -> None:
     
     ###### Logical Operations ######
     opsList += [Operation('logical_and', '$DEST = ($ARG1 && $ARG2)', (LIB_STD,),
-                      BOOL, [BOOL, BOOL], alias=ast.And)]
+                      BOOL, [BOOL, BOOL], aliases=ast.And)]
     opsList += [Operation('logical_or', '$DEST = ($ARG1 || $ARG2)', (LIB_STD,),
-                      BOOL, [BOOL, BOOL], alias=ast.Or)]
+                      BOOL, [BOOL, BOOL], aliases=ast.Or)]
     # TODO: complex and string comparisons
     opsList += [Operation(ast.Gt, '$DEST = ($ARG1 > $ARG2)', (LIB_STD,), 
                      ['?']*len(REAL_NUM), [REAL_NUM, REAL_NUM])]
@@ -1086,9 +1099,9 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                    [np.dtype('float64').char] * 6, [BIG_INT + DECIMAL], vecType=TYPE_LOOP) ] 
     
     opsList += [ Operation( 'rad2deg', '$DEST = $ARG1 * ($DTYPE0)57.2957795130823229', LIB_STD,
-                   DECIMAL, [DECIMAL], vecType=TYPE_LOOP, alias='degrees' ) ] 
+                   DECIMAL, [DECIMAL], vecType=TYPE_LOOP, aliases='degrees' ) ] 
     opsList += [ Operation( 'deg2rad', '$DEST = $ARG1 * ($DTYPE0)0.017453292519943295', LIB_STD,
-                   DECIMAL, [DECIMAL], vecType=TYPE_LOOP, alias='radians' ) ] 
+                   DECIMAL, [DECIMAL], vecType=TYPE_LOOP, aliases='radians' ) ] 
 
     # These are tricky, frexp and ldexp are using ARG2 as return pointers... 
     # We don't support multiple returns at present.
@@ -1205,7 +1218,7 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                         LONGx2, [DECIMAL], vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'lround', '$DEST = lround($ARG1)', LIB_STD,
                         LONGx2, [DECIMAL], vecType=TYPE_LOOP ) ]
-        opsList += [ Operation( 'nearbyint', '$DEST = nearbyint($ARG1)', LIB_STD,
+        opsList += [ Operation( 'nearbyint', '$DEST = ($DTYPE0)nearbyint($ARG1)', LIB_STD,
                         LONGx2, [DECIMAL], vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'nextafter', '$DEST = nextafter($ARG1, $ARG2)', LIB_STD,
                        DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP ) ] 
@@ -1224,7 +1237,7 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
                        DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]
         opsList += [ Operation( 'round', '$DEST = round($ARG1)', LIB_STD,
                         INTx2, [DECIMAL], vecType=TYPE_LOOP ) ]
-        opsList += [ Operation( 'scalbln', '$DEST = scalbln($ARG1, $ARG2)', LIB_STD,
+        opsList += [ Operation( 'scalbln', '$DEST = scalbln($ARG1, (long)$ARG2)', LIB_STD,
                        DECIMAL, [DECIMAL, LONGx2], vecType=TYPE_LOOP ) ] 
         opsList += [ Operation( 'gamma', '$DEST = tgamma($ARG1)', LIB_STD,
                        DECIMAL, [DECIMAL], vecType=TYPE_LOOP ) ]
@@ -1276,7 +1289,7 @@ def FunctionFactory(opsList: List[Operation], C11: bool=True, mkl: bool=False ) 
     opsList += [ Operation( 'expm1', 'nc_expm1(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ] 
     opsList += [ Operation( 'pow', 'nc_pow(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE2 *)x2, sb2, ($DTYPE0 *)dest)', 
-                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED, alias=ast.Pow ) ]  
+                          LIB_STD, COMPLEX, [COMPLEX, COMPLEX], vecType=TYPE_STRIDED, aliases=ast.Pow ) ]  
     opsList += [ Operation( 'arccos', 'nc_acos(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
                           LIB_STD, COMPLEX, [COMPLEX], vecType=TYPE_STRIDED ) ]
     opsList += [ Operation( 'arccosh', 'nc_acosh(task_size, ($DTYPE1 *)x1, sb1, ($DTYPE0 *)dest)', 
@@ -1458,7 +1471,8 @@ def generate(body_stub: str='interp_body_stub.cpp', header_stub: str='interp_hea
     with open(os.path.join(NE_DIR, 'tests/autotest_GENERATED.py'), 'w') as f_test:
         f_test.write(autotestHead)
         for op in opsList:
-            f_test.write(op.test_Auto)
+            if op.autotest:
+                f_test.write(op.test_Auto)
             
         f_test.write(autotestTail)
             
