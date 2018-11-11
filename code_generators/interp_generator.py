@@ -960,8 +960,15 @@ def OpsFactory(opsList: List[Operation]) -> None:
     # Floor division
     # Now C++ integer division is truncation and Python is floor, so 
     # probably this does need to be floordiv instead...
+    opsList += [Operation('floordiv', '''
+        if($ARG2) {
+            $DEST = $ARG1 / $ARG2;
+            $DEST = $DEST > 0 ? $DEST : $DEST - 1;
+        } else {
+            $DEST = 0;
+        }''', (LIB_STD,), ALL_INT, [ALL_INT, ALL_INT], aliases=ast.FloorDiv)]
     opsList += [Operation('floordiv', '$DEST = $ARG2 ? ($DTYPE0)floor($ARG1 / $ARG2) : 0',
-                            (LIB_STD,), REAL_NUM, [REAL_NUM, REAL_NUM], aliases=ast.FloorDiv)]
+                            (LIB_STD,), DECIMAL, [DECIMAL, DECIMAL], aliases=ast.FloorDiv)]
 
     
     ###### Mathematical functions ######
@@ -976,23 +983,43 @@ def OpsFactory(opsList: List[Operation]) -> None:
     opsList += [Operation('power', '$DEST = pow($ARG1, $ARG2)', (LIB_STD,),
                       DECIMAL, [DECIMAL, DECIMAL], aliases=[ast.Pow, 'pow'])]
     
-    # TODO: integer mod
-    # The fancy method for floating-point modulo does not work nicely for 
-    # integers. In fact even the C-standard 'x1 % x2' is faulting.
-    # opsList += [Operation('mod', '$DEST = $ARG1 % $ARG2', (LIB_STD,),
-    #                  ALL_INT, [ALL_INT, ALL_INT], aliases=ast.Mod )]
+    # C will seg-fault if you call modulo with ARG2 == 0 on integers, so it 
+    # needs a guard.
+    #
+    # Python apparently uses a fairly custom algorithm, probably because integer
+    # division always rounds towards -Infinity.
+    # 
+    # see: fast_flood_div and fast_mod:
+    #   https://github.com/python/cpython/blob/master/Objects/longobject.c
+    # Basically the issue is floor division. If one argument is negative, then
+    # C++ integer division truncates the 'wrong' way relative to Python's standard.
+    # i.e. for Python the definition is:
+    #   x % y => x - (x // y) * y
+    # There's probably some way to make this branchless, but I don't see it at 
+    # the moment. Overall this is inefficient but we are bound by the strange 
+    # standards for remainder that Python has.
+    opsList += [Operation('mod', '''
+        if ($ARG2 == 0){ 
+            $DEST = 0; // Typical convention is to return $ARG1 but Python is special
+        } else if ((($ARG1 < 0) && ($ARG2 > 0)) || (($ARG1 > 0) && ($ARG2 < 0))) {
+            $DTYPE0 truncated = $ARG1/$ARG2;
+            // If the division is completely even, don't round down.
+            $DEST = (($ARG1 % $ARG2) == 0) ? ($ARG1 - truncated * $ARG2) : ($ARG1 - (truncated-1) * $ARG2); 
+        } else {
+            $DEST = $ARG1 % $ARG2;
+        }''', (LIB_STD,), ALL_INT, [ALL_INT, ALL_INT], aliases=[ast.Mod, 'remainder'])]
     opsList += [Operation('mod', '$DEST = $ARG1 - floor($ARG1/$ARG2) * $ARG2', (LIB_STD,),
-                      DECIMAL, [DECIMAL, DECIMAL], aliases=ast.Mod )]
+                      DECIMAL, [DECIMAL, DECIMAL], aliases=[ast.Mod, 'remainder'] )]
     
-    opsList += [ Operation( 'fmod', '$DEST = fmod($ARG1, $ARG2)', LIB_STD,
-                   DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP, aliases=ast.Mod ) ] 
+    opsList += [Operation('fmod', '$DEST = fmod($ARG1, $ARG2)', LIB_STD,
+                   DECIMAL, [DECIMAL, DECIMAL], vecType=TYPE_LOOP, aliases=ast.Mod)] 
     opsList += [Operation('where', '$DEST = $ARG1 ? $ARG2 : $ARG3', (LIB_STD,),
                       ALL_NUM, [['?']*len(ALL_NUM), ALL_NUM, ALL_NUM])]
     
     opsList += [Operation('ones_like', '$DEST = 1', (LIB_STD,),
                      REAL_NUM, [REAL_NUM])]
     
-    opsList += [Operation( ast.USub, '$DEST = -$ARG1', (LIB_STD,),
+    opsList += [Operation(ast.USub, '$DEST = -$ARG1', (LIB_STD,),
                      SIGNED_NUM, [SIGNED_NUM])]
     
     ###### Bitwise Operations ######
