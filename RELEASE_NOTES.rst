@@ -4,6 +4,7 @@ Release notes for NumExpr 3.0 series
 
 Changes from 3.0.1 to 3.0.1a4
 ---------------------------
+* Added integer mod/remainder and integer floor division.
 * At the suggestion of Gowtham Sviaraman, added support for integer power.
   As with NumPy, the integer power will overflow. Also added an analog of 
   `numpy.float_power`.
