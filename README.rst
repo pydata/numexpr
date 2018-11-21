@@ -9,6 +9,7 @@ NumExpr: Fast numerical expression evaluator for NumPy
 :Travis CI: |travis|
 :Appveyor: |appveyor|
 :PyPi: |version|
+:DOI: |doi|
 :readthedocs: |docs|
 
 .. |travis| image:: https://travis-ci.org/pydata/numexpr.png?branch=master
@@ -17,6 +18,8 @@ NumExpr: Fast numerical expression evaluator for NumPy
         :target: https://ci.appveyor.com/project/robbmcleod/numexpr
 .. |docs| image:: https://readthedocs.org/projects/numexpr/badge/?version=latest
         :target: http://numexpr.readthedocs.io/en/latest
+.. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1492916.svg
+        :target:  https://zenodo.org/record/1492916
 .. |version| image:: https://img.shields.io/pypi/v/numexpr.png
         :target: https://pypi.python.org/pypi/numexpr
 
