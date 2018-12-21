@@ -7,6 +7,8 @@ Changes from 2.6.8 to 2.6.9
 
 - Thanks to Mike Toews for more robust handling of the thread-setting 
   environment variables.
+- With Appveyor updating to Python 3.7.1, wheels for Python 3.7 are now 
+  available in addition to those for other OSes.
 
 Changes from 2.6.7 to 2.6.8
 ---------------------------

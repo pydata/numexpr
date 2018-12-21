@@ -1,24 +1,23 @@
 ==========================
- Announcing Numexpr 2.6.8
+ Announcing Numexpr 2.6.9
 ==========================
 
 Hi everyone, 
 
-#XXX version-specific blurb XXX#
+This is a version-bump release to provide wheels for Python 3.7.1 on Windows 
+platforms.
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.6.7 to 2.6.8
+Changes from 2.6.8 to 2.6.9
 ---------------------------
 
-- Add check to make sure that `f_locals` is not actually `f_globals` when we 
-  do the `f_locals` clear to avoid the #310 memory leak issue.
-- Compare NumPy versions using `distutils.version.LooseVersion` to avoid issue
-  #312 when working with NumPy development versions.
-- As part of `multibuild`, wheels for Python 3.7 for Linux and MacOSX are now 
-  available on PyPI.
+- Thanks to Mike Toews for more robust handling of the thread-setting 
+  environment variables.
+- With Appveyor updating to Python 3.7.1, wheels for Python 3.7 are now 
+  available in addition to those for other OSes.
 
 What's Numexpr?
 ---------------
