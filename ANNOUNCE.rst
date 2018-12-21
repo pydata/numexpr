@@ -1,23 +1,19 @@
-==========================
- Announcing Numexpr 2.6.9
-==========================
+===========================
+ Announcing Numexpr 2.6.10
+===========================
 
 Hi everyone, 
 
-This is a version-bump release to provide wheels for Python 3.7.1 on Windows 
-platforms.
+- #XXX version-specific blurb XXX#
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.6.8 to 2.6.9
----------------------------
+Changes from 2.6.9 to 2.6.10
+----------------------------
 
-- Thanks to Mike Toews for more robust handling of the thread-setting 
-  environment variables.
-- With Appveyor updating to Python 3.7.1, wheels for Python 3.7 are now 
-  available in addition to those for other OSes.
+- #XXX version-specific blurb XXX#
 
 What's Numexpr?
 ---------------

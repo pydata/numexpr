@@ -18,8 +18,8 @@ NumExpr: Fast numerical expression evaluator for NumPy
         :target: https://ci.appveyor.com/project/robbmcleod/numexpr
 .. |docs| image:: https://readthedocs.org/projects/numexpr/badge/?version=latest
         :target: http://numexpr.readthedocs.io/en/latest
-.. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1492916.svg
-        :target:  https://zenodo.org/record/1492916
+.. |doi| image:: https://zenodo.org/badge/doi/10.5281/zenodo.2483274.svg
+        :target:  https://doi.org/10.5281/zenodo.2483274
 .. |version| image:: https://img.shields.io/pypi/v/numexpr.png
         :target: https://pypi.python.org/pypi/numexpr
 
