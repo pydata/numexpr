@@ -10,6 +10,7 @@
 
 import os
 import subprocess
+import warnings
 
 from numexpr.interpreter import _set_num_threads, MAX_THREADS
 from numexpr import use_vml
@@ -127,7 +128,13 @@ def detect_number_of_threads():
         try:
             nthreads = int(os.environ.get('OMP_NUM_THREADS', ''))
         except ValueError:
-            nthreads = min(detect_number_of_cores(), 8)
+            nthreads = detect_number_of_cores()
+            if (nthreads > 8):
+                warnings.warn(
+                    'System has %s available cores, but NUMEXPR_NUM_THREADS '
+                    'and OMP_NUM_THREADS are both undefined. Falling back to '
+                    '%s threads for safety.')
+                nthreads = 8
 
     # Check that we don't surpass the MAX_THREADS in interpreter.cpp
     if nthreads > MAX_THREADS:
