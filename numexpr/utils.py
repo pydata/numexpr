@@ -127,7 +127,7 @@ def detect_number_of_threads():
         try:
             nthreads = int(os.environ.get('OMP_NUM_THREADS', ''))
         except ValueError:
-            nthreads = detect_number_of_cores()
+            nthreads = min(detect_number_of_cores(), 8)
 
     # Check that we don't surpass the MAX_THREADS in interpreter.cpp
     if nthreads > MAX_THREADS:
