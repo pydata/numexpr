@@ -1064,7 +1064,7 @@ def print_versions():
 
     np_version = LooseVersion(np.__version__)
 
-    if minimum_numpy_version < np_version:
+    if np_version < minimum_numpy_version:
         print('*Warning*: NumPy version is lower than recommended: %s < %s' % (np_version, minimum_numpy_version))
     print('-=' * 38)
     print('Numexpr version:   %s' % numexpr.__version__)
