@@ -21,10 +21,8 @@
 #define BLOCK_SIZE2 16
 #endif
 
-/* The maximum number of threads (for some static arrays).
- * Choose this large enough for most monsters out there.
-   Keep in sync this with the number in __init__.py. */
-// #define MAX_THREADS 4096
+// The default threadpool size. It's prefer that the user set this via an 
+// environment variable, "NUMEXPR_MAX_THREADS"
 #define DEFAULT_MAX_THREADS 64
 
 #if defined(_WIN32)

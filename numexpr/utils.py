@@ -8,8 +8,12 @@
 #  rights to use.
 ####################################################################
 
+import logging
+log = logging.getLogger(__name__)
+
 import os
 import subprocess
+import platform
 
 from numexpr.interpreter import _set_num_threads, MAX_THREADS
 from numexpr import use_vml
@@ -93,7 +97,54 @@ def set_num_threads(nthreads):
     old_nthreads = _set_num_threads(nthreads)
     return old_nthreads
 
+def _init_num_threads():
+    """
+    Detects the environment variable 'NUMEXPR_MAX_THREADS' to set the threadpool 
+    size, and if necessary the slightly redundant 'NUMEXPR_NUM_THREADS' or 
+    'OMP_NUM_THREADS' env vars to set the initial number of threads used by 
+    the virtual machine.
+    """
+    # Any platform-specific short-circuits
+    if 'sparc' in platform.machine():
+        log.warning('The number of threads have been set to 1 because problems related '
+                  'to threading have been reported on some sparc machine. '
+                  'The number of threads can be changed using the "set_num_threads" '
+                  'function.')
+        set_num_threads(1)
+        return 1
 
+    env_configured = False
+    n_cores = detect_number_of_cores()
+    if 'NUMEXPR_MAX_THREADS' in os.environ:
+        # The user has configured NumExpr in the expected way, so suppress logs.
+        env_configured = True
+        n_cores = MAX_THREADS
+    else:
+        # The use has not set 'NUMEXPR_MAX_THREADS', so likely they have not 
+        # configured NumExpr as desired, so we emit info logs.
+        if n_cores > MAX_THREADS:
+            log.info('Note: detected %d virtual cores but NumExpr set to maximum of %d, check "NUMEXPR_MAX_THREADS" environment variable.'%(n_cores, MAX_THREADS))
+        if n_cores > 8:
+            # The historical 'safety' limit.
+            log.info('Note: NumExpr detected %d cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.'%n_cores)
+            n_cores = 8
+
+    # Now we check for 'NUMEXPR_NUM_THREADS' or 'OMP_NUM_THREADS' to set the 
+    # actual number of threads used.
+    if 'NUMEXPR_NUM_THREADS' in os.environ:
+        requested_threads = int(os.environ['NUMEXPR_NUM_THREADS'])
+    elif 'OMP_NUM_THREADS' in os.environ:
+        requested_threads = int(os.environ['OMP_NUM_THREADS'])
+    else:
+        requested_threads = n_cores
+        if not env_configured:
+            log.info('NumExpr defaulting to %d threads.'%n_cores)
+
+    # The C-extension function performs its own checks against `MAX_THREADS`
+    set_num_threads(requested_threads)
+    return requested_threads
+
+    
 def detect_number_of_cores():
     """
     Detects the number of cores on a system. Cribbed from pp.
@@ -119,8 +170,10 @@ def detect_number_of_cores():
 
 def detect_number_of_threads():
     """
+    DEPRECATED: use `_init_num_threads` instead.
     If this is modified, please update the note in: https://github.com/pydata/numexpr/wiki/Numexpr-Users-Guide
     """
+    log.warning('Deprecated, use `init_num_threads` instead.')
     try:
         nthreads = int(os.environ.get('NUMEXPR_NUM_THREADS', ''))
     except ValueError:

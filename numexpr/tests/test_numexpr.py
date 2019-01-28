@@ -14,6 +14,7 @@ import sys
 import platform
 import warnings
 from contextlib import contextmanager
+import subprocess
 
 import numpy as np
 from numpy import (
@@ -319,7 +320,6 @@ class test_numexpr(TestCase):
         # Check for issue #313, whereby clearing f_locals also clear f_globals
         # if in the top-frame. This cannot be done inside `unittest` as it is always 
         # executing code in a child frame.
-        import subprocess
         script = r';'.join([
                 r"import numexpr as ne",
                 r"a=10",
@@ -333,7 +333,7 @@ class test_numexpr(TestCase):
                 r"a += 1",
             ])
         # Raises CalledProcessError on a non-normal exit
-        check = subprocess.check_call('{0} -c "{1}"'.format(sys.executable, script), shell=True)
+        check = subprocess.check_call([sys.executable, '-c', script])
         # Ideally this test should also be done against ipython but it's not 
         # a requirement.
 
@@ -956,17 +956,39 @@ def _environment(key, value):
         else:
             del os.environ[key]
 
-
 # Test cases for the threading configuration
 class test_threading_config(TestCase):
+    def test_max_threads_unset(self):
+        # Has to be done in a subprocess as `importlib.reload` doesn't let us 
+        # re-initialize the threadpool
+        script = '\n'.join([
+                "import os",
+                "if 'NUMEXPR_MAX_THREADS' in os.environ: os.environ.pop('NUMEXPR_MAX_THREADS')",
+                "import numexpr",
+                "assert(numexpr.nthreads <= 8)",
+                "exit(0)"])
+        subprocess.check_call(['python', '-c', script])
+
+    def test_max_threads_set(self):
+        # Has to be done in a subprocess as `importlib.reload` doesn't let us 
+        # re-initialize the threadpool
+        script = '\n'.join([
+                "import os",
+                "os.environ['NUMEXPR_MAX_THREADS'] = '4'",
+                "import numexpr",
+                "assert(numexpr.MAX_THREADS == 4)",
+                "exit(0)"])
+        subprocess.check_call(['python', '-c', script])
+
     def test_numexpr_num_threads(self):
         with _environment('OMP_NUM_THREADS', '5'):
+            # NUMEXPR_NUM_THREADS has priority
             with _environment('NUMEXPR_NUM_THREADS', '3'):
-                self.assertEquals(3, numexpr.detect_number_of_threads())
+                self.assertEquals(3, numexpr._init_num_threads())
 
     def test_omp_num_threads(self):
         with _environment('OMP_NUM_THREADS', '5'):
-            self.assertEquals(5, numexpr.detect_number_of_threads())
+            self.assertEquals(5, numexpr._init_num_threads())
 
 
 # Case test for threads

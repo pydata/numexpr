@@ -59,6 +59,33 @@ different parameters to the :code:`set_vml_accuracy_mode()` and
 :code:`set_vml_num_threads()` functions in the script so as to see how it would
 affect performance).
 
+Threadpool Configuration
+------------------------
+
+Threads are spawned at import-time, with the number being set by the environment 
+variable ``NUMEXPR_MAX_THREADS``. The default maximum thread count is **64**. 
+There is no advantage to spawning more threads than the number of virtual cores
+available on the computing node. Practically NumExpr scales at large thread 
+count (`> 8`) only on very large matrices (`> 2**22`). Spawning large numbers 
+of threads is not free, and can increase import times for NumExpr or packages 
+that import it such as Pandas or PyTables.
+
+If desired, the number of threads in the pool used can be adjusted via an 
+environment variable, ``NUMEXPR_NUM_THREADS`` (preferred) or ``OMP_NUM_THREADS``. 
+Typically only setting ``NUMEXPR_MAX_THREADS`` is sufficient; the number of 
+threads used can be adjusted dynamically via ``numexpr.set_num_threads(int)``. 
+The number of threads can never exceed that set by ``NUMEXPR_MAX_THREADS``.
+
+If the user has not configured the environment prior to importing NumExpr, info 
+logs will be generated, and the initial number of threads _that are used_ will 
+be set to the number of cores detected in the system or 8, whichever is *less*. 
+
+Usage::
+
+    import os
+    os.environ['NUMEXPR_MAX_THREADS'] = '16'
+    os.environ['NUMEXPR_NUM_THREADS'] = '8'
+    import numexpr as ne
 
 Usage Notes
 -----------
@@ -239,19 +266,7 @@ General routines
 
   * :code:`detect_number_of_cores()`: Detects the number of cores on a system.
 
-**Note on the maximum number of threads:** Threads are spawned at import-time, 
-with the number being set by the environment variable ``NUMEXPR_MAX_THREADS``.
-Example:
 
-    :code:`import os; os.environ['NUMEXPR_MAX_THREADS'] = '16'`
-
-The default maximum thread count is 64. The initial number of threads _that are 
-used_ will be set to the number of cores detected in the system or 8, whichever 
-is **lower**. For historical reasons, the :code:`NUMEXPR_NUM_THREADS` environment 
-variable is also honored at initialization time and, if defined, the initial 
-number of threads will be set to this value instead.  Alternatively, the 
-`OMP_NUM_THREADS` environment variable is also honored, but beware because that 
-might affect to other OpenMP applications too. 
 
 
 

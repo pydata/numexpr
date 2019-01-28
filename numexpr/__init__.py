@@ -37,35 +37,19 @@ import os, os.path
 import platform
 from numexpr.expressions import E
 from numexpr.necompiler import NumExpr, disassemble, evaluate, re_evaluate
-# from numexpr.tests import test, print_versions
 from numexpr.interpreter import MAX_THREADS
-from numexpr.utils import (
+from numexpr.utils import (_init_num_threads,
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
     set_num_threads, detect_number_of_cores, detect_number_of_threads)
 
 # Detect the number of cores
 ncores = detect_number_of_cores()
-nthreads = detect_number_of_threads()
-
 # Initialize the number of threads to be used
-if 'sparc' in platform.machine():
-    import warnings
-
-    warnings.warn('The number of threads have been set to 1 because problems related '
-                  'to threading have been reported on some sparc machine. '
-                  'The number of threads can be changed using the "set_num_threads" '
-                  'function.')
-    set_num_threads(1)
-else:
-    set_num_threads(nthreads)
-
+nthreads = _init_num_threads()
 # The default for VML is 1 thread (see #39)
 set_vml_num_threads(1)
 
 import version
-
-dirname = os.path.dirname(__file__)
-
 __version__ = version.version
 
 def print_versions():
