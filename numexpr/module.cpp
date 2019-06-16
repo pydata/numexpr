@@ -366,12 +366,15 @@ add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
 
     o = PyLong_FromLong(name);
     s = PyBytes_FromString(sname);
-    if (!s) {
+    if (!o || !s) {
         PyErr_SetString(PyExc_RuntimeError, routine_name);
-        return -1;
+        r = -1;
     }
-    r = PyDict_SetItem(d, s, o);
+    else {
+        r = PyDict_SetItem(d, s, o);
+    }
     Py_XDECREF(o);
+    Py_XDECREF(s);
     return r;
 }
 
