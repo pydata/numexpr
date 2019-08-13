@@ -1,19 +1,35 @@
-===========================
- Announcing Numexpr 2.6.10
-===========================
+=========================
+ Announcing Numexpr 2.7.0
+=========================
 
 Hi everyone, 
 
-- #XXX version-specific blurb XXX#
+This is a minor version bump for NumExpr. We would like to highlight the changes
+made in 2.6.9 (which in retrospec should have been a minor version bump), where
+the maximum number of threads spawned can be limited by setting the environment 
+variable "NUMEXPR_MAX_THREADS". If this variable is not set, in 2.7.0 the 
+historical limit of 8 threads will be used. The lack of a check caused some 
+problems on very large hosts in cluster environments in 2.6.9.  
+
+In addition, we are officially dropping Python 2.6 support in this release as 
+we cannot perform continuous integration for it.
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.6.9 to 2.6.10
+Changes from 2.6.9 to 2.7.0
 ----------------------------
 
-- #XXX version-specific blurb XXX#
+- The default number of 'safe' threads has been restored to the historical limit 
+  of 8, if the environment variable "NUMEXPR_MAX_THREADS" has not been set.
+- Thanks to @eltoder who fixed a small memory leak.
+- Support for Python 2.6 has been dropped, as it is no longer available via 
+  TravisCI.
+- A typo in the test suite that had a less than rather than greater than symbol 
+  in the NumPy version check has been corrected thanks to dhomeier.
+- The file `site.cfg` was being accidently included in the sdists on PyPi. 
+  It has now been excluded.
 
 What's Numexpr?
 ---------------
