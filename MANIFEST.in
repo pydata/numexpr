@@ -4,7 +4,6 @@ include *.rst *.txt *.cfg site.cfg.example
 
 recursive-include numexpr *.cpp *.hpp *.py
 recursive-include numexpr/win32 *.c *.h
-exclude numexpr/__config__.py
-exclude RELEASING.txt
+exclude numexpr/__config__.py RELEASING.txt site.cfg
 
 recursive-include bench *.py
