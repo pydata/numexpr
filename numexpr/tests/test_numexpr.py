@@ -967,7 +967,7 @@ class test_threading_config(TestCase):
                 "import numexpr",
                 "assert(numexpr.nthreads <= 8)",
                 "exit(0)"])
-        subprocess.check_call(['python', '-c', script])
+        subprocess.check_call([sys.executable, '-c', script])
 
     def test_max_threads_set(self):
         # Has to be done in a subprocess as `importlib.reload` doesn't let us 
@@ -978,7 +978,7 @@ class test_threading_config(TestCase):
                 "import numexpr",
                 "assert(numexpr.MAX_THREADS == 4)",
                 "exit(0)"])
-        subprocess.check_call(['python', '-c', script])
+        subprocess.check_call([sys.executable, '-c', script])
 
     def test_numexpr_num_threads(self):
         with _environment('OMP_NUM_THREADS', '5'):
