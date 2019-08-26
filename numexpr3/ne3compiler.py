@@ -299,7 +299,8 @@ def evaluate(expr: str, name: str=None, lib: int=LIB_STD,
             # need to assemble a new NumExpr object
             pass
 
-    neObj = NumExpr(expr, lib=lib, casting=casting, stackDepth=stackDepth+1)
+    neObj = NumExpr(expr, lib=lib, casting=casting, stackDepth=stackDepth+1,
+                    local_dict=local_dict)
     return neObj.run(verify=False)
     # End of ne3.evaluate()
 
