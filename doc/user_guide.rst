@@ -29,7 +29,8 @@ built in the standard Python way:
 
 You must have a C-compiler (i.e. MSVC on Windows and GCC on Linux) installed.
 
-You can test :code:`numexpr` with:
+Then change to a directory that is not the repository directory (e.g. `/tmp`) and 
+test :code:`numexpr` with:
 
 .. code-block:: bash
 
