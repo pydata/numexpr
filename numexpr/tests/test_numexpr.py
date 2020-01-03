@@ -505,7 +505,7 @@ class test_evaluate(TestCase):
         # Execution order set here so as to not use too many threads
         # during the rest of the execution.  See #33 for details.
         def test_changing_nthreads_00_inc(self):
-            a = linspace(-1, 1, 1e6)
+            a = linspace(-1, 1, 1000000)
             b = ((.25 * a + .75) * a - 1.5) * a - 2
             for nthreads in range(1, 7):
                 numexpr.set_num_threads(nthreads)
@@ -513,7 +513,7 @@ class test_evaluate(TestCase):
                 assert_array_almost_equal(b, c)
 
         def test_changing_nthreads_01_dec(self):
-            a = linspace(-1, 1, 1e6)
+            a = linspace(-1, 1, 1000000)
             b = ((.25 * a + .75) * a - 1.5) * a - 2
             for nthreads in range(6, 1, -1):
                 numexpr.set_num_threads(nthreads)
