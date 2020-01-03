@@ -23,11 +23,11 @@ environment:
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python38"
-      PYTHON_VERSION: "3.8.1"
+      PYTHON_VERSION: "3.8.0"
       PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\Python38-x64"
-      PYTHON_VERSION: "3.8.1"
+      PYTHON_VERSION: "3.8.0"
       PYTHON_ARCH: "64"
 
 install:
