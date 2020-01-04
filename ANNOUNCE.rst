@@ -1,10 +1,11 @@
 =========================
- Announcing Numexpr 2.7.0
+ Announcing Numexpr 2.7.1
 =========================
 
 Hi everyone, 
 
-#XXX version-specific blurb XXX#
+This is a version bump to add support for Python 3.8 and NumPy 1.18. We are also 
+removing support for Python 3.4.
 
 Project documentation is available at:
 
@@ -13,7 +14,11 @@ http://numexpr.readthedocs.io/
 Changes from 2.7.0 to 2.7.1
 ----------------------------
 
-#XXX version-specific blurb XXX#
+- Python 3.8 support has been added.
+- Python 3.4 support is discontinued.
+- The tests are now compatible with NumPy 1.18.
+- `site.cfg.example` was updated to use the `libraries` tag instead of `mkl_libs`,
+  which is recommended for newer version of NumPy.
 
 What's Numexpr?
 ---------------

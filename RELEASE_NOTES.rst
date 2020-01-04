@@ -1,11 +1,15 @@
-=====================================
- Release notes for Numexpr 2.6 series
-=====================================
+====================================
+Release notes for Numexpr 2.7 series
+====================================
 
 Changes from 2.7.0 to 2.7.1
 ----------------------------
 
-#XXX version-specific blurb XXX#
+- Python 3.8 support has been added.
+- Python 3.4 support is discontinued.
+- The tests are now compatible with NumPy 1.18.
+- `site.cfg.example` was updated to use the `libraries` tag instead of `mkl_libs`,
+  which is recommended for newer version of NumPy.
 
 Changes from 2.6.9 to 2.7.0
 ----------------------------
