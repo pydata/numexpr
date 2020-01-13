@@ -20,7 +20,8 @@ from numexpr import use_vml
 
 if use_vml:
     from numexpr.interpreter import (
-        _get_vml_version, _set_vml_accuracy_mode, _set_vml_num_threads)
+        _get_vml_version, _set_vml_accuracy_mode, _set_vml_num_threads,
+        _get_vml_num_threads)
 
 
 def get_vml_version():
@@ -76,6 +77,21 @@ def set_vml_num_threads(nthreads):
     """
     if use_vml:
         _set_vml_num_threads(nthreads)
+
+def get_vml_num_threads():
+    """
+    Gets the maximum number of threads to be used in VML operations.
+
+    This function is equivalent to the call
+    `mkl_domain_get_max_threads (MKL_DOMAIN_VML)` in the MKL
+    library.  See:
+
+    http://software.intel.com/en-us/node/522118
+
+    for more info about it.
+    """
+    if use_vml:
+        return _get_vml_num_threads()
 
 
 def set_num_threads(nthreads):

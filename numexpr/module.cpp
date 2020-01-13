@@ -328,6 +328,13 @@ _set_vml_num_threads(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+static PyObject *
+_get_vml_num_threads(PyObject *self, PyObject *args)
+{
+    int max_num_threads = mkl_domain_get_max_threads (MKL_DOMAIN_VML);
+    return Py_BuildValue("i", max_num_threads);
+}
+
 #endif
 
 static PyObject *
@@ -348,6 +355,8 @@ static PyMethodDef module_methods[] = {
      "Set accuracy mode for VML functions."},
     {"_set_vml_num_threads", _set_vml_num_threads, METH_VARARGS,
      "Suggests a maximum number of threads to be used in VML operations."},
+    {"_get_vml_num_threads", _get_vml_num_threads, METH_VARARGS,
+     "Gets the maximum number of threads to be used in VML operations."},
 #endif
     {"_set_num_threads", _set_num_threads, METH_VARARGS,
      "Suggests a maximum number of threads to be used in operations."},
