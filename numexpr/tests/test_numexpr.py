@@ -990,6 +990,16 @@ class test_threading_config(TestCase):
         with _environment('OMP_NUM_THREADS', '5'):
             self.assertEquals(5, numexpr._init_num_threads())
 
+    def test_vml_threads_round_trip(self):
+        n_threads = 3
+        if use_vml:
+            numexpr.utils.set_vml_num_threads(n_threads)
+            set_threads = numexpr.utils.get_vml_num_threads()
+            self.assertEquals(n_threads, set_threads)
+        else:
+            self.assertIsNone(numexpr.utils.set_vml_num_threads(n_threads))
+            self.assertIsNone(numexpr.utils.get_vml_num_threads())
+
 
 # Case test for threads
 class test_threading(TestCase):
