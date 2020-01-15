@@ -1,25 +1,22 @@
 environment:
   global:
-    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
-    # /E:ON and /V:ON options are not enabled in the batch script intepreter
-    # See: http://stackoverflow.com/a/13751649/163740
-    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C"
 
   matrix:
     - PYTHON: "C:\\Python27"
-      PYTHON_VERSION: "2.7.13"
+      PYTHON_VERSION: "2.7.17"
       PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\Python27-x64"
-      PYTHON_VERSION: "2.7.13"
+      PYTHON_VERSION: "2.7.17"
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4.6"
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.9"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4.6"
+    - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5.9"
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python38"
@@ -39,7 +36,7 @@ install:
 
   # Install Python (from the official .msi of http://python.org) and pip when
   # not already installed.
-  - "powershell ./appveyor/install.ps1"
+  # - "powershell ./appveyor/install.ps1"
 
   # Prepend newly installed Python to the PATH of this build (this cannot be
   # done from inside the powershell script as it would require to restart
@@ -54,7 +51,7 @@ install:
   - "%CMD_IN_ENV% pip install --timeout=60 -r appveyor/requirements.txt"
   - "%CMD_IN_ENV% python setup.py bdist_wheel bdist_wininst"
 
-  # Install the genreated wheel package to test it
+  # Install the generated wheel package to test it
   - "pip install --pre --no-index --find-links dist/ numexpr"
 
 build: false
@@ -64,13 +61,10 @@ test_script:
   # installed library.
   - "mkdir empty_folder"
   - "cd empty_folder"
-  - "python -c \"import sys;import numexpr;sys.exit(0 if numexpr.test().wasSuccessful() else 1)\""
+  - "python -c \"import sys; import numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)\""
   - "cd .."
 
 artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
   - path: dist\*
 
-#on_success:
-#  - TODO: upload the content of dist/*.whl to a public wheelhouse
-#
