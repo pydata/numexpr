@@ -10,7 +10,7 @@ import numpy as np
 import numexpr as ne
 from time import time
 
-N = int(5e7)
+N = int(2**26)
 
 x = np.linspace(0, 1, N)
 y = np.linspace(0, 1, N)
@@ -33,7 +33,13 @@ t1 = time()
 gbs = working_set_GB / (t1-t0)
 print("Time for a transcendental expression: %.3f s / %.3f GB/s" % (t1-t0, gbs))
 
-print("Numexpr version: %s. Using MKL: %s" % (ne.__version__, ne.use_vml))
+if ne.use_vml:
+    ne.set_vml_num_threads(1)
+    ne.set_num_threads(8)
+    print("NumExpr version: %s, Using MKL ver. %s, Num threads: %s" % (ne.__version__, ne.get_vml_version(), ne.nthreads))
+else:
+    ne.set_num_threads(8)
+    print("NumExpr version: %s, Not Using MKL, Num threads: %s" % (ne.__version__, ne.nthreads))
 
 t0 = time()
 ne.evaluate('2*y + 4*x', out = z)

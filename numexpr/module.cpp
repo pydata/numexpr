@@ -428,6 +428,7 @@ initinterpreter()
     }
 
 
+
     th_params.memsteps    = (npy_intp**)calloc(sizeof(npy_intp*), global_max_threads);
     th_params.iter        = (NpyIter**)calloc(sizeof(NpyIter*),   global_max_threads);
     th_params.reduce_iter = (NpyIter**)calloc(sizeof(NpyIter*),   global_max_threads);
@@ -490,6 +491,16 @@ initinterpreter()
     if (PyModule_AddObject(m, "maxdims", PyLong_FromLong(NPY_MAXDIMS)) < 0) INITERROR;
 
     if(PyModule_AddIntConstant(m, "MAX_THREADS", global_max_threads) < 0) INITERROR;
+
+    // Let's export the block sizes to Python side for benchmarking comparisons
+    if(PyModule_AddIntConstant(m, "__BLOCK_SIZE1__", BLOCK_SIZE1) < 0) INITERROR;
+    // Export if we are using VML or not
+#ifdef USE_VML
+    if(PyModule_AddObject(m, "use_vml", Py_True) < 0) INITERROR;
+#else
+    if(PyModule_AddObject(m, "use_vml", Py_False) < 0) INITERROR;
+#endif
+
 
 #if PY_MAJOR_VERSION >= 3
     return m;

@@ -9,5 +9,5 @@ start = timer()
 for k in range(10000):
     cexp = ne.evaluate('exp(scaler * x)')
 exec_time=(timer() - start)
-print
+
 print("Execution took", str(round(exec_time, 3)), "seconds")

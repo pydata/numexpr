@@ -14,11 +14,9 @@
 #ifdef USE_VML
 /* The values below have been tuned for a Skylake processor (E3-1245 v5 @ 3.50GHz) */
 #define BLOCK_SIZE1 1024
-#define BLOCK_SIZE2 16
 #else
 /* The values below have been tuned for a Skylake processor (E3-1245 v5 @ 3.50GHz) */
 #define BLOCK_SIZE1 1024
-#define BLOCK_SIZE2 16
 #endif
 
 // The default threadpool size. It's prefer that the user set this via an 

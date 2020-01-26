@@ -23,10 +23,7 @@ for more info about it.
 
 from __config__ import show as show_config, get_info
 
-if get_info('mkl'):
-    use_vml = True
-else:
-    use_vml = False
+from numexpr.interpreter import MAX_THREADS, use_vml, __BLOCK_SIZE1__
 
 is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
 
@@ -37,7 +34,7 @@ import os, os.path
 import platform
 from numexpr.expressions import E
 from numexpr.necompiler import NumExpr, disassemble, evaluate, re_evaluate
-from numexpr.interpreter import MAX_THREADS
+
 from numexpr.utils import (_init_num_threads,
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
     set_num_threads, detect_number_of_cores, detect_number_of_threads)
@@ -47,7 +44,7 @@ ncores = detect_number_of_cores()
 # Initialize the number of threads to be used
 nthreads = _init_num_threads()
 # The default for VML is 1 thread (see #39)
-set_vml_num_threads(1)
+# set_vml_num_threads(1)
 
 import version
 __version__ = version.version
