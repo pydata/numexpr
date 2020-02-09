@@ -964,6 +964,7 @@ class test_threading_config(TestCase):
         script = '\n'.join([
                 "import os",
                 "if 'NUMEXPR_MAX_THREADS' in os.environ: os.environ.pop('NUMEXPR_MAX_THREADS')",
+                "if 'OMP_NUM_THREADS' in os.environ: os.environ.pop('OMP_NUM_THREADS')",
                 "import numexpr",
                 "assert(numexpr.nthreads <= 8)",
                 "exit(0)"])
