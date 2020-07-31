@@ -700,6 +700,8 @@ def getType(a):
         return complex
     if kind == 'S':
         return bytes
+    if kind == 'U':
+        raise ValueError('NumExpr 2 does not support Unicode as a dtype.')
     raise ValueError("unknown type %s" % a.dtype.name)
 
 

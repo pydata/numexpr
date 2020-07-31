@@ -91,8 +91,8 @@ Usage
   array([        NaN,  1.72284457,  1.79067101, ...,  1.09567006,
           0.17523598, -0.09597844])
 
-  >>> s = np.array(['abba', 'abbb', 'abbcdef'])
-  >>> ne.evaluate("'abba' == s")   # string arrays are supported too
+  >>> s = np.array([b'abba', b'abbb', b'abbcdef'])
+  >>> ne.evaluate("b'abba' == s")   # string arrays are supported too
   array([ True, False, False], dtype=bool)
 
 
