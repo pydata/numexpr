@@ -134,7 +134,7 @@ Datatypes supported internally
     * 32-bit single-precision floating point number (float or float32)
     * 64-bit, double-precision floating point number (double or float64)
     * 2x64-bit, double-precision complex number (complex or complex128)
-    * Raw string of bytes (str)
+    * Raw string of bytes (str in Python 2.7, bytes in Python 3+, numpy.str in both cases)
 
 If the arrays in the expression does not match any of these types,
 they will be upcasted to one of the above types (following the usual
@@ -211,7 +211,7 @@ The next are the current supported set:
     * :code:`{real,imag}(complex): float` -- real or imaginary part of complex.
     * :code:`complex(float, float): complex` -- complex from real and imaginary 
       parts.
-    * :code:`contains(str, str): bool` -- returns True for every string in :code:`op1` that 
+    * :code:`contains(np.str, np.str): bool` -- returns True for every string in :code:`op1` that 
       contains :code:`op2`.
 
 Notes
