@@ -356,7 +356,7 @@ class NumExpr(object):
 
             big = NumExpr('')
             
-        TODO: example with 
+        TODO: example
         
         Arguments
         ^^^^^^^^^
@@ -365,7 +365,7 @@ class NumExpr(object):
             
         The values for :code:`a` and :code:`b` will by default be taken from the calling 
         function's frame (through use of :code:`sys._getframe()`). Alternatively, they 
-        can be specifed using the :code:`local_dict` argument.
+        can be specified using the :code:`local_dict` argument.
         
         Multi-line statements, or semi-colon seperated statements, are supported.
 

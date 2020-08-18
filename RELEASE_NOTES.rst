@@ -2,6 +2,11 @@
 Release notes for NumExpr 3.0 series
 =====================================
 
+Changes from 3.0.1a4 to 3.0.1a5
+-------------------------------
+* Fixed an error when `local_dict` was passed as an input argument to a 
+  `NumExpr` initialization.
+
 Changes from 3.0.1 to 3.0.1a4
 ---------------------------
 * Added integer mod/remainder and integer floor division.
