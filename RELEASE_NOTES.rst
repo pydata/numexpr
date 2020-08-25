@@ -5,10 +5,12 @@ Release notes for Numexpr 2.7 series
 Changes from 2.7.1 to 2.7.2
 ---------------------------
 
-- The block size is now exported into the namespace as `numexpr.__BLOCK_SIZE1__`.
+- The block size is now exported into the namespace as `numexpr.__BLOCK_SIZE1__`
+  as a read-only value.
 - If using MKL, the number of threads for VML is no longer forced to 1 on loading 
   the module. Testing has shown that VML never runs in multi-threaded mode for 
-  the default BLOCKSIZE1 of 1024 elements.
+  the default BLOCKSIZE1 of 1024 elements, and forcing to 1 can have deleterious 
+  effects on NumPy functions when built with MKL. See issue #355 for details.
 
 Changes from 2.7.0 to 2.7.1
 ----------------------------
