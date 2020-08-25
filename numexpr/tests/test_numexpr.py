@@ -42,6 +42,7 @@ if sys.version_info[0] >= 3:
 # Recommended minimum versions
 from distutils.version import LooseVersion
 minimum_numpy_version = LooseVersion('1.7.0')
+present_numpy_version = LooseVersion(np.__version__)
 
 class test_numexpr(TestCase):
     """Testing with 1 thread"""
@@ -810,9 +811,14 @@ class test_strings(TestCase):
         str_list = [
             b'\0\0\0', b'\0\0foo\0', b'\0\0foo\0b', b'\0\0foo\0b\0',
             b'foo\0', b'foo\0b', b'foo\0b\0', b'foo\0bar\0baz\0\0']
+        min_tobytes_version = LooseVersion('1.9.0')
         for s in str_list:
             r = evaluate('s')
-            self.assertEqual(s, r.tostring())  # check *all* stored data
+            if present_numpy_version >= min_tobytes_version:
+                self.assertEqual(s, r.tobytes())  # check *all* stored data
+            else:
+                # ndarray.tostring() is deprecated as of NumPy 1.19
+                self.assertEqual(s, r.tostring())  # check *all* stored data
 
     def test_compare_copy(self):
         sarr = self.str_array1

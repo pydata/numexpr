@@ -11,6 +11,9 @@ Changes from 2.7.1 to 2.7.2
   the module. Testing has shown that VML never runs in multi-threaded mode for 
   the default BLOCKSIZE1 of 1024 elements, and forcing to 1 can have deleterious 
   effects on NumPy functions when built with MKL. See issue #355 for details.
+- Use of `ndarray.tostring()` in tests has been switch to `ndarray.tobytes()` 
+  for future-proofing deprecation of `.tostring()`, if the version of NumPy is 
+  greater than 1.9.
 
 Changes from 2.7.0 to 2.7.1
 ----------------------------
