@@ -37,7 +37,8 @@ from numexpr.necompiler import NumExpr, disassemble, evaluate, re_evaluate
 
 from numexpr.utils import (_init_num_threads,
     get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
-    set_num_threads, detect_number_of_cores, detect_number_of_threads)
+    set_num_threads, get_num_threads,
+    detect_number_of_cores, detect_number_of_threads)
 
 # Detect the number of cores
 ncores = detect_number_of_cores()

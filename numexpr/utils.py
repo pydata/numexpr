@@ -15,7 +15,7 @@ import os
 import subprocess
 import platform
 
-from numexpr.interpreter import _set_num_threads, MAX_THREADS
+from numexpr.interpreter import _set_num_threads, _get_num_threads, MAX_THREADS
 from numexpr import use_vml
 
 if use_vml:
@@ -77,6 +77,7 @@ def set_vml_num_threads(nthreads):
     """
     if use_vml:
         _set_vml_num_threads(nthreads)
+    pass
 
 def get_vml_num_threads():
     """
@@ -92,26 +93,26 @@ def get_vml_num_threads():
     """
     if use_vml:
         return _get_vml_num_threads()
+    return 0
 
 
 def set_num_threads(nthreads):
     """
     Sets a number of threads to be used in operations.
 
-    Returns the previous setting for the number of threads.
+    DEPRECATED: returns the previous setting for the number of threads.
 
-    During initialization time Numexpr sets this number to the number
+    During initialization time NumExpr sets this number to the number
     of detected cores in the system (see `detect_number_of_cores()`).
-
-    If you are using Intel's VML, you may want to use
-    `set_vml_num_threads(nthreads)` to perform the parallel job with
-    VML instead.  However, you should get very similar performance
-    with VML-optimized functions, and VML's parallelizer cannot deal
-    with common expresions like `(x+1)*(x-2)`, while Numexpr's one
-    can.
     """
     old_nthreads = _set_num_threads(nthreads)
     return old_nthreads
+
+def get_num_threads():
+    """
+    Gets the number of threads currently in use for operations.
+    """
+    return _get_num_threads()
 
 def _init_num_threads():
     """

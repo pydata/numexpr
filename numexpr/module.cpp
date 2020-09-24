@@ -337,14 +337,22 @@ _get_vml_num_threads(PyObject *self, PyObject *args)
 
 #endif
 
-static PyObject *
-_set_num_threads(PyObject *self, PyObject *args)
+static PyObject*
+Py_set_num_threads(PyObject *self, PyObject *args)
 {
     int num_threads, nthreads_old;
     if (!PyArg_ParseTuple(args, "i", &num_threads))
     return NULL;
     nthreads_old = numexpr_set_nthreads(num_threads);
     return Py_BuildValue("i", nthreads_old);
+}
+
+static PyObject*
+Py_get_num_threads(PyObject *self, PyObject *args) 
+{
+    int n_thread;
+    n_thread = gs.nthreads;
+    return Py_BuildValue("i", n_thread);
 }
 
 static PyMethodDef module_methods[] = {
@@ -358,8 +366,10 @@ static PyMethodDef module_methods[] = {
     {"_get_vml_num_threads", _get_vml_num_threads, METH_VARARGS,
      "Gets the maximum number of threads to be used in VML operations."},
 #endif
-    {"_set_num_threads", _set_num_threads, METH_VARARGS,
+    {"_set_num_threads", Py_set_num_threads, METH_VARARGS,
      "Suggests a maximum number of threads to be used in operations."},
+    {"_get_num_threads", Py_get_num_threads, METH_VARARGS,
+     "Gets the maximum number of threads currently in use for operations."},
     {NULL}
 };
 

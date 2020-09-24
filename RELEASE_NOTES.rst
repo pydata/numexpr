@@ -14,6 +14,10 @@ Changes from 2.7.1 to 2.7.2
 - Use of `ndarray.tostring()` in tests has been switch to `ndarray.tobytes()` 
   for future-proofing deprecation of `.tostring()`, if the version of NumPy is 
   greater than 1.9.
+- Added a utility method `get_num_threads` that returns the (maximum) number of 
+  threads currently in use by the virtual machine. The functionality of 
+  `set_num_threads` whereby it returns the previous value has been deprecated 
+  and will be removed in 2.8.X.
 
 Changes from 2.7.0 to 2.7.1
 ----------------------------
