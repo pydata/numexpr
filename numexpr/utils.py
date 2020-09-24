@@ -93,8 +93,7 @@ def get_vml_num_threads():
     """
     if use_vml:
         return _get_vml_num_threads()
-    return 0
-
+    return None
 
 def set_num_threads(nthreads):
     """
