@@ -336,8 +336,8 @@ class NumExpr(object):
     '''
 
     
-    def __init__(self, expr, lib=LIB_STD, casting=CAST_SAFE, local_dict=None, 
-                 stackDepth=1):
+    def __init__(self, expr: str, lib: int=LIB_STD, casting: int=CAST_SAFE, local_dict: Optional[Dict]=None, 
+                 stackDepth: int=1):
         '''
         Evaluate a mutli-line expression element-wise, using NumPy broadcasting 
         rules::
@@ -434,6 +434,7 @@ class NumExpr(object):
             self._global_dict = call_frame.f_globals
         else:
             self.local_dict = local_dict
+            self._global_dict = {}
 
         self.timings['frame_call'] = perf_counter() - t1
         self.timings['__init__']   = t1-t0
@@ -482,23 +483,30 @@ class NumExpr(object):
 
         # Do the _last_ assignment/expression with magic_output
         bodyItem = forest.body[-1]
-        _ASTAssembler[type(bodyItem),-1](self,bodyItem)
+        _ASTAssembler[type(bodyItem),-1](self, bodyItem)
 
         t2 = perf_counter()
-        # Mutate the registers into a sorted, unmutable tuple that the C-api understands
-        self.registers = tuple( [reg for reg in sorted(self.registers.values())] )
-        regsToInterpreter = tuple( [reg.to_tuple() for reg in self.registers] )
+        print('a')
+        # Mutate the registers into a sorted, non-mutable tuple that the C-api understands
+        self.registers = tuple([reg for reg in sorted(self.registers.values())])
+        print('b')
+        regsToInterpreter = tuple([reg.to_tuple() for reg in self.registers])
+        print('c')
 
         # Collate the inputNames as well as the the required outputs
         self.program = self._codeStream.getvalue()
+        print('d')
         
         # Add self to the wisdom
         wisdom[(self.expr, self.lib, self.casting)] = self
         # If crashing in the C-api calling disassemble here gives good clues
         # self.disassemble() # DEBUG
         t3 = perf_counter()
+        self.disassemble()
+        for reg in self.registers:
+            print(type(reg.ref))
         self._compiled_exec = interpreter.CompiledExec(self.program, regsToInterpreter)
-
+        print('f')
         # Clean up unneeded attributes and resources
         self._codeStream.close()
         t4 = perf_counter()
@@ -509,7 +517,7 @@ class NumExpr(object):
         self.timings['obj_construct']= t4-t3
         
     
-    def disassemble( self ):
+    def disassemble(self):
         '''
         Prints a formatted representation of the program and registers for 
         debugging purposes.
@@ -593,13 +601,20 @@ class NumExpr(object):
             # args = [kwargs[reg.name] for reg in self.registers if reg.kind == _KIND_ARRAY]
             for reg in self.registers:
                 if reg.name in kwargs:
+                    reg_array = kwargs[reg.name]
+                    # Annoying behavior by NumPy in they allow Python ints and floats to mimic scalars but they don't have a common interface
+                    if isinstance(reg_array, (int, float)): 
+                        reg_array = np.array(reg_array)
+                    
+                    if reg.dchar != reg_array.dtype.char:
+                        raise ValueError(f'Keyword argument {reg.name} has dtype {reg_array.dtype} but register expected {np.dtype(reg.dchar)}')
                     args.append(kwargs[reg.name])
                 elif reg.kind == _KIND_RETURN and reg.ref is None:
                     # Unallocated output needs a None in the list
                     args.append(None)
 
         elif verify: # Renew references from frames
-            # info('run case renew from frames')
+            info('run case renew from frames')
             call_frame = sys._getframe(stackDepth) 
             local_dict = call_frame.f_locals
             for reg in self.registers:
@@ -610,16 +625,18 @@ class NumExpr(object):
                         if np.array(arg).dtype.char != reg.dchar:
                             # Formated error strings would be nice but this is a valid try-except path
                             # and we need the speed.
-                            raise TypeError('local scalar variable has different dtype than in register')
+                            raise ValueError('local scalar variable has different dtype than in register')
                     elif isinstance(arg, np.ndarray):
                         if arg.dtype.char != reg.dchar:
-                            raise TypeError('local array variable has different dtype than in register')
+                            raise ValueError(f'local array variable {reg.name} has different dtype {arg.dtype} than in register {np.dtype(reg.dchar)}')
                     else:
-                        raise TypeError('local variable is not a np.ndarray or scalar')    
+                        raise ValueError('local variable is not a np.ndarray or scalar')    
 
-                    args.append( arg )
+                    args.append(arg)
                 elif reg.kind == _KIND_RETURN:
                     if reg.name in local_dict:
+                        if reg.dchar != local_dict[reg.name].dtype.char:
+                            raise ValueError(f'Return variable {reg.name} has dtype {local_dict[reg.name].dtype} but register expected {np.dtype(reg.dchar)}')
                         # Output can exist even if it didn't used to
                         args.append(local_dict[reg.name])
                     else:
@@ -638,6 +655,8 @@ class NumExpr(object):
                     else: # Likely implies a named scalar.
                         arg = reg.ref
                     args.append(arg)
+
+        # Check that the provided arrays have the correct dtype
             
         self.timings['run_pre'] = perf_counter() - t0
         unalloc = self._compiled_exec(*args, **kwargs)
@@ -655,7 +674,7 @@ class NumExpr(object):
         return unalloc # end NumExpr.run()
 
 
-    def _newTemp(self, dchar, name ):
+    def _newTemp(self, dchar, name):
         '''
         Either creates a new temporary register, or if possible re-uses an old 
         one.
@@ -691,7 +710,7 @@ class NumExpr(object):
                 return tempRegister
 
         # Else case: no free temporaries, create a new one
-        tempToken = next( self._regCount )
+        tempToken = next(self._regCount)
         if name is None:
             name = tempToken
         
@@ -699,7 +718,7 @@ class NumExpr(object):
         self.registers[name] = tempRegister = NumReg(tempToken, name,
             None, dchar, _KIND_TEMP, _DCHAR_ITEMSIZE[dchar])
 
-        if not isinstance(name,str):
+        if not isinstance(name, str):
             # Named temporaries cannot be re-used except explicitely
             # Only temporaries that have an 'int' name may be reused
             self._occupiedTemps.add(tempToken)
@@ -776,9 +795,9 @@ class NumExpr(object):
         # inputReg1.dchar = self.assignDChar
         # return inputReg1
 
-    def _copy(self, targetReg, valueReg ):
+    def _copy(self, targetReg, valueReg):
         '''
-        A copy operation. Can happen with trival ops such as :code:`NumExpr('x=a')`.
+        A copy operation. Can happen with trivial ops such as :code:`NumExpr('x=a')`.
         '''
         # debug( 'copying valueReg (%s) to targetReg (%s)'%(valueReg.dchar, targetReg.dchar) )
         opCode, self.assignDChar = OPTABLE[('copy', self.lib,
@@ -821,9 +840,7 @@ class NumExpr(object):
                                 unaryRegister.token, _NULL_REG, _NULL_REG)))
         return castRegister, castSig
 
-        
-
-    def _cast2(self, leftRegister, rightRegister ): 
+    def _cast2(self, leftRegister, rightRegister): 
         '''
         Search for a valid 'safe' cast between two registers, such as in a 
         binomial operation.  If one of the registers is a constant scalar, it
@@ -834,13 +851,22 @@ class NumExpr(object):
         
         if leftD == rightD:
             return leftRegister, rightRegister
-        elif np.can_cast( leftD, rightD ):  # This has problems if one register is a temporary and the other isn't.
 
-            if leftRegister.kind == _KIND_SCALAR:
-                leftRegister.ref = leftRegister.ref.astype(rightD)
-                leftRegister.dchar = rightD
-                return leftRegister, rightRegister
+        elif (leftRegister.kind == _KIND_SCALAR) and (rightRegister.kind != _KIND_SCALAR):
+            # We allow, for example 2*a, where `a` is a np.float32 array, as this 
+            # is clearly not intended by the user for 2 to be necessarily np.int64 
+            # precision.
+            # Note that for scalars we do not use weakrefs.
+            leftRegister.ref = leftRegister.ref.astype(rightRegister.dchar)
+            leftRegister.dchar = rightRegister.dchar
+            return leftRegister, rightRegister
 
+        elif (rightRegister.kind == _KIND_SCALAR) and (leftRegister.kind != _KIND_SCALAR):
+            rightRegister.ref = rightRegister.ref.astype(leftRegister.dchar)
+            rightRegister.dchar = leftRegister.dchar
+            return leftRegister, rightRegister
+
+        elif np.can_cast(leftD, rightD):  # This has problems if one register is a temporary and the other isn't.
             # Make a new temporary
             # debug( '_cast2: rightD: {}, name: {}'.format(rightD, rightRegister.name) )
             # castRegister = self._newTemp( rightD, rightRegister.name )
@@ -852,17 +878,12 @@ class NumExpr(object):
                 castRegister.itemsize = np.maximum(_DCHAR_ITEMSIZE[rightD], _DCHAR_ITEMSIZE[leftD])
                 castRegister.dchar = rightD
             
-            self._codeStream.write( b''.join(
+            self._codeStream.write(b''.join(
                     (OPTABLE[('cast',self.casting,rightD,leftD)][0], castRegister.token, 
                                 leftRegister.token, _NULL_REG, _NULL_REG)))
             return castRegister, rightRegister
+
         elif np.can_cast(rightD, leftD):
-
-            if rightRegister.kind == _KIND_SCALAR:
-                rightRegister.ref = rightRegister.ref.astype(leftD)
-                rightRegister.dchar = leftD
-                return leftRegister, rightRegister
-
             # Make a new temporary
             # debug( '_cast2: leftD: {}, name: {}'.format(leftD, leftRegister.name) )
             # castRegister = self._newTemp( leftD, leftRegister.name )
@@ -874,17 +895,17 @@ class NumExpr(object):
                 castRegister.dchar = leftD
                         
             self._codeStream.write( b''.join(
-                    (OPTABLE[('cast',self.casting,leftD,rightD)][0], castRegister.token, 
+                    (OPTABLE[('cast', self.casting, leftD, rightD)][0], castRegister.token, 
                                 rightRegister.token, _NULL_REG, _NULL_REG)))
             return leftRegister, castRegister
+
         else:
-            raise TypeError('cast2(): Cannot cast {} (dchar {}) and {} (dchar {}) by rule "safe"'.format(
-                        leftRegister.name, leftRegister.dchar,
-                        rightRegister.name, rightRegister.dchar))
+            # Otherwise it's an error and the user has to explicitely cast one of the inputs.
+            raise TypeError(f'cast2(): Cannot cast {np.dtype(leftD)} and {np.dtype(rightD)} by rule "safe"')
             
     
     def _cast3(self, leftRegister, midRegister, rightRegister):
-        '''_cast3 isn't called by where/tenary so no need for an implementation
+        '''_cast3 isn't called by where/ternary so no need for an implementation
         at present.'''
         warn('TODO: implement 3-argument casting')
         return leftRegister, midRegister, rightRegister
@@ -922,9 +943,18 @@ def _assign_last(self: NumExpr, node: ast.AST) -> NumReg:
     
     if len(node.targets) != 1:
         raise ValueError('NumExpr3 supports only singleton returns in assignments.')
-    
+
     valueReg = _ASTAssembler[type(node.value)](self, node.value)
     self.assignTarget = _mutate_last(self, node.targets[0], valueReg)
+
+    assign_name = node.targets[0].id
+    if assign_name in self.local_dict:
+        assign_ndarray = self.local_dict[assign_name]
+        # Double check that the user has provided the correct type of output array.
+        if assign_ndarray.dtype.char != self.assignDChar:
+            raise ValueError(f'Assignment target array {node.targets[0].id} has dtype {assign_ndarray.dtype} but expression results in dtype {np.dtype(self.assignDChar)}')
+    # else create a magical output
+
     return self.assignTarget
 
 def _expression(self: NumExpr, node: ast.AST) -> None:
@@ -1082,7 +1112,6 @@ def _name(self: NumExpr, node: ast.AST) -> NumReg:
       3. it doesn't, in which case it's a named temporary.
     '''
     # node.ctx (context) is not something that needs to be tracked
-
     nodeId = node.id
     if nodeId in self.registers:
         # info( 'ast.Name: found {} in namesReg'.format(nodeId) )
@@ -1210,7 +1239,7 @@ def _real_imag(self: NumExpr, node: ast.AST) -> NumReg:
     of attribute-like access.
 
     There is currently no difference between :code:`real(a)` and :code:`a.real`.
-    Having a seperate path for slicing existing arrays was considered but it is 
+    Having a separate path for slicing existing arrays was considered but it is 
     overly difficult to manage the weak reference.
     '''
     viewName = node.attr
@@ -1378,16 +1407,26 @@ def _unaryop(self: NumExpr, node: ast.AST) -> NumReg:
     Currently only :code:`ast.USub`, i.e. the negation operation :code:`'-a', 
     is supported, and the :code:`node.operand` is the value acted upon.
     '''
+    
     operandRegister = _ASTAssembler[type(node.operand)](self, node.operand)
+    if operandRegister.kind == _KIND_SCALAR:
+        # Bypass creating a temporary and modify the register immediately.
+        #
+        # NumPy demotes zero-dim arrays to scalars on negation, which we do not want here.
+        # Hence the `np.array()` wrapper.
+        operandRegister.ref = np.array(-operandRegister.ref)
+        return operandRegister
+
     try:
         opWord, self.assignDChar = OPTABLE[(type(node.op), self.lib, operandRegister.dchar)]
     except KeyError as e:
-        if operandRegister.dchar == None :
+        if operandRegister.dchar == None:
             raise ValueError( 
                     'Unary did not find operand array {}. Possibly a stack depth issue'.format(
                             operandRegister.name))
         else:
             raise e
+    
     outputRegister = self._transmit1(operandRegister)
     self._codeStream.write(b''.join((opWord, outputRegister.token, operandRegister.token, _NULL_REG, _NULL_REG)))  
         

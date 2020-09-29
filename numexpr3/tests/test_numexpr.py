@@ -31,8 +31,8 @@ minimum_numpy_version = '1.7'
 
 # Don't use powers of 2 for sizes as BLOCK_SIZEs are powers of 2, and we want 
 # to test when we have sub-sized blocks in the last cycle through the program.
-SMALL_SIZE = 100.0
-LARGE_SIZE = 80000.0
+SMALL_SIZE = 10
+LARGE_SIZE = 80000
 
 class test_numexpr(unittest.TestCase):
     '''Testing with 1 thread for serial operation'''
@@ -63,20 +63,20 @@ class test_numexpr(unittest.TestCase):
         logger.info('Test changing input array shape')
         a = np.array([1., 2., 3.])
         b = np.array([4., 5., 6.])
-        a2 = np.arange(self.ssize).astype(a.dtype).reshape( int(self.ssize/20), 4, 5)
-        b2 = np.arange(3.0, self.ssize+3.0).astype(b.dtype).reshape( int(self.ssize/20), 4, 5)
-        out = ne3.NumExpr( 'a*b' )(a=a2, b=b2)
-        npt.assert_array_almost_equal( out, a2*b2 )
+        a2 = np.arange(self.ssize).astype(a.dtype).reshape(int(self.ssize//2), 2)
+        b2 = np.arange(3.0, self.ssize+3.0).astype(b.dtype).reshape(int(self.ssize//2), 2)
+        out = ne3.NumExpr('a*b')(a=a2, b=b2)
+        npt.assert_array_almost_equal(out, a2*b2)
 
     def test_verify_input(self):
         logger.info('Test input with verify=True')
         a = np.array([1., 2., 3.])
         b = np.array([4., 5., 6.])
-        func = ne3.NumExpr( 'a*b' )
+        func = ne3.NumExpr('a*b')
         a = np.arange(self.ssize).astype(a.dtype)
         b = np.arange(3.0, self.ssize+3.0).astype(b.dtype)
         out = func(verify=True)
-        npt.assert_array_almost_equal( out, a*b )
+        npt.assert_array_almost_equal(out, a*b)
 
     def test_weakref_expiry(self):
         # I have no idea how to turn on gc in unittest. I can't find anything
@@ -116,10 +116,10 @@ class test_numexpr(unittest.TestCase):
 
     def test_rational_func(self):
         logger.info( 'Test rational func' )
-        a = np.arange(self.ssize)
-        b = np.arange(self.ssize) * 0.1
-        func = ne3.NumExpr( '(a + 2.0*b) / (1 + a + 4*b*b)' )
-        x = (a + 2 * b) / (1 + a + 4 * b * b)
+        a = np.arange(self.ssize, dtype=np.float32)
+        b = np.arange(self.ssize, dtype=np.float32) * 0.1
+        func = ne3.NumExpr( '(a + 2*b) / (1 + a + 4*b*b)' )
+        x = (a + 2*b) / (1 + a + 4*b*b)
         y = func(a=a, b=b)
         npt.assert_array_almost_equal(x, y)
 
@@ -141,10 +141,12 @@ class test_numexpr(unittest.TestCase):
     def test_inplace_intermediate(self):
         # When the return array is also a named intermediate assignment target
         logger.info( 'Test in-place named intermediate' )
-        y = np.arange(self.ssize)
-        x = np.empty_like(y)
-        ne3.NumExpr( 'x = 3.5 * y; x = x - y' )()
-        npt.assert_array_almost_equal( x, (3.5*y) - y )
+        y = np.arange(self.ssize, dtype=np.float32)
+        x = np.empty_like(y, dtype=np.float64)
+        ne3.NumExpr('x = 3.5 * y; x = x - y')()
+        z = 3.5 * y
+        z = z - y
+        npt.assert_array_almost_equal(x, z)
 
     def test_named_intermediate_magic_output(self):
         logger.info( 'Test in-place named intermediate with magic output' )
@@ -155,12 +157,12 @@ class test_numexpr(unittest.TestCase):
     def test_changing_singleton(self):
         # When a single-valued array is changed (i.e. it should be KIND_ARRAY, not KIND_SCALAR)
         logger.info( 'Test changing singleton' )
-        pi = np.pi
-        y = np.arange(self.ssize)
-        x = np.empty_like(y)
-        func = ne3.NumExpr( 'x = y*pi' )
-        func( x=x, y=y, pi=pi*2 )
-        npt.assert_array_almost_equal( x, y*np.pi*2 )
+        singleton = np.pi*2
+        y = np.arange(self.ssize, dtype=np.float32)
+        x = np.empty_like(y, dtype=np.float64)
+        func = ne3.NumExpr('x = y*singleton')
+        func(x=x, y=y, singleton=np.pi*4)
+        npt.assert_array_almost_equal(x, y*np.pi*4)
 
     def test_simple_strides(self):
         # It may make more sense to do strided operations on all functions
@@ -285,12 +287,14 @@ class test_numexpr(unittest.TestCase):
             ssize_clip = 64 # This is enough to overflow anything
             base = np.arange(ssize_clip).astype(dtype)
             exp = np.arange(ssize_clip).astype(dtype)
+            # We have to clear the wisdom here each time.
+            ne3.wisdom = {}
             ipow_ne = ne3.evaluate('base**exp')
             ipow_np = np.power(base, exp)
             npt.assert_array_almost_equal(ipow_ne, ipow_np)
 
     # NOTE: Non-unit length multiple strides are not supported any more as it 
-    # isn't supported with the SIMD auto-vectorizationion.
+    # isn't supported with the SIMD auto-vectorization.
 
 
 class test_numexpr_max(test_numexpr):

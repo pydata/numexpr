@@ -63,7 +63,7 @@ On Linux:
 - str/unicode = 'U'
 
 Note that as '?' is the ternary operator in C we map '?' -> '1' in C function
-and variable names
+and variable names.
 
 Windows has different characters for some integers:
 
@@ -1023,6 +1023,33 @@ def OpsFactory(opsList: List[Operation]) -> None:
                      SIGNED_NUM, [SIGNED_NUM])]
     
     ###### Bitwise Operations ######
+    # NumPy does not do a simple bitwise op:
+    # NPY_INPLACE npy_@u@@type@
+    # npy_lshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
+    # {
+    #     if (NPY_LIKELY((size_t)b < sizeof(a) * CHAR_BIT)) {
+    #         return a << b;
+    #     }
+    #     else {
+    #         return 0;
+    #     }
+    # }
+    # NPY_INPLACE npy_@u@@type@
+    # npy_rshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
+    # {
+    #     if (NPY_LIKELY((size_t)b < sizeof(a) * CHAR_BIT)) {
+    #         return a >> b;
+    #     }
+    # #if @is_signed@
+    #     else if (a < 0) {
+    #         return (npy_@u@@type@)-1;  /* preserve the sign bit */
+    #     }
+    # #endif
+    #     else {
+    #         return 0;
+    #     }
+    # }
+    # https://github.com/numpy/numpy/blob/master/numpy/core/src/npymath/npy_math_internal.h.src
     opsList += [Operation(ast.LShift, '$DEST = $ARG1 << $ARG2', (LIB_STD,), 
                       ALL_INT, [ALL_INT, ALL_INT])]
     opsList += [Operation(ast.RShift, '$DEST = $ARG1 >> $ARG2', (LIB_STD,), 

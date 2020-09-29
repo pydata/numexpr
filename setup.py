@@ -23,7 +23,7 @@ if sys.version_info.major == 3 and sys.version_info.minor < 3:
 major_ver = 3
 minor_ver = 0
 nano_ver = 1
-branch = 'a5'
+branch = 'a6'
 version = '%d.%d.%d%s' % (major_ver, minor_ver, nano_ver, branch)
 
 # Write __version__.py
@@ -33,7 +33,22 @@ with open( 'doc/__version__.py', 'w' ) as fh:
     fh.write( "__version__ = '{}'\n".format(version) )   
 
 with open('requirements.txt') as f:
-    requirements = f.read().splitlines()    
+    requirements = f.read().splitlines()
+
+# List classifiers:
+# https://pypi.python.org/pypi?%3Aaction=list_classifiers
+classifiers = """\
+Development Status :: 5 - Production/Stable
+Intended Audience :: Developers
+Intended Audience :: Information Technology
+License :: OSI Approved :: BSD License
+Programming Language :: Python
+Programming Language :: Python :: 3.6
+Programming Language :: Python :: 3.7
+Topic :: Software Development :: Libraries :: Python Modules
+Operating System :: Microsoft :: Windows
+Operating System :: Unix
+"""
 
 # Process additional command-line arguments before distutils gets them
 NOGEN = False
@@ -104,8 +119,6 @@ extra_compile_args['msvc'] =  []
 extra_libraries['msvc'] = []
 extra_link_args['msvc'] = []
 define_macros['msvc'] = []
-
-
 def run_generator( blocksize=(4096,32), mkl=False, C11=True ):
     # Do not generate new files if the GENERATED files are all newer than
     # interp_generator.py.  This saves recompiling if its not needed.
@@ -146,7 +159,7 @@ def setup_package():
                       packages=['numexpr3'],
                       install_requires=requirements,
                       setup_requires=requirements,
-                      classifiers=['Programming Language :: Python :: 3'],
+                      classifiers=classifiers,
                       zip_safe=False
     )
     if (len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]

@@ -2,13 +2,29 @@
 Release notes for NumExpr 3.0 series
 =====================================
 
+Changes from 3.0.1a4 to 3.0.1a6
+-------------------------------
+
+* Python 3.6 is now the minimum requirement in order to support f-strings. 
+* Python 3.8 is now supported.
+* Allow scalars to be cast to match an array even if it is 'unsafe' by the 
+  standard of `np.can_cast`. I.e. for an array `a` with `dtype == np.float32` 
+  previously `ne3.evaluate('2*a')` would create an error as 2 defaults to `np.int32`. 
+  Now '2' will be seemlessly cast to `np.float32`.
+* Fixed a bug whereby scalars where the user could provide an assignment target
+  with the wrong dtype and the execution would fail silently. Now raises a 
+  `ValueError`.
+* Now uploading to PyPi with `twine`.
+
 Changes from 3.0.1a4 to 3.0.1a5
 -------------------------------
+
 * Fixed an error when `local_dict` was passed as an input argument to a 
   `NumExpr` initialization.
 
 Changes from 3.0.1 to 3.0.1a4
 ---------------------------
+
 * Added integer mod/remainder and integer floor division.
 * At the suggestion of Gowtham Sviaraman, added support for integer power.
   As with NumPy, the integer power will overflow. Also added an analog of 
@@ -79,7 +95,6 @@ Changes from 3.0.0 to 3.0.1
 TODO List:
 ^^^^^^^^^^
 
-* consider renaming KIND_SCALAR to KIND_CONST
 * Don't overwrite PyObject_HEAD in pickling
 * documentation and tutorial RSTs
   - Probably we will have to tag to get a seperate branch docs?

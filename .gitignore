@@ -18,6 +18,4 @@ bench/*.png
 temp/
 .eggs
 *.vscode
-
-
-
+upload2pypi.bat
