@@ -486,27 +486,19 @@ class NumExpr(object):
         _ASTAssembler[type(bodyItem),-1](self, bodyItem)
 
         t2 = perf_counter()
-        print('a')
         # Mutate the registers into a sorted, non-mutable tuple that the C-api understands
         self.registers = tuple([reg for reg in sorted(self.registers.values())])
-        print('b')
         regsToInterpreter = tuple([reg.to_tuple() for reg in self.registers])
-        print('c')
 
         # Collate the inputNames as well as the the required outputs
         self.program = self._codeStream.getvalue()
-        print('d')
         
         # Add self to the wisdom
         wisdom[(self.expr, self.lib, self.casting)] = self
         # If crashing in the C-api calling disassemble here gives good clues
         # self.disassemble() # DEBUG
         t3 = perf_counter()
-        self.disassemble()
-        for reg in self.registers:
-            print(type(reg.ref))
         self._compiled_exec = interpreter.CompiledExec(self.program, regsToInterpreter)
-        print('f')
         # Clean up unneeded attributes and resources
         self._codeStream.close()
         t4 = perf_counter()

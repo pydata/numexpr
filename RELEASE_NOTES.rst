@@ -23,7 +23,7 @@ Changes from 3.0.1a4 to 3.0.1a5
   `NumExpr` initialization.
 
 Changes from 3.0.1 to 3.0.1a4
----------------------------
+-----------------------------
 
 * Added integer mod/remainder and integer floor division.
 * At the suggestion of Gowtham Sviaraman, added support for integer power.
