@@ -37,18 +37,20 @@ with open('requirements.txt') as f:
 
 # List classifiers:
 # https://pypi.python.org/pypi?%3Aaction=list_classifiers
-classifiers = """\
-Development Status :: 5 - Production/Stable
-Intended Audience :: Developers
-Intended Audience :: Information Technology
-License :: OSI Approved :: BSD License
-Programming Language :: Python
-Programming Language :: Python :: 3.6
-Programming Language :: Python :: 3.7
-Topic :: Software Development :: Libraries :: Python Modules
-Operating System :: Microsoft :: Windows
-Operating System :: Unix
-"""
+classifiers = [
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'Intended Audience :: Information Technology',
+        'License :: OSI Approved :: BSD License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX :: Linux',
+    ]
 
 # Process additional command-line arguments before distutils gets them
 NOGEN = False
