@@ -68,6 +68,66 @@ NumExpr performs best on matrices that are too large to fit in L1 CPU cache.
 In order to get a better idea on the different speed-ups that can be achieved 
 on your platform, run the provided benchmarks.
 
+Installation
+------------
+
+### From wheels ###
+
+NumExpr is available for install via `pip` for a wide range of platforms and 
+Python versions (which may be browsed at: https://pypi.org/project/numexpr/#files). 
+Installation can be performed as:
+
+    `pip install numexpr`
+
+If you are using the Anaconda or Miniconda distribution of Python you may prefer 
+to use the `conda` package manager in this case.
+
+    `conda install numexpr`
+
+### From Source ###
+
+On most `Nix systems your compilers will already be present. However if you 
+are using a virtual environment with a substantially newer version of Python than
+your system Python you may be prompted to install a new version of `gcc` or `clang`.
+
+For Windows, you will need to install the Microsoft Visual C++ Build Tools 
+(which are free) first.The version depends on which version of Python you have 
+installed:
+
+https://wiki.python.org/moin/WindowsCompilers
+
+For Python 3.6+ simply installating the latest version of MSVC build tools should 
+be sufficient. Note that wheels found via pip do not include MKL support. Wheels 
+available via `conda` will have MKL, if the MKL backend is used for NumPy.
+
+See `requirements.txt` for the required version of NumPy.
+
+NumExpr is built in the standard Python way::
+
+  `python setup.py build install`
+
+You can test `numexpr` with:
+
+  `python -c "import numexpr; numexpr.test()"`
+
+Do not test NumExpr in the source directory or you will generate import errors.
+
+### Enable Intel® MKL support ###
+
+NumExpr includes support for Intel's MKL library. This may provide better 
+performance on Intel architectures, mainly when evaluating transcendental 
+functions (trigonometrical, exponential...). 
+
+If you have Intel's MKL, copy the `site.cfg.example` that comes with the 
+distribution to `site.cfg` and edit the latter file to provide correct paths to 
+the MKL libraries in your system.  After doing this, you can proceed with the 
+usual building instructions listed above.
+
+Pay attention to the messages during the building process in order to know 
+whether MKL has been detected or not.  Finally, you can check the speed-ups on 
+your machine by running the `bench/vml_timing.py` script (you can play with 
+different parameters to the `set_vml_accuracy_mode()` and `set_vml_num_threads()` 
+functions in the script so as to see how it would affect performance).
 
 Usage
 -----
