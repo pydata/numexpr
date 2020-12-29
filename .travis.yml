@@ -1,6 +1,15 @@
-arch:
-    - arm64
-    - ppc64le
+# arch:
+#     - arm64
+#     - ppc64le
+
+jobs:
+  include:
+    # perform a linux ARMv8 build
+    - services: docker
+      arch: arm64
+    # perform a linux PPC64LE build
+    - services: docker
+      arch: ppc64le
 
 language: python
 
@@ -19,11 +28,15 @@ before_install:
   - ulimit -a
   - pip install -q numpy
   - python -V
+  - python3 -m pip install cibuildwheel==1.7.2
 
 install:
   - pip install .
 
 script:
+  # build the wheels, put them into './wheelhouse'
+  - python3 -m cibuildwheel --output-dir wheelhouse
+  # Run tests
   - mkdir empty
   - cd empty
   - python -c "import sys;import numexpr;sys.exit(0 if numexpr.test().wasSuccessful() else 1)"

@@ -24,4 +24,4 @@ Google Inc. contributed bug fixes.
 David Cox improved readability of the Readme.
 
 Robert A. McLeod contributed bug fixes and ported the documentation to 
-numexpr.readthedocs.io.
+numexpr.readthedocs.io. He is the maintainer of the package since 2016.
