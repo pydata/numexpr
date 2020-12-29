@@ -1,4 +1,0 @@
-# RAM: updated to use official NumPy wheels from PyPI
-numpy
-setuptools
-wheel
