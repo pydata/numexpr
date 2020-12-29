@@ -1,121 +1,95 @@
+Releasing NumExpr
 ==================
-Releasing Numexpr
-==================
 
-:Author: Francesc Alted
-:Contact: faltet@gmail.com
-:Date: 2009-06-02
+* Author: Robert A. McLeod
+* Contact: robbmcleod@gmail.com
+* Date: 2020-12-28
 
-
-Following are notes useful for releasing Numexpr.
+Following are notes for releasing NumExpr.
 
 Preliminaries
 -------------
 
-- Make sure that ``RELEASE_NOTES.txt`` and ``ANNOUNCE.txt`` are up to
-  date with the latest news in the release.
+* Make sure that `RELEASE_NOTES.rst` and `ANNOUNCE.rst` are up to date with the latest news in the release.
+* Remove the `.devN` suffix in `numexpr/version.py`.
+* Do a commit and a push:
 
-- Remove the `.devN` suffix in ``numexpr/version.py``.
+    `git commit -a -m "Getting ready for release X.Y.Z"`
 
-- Do a commit and a push:
+* If the directories `dist` or `artifact` exist delete them.
 
-  $ git commit -a -m"Getting ready for release X.Y.Z"
+Local Testing
+-------------
 
-Testing
--------
-
-- Run the test suite in different platforms (at least Linux and
-  Windows) and make sure that all tests passes.
-
-- Re-compile with MKL support and see if all tests passes as well.
-
-- Run all the benchmarks in ``bench/`` directory and see if the
+* Re-compile locally with MKL support and see if all tests passes as well.
+* Run all the benchmarks in `bench/` directory and see if the
   speed-ups are the expected ones.
 
-Packaging
----------
+Tagging
+-------
 
-- Make the tarball with the command:
+* Create a tag `vX.Y.Z` from `master` and push the tag to GitHub:
 
-  $ python setup.py sdist
+    `git tag -a vX.Y.Z -m "Tagging version X.Y.Z"`
+    `git push`
+    `git push --tags`
 
-  Do a quick check that the tarball is sane.
+* If you happen to have to delete the tag, such as artifacts demonstrates a fault, first delete it locally,
+
+    `git tag --delete vX.Y.Z`
+
+  and then remotely on Github,
+
+    `git push --delete origin vX.Y.Z`
+
+Build Wheels
+------------
+
+* Check on GitHub Actions `github.com/robbmcleod/cpufeature/actions` that all the wheels built successfully.
+* Download `artifacts.zip` and unzip.
+* Make the source tarball with the command
+
+    `python setup.py sdist`
 
 Releasing
 ---------
 
-- Create a tag ``vX.Y.Z`` from ``master``.  Use the next message:
+* Upload the built wheels to PyPi via Twine.
 
-  $ git tag -a vX.Y.Z -m "Tagging version X.Y.Z"
+    `twine upload artifact/numexpr*.whl`
 
-- Push the tag to the github repo:
+* Upload the source distribution.
 
-  $ git push
-  $ git push --tags
+    `twine upload dist/numexpr-X.Y.Z.tar.gz`
 
-- If you happen to have to delete the tag, for example if the `manywheels` builds 
-  demonstrates a fault, first delete it locally,
-
-      git tag --delete vX.Y.Z
-  
-  and then remotely on Github,
-
-      git push --delete origin vX.Y.Z
-
-Build wheels
-------------
-
-Matthew Brett has a repository for building for hosting wheels at
-http://github.com/MacPython/numexpr-wheels). For the procedure to trigger and
-upload the built wheels, see the README at that repo.
-
-Build and upload the wheels before uploading the source distribution, to make
-sure that people who do not have compilers do not get breakage while the
-release is being uploaded.
-
-Any problems, feel free to ask @matthew-brett for help - or indeed, pass the
-whole task to him.
-
-Uploading the source distribution
----------------------------------
-
-- Upload it in the PyPi repository:
-
-  $ python setup.py sdist upload
+* Check on `pypi.org/project/numexpr/#files` that the wheels and source have uploaded as expected.
 
 
 Announcing
 ----------
 
-- Send an announcement to the NumPy list, PyData and python-announce
-  list.  Use the ``ANNOUNCE.rst`` file as skeleton (or possibly as the
-  definitive version).
-
+* Send an announcement to the NumPy list, PyData and python-announce
+  list.  Use the `ANNOUNCE.rst` file as skeleton (or possibly as the
+  definitive version). Email should be addressed to the following lists:
+  * python-announce-list@python.org
+  * numpy-discussion@python.org
+  * pydata@googlegroups.com
 
 Post-release actions
 --------------------
 
-- Edit ``numexpr/version.py`` to bump the version revision
+* Edit `numexpr/version.py` to bump the version revision
   (i.e. X.Y.Z --> X.Y.(Z+1).dev0).
-
-- Create new headers for adding new features in ``RELEASE_NOTES.txt``
+* Create new headers for adding new features in `RELEASE_NOTES.rst`
   and add this place-holder:
 
-  #XXX version-specific blurb XXX#
+  `* **Under development.**`
 
   Don't forget to update header to the next version in those files.
 
-- Commit your changes:
+* Commit your changes:
 
   $ git commit -a -m"Post X.Y.Z release actions done"
   $ git push
 
-
-That's all folks!
-
-
-.. Local Variables:
-.. mode: rst
-.. coding: utf-8
-.. fill-column: 70
-.. End:
+Fin.

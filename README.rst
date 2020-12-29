@@ -2,27 +2,27 @@
 NumExpr: Fast numerical expression evaluator for NumPy
 ======================================================
 
-:Author: David M. Cooke, Francesc Alted and others
-:Contact: faltet@gmail.com
+:Author: David M. Cooke, Francesc Alted, and others.
+:Maintainer: Robert A. McLeod
+:Contact: robbmcleod@gmail.com
 :URL: https://github.com/pydata/numexpr
 :Documentation: http://numexpr.readthedocs.io/en/latest/
 :Travis CI: |travis|
-:Appveyor: |appveyor|
+:GitHub Actions: |actions|
 :PyPi: |version|
 :DOI: |doi|
 :readthedocs: |docs|
 
+.. |actions| image:: https://github.com/pydata/numexpr/workflows/Build/badge.svg
+        :target: https://github.com/pydata/numexpr/actions
 .. |travis| image:: https://travis-ci.org/pydata/numexpr.png?branch=master
         :target: https://travis-ci.org/pydata/numexpr
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/we2ff01vqlmlb9ip
-        :target: https://ci.appveyor.com/project/robbmcleod/numexpr
 .. |docs| image:: https://readthedocs.org/projects/numexpr/badge/?version=latest
         :target: http://numexpr.readthedocs.io/en/latest
 .. |doi| image:: https://zenodo.org/badge/doi/10.5281/zenodo.2483274.svg
         :target:  https://doi.org/10.5281/zenodo.2483274
 .. |version| image:: https://img.shields.io/pypi/v/numexpr.png
         :target: https://pypi.python.org/pypi/numexpr
-
 
 What is NumExpr?
 ----------------

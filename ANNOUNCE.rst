@@ -1,12 +1,16 @@
 ========================
-Announcing Numexpr 2.7.2
+Announcing NumExpr 2.7.2
 ========================
 
 Hi everyone, 
 
-This is a change in behavior for the Intel VML (Vector Math Library) version, in
-that it no longer forces the VML threads to 1, as this could have a negative 
-effect on the performance of NumPy itself when it is built with MKL.
+It's been awhile since the last update to NumExpr, mostly as the existing scientific 
+Python tool chain for building wheels on PyPi became defunct and we have had to 
+redevelop a new one based on `cibuildwheel` and GitHub Actions. This release also
+brings us support (and wheels for) Python 3.9.
+
+There have been a number of changes to enhance how NumExpr works when NumPy 
+uses MKL as a backend.
 
 Project documentation is available at:
 
@@ -15,6 +19,10 @@ http://numexpr.readthedocs.io/
 Changes from 2.7.1 to 2.7.2
 ---------------------------
 
+- Support for Python 2.7 and 3.5 is deprecated and will be discontinued when 
+  `cibuildwheels` and/or GitHub Actions no longer support these versions.
+- Wheels are now provided for Python 3.7, 3.5, 3.6, 3.7, 3.8, and 3.9 via 
+  GitHub Actions.
 - The block size is now exported into the namespace as `numexpr.__BLOCK_SIZE1__`
   as a read-only value.
 - If using MKL, the number of threads for VML is no longer forced to 1 on loading 
@@ -24,6 +32,10 @@ Changes from 2.7.1 to 2.7.2
 - Use of `ndarray.tostring()` in tests has been switch to `ndarray.tobytes()` 
   for future-proofing deprecation of `.tostring()`, if the version of NumPy is 
   greater than 1.9.
+- Added a utility method `get_num_threads` that returns the (maximum) number of 
+  threads currently in use by the virtual machine. The functionality of 
+  `set_num_threads` whereby it returns the previous value has been deprecated 
+  and will be removed in 2.8.X.
 
 What's Numexpr?
 ---------------

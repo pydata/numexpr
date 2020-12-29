@@ -3,6 +3,7 @@ syntax: glob
 build/
 build-cmake/
 dist/
+artifact/
 numexpr.egg-info/
 *.pyc
 *.swp

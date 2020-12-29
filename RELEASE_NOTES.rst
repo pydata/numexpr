@@ -5,6 +5,10 @@ Release notes for Numexpr 2.7 series
 Changes from 2.7.1 to 2.7.2
 ---------------------------
 
+- Support for Python 2.7 and 3.5 is deprecated and will be discontinued when 
+  `cibuildwheels` and/or GitHub Actions no longer support these versions.
+- Wheels are now provided for Python 3.7, 3.5, 3.6, 3.7, 3.8, and 3.9 via 
+  GitHub Actions.
 - The block size is now exported into the namespace as `numexpr.__BLOCK_SIZE1__`
   as a read-only value.
 - If using MKL, the number of threads for VML is no longer forced to 1 on loading 
