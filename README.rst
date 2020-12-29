@@ -71,20 +71,22 @@ on your platform, run the provided benchmarks.
 Installation
 ------------
 
-### From wheels ###
+From wheels
+^^^^^^^^^^^
 
 NumExpr is available for install via `pip` for a wide range of platforms and 
 Python versions (which may be browsed at: https://pypi.org/project/numexpr/#files). 
-Installation can be performed as:
+Installation can be performed as::
 
-    `pip install numexpr`
+    pip install numexpr
 
 If you are using the Anaconda or Miniconda distribution of Python you may prefer 
-to use the `conda` package manager in this case.
+to use the `conda` package manager in this case::
 
-    `conda install numexpr`
+    conda install numexpr
 
-### From Source ###
+From Source
+^^^^^^^^^^^
 
 On most `Nix systems your compilers will already be present. However if you 
 are using a virtual environment with a substantially newer version of Python than
@@ -104,15 +106,16 @@ See `requirements.txt` for the required version of NumPy.
 
 NumExpr is built in the standard Python way::
 
-  `python setup.py build install`
+  python setup.py build install
 
-You can test `numexpr` with:
+You can test `numexpr` with::
 
-  `python -c "import numexpr; numexpr.test()"`
+  python -c "import numexpr; numexpr.test()"
 
 Do not test NumExpr in the source directory or you will generate import errors.
 
-### Enable Intel® MKL support ###
+Enable Intel® MKL support
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 NumExpr includes support for Intel's MKL library. This may provide better 
 performance on Intel architectures, mainly when evaluating transcendental 

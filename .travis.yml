@@ -1,15 +1,15 @@
-# arch:
-#     - arm64
-#     - ppc64le
+arch:
+    - arm64
+    - ppc64le
 
-jobs:
-  include:
-    # perform a linux ARMv8 build
-    - services: docker
-      arch: arm64
-    # perform a linux PPC64LE build
-    - services: docker
-      arch: ppc64le
+# jobs:
+#   include:
+#     # perform a linux ARMv8 build
+#     - services: docker
+#       arch: arm64
+#     # perform a linux PPC64LE build
+#     - services: docker
+#       arch: ppc64le
 
 language: python
 
