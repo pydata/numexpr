@@ -2,6 +2,11 @@
 Release notes for Numexpr 2.7 series
 ====================================
 
+Changes from 2.7.2 to 2.7.3
+---------------------------
+
+- **Under development.**
+
 Changes from 2.7.1 to 2.7.2
 ---------------------------
 

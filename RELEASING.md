@@ -64,7 +64,6 @@ Releasing
 
 * Check on `pypi.org/project/numexpr/#files` that the wheels and source have uploaded as expected.
 
-
 Announcing
 ----------
 
@@ -89,7 +88,7 @@ Post-release actions
 
 * Commit your changes:
 
-  $ git commit -a -m"Post X.Y.Z release actions done"
-  $ git push
+  `git commit -a -m "Post X.Y.Z release actions done"`
+  `git push`
 
 Fin.
