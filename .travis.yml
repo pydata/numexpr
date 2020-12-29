@@ -21,6 +21,10 @@ python:
   - 3.8
   - 3.9
 
+addons:
+  artifacts:
+    working_dir: wheelhouse
+
 before_install:
   - uname -a
   - free -m
@@ -28,14 +32,16 @@ before_install:
   - ulimit -a
   - pip install -q numpy
   - python -V
-  - pip install cibuildwheel==1.6.4
+  
 
 install:
-  - pip install .
+  # - pip install .
+  - pip install cibuildwheel==1.6.4
 
 script:
   # build the wheels, put them into './wheelhouse'
-  - python3 -m cibuildwheel --output-dir wheelhouse
+  - python -m cibuildwheel --output-dir wheelhouse
+  - ls wheelhouse/
   # Run tests
   - mkdir empty
   - cd empty
