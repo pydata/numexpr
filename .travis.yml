@@ -28,7 +28,7 @@ before_install:
   - ulimit -a
   - pip install -q numpy
   - python -V
-  - python3 -m pip install cibuildwheel==1.7.2
+  - pip install cibuildwheel==1.6.4
 
 install:
   - pip install .
