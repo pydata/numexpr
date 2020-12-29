@@ -14,8 +14,8 @@ arch:
 language: python
 
 python:
-  - 2.7
-  - 3.5
+  # - 2.7
+  # - 3.5
   - 3.6
   - 3.7
   - 3.8
@@ -30,9 +30,11 @@ before_install:
   - free -m
   - df -h
   - ulimit -a
-  - pip install -q numpy
+  - pip install numpy
+  - python -c "import numpy; print(numpy.__version__)"
+  - which python
+  - which pip
   - python -V
-  
 
 install:
   # - pip install .
