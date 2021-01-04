@@ -65,7 +65,7 @@ before_install:
   - python -V
 
 install:
-  - pip install cibuildwheel==1.6.4
+  - pip install cibuildwheel
 
 script:
   # build the wheels, put them into './wheelhouse'
