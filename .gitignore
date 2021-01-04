@@ -13,3 +13,4 @@ site.cfg
 .vscode
 *.pyd
 __config__.py
+version.py

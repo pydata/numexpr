@@ -11,7 +11,7 @@ Preliminaries
 -------------
 
 * Make sure that `RELEASE_NOTES.rst` and `ANNOUNCE.rst` are up to date with the latest news in the release.
-* Remove the `.devN` suffix in `numexpr/version.py`.
+* Ensure that `branch = ''` in `setup.py`.
 * Do a commit and a push:
 
     `git commit -a -m "Getting ready for release X.Y.Z"`
@@ -77,8 +77,7 @@ Announcing
 Post-release actions
 --------------------
 
-* Edit `numexpr/version.py` to bump the version revision
-  (i.e. X.Y.Z --> X.Y.(Z+1).dev0).
+* Bump the `nano` version number in `setup.py`, including setting `branch = 'dev0'`.
 * Create new headers for adding new features in `RELEASE_NOTES.rst`
   and add this place-holder:
 
