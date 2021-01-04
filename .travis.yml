@@ -7,7 +7,7 @@ jobs:
       arch: arm64
       python: 3.6
       env: 
-        - CIBW_BEFORE_BUILD: pip install setuptools numpy
+        - CIBW_BEFORE_BUILD: "pip install setuptools numpy"
         - CIBW_BUILD: "cp36-*"
     # # ARMv8 Python 3.7 build
     # - services: docker
@@ -31,7 +31,7 @@ jobs:
       arch: ppc64le
       python: 3.6
       env:
-        - CIBW_BEFORE_BUILD: pip install setuptools numpy
+        - CIBW_BEFORE_BUILD: "pip install setuptools numpy"
         - CIBW_BUILD: "cp36-*"
     # # PPC64LE Python 3.7 build
     # - services: docker
