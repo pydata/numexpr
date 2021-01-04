@@ -58,6 +58,8 @@ before_install:
   - python -c "import numpy; print(numpy.__version__)"
   - which python
   - which pip
+  - which python3
+  - which pip3
   - python -V
 
 install:
