@@ -5,7 +5,7 @@
 language: python
 
 env:
-  -CIBW_BEFORE_BUILD: pip install setuptools numpy
+  - CIBW_BEFORE_BUILD: pip install setuptools numpy
 
 jobs:
   include:
@@ -14,7 +14,7 @@ jobs:
       arch: arm64
       python: 3.6
       env: 
-        -CIBW_BUILD: "cp36-*"
+        - CIBW_BUILD: "cp36-*"
     # PPC64LE Python 3.6 build
     - services: docker
       arch: ppc64le
