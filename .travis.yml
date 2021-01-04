@@ -1,4 +1,13 @@
+# After changing this file, check it on:
+#   http://lint.travis-ci.org/
 language: python
+group: travis_latest
+os: linux
+dist: bionic
+
+env:
+  - CIBW_BEFORE_BUILD=pip install setuptools numpy
+  - CIBW_TEST_COMMAND=python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
 
 jobs:
   include:
@@ -7,7 +16,6 @@ jobs:
       arch: arm64
       python: 3.6
       env: 
-        - CIBW_BEFORE_BUILD="pip install setuptools numpy"
         - CIBW_BUILD="cp36-*"
     # # ARMv8 Python 3.7 build
     # - services: docker
@@ -31,7 +39,6 @@ jobs:
       arch: ppc64le
       python: 3.6
       env:
-        - CIBW_BEFORE_BUILD="pip install setuptools numpy"
         - CIBW_BUILD="cp36-*"
     # # PPC64LE Python 3.7 build
     # - services: docker
@@ -51,10 +58,6 @@ jobs:
     #   env: 
     #     - CIBW_BUILD: "cp39-*"
 
-addons:
-  artifacts:
-    working_dir: wheelhouse
-
 before_install:
   - uname -a
   - free -m
@@ -67,12 +70,11 @@ before_install:
 install:
   - pip install cibuildwheel
 
+# addons:
+#   artifacts:
+#     working_dir: wheelhouse
+
 script:
   # build the wheels, put them into './wheelhouse'
   - python -m cibuildwheel --output-dir wheelhouse
   - ls wheelhouse/
-  # Run tests
-  - mkdir empty
-  - cd empty
-  - python -c "import sys;import numexpr;sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
-
