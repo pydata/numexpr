@@ -1,11 +1,4 @@
-# arch:
-#     - arm64
-#     - ppc64le
-
 language: python
-
-env:
-  - CIBW_BEFORE_BUILD: pip install setuptools numpy
 
 jobs:
   include:
@@ -14,12 +7,31 @@ jobs:
       arch: arm64
       python: 3.6
       env: 
+        - CIBW_BEFORE_BUILD: pip install setuptools numpy
         - CIBW_BUILD: "cp36-*"
+    # # ARMv8 Python 3.7 build
+    # - services: docker
+    #   arch: arm64
+    #   python: 3.7
+    #   env:
+    #     - CIBW_BUILD: "cp37-*"
+    # # ARMv8 Python 3.8 build
+    # - services: docker
+    #   arch: arm64
+    #   python: 3.8
+    #   env: 
+    #     - CIBW_BUILD: "cp38-*"
+    # # ARMv8 Python 3.9 build
+    # - services: docker
+    #   arch: arm64
+    #   env: 
+    #     - CIBW_BUILD: "cp39-*"
     # PPC64LE Python 3.6 build
     - services: docker
       arch: ppc64le
       python: 3.6
       env:
+        - CIBW_BEFORE_BUILD: pip install setuptools numpy
         - CIBW_BUILD: "cp36-*"
     # # PPC64LE Python 3.7 build
     # - services: docker
@@ -39,15 +51,6 @@ jobs:
     #   env: 
     #     - CIBW_BUILD: "cp39-*"
 
-
-# python:
-#   - 2.7
-#   - 3.5
-#   - 3.6
-#   - 3.7
-#   - 3.8
-#   - 3.9
-
 addons:
   artifacts:
     working_dir: wheelhouse
@@ -57,16 +60,11 @@ before_install:
   - free -m
   - df -h
   - ulimit -a
-  # - pip install numpy
-  # - python -c "import numpy; print(numpy.__version__)"
   - which python
-  # - which pip
-  # - which python3
-  # - which pip3
+  - which pip
   - python -V
 
 install:
-  # - pip install .
   - pip install cibuildwheel==1.6.4
 
 script:
