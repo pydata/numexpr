@@ -4,6 +4,9 @@
 
 language: python
 
+env:
+  -CIBW_BEFORE_BUILD: pip install setuptools numpy
+
 jobs:
   include:
     # ARMv8 Python 3.6 build
@@ -54,12 +57,12 @@ before_install:
   - free -m
   - df -h
   - ulimit -a
-  - pip install numpy
-  - python -c "import numpy; print(numpy.__version__)"
+  # - pip install numpy
+  # - python -c "import numpy; print(numpy.__version__)"
   - which python
-  - which pip
-  - which python3
-  - which pip3
+  # - which pip
+  # - which python3
+  # - which pip3
   - python -V
 
 install:
