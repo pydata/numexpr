@@ -10,11 +10,17 @@ env:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }}, ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-18.04, windows-latest, macos-latest]
+        arch: [x86_64, aarch64]
+        exclude:
+          - os: windows-latest
+            arch: aarch64
+          - os: macos-latest
+            arch: aarch64
 
     steps:
       - uses: actions/checkout@v2
@@ -26,48 +32,57 @@ jobs:
 
       - name: Install cibuildwheel
         run: |
-          python -m pip install cibuildwheel==1.6.4
+          python -m pip install cibuildwheel~=1.8.0
+      - uses: docker/setup-qemu-action@v1
+        if: ${{ matrix.arch == 'aarch64' }}
+        name: Set up QEMU
 
       - name: Install Visual C++ for Python 2.7
         if: runner.os == 'Windows'
         run: |
           choco install vcpython27 -f -y
-
       - name: Build wheels for CPython 2.7
+        if: ${{ matrix.arch != 'aarch64' }}
         run: |
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp27-*"
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - name: Build wheels for CPython 3.5
         run: |
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp35-*"
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       
       - name: Build wheels for CPython 3.6
         run: |
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp36-*"
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - name: Build wheels for CPython 3.7
         run: |
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp37-*"
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - name: Build wheels for CPython 3.8
         run: |
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp38-*"
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - name: Build wheels for CPython 3.9
         run: |
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp39-*"
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - uses: actions/upload-artifact@v2
         with:
