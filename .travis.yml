@@ -8,13 +8,13 @@ dist: bionic
 jobs:
   include:
     # ARMv8 Python 3.6 build
-    - services: docker
-      arch: arm64
-      python: 3.6
-      env: 
-        - CIBW_BUILD="cp36-*"
-        - CIBW_BEFORE_BUILD="pip install setuptools numpy"
-        - CIBW_TEST_COMMAND="python -c 'import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)'"
+    # - services: docker
+    #   arch: arm64
+    #   python: 3.6
+    #   env: 
+    #     - CIBW_BUILD="cp36-*"
+    #     - CIBW_BEFORE_BUILD="pip install setuptools numpy"
+    #     - CIBW_TEST_COMMAND="python -c 'import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)'"
     # # ARMv8 Python 3.7 build
     # - services: docker
     #   arch: arm64
@@ -38,7 +38,7 @@ jobs:
       python: 3.6
       env:
         - CIBW_BUILD="cp36-*"
-        - CIBW_BEFORE_BUILD="pip install setuptools numpy"
+        - CIBW_BEFORE_BUILD="pip install setuptools numpy==1.13.3"
         - CIBW_TEST_COMMAND="python -c 'import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)'"
     # # PPC64LE Python 3.7 build
     # - services: docker
