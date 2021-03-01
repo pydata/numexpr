@@ -8,6 +8,8 @@ env:
   # CIBW_TEST_REQUIRES: pytest
   CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
 
+# To pin NumPy versions, see docs here:
+# https://github.com/scipy/oldest-supported-numpy/blob/master/setup.cfg
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}, ${{ matrix.arch }}
@@ -47,6 +49,7 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp27-*"
+          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.7.2
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - name: Build wheels for CPython 3.5
@@ -54,6 +57,7 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp35-*"
+          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.13.3
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       
       - name: Build wheels for CPython 3.6
@@ -61,6 +65,7 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp36-*"
+          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.13.3
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - name: Build wheels for CPython 3.7
@@ -68,6 +73,7 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp37-*"
+          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.14.5
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - name: Build wheels for CPython 3.8
@@ -75,6 +81,7 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp38-*"
+          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.17.3
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - name: Build wheels for CPython 3.9
@@ -82,6 +89,7 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp39-*"
+          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.19.0
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - uses: actions/upload-artifact@v2
