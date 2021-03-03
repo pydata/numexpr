@@ -45,7 +45,7 @@ Tagging
 Build Wheels
 ------------
 
-* Check on GitHub Actions `github.com/robbmcleod/cpufeature/actions` that all the wheels built successfully.
+* Check on GitHub Actions `github.com/pydata/numexpr` that all the wheels built successfully.
 * Download `artifacts.zip` and unzip.
 * Make the source tarball with the command
 

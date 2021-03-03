@@ -31,9 +31,9 @@ with io.open('README.rst', encoding='utf-8') as f:
 # with open(os.path.join('numexpr', 'version.py')) as f:
 #     exec(f.read())
 major_ver = 2
-minor_ver = 7
-nano_ver = 3
-branch = ''
+minor_ver = 8
+nano_ver = 0
+branch = 'dev0'
 
 version = '%d.%d.%d%s' % (major_ver, minor_ver, nano_ver, branch)
 with open('numexpr/version.py', 'w') as fh:

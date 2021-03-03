@@ -1,25 +1,20 @@
 ========================
-Announcing NumExpr 2.7.3
+Announcing NumExpr 2.8.0
 ========================
 
 Hi everyone, 
 
-This is a maintenance release to make use of the oldest supported NumPy version 
-when building wheels, in an effort to alleviate issues seen on Windows machines 
-that do not have the latest Windows MSVC runtime installed. It also adds
-wheels built via GitHub Actions for ARMv8 platforms.
+**Under development.**
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.7.2 to 2.7.3
+Changes from 2.7.3 to 2.8.0
 ---------------------------
 
-- Pinned Numpy versions to minimum supported version in an effort to alleviate 
-  issues seen in Windows machines not having the same Windows SDK installed as 
-  was used to build the wheels.
-- ARMv8 wheels are now available, thanks to `odidev` for the pull request.
+- TODO
+
 
 What's Numexpr?
 ---------------
@@ -62,10 +57,3 @@ Let us know of any bugs, suggestions, gripes, kudos, etc. you may
 have.
 
 Enjoy data!
-
-
-.. Local Variables:
-.. mode: rst
-.. coding: utf-8
-.. fill-column: 70
-.. End:
