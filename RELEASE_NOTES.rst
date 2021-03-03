@@ -5,7 +5,11 @@ Release notes for Numexpr 2.7 series
 Changes from 2.7.2 to 2.7.3
 ---------------------------
 
-- **Under development.**
+- Pinned Numpy versions to minimum supported version in an effort to alleviate 
+  issues seen in Windows machines not having the same MSVC runtime installed as 
+  was used to build the wheels.
+- ARMv8 wheels are now available, thanks to `odidev` for the pull request.
+
 
 Changes from 2.7.1 to 2.7.2
 ---------------------------
