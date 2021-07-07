@@ -1267,9 +1267,8 @@ def _binop(self: NumExpr, node: ast.AST) -> NumReg:
 
     ast.Binop fields are :code:`(left,op,right)`
     '''
-    info('$ast.Binop: %s'%node.op)
+    # info('$ast.Binop: %s'%node.op)
     # (left,op,right)
-    print(f'{type(node)}: node.left is {type(node.left)}, node.right is {type(node.right)}')
     leftRegister = _ASTAssembler[type(node.left)](self, node.left)
     rightRegister = _ASTAssembler[type(node.right)](self, node.right)
     
