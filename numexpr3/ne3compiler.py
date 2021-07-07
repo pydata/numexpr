@@ -1148,14 +1148,21 @@ def _const(self: NumExpr, node: ast.AST) -> NumReg:
     literals parsed by the AST.  
 
     The constants are stored and cast such that they do not impose another cast
-    operation on the virtual machine. This is the opposite behavoir to NumExpr2 
+    operation on the virtual machine. This is the opposite behavior to NumExpr2 
     where a float64 const could upcast an enormous array.
     '''
-    
+    # WARNING: in Python 3.8 the `ast.Num` class was replaced with `ast.Constant`.
+    # But this doesn't distinguish, for example, strings from numbers! So a 
+    # str literal will show up in here. Presently we just let this error but 
+    # the error is not descriptive.
+
     # It's easier to just use ndim==0 numpy arrays, since PyArrayScalar 
     # isn't in the API anymore.
     node_n = node.n
-    if np.iscomplex(node_n):
+    if hasattr(node_n, '__len__'):
+        # Probably a tuple with all consts
+        return _sequence(self, node)
+    elif np.iscomplex(node_n):
         constArr = np.complex64(node_n)
     elif isinstance(node_n, int): 
         constArr = np.asarray(node_n, dtype=int)
@@ -1260,8 +1267,9 @@ def _binop(self: NumExpr, node: ast.AST) -> NumReg:
 
     ast.Binop fields are :code:`(left,op,right)`
     '''
-    # info('$ast.Binop: %s'%node.op)
+    info('$ast.Binop: %s'%node.op)
     # (left,op,right)
+    print(f'{type(node)}: node.left is {type(node.left)}, node.right is {type(node.right)}')
     leftRegister = _ASTAssembler[type(node.left)](self, node.left)
     rightRegister = _ASTAssembler[type(node.right)](self, node.right)
     
@@ -1426,9 +1434,9 @@ def _unaryop(self: NumExpr, node: ast.AST) -> NumReg:
     self._releaseTemp(operandRegister, outputRegister)
     return outputRegister
 
-def _list(self: NumExpr, node: ast.AST) -> NumReg:
+def _sequence(self: NumExpr, node: ast.AST) -> NumReg:
     '''
-    Parse a list literal into a numpy.array e.g. 
+    Parse a sequence literal into a numpy.array e.g. 
     :code:`ne3.NumExpr( 'a < [1,2,3]' )`
 
     Only numbers are supported at present. Mixing floats and integers results 
@@ -1446,20 +1454,30 @@ def _unsupported(self: NumExpr, node: ast.AST) -> None:
 
 # _ASTAssembler is a function dictionary that is used for fast flow-control.
 # Think of it being equivalent to a switch-case flow control in C
-_ASTAssembler = defaultdict(_unsupported, 
-                  { ast.Assign:_assign, 
-                    (ast.Assign,-1):_assign_last, 
-                    ast.Expr:_expression, 
-                    (ast.Expr,-1): _expression_last,
-                    ast.Name:_name, 
-                    ast.Num:_const, 
-                    ast.Attribute:_attribute, 
-                    ast.BinOp:_binop, 
-                    ast.BoolOp:_boolop, 
-                    ast.UnaryOp:_unaryop,
-                    ast.Call:_call, 
-                    ast.Compare:_compare,
-                    ast.List:_list})
+_ASTAssembler = defaultdict(         _unsupported, 
+                  { ast.Assign:      _assign, 
+                    (ast.Assign,-1): _assign_last, 
+                    ast.Expr:        _expression, 
+                    (ast.Expr,-1):   _expression_last,
+                    ast.Name:        _name, 
+                    # ast.Num:         _const, # Python <= 3.8
+                    # ast.Constant:    _const, # Python >= 3.8
+                    ast.Attribute:   _attribute, 
+                    ast.BinOp:       _binop, 
+                    ast.BoolOp:      _boolop, 
+                    ast.UnaryOp:     _unaryop,
+                    ast.Call:        _call, 
+                    ast.Compare:     _compare,
+                    ast.List:        _sequence,
+                    ast.Tuple:       _sequence})
+# In Python 3.8 the ast.Num was deprecated and replaced by ast.Constant. However,
+# this can represent unsupported constant types, like unicode strings, which 
+# must be handled in the `_const` function.
+# See: 
+if sys.version_info <= (3, 8):
+    _ASTAssembler[ast.Num] = _const
+if sys.version_info >= (3, 8):
+    _ASTAssembler[ast.Constant] = _const
 ######################### END OF AST HANDLERS ##################################
 
 

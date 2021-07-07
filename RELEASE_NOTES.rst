@@ -2,6 +2,17 @@
 Release notes for NumExpr 3.0 series
 =====================================
 
+Changes from 3.0.1a4 to 3.0.1a7
+-------------------------------
+
+* Python 3.9 is now supported.
+* Due to breaking changes for constants in the Python `ast` module support for 
+  Python 3.6-3.8 are now deprecated. Support will be removed when the `ast.Num` 
+  class is removed, which has not currently been scheduled.
+* Tuples are now supported as literals similarly to lists. I.e. 
+  `ne3.NumExpr("(1,2,3,4)*a")` will not longer error.
+
+
 Changes from 3.0.1a4 to 3.0.1a6
 -------------------------------
 

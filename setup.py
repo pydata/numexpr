@@ -23,7 +23,7 @@ if sys.version_info.major == 3 and sys.version_info.minor < 3:
 major_ver = 3
 minor_ver = 0
 nano_ver = 1
-branch = 'a6'
+branch = 'a7'
 version = '%d.%d.%d%s' % (major_ver, minor_ver, nano_ver, branch)
 
 # Write __version__.py
