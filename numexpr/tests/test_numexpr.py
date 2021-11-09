@@ -8,7 +8,7 @@
 #  See LICENSE.txt and LICENSES/*.txt for details about copyright and
 #  rights to use.
 ####################################################################
-from __future__ import absolute_import, print_function
+
 
 import os
 import sys
@@ -37,13 +37,12 @@ import unittest
 TestCase = unittest.TestCase
 
 double = np.double
-if sys.version_info[0] >= 3:
-    long = int
+long = int
 
 # Recommended minimum versions
-from distutils.version import LooseVersion
-minimum_numpy_version = LooseVersion('1.7.0')
-present_numpy_version = LooseVersion(np.__version__)
+from setuptools._vendor.packaging.version import Version
+minimum_numpy_version = Version('1.7.0')
+present_numpy_version = Version(np.__version__)
 
 class test_numexpr(TestCase):
     """Testing with 1 thread"""
@@ -149,7 +148,7 @@ class test_numexpr(TestCase):
         assert_allclose(evaluate("min(x**2+2,axis=0)"), np.min(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("max(x**2+2,axis=0)"), np.max(x ** 2 + 2, axis=0))
         # Check longs
-        x = x.astype(long)
+        x = x.astype(int)
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x**2+2,axis=0)"), prod(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("min(x**2+2,axis=0)"), np.min(x ** 2 + 2, axis=0))
@@ -379,17 +378,6 @@ class test_evaluate(TestCase):
         x = evaluate("2*a + 3*b*c", local_dict={'a': a, 'b': b, 'c': c})
         x = re_evaluate()
         assert_array_equal(x, array([86., 124., 168.]))
-
-    # Test for issue #37
-    if sys.version_info[0] < 3:
-        # In python 3 '/' perforns true division, not integer division.
-        # Integer division '//' is still not suppoerted by numexpr
-        def test_zero_div(self):
-            x = arange(100, dtype='i4')
-            y = evaluate("1/x")
-            x2 = zeros(100, dtype='i4')
-            x2[1] = 1
-            assert_array_equal(x2, y)
 
     # Test for issue #22
     def test_true_div(self):
@@ -680,7 +668,7 @@ def test_expressions():
 
     x = None
     for test_scalar in (0, 1, 2):
-        for dtype in (int, long, np.float32, double, complex):
+        for dtype in (int, int, np.float32, double, complex):
             array_size = 100
             a = arange(2 * array_size, dtype=dtype)[::2]
             a2 = zeros([array_size, array_size], dtype=dtype)
@@ -708,7 +696,7 @@ def test_expressions():
                             # skip complex comparisons or functions not
                             # defined in complex domain.
                             continue
-                        if (dtype in (int, long) and test_scalar and
+                        if (dtype in (int, int) and test_scalar and
                                     expr == '(a+1) ** -1'):
                             continue
 
@@ -728,13 +716,6 @@ class test_int64(TestCase):
 
 
 class test_int32_int64(TestCase):
-    if sys.version_info[0] < 2:
-        # no long literals in python 3
-        def test_small_long(self):
-            # Small longs should not be downgraded to ints.
-            res = evaluate('42L')
-            assert_array_equal(res, 42)
-            self.assertEqual(res.dtype.name, 'int64')
 
     def test_small_int(self):
         # Small ints (32-bit ones) should not be promoted to longs.
@@ -812,7 +793,7 @@ class test_strings(TestCase):
         str_list = [
             b'\0\0\0', b'\0\0foo\0', b'\0\0foo\0b', b'\0\0foo\0b\0',
             b'foo\0', b'foo\0b', b'foo\0b\0', b'foo\0bar\0baz\0\0']
-        min_tobytes_version = LooseVersion('1.9.0')
+        min_tobytes_version = Version('1.9.0')
         for s in str_list:
             r = evaluate('s')
             if present_numpy_version >= min_tobytes_version:
@@ -1009,7 +990,7 @@ class test_threading_config(TestCase):
         if use_vml:
             numexpr.utils.set_vml_num_threads(n_threads)
             set_threads = numexpr.utils.get_vml_num_threads()
-            self.assertEquals(n_threads, set_threads)
+            self.assertEqual(n_threads, set_threads)
         else:
             self.assertIsNone(numexpr.utils.set_vml_num_threads(n_threads))
             self.assertIsNone(numexpr.utils.get_vml_num_threads())
@@ -1086,7 +1067,7 @@ def print_versions():
     from numexpr.cpuinfo import cpu
     import platform
 
-    np_version = LooseVersion(np.__version__)
+    np_version = Version(np.__version__)
 
     if np_version < minimum_numpy_version:
         print('*Warning*: NumPy version is lower than recommended: %s < %s' % (np_version, minimum_numpy_version))
@@ -1118,7 +1099,6 @@ def test(verbosity=1):
     """
     Run all the tests in the test suite.
     """
-
     print_versions()
     # For some reason, NumPy issues all kinds of warnings when using Python3.
     # Ignoring them in tests should be ok, as all results are checked out.

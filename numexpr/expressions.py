@@ -15,9 +15,9 @@ import sys
 import threading
 
 import numpy
-# numpy's behavoir sometimes changes with versioning, especially in regard as 
+# NumPy's behavior sometimes changes with versioning, especially in regard as 
 # to when ints are cast to floats.
-from packaging.version import parse, Version
+from setuptools._vendor.packaging.version import parse, Version
 _np_version_forbids_neg_powint = parse(numpy.__version__) > Version('1.12.0b1')
 
 # Declare a double type that does not exist in Python space
@@ -25,29 +25,19 @@ double = numpy.double
 
 # The default kind for undeclared variables
 default_kind = 'double'
-if sys.version_info[0] < 3:
-    int_ = int
-    long_ = long
-else:
-    int_ = numpy.int32
-    long_ = numpy.int64
+int_ = numpy.int32
+long_ = numpy.int64
 
 type_to_kind = {bool: 'bool', int_: 'int', long_: 'long', float: 'float',
-                double: 'double', complex: 'complex', bytes: 'bytes'}
+                double: 'double', complex: 'complex', bytes: 'bytes', str: 'str'}
 kind_to_type = {'bool': bool, 'int': int_, 'long': long_, 'float': float,
-                'double': double, 'complex': complex, 'bytes': bytes}
+                'double': double, 'complex': complex, 'bytes': bytes, 'str': str}
 kind_rank = ('bool', 'int', 'long', 'float', 'double', 'complex', 'none')
-scalar_constant_types = [bool, int_, long, float, double, complex, bytes]
+scalar_constant_types = [bool, int_, int, float, double, complex, bytes, str]
 
-# Final corrections for Python 3 (mainly for PyTables needs)
-if sys.version_info[0] > 2:
-    type_to_kind[str] = 'str'
-    kind_to_type['str'] = str
-    scalar_constant_types.append(str)
 scalar_constant_types = tuple(scalar_constant_types)
 
 from numexpr import interpreter
-
 
 class Expression(object):
     def __init__(self):
@@ -164,7 +154,7 @@ def bestConstantType(x):
     for converter in float, complex:
         try:
             y = converter(x)
-        except StandardError as err:
+        except Exception as err:
             continue
         if y == x:
             return converter
@@ -391,7 +381,8 @@ functions = {
 
 
 class ExpressionNode(object):
-    """An object that represents a generic number object.
+    """
+    An object that represents a generic number object.
 
     This implements the number special methods so that we can keep
     track of how this object has been used.
@@ -441,7 +432,7 @@ class ExpressionNode(object):
 
     # The next check is commented out. See #24 for more info.
 
-    def __nonzero__(self):
+    def __bool__(self):
         raise TypeError("You can't use Python's standard boolean operators in "
                         "NumExpr expressions. You should use their bitwise "
                         "counterparts instead: '&' instead of 'and', "
@@ -451,9 +442,6 @@ class ExpressionNode(object):
     __sub__ = binop('sub')
     __rsub__ = binop('sub', reversed=True)
     __mul__ = __rmul__ = binop('mul')
-    if sys.version_info[0] < 3:
-        __div__ = div_op
-        __rdiv__ = binop('div', reversed=True)
     __truediv__ = truediv_op
     __rtruediv__ = rtruediv_op
     __pow__ = pow_op
@@ -491,7 +479,8 @@ class VariableNode(LeafNode):
 
 
 class RawNode(object):
-    """Used to pass raw integers to interpreter.
+    """
+    Used to pass raw integers to interpreter.
     For instance, for selecting what function to use in func1.
     Purposely don't inherit from ExpressionNode, since we don't wan't
     this to be used for anything but being walked.

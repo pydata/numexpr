@@ -19,22 +19,21 @@ from numexpr.utils import CacheDict
 
 # Declare a double type that does not exist in Python space
 double = numpy.double
-if sys.version_info[0] < 3:
-    int_ = int
-    long_ = long
-else:
-    int_ = numpy.int32
-    long_ = numpy.int64
+double = numpy.double
 
-typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float',
-                    'd': 'double', 'c': 'complex', 's': 'bytes', 'n': 'none'}
-kind_to_typecode = {'bool': 'b', 'int': 'i', 'long': 'l', 'float': 'f',
-                    'double': 'd', 'complex': 'c', 'bytes': 's', 'none': 'n'}
+int_ = numpy.int32
+long_ = numpy.int64
+
+typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float', 'd': 'double', 
+                    'c': 'complex', 'n': 'none', 's': 'str'}
+kind_to_typecode = {'bool': 'b', 'int': 'i', 'long': 'l', 'float': 'f', 'double': 'd',
+                    'complex': 'c', 'bytes': 's', 'str': 's', 'none': 'n'}
 type_to_typecode = {bool: 'b', int_: 'i', long_: 'l', float: 'f',
-                    double: 'd', complex: 'c', bytes: 's'}
+                    double: 'd', complex: 'c', bytes: 's', str: 's'}
 type_to_kind = expressions.type_to_kind
 kind_to_type = expressions.kind_to_type
 default_type = kind_to_type[expressions.default_kind]
+scalar_constant_kinds = list(kind_to_typecode.keys())
 
 # VML functions that are implemented in numexpr
 vml_functions = [
@@ -68,14 +67,6 @@ vml_functions = [
     "floor"
     ]
 
-# Final addtions for Python 3 (mainly for PyTables needs)
-if sys.version_info[0] > 2:
-    typecode_to_kind['s'] = 'str'
-    kind_to_typecode['str'] = 's'
-    type_to_typecode[str] = 's'
-
-scalar_constant_kinds = kind_to_typecode.keys()
-
 
 class ASTNode(object):
     """Abstract Syntax Tree node.
@@ -91,8 +82,7 @@ class ASTNode(object):
     """
     cmpnames = ['astType', 'astKind', 'value', 'children']
 
-    def __init__(self, astType='generic', astKind='unknown',
-                 value=None, children=()):
+    def __init__(self, astType='generic', astKind='unknown', value=None, children=()):
         object.__init__(self)
         self.astType = astType
         self.astKind = astKind
@@ -122,7 +112,7 @@ class ASTNode(object):
                 return numpy.array(self.value) < numpy.array(other.value)
             return self.astKind < other.astKind
         else:
-            raise TypeError( 'Sorting not implemented for astType: %s'%self.astType )
+            raise TypeError('Sorting not implemented for astType: %s'%self.astType)
 
     def __hash__(self):
         if self.astType == 'alias':
@@ -186,9 +176,9 @@ def sigPerms(s):
 
 
 def typeCompileAst(ast):
-    """Assign appropiate types to each node in the AST.
+    """Assign appropriate types to each node in the AST.
 
-    Will convert opcodes and functions to appropiate upcast version,
+    Will convert opcodes and functions to appropriate upcast version,
     and add "cast" ops if needed.
     """
     children = list(ast.children)
@@ -312,7 +302,8 @@ def isReduction(ast):
 
 
 def getInputOrder(ast, input_order=None):
-    """Derive the input order of the variables in an expression.
+    """
+    Derive the input order of the variables in an expression.
     """
     variables = {}
     for a in ast.allOf('variable'):
@@ -337,20 +328,21 @@ def convertConstantToKind(x, kind):
     # Exception for 'float' types that will return the NumPy float32 type
     if kind == 'float':
         return numpy.float32(x)
-    elif sys.version_info[0] >= 3 and isinstance(x,str):
+    elif isinstance(x,str):
         return x.encode('ascii')
     return kind_to_type[kind](x)
 
 
 def getConstants(ast):
-    '''
+    """
     RAM: implemented magic method __lt__ for ASTNode to fix issues
     #88 and #209. The following test code works now, as does the test suite.
-    import numexpr as ne
-    a = 1 + 3j; b = 5.0
-    ne.evaluate( 'a*2 + 15j - b' )
-    '''
-    constants_order = sorted( ast.allOf('constant') )
+
+        import numexpr as ne
+        a = 1 + 3j; b = 5.0
+        ne.evaluate('a*2 + 15j - b')
+    """
+    constants_order = sorted(ast.allOf('constant'))
     constants = [convertConstantToKind(a.value, a.astKind)
                  for a in constants_order]
     return constants_order, constants
@@ -366,7 +358,8 @@ def sortNodesByOrder(nodes, order):
 
 
 def assignLeafRegisters(inodes, registerMaker):
-    """Assign new registers to each of the leaf nodes.
+    """
+    Assign new registers to each of the leaf nodes.
     """
     leafRegisters = {}
     for node in inodes:
@@ -378,14 +371,16 @@ def assignLeafRegisters(inodes, registerMaker):
 
 
 def assignBranchRegisters(inodes, registerMaker):
-    """Assign temporary registers to each of the branch nodes.
+    """
+    Assign temporary registers to each of the branch nodes.
     """
     for node in inodes:
         node.reg = registerMaker(node, temporary=True)
 
 
 def collapseDuplicateSubtrees(ast):
-    """Common subexpression elimination.
+    """
+    Common subexpression elimination.
     """
     seen = {}
     aliases = []
@@ -407,8 +402,8 @@ def collapseDuplicateSubtrees(ast):
 
 
 def optimizeTemporariesAllocation(ast):
-    """Attempt to minimize the number of temporaries needed, by
-    reusing old ones.
+    """
+    Attempt to minimize the number of temporaries needed, by reusing old ones.
     """
     nodes = [n for n in ast.postorderWalk() if n.reg.temporary]
     users_of = dict((n.reg, set()) for n in nodes)
@@ -440,7 +435,8 @@ def optimizeTemporariesAllocation(ast):
 
 
 def setOrderedRegisterNumbers(order, start):
-    """Given an order of nodes, assign register numbers.
+    """
+    Given an order of nodes, assign register numbers.
     """
     for i, node in enumerate(order):
         node.reg.n = start + i
@@ -448,7 +444,8 @@ def setOrderedRegisterNumbers(order, start):
 
 
 def setRegisterNumbersForTemporaries(ast, start):
-    """Assign register numbers for temporary registers, keeping track of
+    """
+    Assign register numbers for temporary registers, keeping track of
     aliases and handling immediate operands.
     """
     seen = 0
@@ -472,7 +469,8 @@ def setRegisterNumbersForTemporaries(ast, start):
 
 
 def convertASTtoThreeAddrForm(ast):
-    """Convert an AST to a three address form.
+    """
+    Convert an AST to a three address form.
 
     Three address form is (op, reg1, reg2, reg3), where reg1 is the
     destination of the result of the instruction.
@@ -485,7 +483,8 @@ def convertASTtoThreeAddrForm(ast):
 
 
 def compileThreeAddrForm(program):
-    """Given a three address form of the program, compile it a string that
+    """
+    Given a three address form of the program, compile it a string that
     the VM understands.
     """
 
@@ -495,12 +494,7 @@ def compileThreeAddrForm(program):
         elif reg.n < 0:
             raise ValueError("negative value for register number %s" % reg.n)
         else:
-            if sys.version_info[0] < 3:
-                return chr(reg.n)
-            else:
-                # int.to_bytes is not available in Python < 3.2
-                #return reg.n.to_bytes(1, sys.byteorder)
-                return bytes([reg.n])
+            return bytes([reg.n])
 
     def quadrupleToString(opcode, store, a1=None, a2=None):
         cop = chr(interpreter.opcodes[opcode]).encode('ascii')
@@ -552,12 +546,13 @@ def getContext(kwargs, frame_depth=1):
 
 
 def precompile(ex, signature=(), context={}):
-    """Compile the expression to an intermediate form.
+    """
+    Compile the expression to an intermediate form.
     """
     types = dict(signature)
     input_order = [name for (name, type_) in signature]
 
-    if isinstance(ex, (str, unicode)):
+    if isinstance(ex, str):
         ex = stringToExpression(ex, types, context)
 
     # the AST is like the expression, but the node objects don't have
@@ -641,20 +636,15 @@ def disassemble(nex):
     r_temps = r_constants + len(nex.constants)
 
     def getArg(pc, offset):
-        if sys.version_info[0] < 3:
-            arg = ord(nex.program[pc + offset])
-            op = rev_opcodes.get(ord(nex.program[pc]))
-        else:
-            arg = nex.program[pc + offset]
-            op = rev_opcodes.get(nex.program[pc])
+        arg = nex.program[pc + offset]
+        op = rev_opcodes.get(nex.program[pc])
         try:
             code = op.split(b'_')[1][offset - 1]
         except IndexError:
             return None
-        if sys.version_info[0] > 2:
-            # int.to_bytes is not available in Python < 3.2
-            #code = code.to_bytes(1, sys.byteorder)
-            code = bytes([code])
+
+        code = bytes([code])
+
         if arg == 255:
             return None
         if code != b'n':
@@ -671,10 +661,7 @@ def disassemble(nex):
 
     source = []
     for pc in range(0, len(nex.program), 4):
-        if sys.version_info[0] < 3:
-            op = rev_opcodes.get(ord(nex.program[pc]))
-        else:
-            op = rev_opcodes.get(nex.program[pc])
+        op = rev_opcodes.get(nex.program[pc])
         dest = getArg(pc, 1)
         arg1 = getArg(pc, 2)
         arg2 = getArg(pc, 3)
@@ -724,7 +711,9 @@ def getExprNames(text, context):
 
 
 def getArguments(names, local_dict=None, global_dict=None):
-    """Get the arguments based on the names."""
+    """
+    Get the arguments based on the names.
+    """
     call_frame = sys._getframe(2)
 
     clear_local_dict = False
@@ -766,7 +755,8 @@ evaluate_lock = threading.Lock()
 
 def evaluate(ex, local_dict=None, global_dict=None,
              out=None, order='K', casting='safe', **kwargs):
-    """Evaluate a simple array expression element-wise, using the new iterator.
+    """
+    Evaluate a simple array expression element-wise, using the new iterator.
 
     ex is a string forming an expression, like "2*a+3*b". The values for "a"
     and "b" will by default be taken from the calling function's frame
@@ -809,8 +799,9 @@ def evaluate(ex, local_dict=None, global_dict=None,
           * 'unsafe' means any data conversions may be done.
     """
     global _numexpr_last
-    if not isinstance(ex, (str, unicode)):
+    if not isinstance(ex, str):
         raise ValueError("must specify expression as a string")
+    
     # Get the names for this expression
     context = getContext(kwargs, frame_depth=1)
     expr_key = (ex, tuple(sorted(context.items())))
@@ -837,7 +828,8 @@ def evaluate(ex, local_dict=None, global_dict=None,
 
 
 def re_evaluate(local_dict=None):
-    """Re-evaluate the previous executed array expression without any check.
+    """
+    Re-evaluate the previous executed array expression without any check.
 
     This is meant for accelerating loops that are re-evaluating the same
     expression repeatedly without changing anything else than the operands.

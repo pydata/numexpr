@@ -2,10 +2,11 @@
 Release notes for Numexpr 2.7 series
 ====================================
 
-Changes from 2.7.2 to 2.8.0
+Changes from 2.7.3 to 2.8.0
 ---------------------------
 
-* **Under development.**
+* Wheels for Python 3.10 are now provided.
+* Support for Python 2.7 and 3.5 has been discontinued.
 
 Changes from 2.7.2 to 2.7.3
 ---------------------------

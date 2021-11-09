@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 ###################################################################
 #  cpuinfo - Get information about CPU
 #

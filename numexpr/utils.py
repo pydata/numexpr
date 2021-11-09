@@ -25,7 +25,9 @@ if use_vml:
 
 
 def get_vml_version():
-    """Get the VML/MKL library version."""
+    """
+    Get the VML/MKL library version.
+    """
     if use_vml:
         return _get_vml_version()
     else:
@@ -54,7 +56,7 @@ def set_vml_accuracy_mode(mode):
     if use_vml:
         acc_dict = {None: 0, 'low': 1, 'high': 2, 'fast': 3}
         acc_reverse_dict = {1: 'low', 2: 'high', 3: 'fast'}
-        if mode not in acc_dict.keys():
+        if mode not in list(acc_dict.keys()):
             raise ValueError(
                 "mode argument must be one of: None, 'high', 'low', 'fast'")
         retval = _set_vml_accuracy_mode(acc_dict.get(mode, 0))
@@ -218,7 +220,7 @@ class CacheDict(dict):
         if len(self) > self.maxentries:
             # Remove a 10% of (arbitrary) elements from the cache
             entries_to_remove = self.maxentries // 10
-            for k in self.keys()[:entries_to_remove]:
+            for k in list(self.keys())[:entries_to_remove]:
                 super(CacheDict, self).__delitem__(k)
         super(CacheDict, self).__setitem__(key, value)
 

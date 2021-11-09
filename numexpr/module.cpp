@@ -23,7 +23,6 @@ using namespace std;
 global_state gs;
 long global_max_threads=DEFAULT_MAX_THREADS;
 
-
 /* Do the worker job for a certain thread */
 void *th_worker(void *tidptr)
 {
@@ -401,8 +400,6 @@ add_symbol(PyObject *d, const char *sname, int name, const char* routine_name)
 extern "C" {
 #endif
 
-#if PY_MAJOR_VERSION >= 3
-
 /* XXX: handle the "global_state" state via moduledef */
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
@@ -419,15 +416,7 @@ static struct PyModuleDef moduledef = {
 #define INITERROR return NULL
 
 PyObject *
-PyInit_interpreter(void)
-
-#else
-#define INITERROR return
-
-PyMODINIT_FUNC
-initinterpreter()
-#endif
-{
+PyInit_interpreter(void) {
     PyObject *m, *d;
 
 
@@ -450,11 +439,7 @@ initinterpreter()
     if (PyType_Ready(&NumExprType) < 0)
         INITERROR;
 
-#if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule3("interpreter", module_methods, NULL);
-#endif
 
     if (m == NULL)
         INITERROR;
@@ -511,10 +496,7 @@ initinterpreter()
     if(PyModule_AddObject(m, "use_vml", Py_False) < 0) INITERROR;
 #endif
 
-
-#if PY_MAJOR_VERSION >= 3
     return m;
-#endif
 }
 
 #ifdef __cplusplus

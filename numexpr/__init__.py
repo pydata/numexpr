@@ -21,8 +21,6 @@ for more info about it.
 
 """
 
-from __config__ import show as show_config, get_info
-
 from numexpr.interpreter import MAX_THREADS, use_vml, __BLOCK_SIZE1__
 
 is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
@@ -47,7 +45,7 @@ nthreads = _init_num_threads()
 # The default for VML is 1 thread (see #39)
 # set_vml_num_threads(1)
 
-import version
+from . import version
 __version__ = version.version
 
 def print_versions():

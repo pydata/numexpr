@@ -30,7 +30,7 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.7'
+          python-version: '3.9'
 
       - name: Install cibuildwheel
         run: |
@@ -38,27 +38,6 @@ jobs:
       - uses: docker/setup-qemu-action@v1
         if: ${{ matrix.arch == 'aarch64' }}
         name: Set up QEMU
-
-      - name: Install Visual C++ for Python 2.7
-        if: runner.os == 'Windows'
-        run: |
-          choco install vcpython27 -f -y
-      - name: Build wheels for CPython 2.7
-        if: ${{ matrix.arch != 'aarch64' }}
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: "cp27-*"
-          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.7.2
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-
-      - name: Build wheels for CPython 3.5
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: "cp35-*"
-          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.13.3
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       
       - name: Build wheels for CPython 3.6
         run: |
@@ -90,6 +69,14 @@ jobs:
         env:
           CIBW_BUILD: "cp39-*"
           CIBW_BEFORE_BUILD: pip install setuptools numpy==1.19.3
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+
+      - name: Build wheels for CPython 3.10
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BUILD: "cp310-*"
+          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.21.3
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - uses: actions/upload-artifact@v2
