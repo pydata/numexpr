@@ -7,9 +7,9 @@
 #  define USE_UNALIGNED_ACCESS 1
 #endif
 
-#ifdef SCIPY_MKL_H
-#define USE_VML
-#endif
+// #ifdef SCIPY_MKL_H
+// #define USE_VML
+// #endif
 
 #ifdef USE_VML
 /* The values below have been tuned for a Skylake processor (E3-1245 v5 @ 3.50GHz) */

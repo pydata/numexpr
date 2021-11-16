@@ -39,7 +39,7 @@ with open('numexpr/version.py', 'w') as fh:
         fh.write("numpy_build_version = '%s'\n" % numpy.__version__)
     except ImportError:
         pass
-    
+
 lib_dirs = []
 inc_dirs = [np.get_include(), op.join('framestream')]
 libs = []  # Pre-built libraries ONLY, like python36.so
@@ -59,16 +59,46 @@ else:
     extra_cflags = []
     extra_link_args = []
 
-numexpr_extension = Extension('numexpr.interpreter',
-    include_dirs=inc_dirs,
-    define_macros=def_macros,
-    sources=sources,
-    library_dirs=lib_dirs,
-    libraries=libs,
-    extra_compile_args=extra_cflags,
-    extra_link_args=extra_link_args,)
+def parse_site_cfg():
+    """
+    Parses `site.cfg`, if it exists, to determine the location of Intel oneAPI MKL.
+
+    To compile NumExpr with MKL (VML) support, typically you need to copy the 
+    provided `site.cfg.example` to `site.cfg` and then edit the paths in the 
+    configuration lines for `include_dirs` and `library_dirs` paths to point 
+    to the appropriate directories on your machine.
+    """
+    import configparser
+    site = configparser.ConfigParser()
+    if not op.isfile('site.cfg'):
+        return
+
+    site.read('site.cfg')
+
+    if 'mkl' in site.sections():
+        inc_dirs.extend(
+            site['mkl']['include_dirs'].split(os.pathsep))
+        lib_dirs.extend(
+            site['mkl']['library_dirs'].split(os.pathsep))
+        libs.extend(
+            site['mkl']['libraries'].split(os.pathsep))
+        def_macros.append(('USE_VML', None))
+        
 
 def setup_package():
+
+    parse_site_cfg()
+
+    numexpr_extension = Extension('numexpr.interpreter',
+        include_dirs=inc_dirs,
+        define_macros=def_macros,
+        sources=sources,
+        library_dirs=lib_dirs,
+        libraries=libs,
+        extra_compile_args=extra_cflags,
+        extra_link_args=extra_link_args,)
+
+
     metadata = dict(
                     name = 'numexpr',
                     version = version,
@@ -111,115 +141,6 @@ def setup_package():
                         ],
                     
     )
-    
-    # def configuration():
-    #     from numpy.distutils.misc_util import Configuration, dict_append
-    #     from numpy.distutils.system_info import system_info
-
-    #     config = Configuration('numexpr')
-
-    #     #try to find configuration for MKL, either from environment or site.cfg
-    #     if op.exists('site.cfg'):
-    #         mkl_config_data = config.get_info('mkl')
-    #         # Some version of MKL needs to be linked with libgfortran.
-    #         # For this, use entries of DEFAULT section in site.cfg.
-    #         default_config = system_info()
-    #         dict_append(mkl_config_data,
-    #                     libraries=default_config.get_libraries(),
-    #                     library_dirs=default_config.get_lib_dirs())
-    #     else:
-    #         mkl_config_data = {}
-
-    #     # setup information for C extension
-    #     if os.name == 'nt':
-    #         pthread_win = ['numexpr/win32/pthread.c']
-    #     else:
-    #         pthread_win = []
-    #     extension_config_data = {
-    #         'sources': ['numexpr/interpreter.cpp',
-    #                     'numexpr/module.cpp',
-    #                     'numexpr/numexpr_object.cpp'] + pthread_win,
-    #         'depends': ['numexpr/interp_body.cpp',
-    #                     'numexpr/complex_functions.hpp',
-    #                     'numexpr/interpreter.hpp',
-    #                     'numexpr/module.hpp',
-    #                     'numexpr/msvc_function_stubs.hpp',
-    #                     'numexpr/numexpr_config.hpp',
-    #                     'numexpr/numexpr_object.hpp'],
-    #         'libraries': ['m'],
-    #         'extra_compile_args': ['-funroll-all-loops', ],
-    #     }
-    #     dict_append(extension_config_data, **mkl_config_data)
-    #     if 'library_dirs' in mkl_config_data:
-    #         library_dirs = ':'.join(mkl_config_data['library_dirs'])
-    #     config.add_extension('interpreter', **extension_config_data)
-    #     config.set_options(quiet=True)
-
-    #     config.make_config_py()
-    #     config.add_subpackage('tests', 'numexpr/tests')
-
-    #     #version handling
-    #     config.get_version('numexpr/version.py')
-    #     return config
-
-
-    # class cleaner(setuptools.command.clean):
-    #
-    #     def run(self):
-    #         # Recursive deletion of build/ directory
-    #         path = localpath("build")
-    #         try:
-    #             shutil.rmtree(path)
-    #         except Exception:
-    #             debug("Failed to remove directory %s" % path)
-    #         else:
-    #             debug("Cleaned up %s" % path)
-    #
-    #         # Now, the extension and other files
-    #         try:
-    #             import imp
-    #         except ImportError:
-    #             if os.name == 'posix':
-    #                 paths = [localpath("numexpr/interpreter.so")]
-    #             else:
-    #                 paths = [localpath("numexpr/interpreter.pyd")]
-    #         else:
-    #             paths = []
-    #             for suffix, _, _ in imp.get_suffixes():
-    #                 if suffix == '.py':
-    #                     continue
-    #                 paths.append(localpath("numexpr", "interpreter" + suffix))
-    #         paths.append(localpath("numexpr/__config__.py"))
-    #         paths.append(localpath("numexpr/__config__.pyc"))
-    #         for path in paths:
-    #             try:
-    #                 os.remove(path)
-    #             except Exception:
-    #                 debug("Failed to clean up file %s" % path)
-    #             else:
-    #                 debug("Cleaning up %s" % path)
-    #
-    #         setuptools.clean.run(self)
-
-    # class build_ext(numpy_build_ext):
-    #     def build_extension(self, ext):
-    #         # at this point we know what the C compiler is.
-    #         if self.compiler.compiler_type == 'msvc' or self.compiler.compiler_type == 'intelemw':
-    #             ext.extra_compile_args = []
-    #             # also remove extra linker arguments msvc doesn't understand
-    #             ext.extra_link_args = []
-    #             # also remove gcc math library
-    #             ext.libraries.remove('m')
-    #         numpy_build_ext.build_extension(self, ext)
-
-   
-        # metadata['cmdclass'] = {
-        #     'build_ext': build_ext,
-        #     # 'clean': cleaner,
-        #     'build_py': build_py,
-        # }
-        # metadata['configuration'] = configuration
-
     setup(**metadata)
 
 

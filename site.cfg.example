@@ -2,51 +2,16 @@
 # file to "site.cfg" and edit the paths according to your installation of the
 # Intel MKL.
 
-# Note: some versions of MKL need to be linked to gfortran if compiled with
-# GNU C compiler. Uncomment next line if you get an error like "undefined
-# symbol: _gfortran_malloc"
-#
-# Note2: Some Fedora users reported that they had to install a
-# compatible version of the gfortran lib.  See:
-# http://code.google.com/p/numexpr/issues/detail?id=15
-# for more info.
-[DEFAULT]
-#libraries = gfortran
+# Example for Intel(R) MKL 2018 on Linux
+# [mkl]
+# library_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/lib/intel64
+# include_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/include
+# libraries = mkl_rt
 
-#[mkl]
-# Example for the MKL included in Intel C 11.0 compiler
-# (you may need a recent NumPy version for being able to search libraries
-# in different directories at a time)
-#library_dirs = /opt/intel/Compiler/11.0/074/mkl/lib/em64t/:/opt/intel/Compiler/11.0/074/lib/intel64
-#include_dirs =  /opt/intel/Compiler/11.0/074/mkl/include/
-#libraries = mkl_solver_ilp64, mkl_intel_ilp64,  mkl_intel_thread, mkl_core, iomp5
 
-# This seems to work for MKL 11 with processors with AVX (Sandy Bridge and above) for Linux
-#library_dirs = /opt/intel/composerxe/mkl/lib/intel64:/opt/intel/composer_xe_2013.3.163/compiler/lib/intel64
-#include_dirs = /opt/intel/composerxe/mkl/include/
-#libraries = mkl_intel_lp64, mkl_gf_lp64, mkl_intel_thread, mkl_core, mkl_blas95_lp64, mkl_lapack95_lp64, mkl_avx, mkl_vml_avx, mkl_rt, iomp5
-
-## Example for using MKL 10.0
-#library_dirs = /opt/intel/mkl/10.0.2.018/lib/em64t
-#include_dirs =  /opt/intel/mkl/10.0.2.018/include
-
-# Example for using MKL 10.2 for Windows 64-bit
-#include_dirs = \Program Files\Intel\MKL\10.2.5.035\include
-#library_dirs = \Program Files\Intel\MKL\10.2.5.035\em64t\lib
-#libraries = mkl_solver_ilp64, mkl_core, mkl_intel_thread, mkl_intel_ilp64, libiomp5md
-# The next works too, but for LP64 arithmetic
-#libraries = mkl_core, mkl_intel_thread, mkl_intel_lp64, libiomp5md
-
-# Example with Intel compiler version 14.0.2 and MKL v11.1.2 on intel64 architecture
-#libraries = mkl_intel_lp64, mkl_gf_lp64, mkl_intel_thread, mkl_core, mkl_def, mkl_vml_avx, mkl_rt, iomp5
-# For details, see https://github.com/pydata/numexpr/issues/148
-
-# Example for MKL2018 on Windows x64
-# https://software.intel.com/en-us/articles/building-numpyscipy-with-intel-mkl-and-intel-fortran-on-windows
+# Example for Intel(R) oneAPI MKL on Windows x64
 # Please note that the valid os.pathsep is ';' on Windows and ':' on Linux
-# and that numpy.distutils.system_info only accepts the first instance of library_dirs
-# Last make sure you do `python setup.py install` instead of using pip.
 [mkl]
-library_dirs=/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl/lib/intel64;/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/compiler/lib/intel64
-include_dirs=/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl/include
-libraries = mkl_intel_lp64, mkl_intel_thread, mkl_core, libiomp5md
+include_dirs=C:/Program Files (x86)/Intel/oneAPI/mkl/latest/include
+library_dirs=C:/Program Files (x86)/Intel/oneAPI/mkl/latest/lib/intel64
+libraries=mkl_rt
