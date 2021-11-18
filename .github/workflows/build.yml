@@ -45,7 +45,7 @@ jobs:
         env:
           CIBW_BUILD: "cp36-*"
           CIBW_BEFORE_BUILD: pip install setuptools numpy==1.13.3
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+          CIBW_ARCHS_LINUX: x86_64
 
       - name: Build wheels for CPython 3.7
         run: |
@@ -53,7 +53,7 @@ jobs:
         env:
           CIBW_BUILD: "cp37-*"
           CIBW_BEFORE_BUILD: pip install setuptools numpy==1.14.5
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+          CIBW_ARCHS_LINUX: x86_64
 
       - name: Build wheels for CPython 3.8
         run: |
@@ -61,7 +61,7 @@ jobs:
         env:
           CIBW_BUILD: "cp38-*"
           CIBW_BEFORE_BUILD: pip install setuptools numpy==1.17.3
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+          CIBW_ARCHS_LINUX: x86_64
 
       - name: Build wheels for CPython 3.9
         run: |
@@ -69,7 +69,7 @@ jobs:
         env:
           CIBW_BUILD: "cp39-*"
           CIBW_BEFORE_BUILD: pip install setuptools numpy==1.19.3
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+          CIBW_ARCHS_LINUX: x86_64
 
       - name: Build wheels for CPython 3.10
         run: |

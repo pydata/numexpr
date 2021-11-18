@@ -12,7 +12,6 @@
 import sys, os, os.path as op, io
 # import setuptools
 from setuptools import setup, find_packages, Extension
-# from setuptools.command.build_ext import build_ext
 import platform
 import numpy as np
 
