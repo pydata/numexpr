@@ -27,7 +27,7 @@ with io.open('README.rst', encoding='utf-8') as f:
 major_ver = 2
 minor_ver = 8
 nano_ver = 0
-branch = 'dev0'
+branch = ''
 
 version = '%d.%d.%d%s' % (major_ver, minor_ver, nano_ver, branch)
 with open('numexpr/version.py', 'w') as fh:

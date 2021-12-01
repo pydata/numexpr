@@ -6,7 +6,12 @@ Changes from 2.7.3 to 2.8.0
 ---------------------------
 
 * Wheels for Python 3.10 are now provided.
-* Support for Python 2.7 and 3.5 has been discontinued.
+* Support for Python 2.7 and 3.5 has been discontinued. 
+* All residual support for Python 2.X syntax has been removed, and therefore 
+  the setup build no longer makes calls to the `2to3` script. The `setup.py` 
+  has been refactored to be more modern.
+* The examples on how to link into Intel VML/MKL/oneAPI now use the dynamic 
+  library.
 
 Changes from 2.7.2 to 2.7.3
 ---------------------------
