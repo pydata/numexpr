@@ -14,3 +14,4 @@ site.cfg
 *.pyd
 __config__.py
 version.py
+artifact.zip

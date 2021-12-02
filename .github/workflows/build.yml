@@ -17,12 +17,18 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04, windows-latest, macos-latest]
-        arch: [x86_64, aarch64]
+        # arch: [x86_64, aarch64]
+        # exclude:
+        #   - os: windows-latest
+        #     arch: aarch64
+        #   - os: macos-latest
+        #     arch: aarch64
+        # Disable aarch64 builds until they take a reasonable period to build and test
+        arch: [x86_64]
         exclude:
           - os: windows-latest
-            arch: aarch64
           - os: macos-latest
-            arch: aarch64
+
 
     steps:
       - uses: actions/checkout@v2
