@@ -1,6 +1,11 @@
 ====================================
-Release notes for Numexpr 2.7 series
+Release notes for Numexpr 2.8 series
 ====================================
+
+Changes from 2.8.0 to 2.8.1
+---------------------------
+
+* TODO
 
 Changes from 2.7.3 to 2.8.0
 ---------------------------

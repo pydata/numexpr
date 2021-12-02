@@ -1,25 +1,20 @@
 ========================
-Announcing NumExpr 2.8.0
+Announcing NumExpr 2.8.1
 ========================
 
 Hi everyone, 
 
-**Under development.**
+* **Under development.**
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.7.3 to 2.8.0
+
+Changes from 2.8.0 to 2.8.1
 ---------------------------
 
-* Wheels for Python 3.10 are now provided.
-* Support for Python 2.7 and 3.5 has been discontinued. 
-* All residual support for Python 2.X syntax has been removed, and therefore 
-  the setup build no longer makes calls to the `2to3` script. The `setup.py` 
-  has been refactored to be more modern.
-* The examples on how to link into Intel VML/MKL/oneAPI now use the dynamic 
-  library.
+* TODO
 
 What's Numexpr?
 ---------------
