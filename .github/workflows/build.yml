@@ -25,9 +25,6 @@ jobs:
         #     arch: aarch64
         # Disable aarch64 builds until they take a reasonable period to build and test
         arch: [x86_64]
-        exclude:
-          - os: windows-latest
-          - os: macos-latest
 
 
     steps:
