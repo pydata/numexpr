@@ -40,7 +40,7 @@ double = np.double
 long = int
 
 # Recommended minimum versions
-from setuptools._vendor.packaging.version import Version
+from packaging.version import Version
 minimum_numpy_version = Version('1.7.0')
 present_numpy_version = Version(np.__version__)
 

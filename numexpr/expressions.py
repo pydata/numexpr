@@ -17,7 +17,7 @@ import threading
 import numpy
 # NumPy's behavior sometimes changes with versioning, especially in regard as 
 # to when ints are cast to floats.
-from setuptools._vendor.packaging.version import parse, Version
+from packaging.version import parse, Version
 _np_version_forbids_neg_powint = parse(numpy.__version__) > Version('1.12.0b1')
 
 # Declare a double type that does not exist in Python space
