@@ -5,8 +5,9 @@ Release notes for Numexpr 2.8 series
 Changes from 2.8.0 to 2.8.1
 ---------------------------
 
-* Fix dependency list.
-* Add ``pyproject.toml`` and modernize the ``setup.py`` script.
+* Fixed dependency list.
+* Added ``pyproject.toml`` and modernize the ``setup.py`` script. Thanks to 
+Antonio Valentino for the PR.
 
 Changes from 2.7.3 to 2.8.0
 ---------------------------

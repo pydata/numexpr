@@ -4,7 +4,9 @@ Announcing NumExpr 2.8.1
 
 Hi everyone, 
 
-* **Under development.**
+This is another maintenance release to further modernize our install script for 
+distributions that do not include `setuptools` by default. Thanks to Antonio 
+Valentino for the changes.
 
 Project documentation is available at:
 
@@ -14,7 +16,9 @@ http://numexpr.readthedocs.io/
 Changes from 2.8.0 to 2.8.1
 ---------------------------
 
-* TODO
+* Fixed dependency list.
+* Added ``pyproject.toml`` and modernize the ``setup.py`` script. Thanks to 
+Antonio Valentino for the PR.
 
 What's Numexpr?
 ---------------

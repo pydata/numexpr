@@ -11,7 +11,7 @@ Preliminaries
 -------------
 
 * Make sure that `RELEASE_NOTES.rst` and `ANNOUNCE.rst` are up to date with the latest news in the release.
-* Ensure that `branch = ''` in `setup.py`.
+* Ensure that there is no branch in the version in `setup.cfg`.
 * Do a commit and a push:
 
     `git commit -a -m "Getting ready for release X.Y.Z"`
@@ -77,7 +77,8 @@ Announcing
 Post-release actions
 --------------------
 
-* Bump the `nano` version number in `setup.py`, including setting `branch = 'dev0'`.
+* Add `.dev1` to the version number in `setup.cfg`, and bump the bugfix version 
+  number.
 * Create new headers for adding new features in `RELEASE_NOTES.rst`
   and add this place-holder:
 
