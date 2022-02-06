@@ -5,6 +5,8 @@ Release notes for Numexpr 2.8 series
 Changes from 2.8.1 to 2.8.2
 ---------------------------
 
+* TODO
+=======
 * Due to the removal of the array flag `NPY_ARRAY_UPDATEIFCOPY`, it's possible for
   older versions of NumExpr (<= 2.8.1) to fail to compile against NumPy >= 1.23.0.
   This flag was removed with no observed change in behavior. The branch of code 
@@ -14,7 +16,6 @@ Changes from 2.8.1 to 2.8.2
       ne.evaluate('3', out=x)
 
 *
-
 
 
 Changes from 2.8.0 to 2.8.1
