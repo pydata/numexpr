@@ -26,6 +26,7 @@ with open('numexpr/version.py', 'w') as fh:
         fh.write("numpy_build_version = '%s'\n" % np.__version__)
     except ImportError:
         pass
+    fh.write("platform_machine = '%s'\n" % platform.machine())
 
 lib_dirs = []
 inc_dirs = [np.get_include(), op.join('framestream')]
