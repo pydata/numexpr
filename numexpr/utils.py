@@ -17,6 +17,7 @@ import platform
 
 from numexpr.interpreter import _set_num_threads, _get_num_threads, MAX_THREADS
 from numexpr import use_vml
+from . import version
 
 if use_vml:
     from numexpr.interpreter import (
@@ -123,7 +124,7 @@ def _init_num_threads():
     the virtual machine.
     """
     # Any platform-specific short-circuits
-    if 'sparc' in platform.machine():
+    if 'sparc' in version.platform_machine:
         log.warning('The number of threads have been set to 1 because problems related '
                   'to threading have been reported on some sparc machine. '
                   'The number of threads can be changed using the "set_num_threads" '
