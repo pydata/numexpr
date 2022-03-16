@@ -40,7 +40,9 @@ extra_cflags = []
 extra_link_args = []
 
 if platform.uname().system == 'Windows':
-    extra_cflags = ['/O2']
+    # For MSVC only
+    if "MSC" in platform.python_compiler():
+        extra_cflags = ['/O2']
     extra_link_args = []
     sources.append('numexpr/win32/pthread.c')
 else:
