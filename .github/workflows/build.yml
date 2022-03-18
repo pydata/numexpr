@@ -13,7 +13,7 @@ env:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}, ${{ matrix.arch }}
+    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     env:
       CIBW_BUILD: cp3{6,7,8,9,10}-*
