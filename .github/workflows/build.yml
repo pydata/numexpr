@@ -3,17 +3,22 @@ name: Build
 on: [push, pull_request]
 
 env:
-  CIBW_BEFORE_BUILD: pip install setuptools numpy
+  CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy
   # CIBW_BUILD_VERBOSITY: 1
   # CIBW_TEST_REQUIRES: pytest
   CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
+  CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
+    DYLD_FALLBACK_LIBRARY_PATH=/tmp/hdf5/lib delocate-listdeps {wheel} &&
+    DYLD_FALLBACK_LIBRARY_PATH=/tmp/hdf5/lib delocate-wheel --require-archs {delocate_archs} -w {dest_dir} {wheel}
 
-# To pin NumPy versions, see docs here:
-# https://github.com/scipy/oldest-supported-numpy/blob/master/setup.cfg
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}, ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
+    env:
+      CIBW_BUILD: cp3{6,7,8,9,10}-*
+      CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+      CIBW_ARCHS_MACOS: ${{ matrix.arch }}
     strategy:
       matrix:
         os: [ubuntu-18.04, windows-latest, macos-latest]
@@ -25,7 +30,9 @@ jobs:
         #     arch: aarch64
         # Disable aarch64 builds until they take a reasonable period to build and test
         arch: [x86_64]
-
+        include:
+          - arch: arm64
+            os: macos-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -33,54 +40,19 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install cibuildwheel
         run: |
           python -m pip install cibuildwheel
+
       - uses: docker/setup-qemu-action@v1
         if: ${{ matrix.arch == 'aarch64' }}
         name: Set up QEMU
       
-      - name: Build wheels for CPython 3.6
+      - name: Build wheels for CPython
         run: |
           python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: "cp36-*"
-          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.13.3
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-
-      - name: Build wheels for CPython 3.7
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: "cp37-*"
-          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.14.5
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-
-      - name: Build wheels for CPython 3.8
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: "cp38-*"
-          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.17.3
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-
-      - name: Build wheels for CPython 3.9
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: "cp39-*"
-          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.19.3
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-
-      - name: Build wheels for CPython 3.10
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
-        env:
-          CIBW_BUILD: "cp310-*"
-          CIBW_BEFORE_BUILD: pip install setuptools numpy==1.21.3
-          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
 
       - uses: actions/upload-artifact@v2
         with:
