@@ -27,19 +27,19 @@ jobs:
             os: macos-latest
           - arch: aarch64
             os: ubuntu-latest
-            cibw_build: "*36*"
+            cibw_build: "cp36*"
           - arch: aarch64
             os: ubuntu-latest
-            cibw_build: "*37*"
+            cibw_build: "cp37*"
           - arch: aarch64
             os: ubuntu-latest
-            cibw_build: "*38*"
+            cibw_build: "cp38*"
           - arch: aarch64
             os: ubuntu-latest
-            cibw_build: "*39*"
+            cibw_build: "cp39*"
           - arch: aarch64
             os: ubuntu-latest
-            cibw_build: "*310*"
+            cibw_build: "cp310*"
 
     steps:
       - uses: actions/checkout@v2
