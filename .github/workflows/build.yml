@@ -25,6 +25,7 @@ jobs:
         include:
           - arch: arm64
             os: macos-latest
+            cibw_build: "cp3{6,7,8,9,10}-*"
           - arch: aarch64
             os: ubuntu-latest
             cibw_build: "cp36*manylinux*"
@@ -62,6 +63,7 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
       
       - name: Make sdist
+        if: ${{ matrix.os == 'windows-latest' }}
         run: |
           python -m pip install build
           python -m build --sdist --outdir wheelhouse .
