@@ -14,18 +14,32 @@ jobs:
     name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     env:
-      CIBW_BUILD: cp3{6,7,8,9,10}-*
+      CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: ${{ matrix.arch }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x86_64]
+        cibw_build: ["cp3{6,7,8,9,10}-*"]
         include:
           - arch: arm64
             os: macos-latest
           - arch: aarch64
             os: ubuntu-latest
+            cibw_build: "*36*"
+          - arch: aarch64
+            os: ubuntu-latest
+            cibw_build: "*37*"
+          - arch: aarch64
+            os: ubuntu-latest
+            cibw_build: "*38*"
+          - arch: aarch64
+            os: ubuntu-latest
+            cibw_build: "*39*"
+          - arch: aarch64
+            os: ubuntu-latest
+            cibw_build: "*310*"
 
     steps:
       - uses: actions/checkout@v2
