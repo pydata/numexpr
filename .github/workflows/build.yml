@@ -8,9 +8,6 @@ env:
   # CIBW_TEST_REQUIRES: pytest
   CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
   CIBW_TEST_SKIP: "*macosx*arm64*"
-  CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
-    DYLD_FALLBACK_LIBRARY_PATH=/tmp/hdf5/lib delocate-listdeps {wheel} &&
-    DYLD_FALLBACK_LIBRARY_PATH=/tmp/hdf5/lib delocate-wheel --require-archs {delocate_archs} -w {dest_dir} {wheel}
 
 jobs:
   build_wheels:
@@ -22,18 +19,13 @@ jobs:
       CIBW_ARCHS_MACOS: ${{ matrix.arch }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, windows-latest, macos-latest]
-        # arch: [x86_64, aarch64]
-        # exclude:
-        #   - os: windows-latest
-        #     arch: aarch64
-        #   - os: macos-latest
-        #     arch: aarch64
-        # Disable aarch64 builds until they take a reasonable period to build and test
+        os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x86_64]
         include:
           - arch: arm64
             os: macos-latest
+          - arch: aarch64
+            os: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
