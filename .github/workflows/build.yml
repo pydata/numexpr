@@ -8,32 +8,47 @@ env:
   # CIBW_TEST_REQUIRES: pytest
   CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
   CIBW_TEST_SKIP: "*macosx*arm64*"
-  CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
-    DYLD_FALLBACK_LIBRARY_PATH=/tmp/hdf5/lib delocate-listdeps {wheel} &&
-    DYLD_FALLBACK_LIBRARY_PATH=/tmp/hdf5/lib delocate-wheel --require-archs {delocate_archs} -w {dest_dir} {wheel}
+  CIBW_SKIP: "*musllinux*"
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }}
+    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }} - ${{ matrix.p_ver }}
     runs-on: ${{ matrix.os }}
     env:
-      CIBW_BUILD: cp3{6,7,8,9,10}-*
+      CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: ${{ matrix.arch }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, windows-latest, macos-latest]
-        # arch: [x86_64, aarch64]
-        # exclude:
-        #   - os: windows-latest
-        #     arch: aarch64
-        #   - os: macos-latest
-        #     arch: aarch64
-        # Disable aarch64 builds until they take a reasonable period to build and test
+        os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x86_64]
+        cibw_build: ["cp3{6,7,8,9,10}-*"]
+        p_ver: ["3.6-3.10"]
         include:
           - arch: arm64
             os: macos-latest
+            cibw_build: "cp3{6,7,8,9,10}-*"
+            p_ver: "3.6-3.10"
+          - arch: aarch64
+            os: ubuntu-latest
+            cibw_build: "cp36*"
+            p_ver: "3.6"
+          - arch: aarch64
+            os: ubuntu-latest
+            cibw_build: "cp37*"
+            p_ver: "3.7"
+          - arch: aarch64
+            os: ubuntu-latest
+            cibw_build: "cp38*"
+            p_ver: "3.8"
+          - arch: aarch64
+            os: ubuntu-latest
+            cibw_build: "cp39*"
+            p_ver: "3.9"
+          - arch: aarch64
+            os: ubuntu-latest
+            cibw_build: "cp310*"
+            p_ver: "3.10"
 
     steps:
       - uses: actions/checkout@v2
@@ -41,7 +56,7 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.10'
+          python-version: '3.x'
 
       - name: Install cibuildwheel
         run: |
@@ -51,10 +66,22 @@ jobs:
         if: ${{ matrix.arch == 'aarch64' }}
         name: Set up QEMU
       
-      - name: Build wheels for CPython
+      - name: Build wheels for Python
         run: |
           python -m cibuildwheel --output-dir wheelhouse
+      
+      - name: Make sdist
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          python -m pip install build
+          python -m build --sdist --outdir wheelhouse .
 
       - uses: actions/upload-artifact@v2
         with:
-          path: ./wheelhouse/*.whl
+          path: ./wheelhouse/*
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v0.1.14
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: wheelhouse/*
