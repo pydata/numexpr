@@ -4,7 +4,9 @@ Announcing NumExpr 2.8.2
 
 Hi everyone, 
 
-TODO
+Please find here another maintenance release of NumExpr. Wheels for ARM64 
+multilinux should be available again and Apple Silicon wheels are also now 
+available on PyPi.
 
 Project documentation is available at:
 
@@ -14,7 +16,22 @@ http://numexpr.readthedocs.io/
 Changes from 2.8.0 to 2.8.1
 ---------------------------
 
-* TODO
+* Thanks to Matt Einhorn for improvements to the GitHub Actions build process to
+  add support for Apple Silicon and aarch64.
+* Thanks to Biswapriyo Nath for a fix to allow `mingw` builds on Windows.
+* Due to the removal of the array flag `NPY_ARRAY_UPDATEIFCOPY`, it's possible for
+  older versions of NumExpr (<= 2.8.1) to fail to compile against NumPy >= 1.23.0.
+  This flag was removed with no observed change in behavior. The branch of code 
+  effected could only be reached with a statement such as:
+
+```
+      x=np.zeros(1); 
+      ne.evaluate('3', out=x)
+```
+
+* There have been some changes made to not import `platform.machine()` on `sparc`
+  but it is highly advised to upgrade to Python 3.9+ to avoid this issue with 
+  the `platform` package.
 
 What's Numexpr?
 ---------------
