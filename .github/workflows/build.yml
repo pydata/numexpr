@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        arch: [x86_64]
+        arch: [auto64]
         cibw_build: ["cp3{6,7,8,9,10}-*"]
         p_ver: ["3.6-3.10"]
         include:
