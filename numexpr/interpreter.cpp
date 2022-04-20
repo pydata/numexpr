@@ -1271,7 +1271,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             // a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
             //                             NPY_ARRAY_ALIGNED|NPY_ARRAY_WRITEBACKIFCOPY);
             a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
-                                        NPY_ARRAY_ALIGNED|NPY_ARRAY_UPDATEIFCOPY);
+                                        NPY_ARRAY_ALIGNED|NPY_ARRAY_WRITEBACKIFCOPY);
             if (a == NULL) {
                 goto fail;
             }
