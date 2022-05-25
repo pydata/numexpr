@@ -178,7 +178,7 @@ Supported operators
 
 *NumExpr* supports the set of operators listed below:
 
-    * Logical operators: :code:`&, |, ~`
+    * Bitwise operators (and, or, not, xor): :code:`&, |, ~, ^`
     * Comparison operators: :code:`<, <=, ==, !=, >=, >`
     * Unary arithmetic operators: :code:`-`
     * Binary arithmetic operators: :code:`+, -, *, /, **, %, <<, >>`
