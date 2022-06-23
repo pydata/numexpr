@@ -1246,6 +1246,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
 
     /* A case with a single constant output */
+    PyArrayObject *a = NULL;
     if (n_inputs == 0) {
         char retsig = get_return_sig(self->program);
 
@@ -1259,7 +1260,6 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
         }
         else { // Use the provided output array
-            PyArrayObject *a;
             if (PyArray_SIZE(operands[0]) != 1) {
                 PyErr_SetString(PyExc_ValueError,
                         "output for a constant expression must have size 1");
@@ -1277,11 +1277,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             //                             NPY_ARRAY_ALIGNED|NPY_ARRAY_UPDATEIFCOPY);
 
             // NumPy folkds suggested using WRITEBACKIFCOPY instead:
-            // a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
-            //                             NPY_ARRAY_ALIGNED|NPY_ARRAY_WRITEBACKIFCOPY);
+            a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
+                                        NPY_ARRAY_ALIGNED|NPY_ARRAY_WRITEBACKIFCOPY);
 
             // The array does not have to be aligned, however:
-            a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0], 0);
+            // a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0], 0);
 
             if (a == NULL) {
                 goto fail;
@@ -1292,6 +1292,15 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
         r = run_interpreter_const(self, PyArray_BYTES(operands[0]), &pc_error);
 
+        if ((n_inputs == 0) && (operands[0] != NULL)) {
+            // Write-back our copy to the passed in output array if we had to make a copy.
+            int retval = PyArray_ResolveWritebackIfCopy(a);
+            if (retval < 0) {
+                // 1 means it copied the value, 0 means no copy, only -1 is an error.
+                PyErr_Format(PyExc_ValueError, "Writeback to singleton failed with error code: %d", retval);
+                goto fail;
+            }
+        }
         ret = (PyObject *)operands[0];
         Py_INCREF(ret);
         goto cleanup_and_exit;
