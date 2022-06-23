@@ -1246,7 +1246,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
 
     /* A case with a single constant output */
-    PyArrayObject *a = NULL;
+    PyArrayObject *singleton;
+    singleton = NULL;
     if (n_inputs == 0) {
         char retsig = get_return_sig(self->program);
 
@@ -1277,24 +1278,24 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             //                             NPY_ARRAY_ALIGNED|NPY_ARRAY_UPDATEIFCOPY);
 
             // NumPy folkds suggested using WRITEBACKIFCOPY instead:
-            a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
+            singleton = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
                                         NPY_ARRAY_ALIGNED|NPY_ARRAY_WRITEBACKIFCOPY);
 
             // The array does not have to be aligned, however:
             // a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0], 0);
 
-            if (a == NULL) {
+            if (singleton == NULL) {
                 goto fail;
             }
             Py_DECREF(operands[0]);
-            operands[0] = a;
+            operands[0] = singleton;
         }
 
         r = run_interpreter_const(self, PyArray_BYTES(operands[0]), &pc_error);
 
         if ((n_inputs == 0) && (operands[0] != NULL)) {
             // Write-back our copy to the passed in output array if we had to make a copy.
-            int retval = PyArray_ResolveWritebackIfCopy(a);
+            int retval = PyArray_ResolveWritebackIfCopy(singleton);
             if (retval < 0) {
                 // 1 means it copied the value, 0 means no copy, only -1 is an error.
                 PyErr_Format(PyExc_ValueError, "Writeback to singleton failed with error code: %d", retval);
