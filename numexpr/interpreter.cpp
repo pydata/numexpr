@@ -25,6 +25,9 @@
 #define fmin min
 #define NE_INFINITY (DBL_MAX+DBL_MAX)
 #define NE_NAN (INFINITY-INFINITY)
+#else 
+#define NE_INFINITY INFINITY
+#define NE_NAN NAN
 #endif
 
 #ifndef SIZE_MAX
