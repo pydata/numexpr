@@ -23,8 +23,8 @@
 /* Some missing symbols and functions for Win */
 #define fmax max
 #define fmin min
-#define INFINITY (DBL_MAX+DBL_MAX)
-#define NAN (INFINITY-INFINITY)
+#define NE_INFINITY (DBL_MAX+DBL_MAX)
+#define NE_NAN (INFINITY-INFINITY)
 #endif
 
 #ifndef SIZE_MAX
@@ -1255,7 +1255,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 goto fail;
             }
         }
-        else {
+        else { // Use the provided output array
             PyArrayObject *a;
             if (PyArray_SIZE(operands[0]) != 1) {
                 PyErr_SetString(PyExc_ValueError,
@@ -1268,10 +1268,18 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 goto fail;
             }
             Py_INCREF(dtypes[0]);
+
+            // Original code enforced use of an aligned array:
+            // a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
+            //                             NPY_ARRAY_ALIGNED|NPY_ARRAY_UPDATEIFCOPY);
+
+            // NumPy folkds suggested using WRITEBACKIFCOPY instead:
             // a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
             //                             NPY_ARRAY_ALIGNED|NPY_ARRAY_WRITEBACKIFCOPY);
-            a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
-                                        NPY_ARRAY_ALIGNED|NPY_ARRAY_UPDATEIFCOPY);
+
+            // The array does not have to be aligned, however:
+            a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0], 0);
+
             if (a == NULL) {
                 goto fail;
             }
@@ -1411,7 +1419,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             fill = PyLong_FromLong(1);
         } else if (PyArray_DESCR(a)->kind == 'f') {
             /* floating point min/max identity is NaN */
-            fill = PyFloat_FromDouble(NAN);
+            fill = PyFloat_FromDouble(NE_NAN);
         } else if (op >= OP_MIN && op < OP_MAX) {
             /* integer min identity */
             fill = PyLong_FromLong(LONG_MAX);

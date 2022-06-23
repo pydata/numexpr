@@ -481,6 +481,14 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
+    def test_unaligned_singleton(self):
+        # Test for issue #397 whether singletons outputs assigned to consts must be 
+        # aligned or not.
+        a = np.empty(5, dtype=np.uint8)[1:].view(np.int32)
+        evaluate('3', out=a)
+        assert_equal(a, 3)
+
+
     def test_ex_uses_vml(self):
         vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
                       "sinh", "cosh", "tanh", "arcsinh", "arccosh", "arctanh",
