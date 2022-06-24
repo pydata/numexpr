@@ -1247,7 +1247,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     /* A case with a single constant output */
     PyArrayObject *singleton;
-    singleton = NULL;
+    singleton = NULL; // NOTE: cannot assign on declaration due to `goto` statements
     if (n_inputs == 0) {
         char retsig = get_return_sig(self->program);
 
@@ -1273,16 +1273,9 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
             Py_INCREF(dtypes[0]);
 
-            // Original code enforced use of an aligned array:
-            // a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
-            //                             NPY_ARRAY_ALIGNED|NPY_ARRAY_UPDATEIFCOPY);
-
-            // NumPy folkds suggested using WRITEBACKIFCOPY instead:
+            // NumPy folks suggested using WRITEBACKIFCOPY to resolve issue #397
             singleton = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
                                         NPY_ARRAY_ALIGNED|NPY_ARRAY_WRITEBACKIFCOPY);
-
-            // The array does not have to be aligned, however:
-            // a = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0], 0);
 
             if (singleton == NULL) {
                 goto fail;

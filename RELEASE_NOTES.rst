@@ -1,26 +1,29 @@
 ====================================
-Release notes for Numexpr 2.8 series
+Release notes for NumExpr 2.8 series
 ====================================
 
 Changes from 2.8.1 to 2.8.2
 ---------------------------
 
-* Thanks to Matt Einhorn for improvements to the GitHub Actions build process to
+* Support for Python 3.6 has been dropped due to the need to substitute the flag 
+  `NPY_ARRAY_WRITEBACKIFCOPY` for `NPY_ARRAY_UPDATEIFCOPY`. This flag change was 
+  initiated in NumPy 1.14 and finalized in 1.23. The only changes were made to 
+  cases where an unaligned constant was passed in with a pre-allocated output 
+  variable:
+
+```
+    x = np.empty(5, dtype=np.uint8)[1:].view(np.int32)
+    ne.evaluate('3', out=x)
+```
+
+  We think the risk of issues is very low, but if you are using NumExpr as a 
+  expression evaluation tool you may want to write a test for this edge case.
+* Thanks to Matt Einhorn (@matham) for improvements to the GitHub Actions build process to
   add support for Apple Silicon and aarch64.
-* Thanks to Biswapriyo Nath for a fix to allow `mingw` builds on Windows.
-* Due to the removal of the array flag `NPY_ARRAY_UPDATEIFCOPY`, it's possible for
-  older versions of NumExpr (<= 2.8.1) to fail to compile against NumPy >= 1.23.0.
-  This flag was removed with no observed change in behavior. The branch of code 
-  effected could only be reached with a statement such as:
-
-```
-      x=np.zeros(1); 
-      ne.evaluate('3', out=x)
-```
-
+* Thanks to Biswapriyo Nath (@biswa96) for a fix to allow `mingw` builds on Windows.
 * There have been some changes made to not import `platform.machine()` on `sparc`
   but it is highly advised to upgrade to Python 3.9+ to avoid this issue with 
-  the `platform` package.
+  the Python core package `platform`.
 
 
 Changes from 2.8.0 to 2.8.1
