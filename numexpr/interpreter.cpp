@@ -1290,7 +1290,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
         r = run_interpreter_const(self, PyArray_BYTES(operands[0]), &pc_error);
 
         if (writeback) {
-            // Write-back our copy to the passed in output array if we had to make a copy.
+            // Write-back our copy to the passed in output array if we had to make a copy
+            // (which only happens if the input was not aligned)
             int retval = PyArray_ResolveWritebackIfCopy(singleton);
             if (retval < 0) {
                 // 1 means it copied the value, 0 means no copy, only -1 is an error.

@@ -1,5 +1,5 @@
 ========================
-Announcing NumExpr 2.8.2
+Announcing NumExpr 2.8.3
 ========================
 
 Hi everyone, 
@@ -37,7 +37,7 @@ Changes from 2.8.1 to 2.8.2
 * There have been some changes made to not import `platform.machine()` on `sparc`
   but it is highly advised to upgrade to Python 3.9+ to avoid this issue with 
   the Python core package `platform`.
-  
+
 What's Numexpr?
 ---------------
 

@@ -2,9 +2,10 @@
 Release notes for NumExpr 2.8 series
 ====================================
 
-Changes from 2.8.1 to 2.8.2
+Changes from 2.8.1 to 2.8.3
 ---------------------------
 
+* 2.8.2 was skipped due to an error in uploading to PyPi.
 * Support for Python 3.6 has been dropped due to the need to substitute the flag 
   `NPY_ARRAY_WRITEBACKIFCOPY` for `NPY_ARRAY_UPDATEIFCOPY`. This flag change was 
   initiated in NumPy 1.14 and finalized in 1.23. The only changes were made to 

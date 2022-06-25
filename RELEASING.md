@@ -46,10 +46,7 @@ Build Wheels
 ------------
 
 * Check on GitHub Actions `github.com/pydata/numexpr` that all the wheels built successfully.
-* Download `artifacts.zip` and unzip.
-* Make the source tarball with the command
-
-    `python setup.py sdist`
+* Download `artifacts.zip` and unzip, you should find the source tarball and all wheels.
 
 Releasing
 ---------
@@ -60,7 +57,7 @@ Releasing
 
 * Upload the source distribution.
 
-    `twine upload dist/numexpr-X.Y.Z.tar.gz`
+    `twine upload artifact/numexpr*.tar.gz`
 
 * Check on `pypi.org/project/numexpr/#files` that the wheels and source have uploaded as expected.
 
