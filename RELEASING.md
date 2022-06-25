@@ -81,7 +81,7 @@ Post-release actions
 
   `* **Under development.**`
 
-  Don't forget to update header to the next version in those files.
+  Don't forget to update the header to the next version as well.
 
 * Commit your changes:
 
