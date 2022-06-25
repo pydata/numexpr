@@ -1247,7 +1247,10 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     /* A case with a single constant output */
     PyArrayObject *singleton;
-    singleton = NULL; // NOTE: cannot assign on declaration due to `goto` statements
+    bool writeback;
+    // NOTE: cannot assign on declaration due to `goto` statements
+    singleton = NULL; 
+    writeback = false;
     if (n_inputs == 0) {
         char retsig = get_return_sig(self->program);
 
@@ -1276,17 +1279,17 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             // NumPy folks suggested using WRITEBACKIFCOPY to resolve issue #397
             singleton = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
                                         NPY_ARRAY_ALIGNED|NPY_ARRAY_WRITEBACKIFCOPY);
-
             if (singleton == NULL) {
                 goto fail;
             }
+            writeback = true;
             Py_DECREF(operands[0]);
             operands[0] = singleton;
         }
 
         r = run_interpreter_const(self, PyArray_BYTES(operands[0]), &pc_error);
 
-        if ((n_inputs == 0) && (operands[0] != NULL)) {
+        if (writeback) {
             // Write-back our copy to the passed in output array if we had to make a copy.
             int retval = PyArray_ResolveWritebackIfCopy(singleton);
             if (retval < 0) {
