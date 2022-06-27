@@ -1,20 +1,42 @@
 ========================
-Announcing NumExpr 2.8.4
+Announcing NumExpr 2.8.3
 ========================
 
 Hi everyone, 
 
-* **Under development.**
+Please find here another maintenance release of NumExpr. Support for Python 3.6 
+has been dropped to enable support for NumPy 1.23 (and by extension Python 3.11 
+when it is released). Wheels for ARM64 multilinux should be available again after 
+troubles with GitHub Actions and Apple Silicon wheels are also now available on 
+PyPi for download.
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
 
-Changes from 2.8.3 to 2.8.4
+Changes from 2.8.1 to 2.8.3
 ---------------------------
 
-* **Under development.**
+* Support for Python 3.6 has been dropped due to the need to substitute the flag 
+  `NPY_ARRAY_WRITEBACKIFCOPY` for `NPY_ARRAY_UPDATEIFCOPY`. This flag change was 
+  initiated in NumPy 1.14 and finalized in 1.23. The only changes were made to 
+  cases where an unaligned constant was passed in with a pre-allocated output 
+  variable:
+
+```
+    x = np.empty(5, dtype=np.uint8)[1:].view(np.int32)
+    ne.evaluate('3', out=x)
+```
+
+  We think the risk of issues is very low, but if you are using NumExpr as a 
+  expression evaluation tool you may want to write a test for this edge case.
+* Thanks to Matt Einhorn (@matham) for improvements to the GitHub Actions build process to
+  add support for Apple Silicon and aarch64.
+* Thanks to Biswapriyo Nath (@biswa96) for a fix to allow `mingw` builds on Windows.
+* There have been some changes made to not import `platform.machine()` on `sparc`
+  but it is highly advised to upgrade to Python 3.9+ to avoid this issue with 
+  the Python core package `platform`.
 
 What's Numexpr?
 ---------------
