@@ -481,6 +481,13 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
+    def test_disassemble(self):
+        assert_equal(disassemble(NumExpr(
+            "where(m, a, -1)", [('m', bool), ('a', float)])),
+            [[b'where_fbff', b'r0', b'r1[m]', b'r2[a]', b'c3[-1.0]'], 
+             [b'noop', None, None, None]])
+
+
     def test_unaligned_singleton(self):
         # Test for issue #397 whether singletons outputs assigned to consts must be 
         # aligned or not.
