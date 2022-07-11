@@ -342,7 +342,8 @@ def getConstants(ast):
         a = 1 + 3j; b = 5.0
         ne.evaluate('a*2 + 15j - b')
     """
-    constants_order = sorted(ast.allOf('constant'))
+    constant_registers = set([node.reg for node in ast.allOf("constant")]) 
+    constants_order = sorted([r.node for r in constant_registers])
     constants = [convertConstantToKind(a.value, a.astKind)
                  for a in constants_order]
     return constants_order, constants
