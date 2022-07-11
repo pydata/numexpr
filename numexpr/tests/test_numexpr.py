@@ -25,6 +25,7 @@ from numpy import (
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
     log, log1p, log10, exp, expm1, conj)
+import numpy
 from numpy.testing import (assert_equal, assert_array_equal,
                            assert_array_almost_equal, assert_allclose)
 from numpy import shape, allclose, array_equal, ravel, isnan, isinf
@@ -499,6 +500,13 @@ class test_evaluate(TestCase):
         expr = (E.a + _nan)*(E.b + _nan)
         assert_equal(NumExpr(expr, [('a', double), ('b', double)]).constants, (float("nan"),))
 
+
+    def test_f32_constant(self):
+        assert_equal(ConstantNode(numpy.float32(1)).astKind, "float")
+        assert_equal(ConstantNode(numpy.float32("nan")).astKind, "float")
+        assert_equal(ConstantNode(numpy.float32(3)).value.dtype, numpy.dtype("float32"))
+        assert_array_equal(NumExpr(ConstantNode(numpy.float32(1))).run(), 
+                           numpy.array(1, dtype="float32"))
 
     def test_unaligned_singleton(self):
         # Test for issue #397 whether singletons outputs assigned to consts must be 

@@ -142,6 +142,8 @@ def bestConstantType(x):
     # a float (32-bit) array with a double (64-bit) constant.
     if isinstance(x, double):
         return double
+    if isinstance(x, numpy.float32):
+        return float
     if isinstance(x, (int, numpy.integer)):
         # Constants needing more than 32 bits are always
         # considered ``long``, *regardless of the platform*, so we
@@ -504,7 +506,7 @@ class ConstantNode(LeafNode):
     def __init__(self, value=None, children=None):
         kind = getKind(value)
         # Python float constants are double precision by default
-        if kind == 'float':
+        if kind == 'float' and isinstance(value, float):
             kind = 'double'
         LeafNode.__init__(self, value=value, kind=kind)
 
