@@ -156,7 +156,7 @@ def bestConstantType(x):
             y = converter(x)
         except Exception as err:
             continue
-        if y == x:
+        if y == x or numpy.isnan(y):
             return converter
 
 

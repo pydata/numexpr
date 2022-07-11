@@ -31,6 +31,7 @@ from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 
 import numexpr
 from numexpr import E, NumExpr, evaluate, re_evaluate, disassemble, use_vml
+from numexpr.expressions import ConstantNode
 
 import unittest
 
@@ -489,6 +490,15 @@ class test_evaluate(TestCase):
 
     def test_constant_deduplication(self):
         assert_equal(NumExpr("(a + 1)*(a - 1)", [('a', np.int32)]).constants, (1,))
+
+    def test_nan_constant(self):
+        assert_equal(str(ConstantNode(float("nan")).value), 'nan')
+
+        # check de-duplication works for nan
+        _nan = ConstantNode(float("nan"))
+        expr = (E.a + _nan)*(E.b + _nan)
+        assert_equal(NumExpr(expr, [('a', double), ('b', double)]).constants, (float("nan"),))
+
 
     def test_unaligned_singleton(self):
         # Test for issue #397 whether singletons outputs assigned to consts must be 
