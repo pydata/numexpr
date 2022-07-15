@@ -342,7 +342,8 @@ def getConstants(ast):
         a = 1 + 3j; b = 5.0
         ne.evaluate('a*2 + 15j - b')
     """
-    constants_order = sorted(ast.allOf('constant'))
+    constant_registers = set([node.reg for node in ast.allOf("constant")]) 
+    constants_order = sorted([r.node for r in constant_registers])
     constants = [convertConstantToKind(a.value, a.astKind)
                  for a in constants_order]
     return constants_order, constants
@@ -635,11 +636,15 @@ def disassemble(nex):
     r_constants = 1 + len(nex.signature)
     r_temps = r_constants + len(nex.constants)
 
+    def parseOp(op):
+        name, sig = [*op.rsplit(b'_', 1), ''][:2]
+        return name, sig 
+
     def getArg(pc, offset):
-        arg = nex.program[pc + offset]
-        op = rev_opcodes.get(nex.program[pc])
+        arg = nex.program[pc + (offset if offset < 4 else offset+1)]
+        _, sig = parseOp(rev_opcodes.get(nex.program[pc]))
         try:
-            code = op.split(b'_')[1][offset - 1]
+            code = sig[offset - 1]
         except IndexError:
             return None
 
@@ -662,10 +667,13 @@ def disassemble(nex):
     source = []
     for pc in range(0, len(nex.program), 4):
         op = rev_opcodes.get(nex.program[pc])
-        dest = getArg(pc, 1)
-        arg1 = getArg(pc, 2)
-        arg2 = getArg(pc, 3)
-        source.append((op, dest, arg1, arg2))
+        _, sig = parseOp(op)
+        parsed = [op]
+        for i in range(len(sig)):
+            parsed.append(getArg(pc, 1 + i))
+        while len(parsed) < 4:
+            parsed.append(None)
+        source.append(parsed)
     return source
 
 
