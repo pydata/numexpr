@@ -5,7 +5,8 @@ Release notes for NumExpr 2.8 series
 Changes from 2.8.3 to 2.8.4
 ---------------------------
 
-* **Under development.**
+* Thanks to Kirill Kouzoubov for a range of fixes to constants parsing that was 
+  resulting in duplicated constants of the same value.
 
 Changes from 2.8.1 to 2.8.3
 ---------------------------
