@@ -7,6 +7,8 @@ Changes from 2.8.3 to 2.8.4
 
 * Thanks to Kirill Kouzoubov for a range of fixes to constants parsing that was 
   resulting in duplicated constants of the same value.
+* Thanks to Mark Harfouche for noticing that we no longer need `numpy` version 
+  checks. `packaging` is no longer a requirement as a result.
 
 Changes from 2.8.1 to 2.8.3
 ---------------------------
