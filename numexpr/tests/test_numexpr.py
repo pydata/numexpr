@@ -20,14 +20,15 @@ import subprocess
 import numpy as np
 from numpy import (
     array, arange, empty, zeros, int32, int64, uint16, complex_, float64, rec,
-    copy, ones_like, where, alltrue, linspace,
+    copy, ones_like, where, alltrue, linspace, geomspace,
     sum, prod, sqrt, fmod, floor, ceil,
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
     log, log1p, log10, exp, expm1, conj)
 import numpy
 from numpy.testing import (assert_equal, assert_array_equal,
-                           assert_array_almost_equal, assert_allclose)
+                           assert_array_almost_equal, assert_allclose,
+                           assert_array_almost_equal_nulp)
 from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 
 import numexpr
@@ -425,6 +426,17 @@ class test_evaluate(TestCase):
         x = sin(complex(a, b)).real + z.imag
         y = evaluate("sin(complex(a, b)).real + z.imag")
         assert_array_almost_equal(x, y)
+
+    def test_expm1_accuracy(self):
+        x = geomspace(7.8e-20, 7.8e-0, 21)
+        y = geomspace(2.3e-20j, 2.3e-0j, 21)
+        z = x + y
+        assert_array_almost_equal_nulp(expm1(x).real, evaluate("expm1(x)").real)
+        assert_array_almost_equal_nulp(expm1(y).real, evaluate("expm1(y)").real)
+        assert_array_almost_equal_nulp(expm1(z).real, evaluate("expm1(z)").real)
+        assert_array_almost_equal_nulp(expm1(x).imag, evaluate("expm1(x)").imag, nulp=2500)
+        assert_array_almost_equal_nulp(expm1(y).imag, evaluate("expm1(y)").imag, nulp=2500)
+        assert_array_almost_equal_nulp(expm1(z).imag, evaluate("expm1(z)").imag, nulp=2500)
 
     def test_complex_strides(self):
         a = arange(100).reshape(10, 10)[::2]
