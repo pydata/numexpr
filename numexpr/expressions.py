@@ -357,6 +357,7 @@ functions = {
     'log10': func(numpy.log10, 'float'),
     'exp': func(numpy.exp, 'float'),
     'expm1': func(numpy.expm1, 'float'),
+    'expm1x': func(numpy.expm1, 'float'),
 
     'abs': func(numpy.absolute, 'float'),
     'ceil': func(numpy.ceil, 'float', 'double'),
