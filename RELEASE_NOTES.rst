@@ -5,6 +5,10 @@ Release notes for NumExpr 2.8 series
 Changes from 2.8.3 to 2.8.4
 ---------------------------
 
+* Support for Python 3.11 has been added.
+* Thanks to Tobias Hangleiter for an improved accuracy complex `expm1` function.
+  While it is 25 % slower, it is significantly more accurate for the real component
+  over a range of values and matches NumPy outputs much more closely.
 * Thanks to Kirill Kouzoubov for a range of fixes to constants parsing that was 
   resulting in duplicated constants of the same value.
 * Thanks to Mark Harfouche for noticing that we no longer need `numpy` version 
