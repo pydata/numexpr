@@ -1,28 +1,19 @@
 ========================
-Announcing NumExpr 2.8.4
+Announcing NumExpr 2.8.5
 ========================
 
 Hi everyone, 
 
-This is a maintenance and bug-fix release for NumExpr. In particular, now we have 
-added Python 3.11 support. 
+**Under development.**
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-
-Changes from 2.8.3 to 2.8.4
+Changes from 2.8.4 to 2.8.5
 ---------------------------
 
-* Support for Python 3.11 has been added.
-* Thanks to Tobias Hangleiter for an improved accuracy complex `expm1` function.
-  While it is 25 % slower, it is significantly more accurate for the real component
-  over a range of values and matches NumPy outputs much more closely.
-* Thanks to Kirill Kouzoubov for a range of fixes to constants parsing that was 
-  resulting in duplicated constants of the same value.
-* Thanks to Mark Harfouche for noticing that we no longer need `numpy` version 
-  checks. `packaging` is no longer a requirement as a result.
+**Under development.**
 
 
 What's Numexpr?
