@@ -74,6 +74,7 @@ def parse_site_cfg():
         libs.extend(
             site['mkl']['libraries'].split(os.pathsep))
         def_macros.append(('USE_VML', None))
+        print(f'FOUND MKL IMPORT')
         
 
 def setup_package():

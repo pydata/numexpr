@@ -330,6 +330,7 @@ def pow_op(a, b):
     return OpNode('pow', [a, b])
 
 # The functions and the minimum and maximum types accepted
+numpy.expm1x = numpy.expm1
 functions = {
     'copy': func(numpy.copy),
     'ones_like': func(numpy.ones_like),

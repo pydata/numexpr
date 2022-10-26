@@ -15,3 +15,5 @@ site.cfg
 __config__.py
 version.py
 artifact.zip
+# issues/
+site.bak

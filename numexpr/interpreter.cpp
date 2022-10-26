@@ -261,7 +261,7 @@ static void vzExpm1(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
     MKL_INT j;
     vzExp(n, x1, dest);
     for (j=0; j<n; j++) {
-    dest[j].real -= 1.0;
+        dest[j].real -= 1.0;
     };
 };
 
@@ -269,8 +269,8 @@ static void vzLog1p(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
     MKL_INT j;
     for (j=0; j<n; j++) {
-    dest[j].real = x1[j].real + 1;
-    dest[j].imag = x1[j].imag;
+        dest[j].real = x1[j].real + 1;
+        dest[j].imag = x1[j].imag;
     };
     vzLn(n, dest, dest);
 };

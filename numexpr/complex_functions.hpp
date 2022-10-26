@@ -158,9 +158,10 @@ nc_exp(npy_cdouble *x, npy_cdouble *r)
 static void
 nc_expm1(npy_cdouble *x, npy_cdouble *r)
 {
-    double a = exp(x->real);
-    r->real = a*cos(x->imag) - 1.0;
-    r->imag = a*sin(x->imag);
+    double a = sin(x->imag / 2);
+    double b = exp(x->real);
+    r->real = expm1(x->real) * cos(x->imag) - 2 * a * a;
+    r->imag = b * sin(x->imag);
     return;
 }
 
