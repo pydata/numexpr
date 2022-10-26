@@ -330,6 +330,7 @@ def pow_op(a, b):
     return OpNode('pow', [a, b])
 
 # The functions and the minimum and maximum types accepted
+numpy.expm1x = numpy.expm1
 functions = {
     'copy': func(numpy.copy),
     'ones_like': func(numpy.ones_like),
@@ -357,7 +358,6 @@ functions = {
     'log10': func(numpy.log10, 'float'),
     'exp': func(numpy.exp, 'float'),
     'expm1': func(numpy.expm1, 'float'),
-    'expm1x': func(numpy.expm1, 'float'),
 
     'abs': func(numpy.absolute, 'float'),
     'ceil': func(numpy.ceil, 'float', 'double'),
