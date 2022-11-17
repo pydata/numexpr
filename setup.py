@@ -29,7 +29,7 @@ with open('numexpr/version.py', 'w') as fh:
     fh.write("platform_machine = '%s'\n" % platform.machine())
 
 lib_dirs = []
-inc_dirs = [np.get_include(), op.join('framestream')]
+inc_dirs = [np.get_include()]
 libs = []  # Pre-built libraries ONLY, like python36.so
 clibs = []
 def_macros = []
