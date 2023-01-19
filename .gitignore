@@ -19,3 +19,4 @@ temp/
 .eggs
 *.vscode
 upload2pypi.bat
+*.whl

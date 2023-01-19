@@ -536,7 +536,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 {
     PyArrayObject *operands[NPY_MAXARGS];
     PyArray_Descr *dtypes[NPY_MAXARGS];
-    PyObject *tmp, *returnArray;
+    PyObject *returnArray;
     PyObject *objectRef, *arrayRef;
     npy_uint32 op_flags[NPY_MAXARGS];
     NPY_CASTING casting = NPY_SAFE_CASTING;
@@ -968,6 +968,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     
     // printf( "NumExpr_run() #8\n" ); 
     // A case with a single constant output
+    PyArrayObject *singleton;
+    bool writeback;
     if (n_input == 0) {
         char retsig = get_return_sig(self);
 
@@ -982,8 +984,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 goto fail; 
             }
         }
-        else {
-            PyArrayObject *arrayObj;
+        else { // Use the provided output array
+
             if (PyArray_SIZE(operands[self->returnOperand]) != 1) {
                 PyErr_SetString(PyExc_ValueError,
                         "output for a constant expression must have size 1");
@@ -995,19 +997,29 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 goto fail;
             }
             Py_INCREF(dtypes[self->returnOperand]);
-            arrayObj = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
-                                        NPY_ARRAY_ALIGNED|NPY_ARRAY_UPDATEIFCOPY);
-            if (arrayObj == NULL) { 
+            singleton = (PyArrayObject *)PyArray_FromArray(operands[0], dtypes[0],
+                                        NPY_ARRAY_ALIGNED|NPY_ARRAY_WRITEBACKIFCOPY);
+            if (singleton == NULL) { 
                 PyErr_SetString(PyExc_ValueError, 
-                    "arrayObj == NULL" );
+                    "singleton == NULL" );
                 goto fail; 
             }
             Py_DECREF(operands[self->returnOperand]);
-            operands[0] = arrayObj;
+            operands[0] = singleton;
         }
 
         r = run_interpreter_const(self, PyArray_BYTES(operands[self->returnOperand]), &pc_error);
 
+        if (writeback) {
+            // Write-back our copy to the passed in output array if we had to make a copy
+            // (which only happens if the input was not aligned)
+            int retval = PyArray_ResolveWritebackIfCopy(singleton);
+            if (retval < 0) {
+                // 1 means it copied the value, 0 means no copy, only -1 is an error.
+                PyErr_Format(PyExc_ValueError, "Writeback to singleton failed with error code: %d", retval);
+                goto fail;
+            }
+        }
         returnArray = (PyObject *)operands[self->returnOperand];
         Py_INCREF(returnArray);
         goto cleanup_and_exit;
