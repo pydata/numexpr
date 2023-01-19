@@ -2,6 +2,11 @@
 Release notes for NumExpr 3.0 series
 =====================================
 
+Changes from 3.0.1a7 to 3.0.1a8
+-------------------------------
+
+* Support is now provided for Python versions 3.9 - 3.11.
+
 Changes from 3.0.1a4 to 3.0.1a7
 -------------------------------
 
