@@ -979,7 +979,7 @@ class test_threading_config(TestCase):
                 "import os",
                 "if 'NUMEXPR_MAX_THREADS' in os.environ: os.environ.pop('NUMEXPR_MAX_THREADS')",
                 "if 'OMP_NUM_THREADS' in os.environ: os.environ.pop('OMP_NUM_THREADS')",
-                "import numexpr",
+                "import numexpr_mod",
                 "assert(numexpr_mod.nthreads <= 8)",
                 "exit(0)"])
         subprocess.check_call([sys.executable, '-c', script])
@@ -990,7 +990,7 @@ class test_threading_config(TestCase):
         script = '\n'.join([
                 "import os",
                 "os.environ['NUMEXPR_MAX_THREADS'] = '4'",
-                "import numexpr",
+                "import numexpr_mod",
                 "assert(numexpr_mod.MAX_THREADS == 4)",
                 "exit(0)"])
         subprocess.check_call([sys.executable, '-c', script])
