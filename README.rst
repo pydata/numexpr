@@ -1,6 +1,6 @@
-======================================================
+============================================================
 NumExpr_mod: Fast numerical expression evaluator for NumPy
-======================================================
+============================================================
 
 :Author: Alexander K.
 :URL: https://github.com/MrCheatak/numexpr_mod
@@ -21,12 +21,7 @@ NumExpr is available for install via `pip` for a wide range of platforms and
 Python versions (which may be browsed at: https://pypi.org/project/numexpr/#files). 
 Installation can be performed as::
 
-    pip install numexpr
-
-If you are using the Anaconda or Miniconda distribution of Python you may prefer 
-to use the `conda` package manager in this case::
-
-    conda install numexpr
+    pip install numexpr_mod
 
 From Source
 ^^^^^^^^^^^
@@ -53,7 +48,7 @@ NumExpr is built in the standard Python way::
 
 You can test `numexpr` with::
 
-  python -c "import numexpr; numexpr.test()"
+  python -c "import numexpr_mod; numexpr_mod.test()"
 
 Do not test NumExpr in the source directory or you will generate import errors.
 
