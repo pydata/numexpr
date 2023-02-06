@@ -1,12 +1,23 @@
 name: Build
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
 
 env:
   CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy
   CIBW_BUILD_VERBOSITY: 3
   # CIBW_TEST_REQUIRES: pytest
-  CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
+  CIBW_TEST_COMMAND: python -c "import sys, numexpr_mod; sys.exit(0 if numexpr_mod.test().wasSuccessful() else 1)"
   CIBW_TEST_SKIP: "*macosx*arm64*"
   CIBW_SKIP: "*musllinux*"
 
