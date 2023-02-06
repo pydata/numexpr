@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 import numpy as np
-import numexpr as ne
+import numexpr_mod as ne
 from numpy.testing import assert_array_equal
 from time import time
 

@@ -33,7 +33,7 @@ scalar_constant_types = [bool, int_, int, float, double, complex, bytes, str]
 
 scalar_constant_types = tuple(scalar_constant_types)
 
-from numexpr import interpreter
+from numexpr_mod import interpreter
 
 class Expression(object):
     def __init__(self):

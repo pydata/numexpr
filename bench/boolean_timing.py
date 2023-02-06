@@ -80,7 +80,7 @@ def compare_times(expr, nexpr):
 setupNP = """\
 from numpy import arange, where, arctan2, sqrt
 from numpy import rec as records
-from numexpr import evaluate
+from numexpr_mod import evaluate
 
 # Initialize a recarray of 16 MB in size
 r=records.array(None, formats='a%s,i4,f8', shape=%s)
@@ -125,8 +125,8 @@ def compare(expression=False):
 
 if __name__ == '__main__':
 
-    import numexpr
-    numexpr.print_versions()
+    import numexpr_mod
+    numexpr_mod.print_versions()
 
     if len(sys.argv) > 1:
         expression = sys.argv[1]

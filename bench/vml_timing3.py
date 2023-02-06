@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import numexpr as ne
+import numexpr_mod as ne
 from timeit import default_timer as timer
 
 x = np.ones(100000)

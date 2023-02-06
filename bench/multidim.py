@@ -13,7 +13,7 @@
 
 from __future__ import print_function
 import numpy as np
-import numexpr as nx
+import numexpr_mod as nx
 import time
 
 test_shapes = [

@@ -16,7 +16,7 @@ from __future__ import print_function
 import sys
 from time import time
 import numpy as np
-import numexpr as ne
+import numexpr_mod as ne
 
 N = 100
 M = 10

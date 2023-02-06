@@ -12,7 +12,7 @@ from __future__ import print_function
 import sys
 import timeit
 import numpy
-import numexpr
+import numexpr_mod
 
 array_size = 1000*1000
 iterations = 10
@@ -82,8 +82,8 @@ def compare_times(expr, nexpr):
 setupNP = """\
 from numpy import arange, linspace, arctan2, sqrt, sin, cos, exp, log
 from numpy import rec as records
-#from numexpr import evaluate
-from numexpr import %s
+#from numexpr_mod import evaluate
+from numexpr_mod import %s
 
 # Initialize a recarray of 16 MB in size
 r=records.array(None, formats='a%s,i4,f4,f8', shape=%s)
@@ -129,13 +129,13 @@ def compare(expression=False):
     print()
 
 if __name__ == '__main__':
-    import numexpr
-    print("Numexpr version: ", numexpr.__version__)
+    import numexpr_mod
+    print("Numexpr version: ", numexpr_mod.__version__)
 
     numpy.seterr(all='ignore')
 
-    numexpr.set_vml_accuracy_mode('low')
-    numexpr.set_vml_num_threads(2)
+    numexpr_mod.set_vml_accuracy_mode('low')
+    numexpr_mod.set_vml_num_threads(2)
 
     if len(sys.argv) > 1:
         expression = sys.argv[1]

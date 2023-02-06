@@ -15,7 +15,7 @@ aligned vs unaligned arrays.
 from __future__ import print_function
 from timeit import Timer
 import numpy as np
-import numexpr as ne
+import numexpr_mod as ne
 
 niter = 10
 #shape = (1000*10000)   # unidimensional test

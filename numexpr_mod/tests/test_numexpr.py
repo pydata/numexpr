@@ -30,9 +30,9 @@ from numpy.testing import (assert_equal, assert_array_equal,
                            assert_array_almost_equal, assert_allclose)
 from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 
-import numexpr
-from numexpr import E, NumExpr, evaluate, re_evaluate, disassemble, use_vml
-from numexpr.expressions import ConstantNode
+import numexpr_mod
+from numexpr_mod import E, NumExpr, evaluate, re_evaluate, disassemble, use_vml
+from numexpr_mod.expressions import ConstantNode
 
 import unittest
 
@@ -47,7 +47,7 @@ class test_numexpr(TestCase):
     nthreads = 1
 
     def setUp(self):
-        numexpr.set_num_threads(self.nthreads)
+        numexpr_mod.set_num_threads(self.nthreads)
 
     def test_simple(self):
         ex = 2.0 * E.a + 3.0 * E.b * E.c
@@ -320,7 +320,7 @@ class test_numexpr(TestCase):
         # if in the top-frame. This cannot be done inside `unittest` as it is always 
         # executing code in a child frame.
         script = r';'.join([
-                r"import numexpr as ne",
+                r"import numexpr_mod  as ne",
                 r"a=10",
                 r"ne.evaluate('1')",
                 r"a += 1",
@@ -519,7 +519,7 @@ class test_evaluate(TestCase):
                       "arctan2", "fmod"]
         for func in vml_funcs:
             strexpr = func+'(a)'
-            _, ex_uses_vml = numexpr.necompiler.getExprNames(strexpr, {})
+            _, ex_uses_vml = numexpr_mod.necompiler.getExprNames(strexpr, {})
             assert_equal(ex_uses_vml, use_vml, strexpr)
 
     if 'sparc' not in platform.machine():
@@ -529,7 +529,7 @@ class test_evaluate(TestCase):
             a = linspace(-1, 1, 1000000)
             b = ((.25 * a + .75) * a - 1.5) * a - 2
             for nthreads in range(1, 7):
-                numexpr.set_num_threads(nthreads)
+                numexpr_mod.set_num_threads(nthreads)
                 c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
                 assert_array_almost_equal(b, c)
 
@@ -537,7 +537,7 @@ class test_evaluate(TestCase):
             a = linspace(-1, 1, 1000000)
             b = ((.25 * a + .75) * a - 1.5) * a - 2
             for nthreads in range(6, 1, -1):
-                numexpr.set_num_threads(nthreads)
+                numexpr_mod.set_num_threads(nthreads)
                 c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
                 assert_array_almost_equal(b, c)
 
@@ -980,7 +980,7 @@ class test_threading_config(TestCase):
                 "if 'NUMEXPR_MAX_THREADS' in os.environ: os.environ.pop('NUMEXPR_MAX_THREADS')",
                 "if 'OMP_NUM_THREADS' in os.environ: os.environ.pop('OMP_NUM_THREADS')",
                 "import numexpr",
-                "assert(numexpr.nthreads <= 8)",
+                "assert(numexpr_mod.nthreads <= 8)",
                 "exit(0)"])
         subprocess.check_call([sys.executable, '-c', script])
 
@@ -991,7 +991,7 @@ class test_threading_config(TestCase):
                 "import os",
                 "os.environ['NUMEXPR_MAX_THREADS'] = '4'",
                 "import numexpr",
-                "assert(numexpr.MAX_THREADS == 4)",
+                "assert(numexpr_mod.MAX_THREADS == 4)",
                 "exit(0)"])
         subprocess.check_call([sys.executable, '-c', script])
 
@@ -1000,26 +1000,26 @@ class test_threading_config(TestCase):
             # NUMEXPR_NUM_THREADS has priority
             with _environment('NUMEXPR_NUM_THREADS', '3'):
                  if 'sparc' in platform.machine():
-                     self.assertEqual(1, numexpr._init_num_threads())
+                     self.assertEqual(1, numexpr_mod._init_num_threads())
                  else:
-                     self.assertEqual(3, numexpr._init_num_threads())
+                     self.assertEqual(3, numexpr_mod._init_num_threads())
 
     def test_omp_num_threads(self):
         with _environment('OMP_NUM_THREADS', '5'):
             if 'sparc' in platform.machine():
-                self.assertEqual(1, numexpr._init_num_threads())
+                self.assertEqual(1, numexpr_mod._init_num_threads())
             else:
-                self.assertEqual(5, numexpr._init_num_threads())
+                self.assertEqual(5, numexpr_mod._init_num_threads())
 
     def test_vml_threads_round_trip(self):
         n_threads = 3
         if use_vml:
-            numexpr.utils.set_vml_num_threads(n_threads)
-            set_threads = numexpr.utils.get_vml_num_threads()
+            numexpr_mod.utils.set_vml_num_threads(n_threads)
+            set_threads = numexpr_mod.utils.get_vml_num_threads()
             self.assertEqual(n_threads, set_threads)
         else:
-            self.assertIsNone(numexpr.utils.set_vml_num_threads(n_threads))
-            self.assertIsNone(numexpr.utils.get_vml_num_threads())
+            self.assertIsNone(numexpr_mod.utils.set_vml_num_threads(n_threads))
+            self.assertIsNone(numexpr_mod.utils.get_vml_num_threads())
 
 
 # Case test for threads
@@ -1074,7 +1074,7 @@ class test_subprocess(TestCase):
         except ImportError:
             return
         # Check for two threads at least
-        numexpr.set_num_threads(2)
+        numexpr_mod.set_num_threads(2)
         #print "**** Running from main process:"
         _worker()
         #print "**** Running from subprocess:"
@@ -1090,11 +1090,11 @@ class test_subprocess(TestCase):
 def print_versions():
     """Print the versions of software that numexpr relies on."""
     # from pkg_resources import parse_version
-    from numexpr.cpuinfo import cpu
+    from numexpr_mod.cpuinfo import cpu
     import platform
 
     print('-=' * 38)
-    print('Numexpr version:   %s' % numexpr.__version__)
+    print('Numexpr version:   %s' % numexpr_mod.__version__)
     print('NumPy version:     %s' % np.__version__)
     print('Python version:    %s' % sys.version)
     (sysname, nodename, release, os_version, machine, processor) = platform.uname()
@@ -1110,10 +1110,10 @@ def print_versions():
         pass
     print('VML available?     %s' % use_vml)
     if use_vml:
-        print('VML/MKL version:   %s' % numexpr.get_vml_version())
+        print('VML/MKL version:   %s' % numexpr_mod.get_vml_version())
     print('Number of threads used by default: %d '
-          '(out of %d detected cores)' % (numexpr.nthreads, numexpr.ncores))
-    print('Maximum number of threads: %s' % numexpr.MAX_THREADS)
+          '(out of %d detected cores)' % (numexpr_mod.nthreads, numexpr_mod.ncores))
+    print('Maximum number of threads: %s' % numexpr_mod.MAX_THREADS)
     print('-=' * 38)
 
 

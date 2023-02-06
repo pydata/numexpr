@@ -7,7 +7,7 @@ from __future__ import print_function
 import datetime
 import sys
 import numpy as np
-import numexpr as ne
+import numexpr_mod as ne
 from time import time
 
 N = int(2**26)

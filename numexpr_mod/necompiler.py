@@ -14,8 +14,8 @@ import numpy
 import threading
 
 is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
-from numexpr import interpreter, expressions, use_vml
-from numexpr.utils import CacheDict
+from numexpr_mod import interpreter, expressions, use_vml
+from numexpr_mod.utils import CacheDict
 
 # Declare a double type that does not exist in Python space
 double = numpy.double
@@ -35,7 +35,7 @@ kind_to_type = expressions.kind_to_type
 default_type = kind_to_type[expressions.default_kind]
 scalar_constant_kinds = list(kind_to_typecode.keys())
 
-# VML functions that are implemented in numexpr
+# VML functions that are implemented in numexpr_mod
 vml_functions = [
     "div",  # interp_body.cpp
     "inv",  # interp_body.cpp
@@ -338,7 +338,7 @@ def getConstants(ast):
     RAM: implemented magic method __lt__ for ASTNode to fix issues
     #88 and #209. The following test code works now, as does the test suite.
 
-        import numexpr as ne
+        import numexpr_mod as ne
         a = 1 + 3j; b = 5.0
         ne.evaluate('a*2 + 15j - b')
     """
@@ -758,6 +758,7 @@ def getArguments(names, local_dict=None, global_dict=None):
 _names_cache = CacheDict(256)
 _numexpr_cache = CacheDict(256)
 _numexpr_last = {}
+_expr_cache = {}
 
 evaluate_lock = threading.Lock()
 
@@ -822,7 +823,7 @@ def evaluate(ex, local_dict=None, global_dict=None,
     signature = [(name, getType(arg)) for (name, arg) in
                  zip(names, arguments)]
 
-    # Look up numexpr if possible.
+    # Look up numexpr_mod if possible.
     numexpr_key = expr_key + (tuple(signature),)
     try:
         compiled_ex = _numexpr_cache[numexpr_key]
@@ -835,9 +836,9 @@ def evaluate(ex, local_dict=None, global_dict=None,
         return compiled_ex(*arguments, **kwargs)
 
 
-def re_evaluate(local_dict=None):
+def re_evaluate(expr_name='', local_dict=None, out=None, order=None, casting=None,):
     """
-    Re-evaluate the previous executed array expression without any check.
+    Re-evaluate cached or the previous executed array expression without any check.
 
     This is meant for accelerating loops that are re-evaluating the same
     expression repeatedly without changing anything else than the operands.
@@ -850,12 +851,78 @@ def re_evaluate(local_dict=None):
         A dictionary that replaces the local operands in current frame.
 
     """
+    global _numexpr_last
+    global _expr_cache
+    # Get expression from the cache dict or use the last one
+    if expr_name:
+        expr = _expr_cache[expr_name]
+    else:
+        expr = _numexpr_last
     try:
-        compiled_ex = _numexpr_last['ex']
+        compiled_ex = expr['ex']
     except KeyError:
         raise RuntimeError("not a previous evaluate() execution found")
-    argnames = _numexpr_last['argnames']
-    args = getArguments(argnames, local_dict)
-    kwargs = _numexpr_last['kwargs']
+    argnames = expr['argnames']
+    arguments = getArguments(argnames, local_dict)
+    kwargs = expr['kwargs']
+    if out:
+        kwargs['out'] = out
+    if order:
+        kwargs['order'] = order
+    if casting:
+        kwargs['casting'] = casting
     with evaluate_lock:
-        return compiled_ex(*args, **kwargs)
+        return compiled_ex(*arguments, **kwargs)
+
+
+def cache_expression(ex, expr_name, local_dict=None, global_dict=None,
+             out=None, order='K', casting='safe', **kwargs):
+    """ Precompiles expressions for continuous use
+
+    ex is a string forming an expression, like "2*a+3*b". The values for "a"
+    and "b" will by default be taken from the calling function's frame
+    (through use of sys._getframe()). Alternatively, they can be specifed
+    using the 'local_dict' or 'global_dict' arguments.
+
+
+    local_dict : dictionary, optional
+        A dictionary that replaces the local operands in current frame.
+
+    global_dict : dictionary, optional
+        A dictionary that replaces the global operands in current frame.
+
+    signature : list
+        (Optional) Defines types of the variables used in the expression
+
+    :return:
+    """
+    global _numexpr_last
+    global _expr_cache
+    if not isinstance(ex, str):
+        raise ValueError("must specify expression as a string")
+
+    # Get the names for this expression
+    context = getContext(kwargs, frame_depth=1)
+    expr_key = (ex, tuple(sorted(context.items())))
+    if expr_key not in _names_cache:
+        _names_cache[expr_key] = getExprNames(ex, context)
+    names, ex_uses_vml = _names_cache[expr_key]
+    arguments = getArguments(names, local_dict, global_dict)
+
+    # Create a signature
+    signature = [(name, getType(arg)) for (name, arg) in
+                 zip(names, arguments)]
+
+    # Look up numexpr_mod if possible.
+    numexpr_key = expr_key + (tuple(signature),)
+    try:
+        compiled_ex = _numexpr_cache[numexpr_key]
+    except KeyError:
+        compiled_ex = _numexpr_cache[numexpr_key] = NumExpr(ex, signature, **context)
+    kwargs = {'out': out, 'order': order, 'casting': casting,
+              'ex_uses_vml': ex_uses_vml}
+    _numexpr_last = _expr_cache[expr_name] = dict(ex=compiled_ex, argnames=names, kwargs=kwargs)
+    return _numexpr_last
+
+def get_expression_names():
+    return list(_expr_cache.keys())

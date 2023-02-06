@@ -15,12 +15,12 @@ import os
 import subprocess
 import platform
 
-from numexpr.interpreter import _set_num_threads, _get_num_threads, MAX_THREADS
-from numexpr import use_vml
+from numexpr_mod.interpreter import _set_num_threads, _get_num_threads, MAX_THREADS
+from numexpr_mod import use_vml
 from . import version
 
 if use_vml:
-    from numexpr.interpreter import (
+    from numexpr_mod.interpreter import (
         _get_vml_version, _set_vml_accuracy_mode, _set_vml_num_threads,
         _get_vml_num_threads)
 

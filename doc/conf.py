@@ -18,8 +18,8 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os, sys
-import numexpr
-module_location = os.path.dirname( numexpr.__file__ )
+import numexpr_mod
+module_location = os.path.dirname(numexpr_mod.__file__)
 sys.path.insert(0, os.path.abspath(module_location) )
 
 # -- General configuration ------------------------------------------------

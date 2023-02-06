@@ -52,7 +52,7 @@ setup1 = """\
 from numpy import arange
 try: from scipy.weave import blitz
 except: pass
-from numexpr import evaluate
+from numexpr_mod import evaluate
 result = arange(%f, dtype='%s')
 b = arange(%f, dtype='%s')
 c = arange(%f, dtype='%s')
@@ -65,7 +65,7 @@ setup2 = """\
 from numpy import arange
 try: from scipy.weave import blitz
 except: pass
-from numexpr import evaluate
+from numexpr_mod import evaluate
 a = arange(%f, dtype='%s')
 b = arange(%f, dtype='%s')
 result = arange(%f, dtype='%s')
@@ -77,7 +77,7 @@ setup3 = """\
 from numpy import arange, sin, cos, sinh
 try: from scipy.weave import blitz
 except: pass
-from numexpr import evaluate
+from numexpr_mod import evaluate
 a = arange(2*%f, dtype='%s')[::2]
 b = arange(%f, dtype='%s')
 result = arange(%f, dtype='%s')
@@ -89,7 +89,7 @@ setup4 = """\
 from numpy import arange, sin, cos, sinh, arctan2
 try: from scipy.weave import blitz
 except: pass
-from numexpr import evaluate
+from numexpr_mod import evaluate
 a = arange(2*%f, dtype='%s')[::2]
 b = arange(%f, dtype='%s')
 result = arange(%f, dtype='%s')
@@ -101,7 +101,7 @@ setup5 = """\
 from numpy import arange, sin, cos, sinh, arctan2, sqrt, where
 try: from scipy.weave import blitz
 except: pass
-from numexpr import evaluate
+from numexpr_mod import evaluate
 a = arange(2*%f, dtype='%s')[::2]
 b = arange(%f, dtype='%s')
 result = arange(%f, dtype='%s')
@@ -137,8 +137,8 @@ def compare(check_only=False):
     return average
 
 if __name__ == '__main__':
-    import numexpr
-    print("Numexpr version: ", numexpr.__version__)
+    import numexpr_mod
+    print("Numexpr version: ", numexpr_mod.__version__)
 
     averages = []
     for i in range(iterations):

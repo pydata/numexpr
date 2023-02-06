@@ -1,72 +1,15 @@
 ======================================================
-NumExpr: Fast numerical expression evaluator for NumPy
+NumExpr_mod: Fast numerical expression evaluator for NumPy
 ======================================================
 
-:Author: David M. Cooke, Francesc Alted, and others.
-:Maintainer: Robert A. McLeod
-:Contact: robbmcleod@gmail.com
-:URL: https://github.com/pydata/numexpr
-:Documentation: http://numexpr.readthedocs.io/en/latest/
-:Travis CI: |travis|
-:GitHub Actions: |actions|
-:PyPi: |version|
-:DOI: |doi|
-:readthedocs: |docs|
+:Author: Alexander K.
+:URL: https://github.com/MrCheatak/numexpr_mod
 
-.. |actions| image:: https://github.com/pydata/numexpr/workflows/Build/badge.svg
-        :target: https://github.com/pydata/numexpr/actions
-.. |travis| image:: https://travis-ci.org/pydata/numexpr.png?branch=master
-        :target: https://travis-ci.org/pydata/numexpr
-.. |docs| image:: https://readthedocs.org/projects/numexpr/badge/?version=latest
-        :target: http://numexpr.readthedocs.io/en/latest
-.. |doi| image:: https://zenodo.org/badge/doi/10.5281/zenodo.2483274.svg
-        :target:  https://doi.org/10.5281/zenodo.2483274
-.. |version| image:: https://img.shields.io/pypi/v/numexpr.png
-        :target: https://pypi.python.org/pypi/numexpr
 
 What is NumExpr?
 ----------------
+Please refer to the original `Numexpr <https://github.com/pydata/numexpr>`_ repo.
 
-NumExpr is a fast numerical expression evaluator for NumPy.  With it,
-expressions that operate on arrays (like :code:`'3*a+4*b'`) are accelerated
-and use less memory than doing the same calculation in Python.
-
-In addition, its multi-threaded capabilities can make use of all your
-cores -- which generally results in substantial performance scaling compared
-to NumPy.
-
-Last but not least, numexpr can make use of Intel's VML (Vector Math
-Library, normally integrated in its Math Kernel Library, or MKL).
-This allows further acceleration of transcendent expressions.
-
-
-How NumExpr achieves high performance
--------------------------------------
-
-The main reason why NumExpr achieves better performance than NumPy is
-that it avoids allocating memory for intermediate results. This
-results in better cache utilization and reduces memory access in
-general. Due to this, NumExpr works best with large arrays.
-
-NumExpr parses expressions into its own op-codes that are then used by
-an integrated computing virtual machine. The array operands are split
-into small chunks that easily fit in the cache of the CPU and passed
-to the virtual machine. The virtual machine then applies the
-operations on each chunk. It's worth noting that all temporaries and
-constants in the expression are also chunked. Chunks are distributed among 
-the available cores of the CPU, resulting in highly parallelized code 
-execution.
-
-The result is that NumExpr can get the most of your machine computing
-capabilities for array-wise computations. Common speed-ups with regard
-to NumPy are usually between 0.95x (for very simple expressions like
-:code:`'a + 1'`) and 4x (for relatively complex ones like :code:`'a*b-4.1*a > 2.5*b'`), 
-although much higher speed-ups can be achieved for some functions  and complex 
-math operations (up to 15x in some cases).
-
-NumExpr performs best on matrices that are too large to fit in L1 CPU cache. 
-In order to get a better idea on the different speed-ups that can be achieved 
-on your platform, run the provided benchmarks.
 
 Installation
 ------------
@@ -114,49 +57,23 @@ You can test `numexpr` with::
 
 Do not test NumExpr in the source directory or you will generate import errors.
 
-Enable Intel® MKL support
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-NumExpr includes support for Intel's MKL library. This may provide better 
-performance on Intel architectures, mainly when evaluating transcendental 
-functions (trigonometrical, exponential, ...). 
-
-If you have Intel's MKL, copy the `site.cfg.example` that comes with the 
-distribution to `site.cfg` and edit the latter file to provide correct paths to 
-the MKL libraries in your system.  After doing this, you can proceed with the 
-usual building instructions listed above.
-
-Pay attention to the messages during the building process in order to know 
-whether MKL has been detected or not.  Finally, you can check the speed-ups on 
-your machine by running the `bench/vml_timing.py` script (you can play with 
-different parameters to the `set_vml_accuracy_mode()` and `set_vml_num_threads()` 
-functions in the script so as to see how it would affect performance).
-
 Usage
 -----
 
 ::
 
-  >>> import numpy as np
-  >>> import numexpr as ne
+    >>> import numexpr_mod as ne
+    >>> import numpy as np
 
-  >>> a = np.arange(1e6)   # Choose large arrays for better speedups
-  >>> b = np.arange(1e6)
+    >>> a = np.array([1,2,3,4,5])
+    >>> b = np.array([6,7,8,9,0])
 
-  >>> ne.evaluate("a + 1")   # a simple expression
-  array([  1.00000000e+00,   2.00000000e+00,   3.00000000e+00, ...,
-           9.99998000e+05,   9.99999000e+05,   1.00000000e+06])
-
-  >>> ne.evaluate('a*b-4.1*a > 2.5*b')   # a more complex one
-  array([False, False, False, ...,  True,  True,  True], dtype=bool)
-
-  >>> ne.evaluate("sin(a) + arcsinh(a/b)")   # you can also use functions
-  array([        NaN,  1.72284457,  1.79067101, ...,  1.09567006,
-          0.17523598, -0.09597844])
-
-  >>> s = np.array([b'abba', b'abbb', b'abbcdef'])
-  >>> ne.evaluate("b'abba' == s")   # string arrays are supported too
-  array([ True, False, False], dtype=bool)
+    >>> ne.cache_expression('a + b', 'sum_ab')
+    {'ex': <numexpr_mod.NumExpr object at 0x1090e36b0>, 'argnames': ['a', 'b'], 'kwargs': {'out': None, 'order': 'K', 'casting': 'safe', 'ex_uses_vml': False}}
+    >>> ne.re_evaluate('sum_ab')
+    array([ 7,  9, 11, 13,  5], dtype=int64)
+    >>> ne.evaluate('a + b')
+    array([ 7,  9, 11, 13,  5], dtype=int64)
 
 
 Documentation

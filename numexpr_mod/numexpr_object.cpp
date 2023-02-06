@@ -367,7 +367,7 @@ static PyMemberDef NumExpr_members[] = {
 
 PyTypeObject NumExprType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "numexpr.NumExpr",         /*tp_name*/
+    "numexpr_mod.NumExpr",         /*tp_name*/
     sizeof(NumExprObject),     /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)NumExpr_dealloc, /*tp_dealloc*/

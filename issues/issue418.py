@@ -1,5 +1,5 @@
 import numpy as np
-import numexpr as ne
+import numexpr_mod as ne
 import matplotlib.pyplot as plt
 from time import perf_counter as pc
 
