@@ -1,6 +1,6 @@
-============================================================
-NumExpr_mod: Fast numerical expression evaluator for NumPy
-============================================================
+======================================================================
+NumExpr_mod: Fast numerical expression evaluator for NumPy with cache
+======================================================================
 
 :Author: Alexander K.
 :URL: https://github.com/MrCheatak/numexpr_mod
@@ -46,7 +46,7 @@ NumExpr is built in the standard Python way::
 
   python setup.py build install
 
-You can test `numexpr` with::
+You can test `numexpr_mod` with::
 
   python -c "import numexpr_mod; numexpr_mod.test()"
 
@@ -54,6 +54,14 @@ Do not test NumExpr in the source directory or you will generate import errors.
 
 Usage
 -----
+
+This modification of the Numexpr package enables storage of the previously compiled expressions.  
+Stored expressions can be then called by their assigned name.  
+
+Note that precompiled expressions accept only the same variable names with the same types. 
+Although, both arrays and single values can be used for the same expression variable.
+
+Output destination, order and casting can be preset at compilation time or be specified at expression call. 
 
 ::
 
@@ -71,17 +79,11 @@ Usage
     array([ 7,  9, 11, 13,  5], dtype=int64)
 
 
-Documentation
--------------
+Additionally, cached expresion names can be retrieved:
+::
 
-Please see the official documentation at `numexpr.readthedocs.io <https://numexpr.readthedocs.io>`_.
-Included is a user guide, benchmark results, and the reference API.
-
-
-Authors
--------
-
-Please see `AUTHORS.txt <https://github.com/pydata/numexpr/blob/master/AUTHORS.txt>`_.
+    >>>ne.get_expression_names()
+    ['sum_ab']
 
 
 License
