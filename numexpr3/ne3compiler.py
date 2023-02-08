@@ -606,7 +606,7 @@ class NumExpr(object):
                     args.append(None)
 
         elif verify: # Renew references from frames
-            info('run case renew from frames')
+            # info('run case renew from frames')
             call_frame = sys._getframe(stackDepth) 
             local_dict = call_frame.f_locals
             for reg in self.registers:
@@ -1448,8 +1448,8 @@ def _sequence(self: NumExpr, node: ast.AST) -> NumReg:
     return register
 
                 
-def _unsupported(self: NumExpr, node: ast.AST) -> None:
-    raise KeyError('unimplemented ASTNode: ' + type(node))
+def _unsupported(self: NumExpr, *args) -> None:
+    raise KeyError(f'unimplemented ASTNode called with args: {args}')
 
 # _ASTAssembler is a function dictionary that is used for fast flow-control.
 # Think of it being equivalent to a switch-case flow control in C

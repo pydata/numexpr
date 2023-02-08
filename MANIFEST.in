@@ -2,6 +2,8 @@ include MANIFEST.in
 
 include *.rst *.txt *.cfg site.cfg.example
 
+include *.pkl
+
 recursive-include numexpr3 *.cpp *.hpp *.py
 recursive-include numexpr3/win32 *.c *.h
 
