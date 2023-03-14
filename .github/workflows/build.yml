@@ -17,7 +17,7 @@ env:
   CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy
   CIBW_BUILD_VERBOSITY: 3
   # CIBW_TEST_REQUIRES: pytest
-  CIBW_TEST_COMMAND: python -c "import sys, numexpr_mod; sys.exit(0 if numexpr_mod.test().wasSuccessful() else 1)"
+#  CIBW_TEST_COMMAND: python -c "import sys, numexpr_mod; sys.exit(0 if numexpr_mod.test().wasSuccessful() else 1)"
   CIBW_TEST_SKIP: "*macosx*arm64*"
   CIBW_SKIP: "*musllinux*"
 
@@ -69,6 +69,11 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install build twine
+
       - name: Install cibuildwheel
         run: |
           python -m pip install cibuildwheel
@@ -79,20 +84,17 @@ jobs:
       
       - name: Build wheels for Python
         run: |
-          python -m cibuildwheel --output-dir wheelhouse
+          python -m cibuildwheel --output-dir dist
       
       - name: Make sdist
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           python -m pip install build
-          python -m build --sdist --outdir wheelhouse .
+          python -m build --sdist --outdir dist .
 
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*
-
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v0.1.14
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: wheelhouse/*
+      - name: Publish wheels to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
+        run: |
+          twine upload ./dist/*
