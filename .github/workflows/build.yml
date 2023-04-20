@@ -2,6 +2,9 @@ name: Build
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 env:
   CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy
   CIBW_BUILD_VERBOSITY: 3
@@ -14,6 +17,8 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }} - ${{ matrix.p_ver }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     env:
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
