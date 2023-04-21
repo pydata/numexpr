@@ -271,17 +271,17 @@ def rtruediv_op(a, b):
 
 @ophelper
 def pow_op(a, b):
-    if (b.astKind in ('int', 'long') and
-        a.astKind in ('int', 'long') and
-        numpy.any(b.value < 0)):
-
-        raise ValueError(
-            'Integers to negative integer powers are not allowed.')
-
     if allConstantNodes([a, b]):
         return ConstantNode(a.value ** b.value)
     if isinstance(b, ConstantNode):
         x = b.value
+        # Numpy Error: Integers to negative integer powers are not allowed.
+        # if a is a vector of numpy integer, b is not allowed to be a negative integer(number or vector).
+        if (a.astKind in ('int', 'long') and 
+            b.astKind in ('int', 'long') and
+            x < 0) :
+            raise ValueError(
+                'Integers to negative integer powers are not allowed.')
         if get_optimization() == 'aggressive':
             RANGE = 50  # Approximate break even point with pow(x,y)
             # Optimize all integral and half integral powers in [-RANGE, RANGE]
