@@ -742,7 +742,11 @@ def getArguments(names, local_dict=None, global_dict=None):
             try:
                 a = local_dict[name]
             except KeyError:
-                a = global_dict[name]
+                try:
+                    a = global_dict[name]
+                except KeyError:
+                    call_frame_local = call_frame.f_locals
+                    a = call_frame_local[name]
             arguments.append(numpy.asarray(a))
     finally:
         # If we generated local_dict via an explicit reference to f_locals,
@@ -865,7 +869,7 @@ def re_evaluate(expr_name='', local_dict=None, out=None, order=None, casting=Non
     argnames = expr['argnames']
     arguments = getArguments(argnames, local_dict)
     kwargs = expr['kwargs']
-    if out:
+    if out is not None:
         kwargs['out'] = out
     if order:
         kwargs['order'] = order
