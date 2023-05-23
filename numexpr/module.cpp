@@ -13,6 +13,8 @@
 #include <structmember.h>
 #include <vector>
 
+#include <signal.h>
+
 #include "interpreter.hpp"
 #include "numexpr_object.hpp"
 
@@ -209,7 +211,26 @@ int init_threads(void)
     gs.count_threads = 0;      /* Reset threads counter */
     gs.barrier_passed = 0;
 
-    /* Finally, create the threads */
+    /*
+     * Our worker threads should not deal with signals from the rest of the
+     * application - mask everything temporarily in this thread, so our workers
+     * can inherit that mask
+     */
+    sigset_t sigset_block_all, sigset_restore;
+    rc = sigfillset(&sigset_block_all);
+    if (rc != 0) {
+        fprintf(stderr, "ERROR; failed to block signals: sigfillset: %s",
+                strerror(rc));
+        exit(-1);
+    }
+    rc = pthread_sigmask( SIG_BLOCK, &sigset_block_all, &sigset_restore);
+    if (rc != 0) {
+        fprintf(stderr, "ERROR; failed to block signals: pthread_sigmask: %s",
+                strerror(rc));
+        exit(-1);
+    }
+
+    /* Now create the threads */
     for (tid = 0; tid < gs.nthreads; tid++) {
         gs.tids[tid] = tid;
         rc = pthread_create(&gs.threads[tid], NULL, th_worker,
@@ -220,6 +241,18 @@ int init_threads(void)
             fprintf(stderr, "\tError detail: %s\n", strerror(rc));
             exit(-1);
         }
+    }
+
+    /*
+     * Restore the signal mask so the main thread can process signals as
+     * expected
+     */
+    rc = pthread_sigmask( SIG_SETMASK, &sigset_restore, NULL);
+    if (rc != 0) {
+        fprintf(stderr,
+                "ERROR: failed to restore signal mask: pthread_sigmask: %s",
+                strerror(rc));
+        exit(-1);
     }
 
     gs.init_threads_done = 1;                 /* Initialization done! */
