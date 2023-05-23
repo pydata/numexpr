@@ -990,7 +990,10 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     int r, pc_error = 0;
     int reduction_axis = -1;
     npy_intp reduction_size = -1; // For #277 change this 1 -> -1 to be in-line with NumPy 1.8,
-    int ex_uses_vml = 0, is_reduction = 0;
+#ifdef USE_VML
+    int ex_uses_vml = 0
+#endif
+    int is_reduction = 0;
     bool reduction_outer_loop = false, need_output_buffering = false, full_reduction = false;
 
     // To specify axes when doing a reduction
@@ -1040,9 +1043,11 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             return PyErr_Format(PyExc_ValueError,
                                 "ex_uses_vml parameter is required");
         }
+#ifdef USE_VML
         if (tmp == Py_True) {
             ex_uses_vml = 1;
         }
+#endif
             // borrowed ref
         operands[0] = (PyArrayObject *)PyDict_GetItemString(kwds, "out");
         if (operands[0] != NULL) {
