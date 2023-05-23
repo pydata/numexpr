@@ -312,7 +312,8 @@ def pow_op(a, b):
                 if r is None:
                     r = OpNode('ones_like', [a])
                 if x < 0:
-                    r = OpNode('div', [ConstantNode(1), r])
+                    # Issue #428
+                    r = truediv_op(ConstantNode(1), r)
                 return r
         if get_optimization() in ('moderate', 'aggressive'):
             if x == -1:

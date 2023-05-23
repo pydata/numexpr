@@ -524,6 +524,18 @@ class test_evaluate(TestCase):
         out_l = evaluate('b % m')
         assert_equal(out_l, np.mod(b, m))
 
+    def test_negative_power_scalar(self):
+        # Test for issue #428, where the power is negative and the base is an
+        # integer. This was running afoul in the precomputation in `expressions.py:pow_op()`
+        base = np.array([-2, -1, 0, 1, 2, 3], dtype=np.int32)
+        out_i = evaluate('base ** -1.0')
+        assert_equal(out_i, np.power(base, -1.0))
+
+        base = np.array([-2, -1, 0, 1, 2, 3], dtype=np.int64)
+        out_l = evaluate('base ** -1.0')
+        assert_equal(out_l, np.power(base, -1.0))
+
+
     def test_ex_uses_vml(self):
         vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
                       "sinh", "cosh", "tanh", "arcsinh", "arccosh", "arctanh",
