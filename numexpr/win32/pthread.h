@@ -93,6 +93,25 @@ extern int pthread_create(pthread_t *thread, const void *unused,
 
 extern int win32_pthread_join(pthread_t *thread, void **value_ptr);
 
+/*
+ * The POSIX signal system has a more developed interface than what's in
+ * Windows. We create a no-op shim layer to proivde enough of the API to
+ * pretend to support what's used when creating threads on POSIX systems.
+ */
+typedef int sigset_t;
+enum sigop {
+    SIG_BLOCK,
+    SIG_UNBLOCK,
+    SIG_SETMASK
+};
+
+static inline int sigemptyset(sigset_t *sigs) { return 0; }
+static inline int sigfillset(sigset_t *sigs) { return 0; }
+static inline int sigaddset(sigset_t *sigs, int sig) { return 0; }
+static inline int sigdelset(sigset_t *sigs, int sig) { return 0; }
+static inline int pthread_sigmask(int how, sigset_t *newmask,
+                                  sigset_t *oldmask) { return 0; }
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
