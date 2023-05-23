@@ -511,6 +511,18 @@ class test_evaluate(TestCase):
         evaluate('3', out=a)
         assert_equal(a, 3)
 
+    def test_negative_mod(self):
+        # Test for issue #413, modulus of negative integers. C modulus is 
+        # actually remainder op, and hence different from Python modulus.
+        a = np.array([-500, -135, 0, 0, 135, 500], dtype=np.int32)
+        n = np.array([-360, -360, -360, 360, 360, 360], dtype=np.int32)
+        out_i = evaluate('a % n')
+        assert_equal(out_i, np.mod(a, n))
+
+        b = a.astype(np.int64)
+        m = n.astype(np.int64)
+        out_l = evaluate('b % m')
+        assert_equal(out_l, np.mod(b, m))
 
     def test_ex_uses_vml(self):
         vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
@@ -624,7 +636,7 @@ def equal(a, b, exact):
         return (shape(a) == shape(b)) and alltrue(ravel(a) == ravel(b), axis=0)
     else:
         if hasattr(a, 'dtype') and a.dtype == 'f4':
-            atol = 1e-5  # Relax precission for special opcodes, like fmod
+            atol = 1e-5  # Relax precision for special opcodes, like fmod
         else:
             atol = 1e-8
         return (shape(a) == shape(b) and
