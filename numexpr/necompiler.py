@@ -773,7 +773,10 @@ def validate(ex: str,
              _frame_depth: int = 2,
              **kwargs) -> Optional[Exception]:
     """
-    Returns
+    Validate a NumExpr expression with the given `local_dict` or `locals()`.
+    Returns `None` on success and the Exception object if one occurs. Note that 
+    you can proceed directly to call `re_evaluate()` if you use `validate()`
+    to sanitize your expressions and variables in advance.
 
     Parameters
     ----------
