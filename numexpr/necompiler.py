@@ -69,7 +69,7 @@ vml_functions = [
     ]
 
 
-class ASTNode(object):
+class ASTNode():
     """Abstract Syntax Tree node.
 
     Members:
@@ -84,7 +84,6 @@ class ASTNode(object):
     cmpnames = ['astType', 'astKind', 'value', 'children']
 
     def __init__(self, astType='generic', astKind='unknown', value=None, children=()):
-        object.__init__(self)
         self.astType = astType
         self.astKind = astKind
         self.value = value
@@ -219,7 +218,7 @@ def typeCompileAst(ast):
                    [typeCompileAst(c) for c in children])
 
 
-class Register(object):
+class Register():
     """Abstraction for a register in the VM.
 
     Members:

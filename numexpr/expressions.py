@@ -35,9 +35,7 @@ scalar_constant_types = tuple(scalar_constant_types)
 
 from numexpr import interpreter
 
-class Expression(object):
-    def __init__(self):
-        object.__init__(self)
+class Expression():
 
     def __getattr__(self, name):
         if name.startswith('_'):
@@ -271,17 +269,13 @@ def rtruediv_op(a, b):
 
 @ophelper
 def pow_op(a, b):
-    if (b.astKind in ('int', 'long') and
-        a.astKind in ('int', 'long') and
-        numpy.any(b.value < 0)):
-
-        raise ValueError(
-            'Integers to negative integer powers are not allowed.')
-
-    if allConstantNodes([a, b]):
-        return ConstantNode(a.value ** b.value)
+    
     if isinstance(b, ConstantNode):
         x = b.value
+        if (    a.astKind in ('int', 'long') and 
+                b.astKind in ('int', 'long') and x < 0) :
+            raise ValueError(
+                'Integers to negative integer powers are not allowed.')
         if get_optimization() == 'aggressive':
             RANGE = 50  # Approximate break even point with pow(x,y)
             # Optimize all integral and half integral powers in [-RANGE, RANGE]
@@ -379,7 +373,7 @@ functions = {
 }
 
 
-class ExpressionNode(object):
+class ExpressionNode():
     """
     An object that represents a generic number object.
 
@@ -389,7 +383,6 @@ class ExpressionNode(object):
     astType = 'generic'
 
     def __init__(self, value=None, kind=None, children=None):
-        object.__init__(self)
         self.value = value
         if kind is None:
             kind = 'none'
@@ -477,7 +470,7 @@ class VariableNode(LeafNode):
         LeafNode.__init__(self, value=value, kind=kind)
 
 
-class RawNode(object):
+class RawNode():
     """
     Used to pass raw integers to interpreter.
     For instance, for selecting what function to use in func1.
