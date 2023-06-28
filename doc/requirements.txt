@@ -1,4 +1,4 @@
-sphinx == 7.0.1
+sphinx == 6.2.1
 numpy >= 1.13.3
 sphinx-rtd-theme == 1.2.2
 numpydoc == 1.5.0
