@@ -78,7 +78,7 @@ threads used can be adjusted dynamically via ``numexpr.set_num_threads(int)``.
 The number of threads can never exceed that set by ``NUMEXPR_MAX_THREADS``.
 
 If the user has not configured the environment prior to importing NumExpr, info 
-logs will be generated, and the initial number of threads _that are used_ will 
+logs will be generated, and the initial number of threads *that are used*_ will 
 be set to the number of cores detected in the system or 8, whichever is *less*. 
 
 Usage::

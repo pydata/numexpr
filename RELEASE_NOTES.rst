@@ -30,8 +30,8 @@ Changes from 2.8.1 to 2.8.3
   variable:
 
 ```
-    x = np.empty(5, dtype=np.uint8)[1:].view(np.int32)
-    ne.evaluate('3', out=x)
+x = np.empty(5, dtype=np.uint8)[1:].view(np.int32)
+ne.evaluate('3', out=x)
 ```
 
   We think the risk of issues is very low, but if you are using NumExpr as a 
@@ -49,7 +49,7 @@ Changes from 2.8.0 to 2.8.1
 
 * Fixed dependency list.
 * Added ``pyproject.toml`` and modernize the ``setup.py`` script. Thanks to 
-Antonio Valentino for the PR.
+  Antonio Valentino for the PR.
 
 Changes from 2.7.3 to 2.8.0
 ---------------------------
