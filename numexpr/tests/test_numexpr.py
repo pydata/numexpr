@@ -373,8 +373,9 @@ class test_evaluate(TestCase):
         a1 = array([1., 2., 3.])
         b1 = array([4., 5., 6.])
         c1 = array([7., 8., 9.])
-        x = evaluate("2*a + 3*b*c", local_dict={'a': a1, 'b': b1, 'c': c1})
-        x = re_evaluate()
+        local_dict={'a': a1, 'b': b1, 'c': c1}
+        x = evaluate("2*a + 3*b*c", local_dict=local_dict)
+        x = re_evaluate(local_dict=local_dict)
         assert_array_equal(x, array([86., 124., 168.]))
 
     def test_validate(self):
@@ -400,9 +401,10 @@ class test_evaluate(TestCase):
         a1 = array([1., 2., 3.])
         b1 = array([4., 5., 6.])
         c1 = array([7., 8., 9.])
-        retval = validate("2*a + 3*b*c", local_dict={'a': a1, 'b': b1, 'c': c1})
+        local_dict={'a': a1, 'b': b1, 'c': c1}
+        retval = validate("2*a + 3*b*c", local_dict=local_dict)
         assert(retval is None)
-        x = re_evaluate()
+        x = re_evaluate(local_dict=local_dict)
         assert_array_equal(x, array([86., 124., 168.]))
 
     # Test for issue #22
@@ -502,10 +504,48 @@ class test_evaluate(TestCase):
         a = arange(3)
         try:
             evaluate("a < [0, 0, 0]")
-        except TypeError:
+        except (ValueError, TypeError):
             pass
         else:
             self.fail()
+
+    def test_forbidden_tokens(self):
+        # Forbid dunder
+        try:
+            evaluate('__builtins__')
+        except ValueError:
+            pass
+        else:
+            self.fail()
+
+        # Forbid colon for lambda funcs
+        try: 
+            evaluate('lambda x: x')
+        except ValueError:
+            pass
+        else:
+            self.fail()
+
+        # Forbid indexing
+        try:
+            evaluate('locals()[]')
+        except ValueError:
+            pass
+        else:
+            self.fail()
+
+        # Forbid semicolon
+        try:
+            evaluate('import os; os.cpu_count()')
+        except ValueError:
+            pass
+        else:
+            self.fail()
+
+        # I struggle to come up with cases for our ban on `'` and `"`
+
+
+
 
     def test_disassemble(self):
         assert_equal(disassemble(NumExpr(

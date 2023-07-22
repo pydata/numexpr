@@ -13,6 +13,7 @@ import __future__
 import sys
 import numpy
 import threading
+import re
 
 is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
 from numexpr import interpreter, expressions, use_vml
@@ -259,10 +260,17 @@ class Immediate(Register):
     def __str__(self):
         return 'Immediate(%d)' % (self.node.value,)
 
-
+_forbidden_re = re.compile('[\;[\:]|__')
 def stringToExpression(s, types, context):
     """Given a string, convert it to a tree of ExpressionNode's.
     """
+    # sanitize the string for obvious attack vectors that NumExpr cannot 
+    # parse into its homebrew AST. This is to protect the call to `eval` below.
+    # We forbid `;`, `:`. `[` and `__`
+    # We would like to forbid `.` but it is both a reference and decimal point.
+    if _forbidden_re.search(s) is not None:
+        raise ValueError(f'Expression {s} has forbidden control characters.')
+    
     old_ctx = expressions._context.get_current_context()
     try:
         expressions._context.set_new_context(context)
@@ -285,8 +293,10 @@ def stringToExpression(s, types, context):
                 t = types.get(name, default_type)
                 names[name] = expressions.VariableNode(name, type_to_kind[t])
         names.update(expressions.functions)
+
         # now build the expression
         ex = eval(c, names)
+        
         if expressions.isConstant(ex):
             ex = expressions.ConstantNode(ex, expressions.getKind(ex))
         elif not isinstance(ex, expressions.ExpressionNode):
@@ -611,9 +621,7 @@ def NumExpr(ex, signature=(), **kwargs):
 
     Returns a `NumExpr` object containing the compiled function.
     """
-    # NumExpr can be called either directly by the end-user, in which case
-    # kwargs need to be sanitized by getContext, or by evaluate,
-    # in which case kwargs are in already sanitized.
+
     # In that case _frame_depth is wrong (it should be 2) but it doesn't matter
     # since it will not be used (because truediv='auto' has already been
     # translated to either True or False).
@@ -758,7 +766,7 @@ def getArguments(names, local_dict=None, global_dict=None, _frame_depth: int=2):
 _names_cache = CacheDict(256)
 _numexpr_cache = CacheDict(256)
 _numexpr_last = {}
-
+_numexpr_sanity = set()
 evaluate_lock = threading.Lock()
 
 # MAYBE: decorate this function to add attributes instead of having the 
@@ -861,7 +869,7 @@ def evaluate(ex: str,
              out: numpy.ndarray = None, 
              order: str = 'K', 
              casting: str = 'safe', 
-             _frame_depth: int=3,
+             _frame_depth: int = 3,
              **kwargs) -> numpy.ndarray:
     """
     Evaluate a simple array expression element-wise using the virtual machine.
@@ -909,6 +917,8 @@ def evaluate(ex: str,
     _frame_depth: int
         The calling frame depth. Unless you are a NumExpr developer you should 
         not set this value.
+
+    
     """
     # We could avoid code duplication if we called validate and then re_evaluate 
     # here, but they we have difficulties with the `sys.getframe(2)` call in
@@ -921,10 +931,6 @@ def evaluate(ex: str,
     else:
         raise e
     
-
-  
-
-
 def re_evaluate(local_dict: Optional[Dict] = None, 
                 _frame_depth: int=2) -> numpy.ndarray:
     """
