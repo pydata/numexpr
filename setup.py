@@ -71,8 +71,10 @@ def parse_site_cfg():
             site['mkl']['include_dirs'].split(os.pathsep))
         lib_dirs.extend(
             site['mkl']['library_dirs'].split(os.pathsep))
+        # numpy's site.cfg splits libraries by comma, but numexpr historically split by os.pathsep.
+        # For compatibility, we split by both.
         libs.extend(
-            site['mkl']['libraries'].split(os.pathsep))
+            site['mkl']['libraries'].replace(os.pathsep, ',').split(','))
         def_macros.append(('USE_VML', None))
         print(f'FOUND MKL IMPORT')
         
