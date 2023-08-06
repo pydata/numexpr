@@ -2,6 +2,12 @@
 Release notes for NumExpr 2.8 series
 ====================================
 
+Changes from 2.8.5 to 2.8.6
+---------------------------
+
+** Under Construction **
+
+
 Changes from 2.8.4 to 2.8.5
 ---------------------------
 
@@ -15,7 +21,7 @@ Changes from 2.8.4 to 2.8.5
   is also banned except for '.r' for real and '.i'  for imag.
 * Thanks to timbrist for a fix to behavior of NumExpr with integers to negative 
   powers. NumExpr was pre-checking integer powers for negative values, which 
-  was both inefficient and causing parsing errors in some situations. Now NumExpr
+  was both inefficient and caused parsing errors in some situations. Now NumExpr
   will simply return 0 as a result for such cases. While NumExpr generally tries 
   to follow NumPy behavior, performance is also critical. 
 * Thanks to peadar for some fixes to how NumExpr launches threads for embedded 

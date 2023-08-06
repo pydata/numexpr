@@ -53,11 +53,11 @@ Releasing
 
 * Upload the built wheels to PyPi via Twine.
 
-    `twine upload artifact/numexpr*.whl`
+    `twine upload --repository numexpr artifact/numexpr*.whl`
 
 * Upload the source distribution.
 
-    `twine upload artifact/numexpr*.tar.gz`
+    `twine upload --repository numexpr artifact/numexpr*.tar.gz`
 
 * Check on `pypi.org/project/numexpr/#files` that the wheels and source have uploaded as expected.
 
