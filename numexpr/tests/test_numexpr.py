@@ -536,13 +536,27 @@ class test_evaluate(TestCase):
 
         # Forbid semicolon
         try:
-            evaluate('import os; os.cpu_count()')
+            evaluate('import os;')
         except ValueError:
             pass
         else:
             self.fail()
 
-        # I struggle to come up with cases for our ban on `'` and `"`
+        # Attribute access
+        try:
+            evaluate('os.cpucount()')
+        except ValueError:
+            pass
+        else:
+            self.fail()
+
+        # But decimal point must pass
+        a = 3.0
+        evaluate('a*2.')
+        evaluate('2.+a')
+        
+
+        
 
 
 

@@ -5,7 +5,24 @@ Release notes for NumExpr 2.8 series
 Changes from 2.8.4 to 2.8.5
 ---------------------------
 
-**Under development.**
+* A `validate` function has been added. This function checks the inputs, returning 
+  `None` on success or raising an exception on invalid inputs. This function was 
+  added as numerous projects seem to be using NumExpr for parsing user inputs.
+  `re_evaluate` may be called directly following `validate`.
+* As an addendum to the use of NumExpr for parsing user inputs, is that NumExpr
+  calls `eval` on the inputs. A regular expression is now applied to help sanitize 
+  the input expression string, forbidding '__', ':', and ';'. Attribute access 
+  is also banned except for '.r' for real and '.i'  for imag.
+* Thanks to timbrist for a fix to behavior of NumExpr with integers to negative 
+  powers. NumExpr was pre-checking integer powers for negative values, which 
+  was both inefficient and causing parsing errors in some situations. Now NumExpr
+  will simply return 0 as a result for such cases. While NumExpr generally tries 
+  to follow NumPy behavior, performance is also critical. 
+* Thanks to peadar for some fixes to how NumExpr launches threads for embedded 
+  applications.
+* Thanks to de11n for making parsing of the `site.cfg` for MKL consistent among 
+  all shared platforms.
+
 
 Changes from 2.8.3 to 2.8.4
 ---------------------------

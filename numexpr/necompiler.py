@@ -260,15 +260,17 @@ class Immediate(Register):
     def __str__(self):
         return 'Immediate(%d)' % (self.node.value,)
 
-_forbidden_re = re.compile('[\;[\:]|__')
+
+_forbidden_re = re.compile('[\;[\:]|__|\.[abcdefghjklmnopqstuvwxyzA-Z_]')
 def stringToExpression(s, types, context):
     """Given a string, convert it to a tree of ExpressionNode's.
     """
     # sanitize the string for obvious attack vectors that NumExpr cannot 
     # parse into its homebrew AST. This is to protect the call to `eval` below.
-    # We forbid `;`, `:`. `[` and `__`
-    # We would like to forbid `.` but it is both a reference and decimal point.
-    if _forbidden_re.search(s) is not None:
+    # We forbid `;`, `:`. `[` and `__`, and attribute access via '.'.
+    # We cannot ban `.real` or `.imag` however...
+    no_whitespace = re.sub(r'\s+', '', s)
+    if _forbidden_re.search(no_whitespace) is not None:
         raise ValueError(f'Expression {s} has forbidden control characters.')
     
     old_ctx = expressions._context.get_current_context()
@@ -766,7 +768,6 @@ def getArguments(names, local_dict=None, global_dict=None, _frame_depth: int=2):
 _names_cache = CacheDict(256)
 _numexpr_cache = CacheDict(256)
 _numexpr_last = {}
-_numexpr_sanity = set()
 evaluate_lock = threading.Lock()
 
 # MAYBE: decorate this function to add attributes instead of having the 
@@ -828,6 +829,13 @@ def validate(ex: str,
     _frame_depth: int
         The calling frame depth. Unless you are a NumExpr developer you should 
         not set this value.
+
+    Note
+    ----
+    Both `validate` and by extension `evaluate` call `eval(ex)`, which is 
+    potentially dangerous on unsanitized inputs. As such, NumExpr does some 
+    sanitization, banning the character ':;[', the dunder '__', and attribute
+    access to all but '.r' for real and '.i' for imag access to complex numbers.
     """
     global _numexpr_last
 
@@ -857,8 +865,6 @@ def validate(ex: str,
         kwargs = {'out': out, 'order': order, 'casting': casting,
                 'ex_uses_vml': ex_uses_vml}
         _numexpr_last = dict(ex=compiled_ex, argnames=names, kwargs=kwargs)
-        # with evaluate_lock:
-        #     return compiled_ex(*arguments, **kwargs)
     except Exception as e:
         return e
     return None
@@ -918,7 +924,12 @@ def evaluate(ex: str,
         The calling frame depth. Unless you are a NumExpr developer you should 
         not set this value.
 
-    
+    Note
+    ----
+    Both `validate` and by extension `evaluate` call `eval(ex)`, which is 
+    potentially dangerous on unsanitized inputs. As such, NumExpr does some 
+    sanitization, banning the character ':;[', the dunder '__', and attribute
+    access to all but '.r' for real and '.i' for imag access to complex numbers.
     """
     # We could avoid code duplication if we called validate and then re_evaluate 
     # here, but they we have difficulties with the `sys.getframe(2)` call in
