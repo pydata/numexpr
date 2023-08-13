@@ -991,7 +991,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     int reduction_axis = -1;
     npy_intp reduction_size = -1; // For #277 change this 1 -> -1 to be in-line with NumPy 1.8,
 #ifdef USE_VML
-    int ex_uses_vml = 0
+    int ex_uses_vml = 0;
 #endif
     int is_reduction = 0;
     bool reduction_outer_loop = false, need_output_buffering = false, full_reduction = false;
