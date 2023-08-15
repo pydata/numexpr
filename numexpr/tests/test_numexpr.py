@@ -528,7 +528,7 @@ class test_evaluate(TestCase):
 
         # Forbid indexing
         try:
-            evaluate('locals()[]')
+            evaluate('locals()["evaluate"]')
         except ValueError:
             pass
         else:
@@ -542,24 +542,40 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
-        # Attribute access
+        # Attribute access with spaces
         try:
-            evaluate('os.cpucount()')
+            evaluate('os. cpu_count()')
         except ValueError:
             pass
         else:
             self.fail()
 
-        # But decimal point must pass
+        # Attribute access with funny unicode characters that eval translates
+        # into ASCII.
+        try:
+            evaluate("(3+1).ᵇit_length()")
+        except ValueError:
+            pass
+        else:
+            self.fail()
+
+        # Pass decimal points
         a = 3.0
         evaluate('a*2.')
         evaluate('2.+a')
+
+        # pass .real and .imag
+        c = 2.5 + 1.5j
+        evaluate('c.real')
+        evaluate('c.imag')
         
-
-        
-
-
-
+    def test_no_sanitize(self):
+        try: # Errors on compile() after eval()
+            evaluate('import os;', sanitize=False)
+        except SyntaxError:
+            pass
+        else:
+            self.fail()
 
     def test_disassemble(self):
         assert_equal(disassemble(NumExpr(

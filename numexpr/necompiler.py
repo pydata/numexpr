@@ -261,17 +261,22 @@ class Immediate(Register):
         return 'Immediate(%d)' % (self.node.value,)
 
 
-_forbidden_re = re.compile('[\;[\:]|__|\.[abcdefghjklmnopqstuvwxyzA-Z_]')
-def stringToExpression(s, types, context):
+_flow_pat = r'[\;\[\:]'
+_dunder_pat = r'__[\w]+__'
+_attr_pat = r'\.\b(?!(real|imag|\d+)\b)'
+_blacklist_re = re.compile(f'{_flow_pat}|{_dunder_pat}|{_attr_pat}')
+
+def stringToExpression(s, types, context, sanitize: bool):
     """Given a string, convert it to a tree of ExpressionNode's.
     """
     # sanitize the string for obvious attack vectors that NumExpr cannot 
     # parse into its homebrew AST. This is to protect the call to `eval` below.
     # We forbid `;`, `:`. `[` and `__`, and attribute access via '.'.
     # We cannot ban `.real` or `.imag` however...
-    no_whitespace = re.sub(r'\s+', '', s)
-    if _forbidden_re.search(no_whitespace) is not None:
-        raise ValueError(f'Expression {s} has forbidden control characters.')
+    if sanitize:
+        no_whitespace = re.sub(r'\s+', '', s)
+        if _blacklist_re.search(no_whitespace) is not None:
+            raise ValueError(f'Expression {s} has forbidden control characters.')
     
     old_ctx = expressions._context.get_current_context()
     try:
@@ -558,7 +563,7 @@ def getContext(kwargs, _frame_depth=1):
     return context
 
 
-def precompile(ex, signature=(), context={}):
+def precompile(ex, signature=(), context={}, sanitize: bool=True):
     """
     Compile the expression to an intermediate form.
     """
@@ -566,7 +571,7 @@ def precompile(ex, signature=(), context={}):
     input_order = [name for (name, type_) in signature]
 
     if isinstance(ex, str):
-        ex = stringToExpression(ex, types, context)
+        ex = stringToExpression(ex, types, context, sanitize)
 
     # the AST is like the expression, but the node objects don't have
     # any odd interpretations
@@ -612,7 +617,7 @@ def precompile(ex, signature=(), context={}):
     return threeAddrProgram, signature, tempsig, constants, input_names
 
 
-def NumExpr(ex, signature=(), **kwargs):
+def NumExpr(ex,  signature=(), sanitize: bool=True, **kwargs):
     """
     Compile an expression built using E.<variable> variables to a function.
 
@@ -629,7 +634,7 @@ def NumExpr(ex, signature=(), **kwargs):
     # translated to either True or False).
     _frame_depth = 1
     context = getContext(kwargs, _frame_depth=_frame_depth)
-    threeAddrProgram, inputsig, tempsig, constants, input_names = precompile(ex, signature, context)
+    threeAddrProgram, inputsig, tempsig, constants, input_names = precompile(ex, signature, context, sanitize=sanitize)
     program = compileThreeAddrForm(threeAddrProgram)
     return interpreter.NumExpr(inputsig.encode('ascii'),
                                tempsig.encode('ascii'),
@@ -710,8 +715,8 @@ def getType(a):
     raise ValueError("unknown type %s" % a.dtype.name)
 
 
-def getExprNames(text, context):
-    ex = stringToExpression(text, {}, context)
+def getExprNames(text, context, sanitize: bool=True):
+    ex = stringToExpression(text, {}, context, sanitize)
     ast = expressionToAST(ex)
     input_order = getInputOrder(ast, None)
     #try to figure out if vml operations are used by expression
@@ -779,6 +784,7 @@ def validate(ex: str,
              order: str = 'K', 
              casting: str = 'safe', 
              _frame_depth: int = 2,
+             sanitize: bool = True,
              **kwargs) -> Optional[Exception]:
     """
     Validate a NumExpr expression with the given `local_dict` or `locals()`.
@@ -826,16 +832,19 @@ def validate(ex: str,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
 
+    sanitize: bool
+        Both `validate` and by extension `evaluate` call `eval(ex)`, which is 
+        potentially dangerous on unsanitized inputs. As such, NumExpr by default 
+        performs simple sanitization, banning the character ':;[', the 
+        dunder '__[\w+]__', and attribute access to all but '.real' and '.imag'.
+
     _frame_depth: int
         The calling frame depth. Unless you are a NumExpr developer you should 
         not set this value.
 
     Note
     ----
-    Both `validate` and by extension `evaluate` call `eval(ex)`, which is 
-    potentially dangerous on unsanitized inputs. As such, NumExpr does some 
-    sanitization, banning the character ':;[', the dunder '__', and attribute
-    access to all but '.r' for real and '.i' for imag access to complex numbers.
+    
     """
     global _numexpr_last
 
@@ -848,7 +857,7 @@ def validate(ex: str,
         context = getContext(kwargs)
         expr_key = (ex, tuple(sorted(context.items())))
         if expr_key not in _names_cache:
-            _names_cache[expr_key] = getExprNames(ex, context)
+            _names_cache[expr_key] = getExprNames(ex, context, sanitize=sanitize)
         names, ex_uses_vml = _names_cache[expr_key]
         arguments = getArguments(names, local_dict, global_dict, _frame_depth=_frame_depth)
 
@@ -861,7 +870,7 @@ def validate(ex: str,
         try:
             compiled_ex = _numexpr_cache[numexpr_key]
         except KeyError:
-            compiled_ex = _numexpr_cache[numexpr_key] = NumExpr(ex, signature, **context)
+            compiled_ex = _numexpr_cache[numexpr_key] = NumExpr(ex, signature, sanitize=sanitize, **context)
         kwargs = {'out': out, 'order': order, 'casting': casting,
                 'ex_uses_vml': ex_uses_vml}
         _numexpr_last = dict(ex=compiled_ex, argnames=names, kwargs=kwargs)
@@ -875,6 +884,7 @@ def evaluate(ex: str,
              out: numpy.ndarray = None, 
              order: str = 'K', 
              casting: str = 'safe', 
+             sanitize: bool = True,
              _frame_depth: int = 3,
              **kwargs) -> numpy.ndarray:
     """
@@ -920,6 +930,12 @@ def evaluate(ex: str,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
 
+    sanitize: bool
+        Both `validate` and by extension `evaluate` call `eval(ex)`, which is 
+        potentially dangerous on unsanitized inputs. As such, NumExpr by default 
+        performs simple sanitization, banning the character ':;[', the 
+        dunder '__[\w+]__', and attribute access to all but '.real' and '.imag'.
+
     _frame_depth: int
         The calling frame depth. Unless you are a NumExpr developer you should 
         not set this value.
@@ -936,7 +952,7 @@ def evaluate(ex: str,
     # `getArguments`
     e = validate(ex, local_dict=local_dict, global_dict=global_dict, 
                  out=out, order=order, casting=casting, 
-                 _frame_depth=_frame_depth, **kwargs)
+                 _frame_depth=_frame_depth, sanitize=sanitize, **kwargs)
     if e is None:
         return re_evaluate(local_dict=local_dict, _frame_depth=_frame_depth)
     else:
