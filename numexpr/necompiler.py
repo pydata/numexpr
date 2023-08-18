@@ -263,10 +263,10 @@ class Immediate(Register):
 
 _flow_pat = r'[\;\[\:]'
 _dunder_pat = r'__[\w]+__'
-_attr_pat = r'\.\b(?!(real|imag|\d+)\b)'
+_attr_pat = r'\.\b(?!(real|imag|[eE]?[+-]?\d+)\b)'
 _blacklist_re = re.compile(f'{_flow_pat}|{_dunder_pat}|{_attr_pat}')
 
-def stringToExpression(s, types, context, sanitize: bool):
+def stringToExpression(s, types, context, sanitize: bool=True):
     """Given a string, convert it to a tree of ExpressionNode's.
     """
     # sanitize the string for obvious attack vectors that NumExpr cannot 

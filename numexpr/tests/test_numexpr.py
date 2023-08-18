@@ -509,7 +509,7 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
-    def test_forbidden_tokens(self):
+    def test_blacklist_tokens(self):
         # Forbid dunder
         try:
             evaluate('__builtins__')
@@ -559,15 +559,18 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
-        # Pass decimal points
+        # Pass decimal points including scientific notation
         a = 3.0
-        evaluate('a*2.')
+        evaluate('a*2e-5')
+        evaluate('a*2e+5')
+        evaluate('a*2E-5')
         evaluate('2.+a')
 
         # pass .real and .imag
         c = 2.5 + 1.5j
         evaluate('c.real')
         evaluate('c.imag')
+
         
     def test_no_sanitize(self):
         try: # Errors on compile() after eval()
