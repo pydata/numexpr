@@ -105,7 +105,7 @@ class CPUInfoBase(object):
 
     def __get_nbits(self):
         abits = platform.architecture()[0]
-        nbits = re.compile('(\d+)bit').search(abits).group(1)
+        nbits = re.compile(r'(\d+)bit').search(abits).group(1)
         return nbits
 
     def _is_32bit(self):
@@ -658,7 +658,7 @@ class Win32CPUInfo(CPUInfoBase):
             #XXX: Bad style to use so long `try:...except:...`. Fix it!
 
             prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"
-                              "\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
+                              r"\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
             chnd = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, self.pkey)
             pnum = 0
             while 1:

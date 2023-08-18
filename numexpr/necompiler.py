@@ -786,7 +786,7 @@ def validate(ex: str,
              _frame_depth: int = 2,
              sanitize: bool = True,
              **kwargs) -> Optional[Exception]:
-    """
+    r"""
     Validate a NumExpr expression with the given `local_dict` or `locals()`.
     Returns `None` on success and the Exception object if one occurs. Note that 
     you can proceed directly to call `re_evaluate()` if you use `validate()`
@@ -887,7 +887,7 @@ def evaluate(ex: str,
              sanitize: bool = True,
              _frame_depth: int = 3,
              **kwargs) -> numpy.ndarray:
-    """
+    r"""
     Evaluate a simple array expression element-wise using the virtual machine.
 
     Parameters
