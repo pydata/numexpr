@@ -11,9 +11,11 @@
 from typing import Optional, Dict
 import __future__
 import sys
-import numpy
+import os
 import threading
 import re
+
+import numpy
 
 is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
 from numexpr import interpreter, expressions, use_vml
@@ -784,7 +786,7 @@ def validate(ex: str,
              order: str = 'K', 
              casting: str = 'safe', 
              _frame_depth: int = 2,
-             sanitize: bool = True,
+             sanitize: Optional[bool] = None,
              **kwargs) -> Optional[Exception]:
     r"""
     Validate a NumExpr expression with the given `local_dict` or `locals()`.
@@ -832,11 +834,15 @@ def validate(ex: str,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
 
-    sanitize: bool
+    sanitize: Optional[bool]
         Both `validate` and by extension `evaluate` call `eval(ex)`, which is 
         potentially dangerous on unsanitized inputs. As such, NumExpr by default 
         performs simple sanitization, banning the character ':;[', the 
         dunder '__[\w+]__', and attribute access to all but '.real' and '.imag'.
+        
+        Using `None` defaults to `True` unless the environment variable 
+        `NUMEXPR_SANITIZE=0` is set, in which case the default is `False`. 
+        Nominally this can be set via `os.environ` before `import numexpr`.
 
     _frame_depth: int
         The calling frame depth. Unless you are a NumExpr developer you should 
@@ -852,6 +858,12 @@ def validate(ex: str,
         
         if not isinstance(ex, str):
             raise ValueError("must specify expression as a string")
+        
+        if sanitize is None:
+            if 'NUMEXPR_SANITIZE' in os.environ:
+                sanitize = bool(int(os.environ['NUMEXPR_SANITIZE']))
+            else:
+                sanitize = True
 
         # Get the names for this expression
         context = getContext(kwargs)
@@ -884,7 +896,7 @@ def evaluate(ex: str,
              out: numpy.ndarray = None, 
              order: str = 'K', 
              casting: str = 'safe', 
-             sanitize: bool = True,
+             sanitize: Optional[bool] = None,
              _frame_depth: int = 3,
              **kwargs) -> numpy.ndarray:
     r"""
@@ -935,6 +947,10 @@ def evaluate(ex: str,
         potentially dangerous on unsanitized inputs. As such, NumExpr by default 
         performs simple sanitization, banning the character ':;[', the 
         dunder '__[\w+]__', and attribute access to all but '.real' and '.imag'.
+
+        Using `None` defaults to `True` unless the environment variable 
+        `NUMEXPR_SANITIZE=0` is set, in which case the default is `False`. 
+        Nominally this can be set via `os.environ` before `import numexpr`.
 
     _frame_depth: int
         The calling frame depth. Unless you are a NumExpr developer you should 

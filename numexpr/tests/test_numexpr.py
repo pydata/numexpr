@@ -509,67 +509,71 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
-    def test_blacklist_tokens(self):
-        # Forbid dunder
-        try:
-            evaluate('__builtins__')
-        except ValueError:
-            pass
-        else:
-            self.fail()
+    def test_sanitize(self):
+        with _environment('NUMEXPR_SANITIZE', '1'):
+            print('Sanitize')
+            # Forbid dunder
+            try:
+                evaluate('__builtins__')
+            except ValueError:
+                pass
+            else:
+                self.fail()
 
-        # Forbid colon for lambda funcs
-        try: 
-            evaluate('lambda x: x')
-        except ValueError:
-            pass
-        else:
-            self.fail()
+            # Forbid colon for lambda funcs
+            try: 
+                evaluate('lambda x: x')
+            except ValueError:
+                pass
+            else:
+                self.fail()
 
-        # Forbid indexing
-        try:
-            evaluate('locals()["evaluate"]')
-        except ValueError:
-            pass
-        else:
-            self.fail()
+            # Forbid indexing
+            try:
+                evaluate('locals()["evaluate"]')
+            except ValueError:
+                pass
+            else:
+                self.fail()
 
-        # Forbid semicolon
-        try:
-            evaluate('import os;')
-        except ValueError:
-            pass
-        else:
-            self.fail()
+            # Forbid semicolon
+            try:
+                evaluate('import os;')
+            except ValueError:
+                pass
+            else:
+                self.fail()
 
-        # Attribute access with spaces
-        try:
-            evaluate('os. cpu_count()')
-        except ValueError:
-            pass
-        else:
-            self.fail()
+            # Attribute access with spaces
+            try:
+                evaluate('os. cpu_count()')
+            except ValueError:
+                pass
+            else:
+                self.fail()
 
-        # Attribute access with funny unicode characters that eval translates
-        # into ASCII.
-        try:
-            evaluate("(3+1).ᵇit_length()")
-        except ValueError:
-            pass
-        else:
-            self.fail()
+            # Attribute access with funny unicode characters that eval translates
+            # into ASCII.
+            try:
+                evaluate("(3+1).ᵇit_length()")
+            except ValueError:
+                pass
+            else:
+                self.fail()
 
-        # Pass decimal points including scientific notation
-        a = 3.0
-        evaluate('a*2e-5')
-        evaluate('a*2e+5')
-        evaluate('a*2E-5')
-        evaluate('2.+a')
+            # Pass decimal points including scientific notation
+            a = 3.0
+            evaluate('a*2.e-5')
+            evaluate('a*2.e+5')
+            evaluate('a*2e-5')
+            evaluate('a*2e+5')
+            evaluate('a*2E-5')
+            evaluate('2.+a')
 
-        # pass .real and .imag
-        c = 2.5 + 1.5j
-        evaluate('c.real')
-        evaluate('c.imag')
+            # pass .real and .imag
+            c = 2.5 + 1.5j
+            evaluate('c.real')
+            evaluate('c.imag')
 
         
     def test_no_sanitize(self):
@@ -579,6 +583,14 @@ class test_evaluate(TestCase):
             pass
         else:
             self.fail()
+
+        with _environment('NUMEXPR_SANITIZE', '0'):
+            try: # Errors on compile() after eval()
+                evaluate('import os;', sanitize=None)
+            except SyntaxError:
+                pass
+            else:
+                self.fail()
 
     def test_disassemble(self):
         assert_equal(disassemble(NumExpr(
