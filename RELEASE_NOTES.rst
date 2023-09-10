@@ -5,8 +5,12 @@ Release notes for NumExpr 2.8 series
 Changes from 2.8.5 to 2.8.6
 ---------------------------
 
-** Under Construction **
+* The sanitization can be turned off by default by setting an environment variable,
 
+    `set NUMEXPR_SANITIZE=0`
+
+* Improved behavior of the blacklist to avoid triggering on private variables 
+  and scientific notation numbers.
 
 Changes from 2.8.4 to 2.8.5
 ---------------------------
