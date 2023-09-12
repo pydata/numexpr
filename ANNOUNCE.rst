@@ -4,33 +4,12 @@ Announcing NumExpr 2.8.6
 
 Hi everyone, 
 
-NumExpr 2.8.6 is a release to deal with issues related to downstream `pandas`
-where the sanitization blacklist was hitting private variables used in their
-evaluate. In addition the sanitization was hitting on scientific notation.
-
-For those who do not wish to have sanitization on by default, it can be changed 
-by setting an environment variable, `NUMEXPR_SANITIZE=0`.
-
-If you use `pandas` in your packages it is advisable you pin 
-
-`numexpr >= 2.8.6` 
-
-in your requirements.
-
-Project documentation is available at:
-
-http://numexpr.readthedocs.io/
+...
 
 Changes from 2.8.5 to 2.8.6
 ---------------------------
 
-* The sanitization can be turned off by default by setting an environment variable,
-
-    `set NUMEXPR_SANITIZE=0`
-
-* Improved behavior of the blacklist to avoid triggering on private variables 
-  and scientific notation numbers.
- 
+** Under development **
 
 What's Numexpr?
 ---------------
