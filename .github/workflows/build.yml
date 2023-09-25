@@ -10,7 +10,9 @@ env:
   CIBW_BUILD_VERBOSITY: 1
   CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
   #CIBW_TEST_SKIP: "*macosx*arm64*"
-  #CIBW_SKIP: "*musllinux*"
+  # Building for musllinux and aarch64 takes way too much time.
+  # NumPy is adding musllinux for just x86_64 too, so this is not too bad.
+  CIBW_SKIP: "*musllinux*aarch64*"
 
 jobs:
   build_wheels:
