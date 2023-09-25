@@ -568,6 +568,8 @@ class test_evaluate(TestCase):
             evaluate('a*2e-5')
             evaluate('a*2e+5')
             evaluate('a*2E-5')
+            evaluate('a*2.0e5')
+            evaluate('a*2.2e5')
             evaluate('2.+a')
 
             # pass .real and .imag
