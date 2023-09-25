@@ -20,7 +20,7 @@ import subprocess
 import numpy as np
 from numpy import (
     array, arange, empty, zeros, int32, int64, uint16, complex_, float64, rec,
-    copy, ones_like, where, alltrue, linspace,
+    copy, ones_like, where, all as alltrue, linspace,
     sum, prod, sqrt, fmod, floor, ceil,
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
