@@ -511,7 +511,6 @@ class test_evaluate(TestCase):
 
     def test_sanitize(self):
         with _environment('NUMEXPR_SANITIZE', '1'):
-            print('Sanitize')
             # Forbid dunder
             try:
                 evaluate('__builtins__')
