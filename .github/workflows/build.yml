@@ -20,7 +20,7 @@ jobs:
       contents: write
     env:
       CIBW_BUILD: ${{ matrix.cibw_build }}
-      #CIBW_ARCHS_LINUX: "x86_64 aarch64"
+      CIBW_ARCHS_LINUX: "x86_64 aarch64"
       CIBW_ARCHS_MACOS: "x86_64 arm64"
     strategy:
       matrix:
