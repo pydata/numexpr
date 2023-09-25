@@ -30,6 +30,12 @@ jobs:
         arch: [x86_64, aarch64]
         cibw_build: ["cp3{9,10,11,12}-*"]
         p_ver: ["3.9-3.12"]
+        exclude:
+          - os: windows-latest
+            arch: aarch64
+          - os: macos-latest
+            arch: aarch64
+
 #        include:
 #          - arch: arm64
 #            os: macos-latest
@@ -72,9 +78,28 @@ jobs:
         if: ${{ matrix.arch == 'aarch64' }}
         name: Set up QEMU
 
-      - name: Build wheels for Python
+      - name: Build wheels (Windows)
+        if: runner.os == 'Windows'
         run: |
           python -m cibuildwheel --output-dir wheelhouse
+        env:
+          #CIBW_BUILD: 'cp39-win_amd64 cp310-win_amd64 cp311-win_amd64 cp312-win_amd64'
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: python -c "import numexpr; numexpr.test()"
+          CIBW_BUILD_VERBOSITY: 1
+
+      - name: Build wheels (Linux / Mac OSX)
+        if: runner.os != 'Windows'
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+        env:
+          # CIBW_BUILD: 'cp39-* cp310-* cp311-* cp312-*'
+          #CIBW_SKIP: '*-manylinux*_i686 *-musllinux_* ${{ env.CIBW_SKIP}}'
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: python -c "import numexpr; numexpr.test()"
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
 
       - name: Make sdist
         if: ${{ matrix.os == 'windows-latest' }}
