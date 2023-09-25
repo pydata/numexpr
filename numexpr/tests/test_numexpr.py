@@ -20,7 +20,7 @@ import subprocess
 import numpy as np
 from numpy import (
     array, arange, empty, zeros, int32, int64, uint16, complex_, float64, rec,
-    copy, ones_like, where, alltrue, linspace,
+    copy, ones_like, where, all as alltrue, linspace,
     sum, prod, sqrt, fmod, floor, ceil,
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
     sinh, cosh, tanh, arcsinh, arccosh, arctanh,
@@ -568,6 +568,8 @@ class test_evaluate(TestCase):
             evaluate('a*2e-5')
             evaluate('a*2e+5')
             evaluate('a*2E-5')
+            evaluate('a*2.0e5')
+            evaluate('a*2.2e5')
             evaluate('2.+a')
 
             # pass .real and .imag
