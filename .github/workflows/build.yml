@@ -9,7 +9,7 @@ env:
   CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy
   CIBW_BUILD_VERBOSITY: 1
   CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
-  #CIBW_TEST_SKIP: "*macosx*arm64*"
+  CIBW_TEST_SKIP: "*macosx*arm64*"
   # Building for musllinux and aarch64 takes way too much time.
   # NumPy is adding musllinux for just x86_64 too, so this is not too bad.
   CIBW_SKIP: "*musllinux*aarch64*"
@@ -27,14 +27,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        # arch: [auto64]
         arch: [x86_64, aarch64]
         cibw_build: ["cp3{9,10,11,12}-*"]
         p_ver: ["3.9-3.12"]
         exclude:
           - os: windows-latest
             arch: aarch64
-          # cibuild is already in charge to build aarch64
+          # cibuild is already in charge to build aarch64 (see CIBW_ARCHS_MACOS)
           - os: macos-latest
             arch: aarch64
 
