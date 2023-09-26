@@ -1,15 +1,40 @@
 ========================
-Announcing NumExpr 2.8.6
+Announcing NumExpr 2.8.7
 ========================
 
-Hi everyone, 
+Hi everyone,
 
-...
+NumExpr 2.8.7 is a release to deal with issues related to downstream `pandas`
+and other projects where the sanitization blacklist was triggering issue in their
+evaluate. Hopefully, the new sanitization code would be much more robust now.
+
+For those who do not wish to have sanitization on by default, it can be changed
+by setting an environment variable, `NUMEXPR_SANITIZE=0`.
+
+If you use `pandas` in your packages it is advisable you pin
+
+`numexpr >= 2.8.7`
+
+in your requirements.
+
+Project documentation is available at:
+
+http://numexpr.readthedocs.io/
 
 Changes from 2.8.5 to 2.8.6
 ---------------------------
 
-** Under development **
+* More permissive rules in sanitizing regular expression: allow to access digits
+  after the . with scientific notation.  Thanks to Thomas Vincent.
+
+* Don't reject double underscores that are not at the start or end of a variable
+  name (pandas uses those), or scientific-notation numbers with digits after the
+  decimal point.  Thanks to Rebecca Palmer.
+
+* Do not use `numpy.alltrue` in the test suite, as it has been deprecated
+  (replaced by `numpy.all`).  Thanks to Rebecca Chen.
+
+* Wheels for Python 3.12.  Wheels for 3.7 and 3.8 are not generated anymore.
 
 What's Numexpr?
 ---------------

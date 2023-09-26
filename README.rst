@@ -24,6 +24,22 @@ NumExpr: Fast numerical expression evaluator for NumPy
 .. |version| image:: https://img.shields.io/pypi/v/numexpr.png
         :target: https://pypi.python.org/pypi/numexpr
 
+IMPORTANT NOTE: NumExpr is looking for maintainers!
+---------------------------------------------------
+
+After 5 years as a solo maintainer (and performing a most excellent work), Robert McLeod
+is asking for a well deserved break. So the NumExpr project is looking for a new
+maintainer for a package that is used in pandas, PyTables and many other packages.
+If have benefited of NumExpr capabilities in the past, and willing to contribute back to
+the community, we would be happy to hear about you!
+
+We are looking for someone that is knowledgeable about compiling extensions, and that is
+ready to spend some cycles in making releases (2 or 3 a year, maybe even less!).
+Interested? just open a new ticket here and we will help you onboarding!
+
+Thank you!
+
+
 What is NumExpr?
 ----------------
 

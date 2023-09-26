@@ -5,7 +5,17 @@ Release notes for NumExpr 2.8 series
 Changes from 2.8.6 to 2.8.7
 ---------------------------
 
-** Under development **
+* More permissive rules in sanitizing regular expression: allow to access digits
+  after the . with scientific notation.  Thanks to Thomas Vincent.
+
+* Don't reject double underscores that are not at the start or end of a variable
+  name (pandas uses those), or scientific-notation numbers with digits after the
+  decimal point.  Thanks to Rebecca Palmer.
+
+* Do not use `numpy.alltrue` in the test suite, as it has been deprecated
+  (replaced by `numpy.all`).  Thanks to Rebecca Chen.
+
+* Wheels for Python 3.12.  Wheels for 3.7 and 3.8 are not generated anymore.
 
 Changes from 2.8.5 to 2.8.6
 ---------------------------
@@ -14,28 +24,28 @@ Changes from 2.8.5 to 2.8.6
 
     `set NUMEXPR_SANITIZE=0`
 
-* Improved behavior of the blacklist to avoid triggering on private variables 
+* Improved behavior of the blacklist to avoid triggering on private variables
   and scientific notation numbers.
 
 Changes from 2.8.4 to 2.8.5
 ---------------------------
 
-* A `validate` function has been added. This function checks the inputs, returning 
-  `None` on success or raising an exception on invalid inputs. This function was 
+* A `validate` function has been added. This function checks the inputs, returning
+  `None` on success or raising an exception on invalid inputs. This function was
   added as numerous projects seem to be using NumExpr for parsing user inputs.
   `re_evaluate` may be called directly following `validate`.
 * As an addendum to the use of NumExpr for parsing user inputs, is that NumExpr
-  calls `eval` on the inputs. A regular expression is now applied to help sanitize 
-  the input expression string, forbidding '__', ':', and ';'. Attribute access 
+  calls `eval` on the inputs. A regular expression is now applied to help sanitize
+  the input expression string, forbidding '__', ':', and ';'. Attribute access
   is also banned except for '.r' for real and '.i'  for imag.
-* Thanks to timbrist for a fix to behavior of NumExpr with integers to negative 
-  powers. NumExpr was pre-checking integer powers for negative values, which 
+* Thanks to timbrist for a fix to behavior of NumExpr with integers to negative
+  powers. NumExpr was pre-checking integer powers for negative values, which
   was both inefficient and caused parsing errors in some situations. Now NumExpr
-  will simply return 0 as a result for such cases. While NumExpr generally tries 
-  to follow NumPy behavior, performance is also critical. 
-* Thanks to peadar for some fixes to how NumExpr launches threads for embedded 
+  will simply return 0 as a result for such cases. While NumExpr generally tries
+  to follow NumPy behavior, performance is also critical.
+* Thanks to peadar for some fixes to how NumExpr launches threads for embedded
   applications.
-* Thanks to de11n for making parsing of the `site.cfg` for MKL consistent among 
+* Thanks to de11n for making parsing of the `site.cfg` for MKL consistent among
   all shared platforms.
 
 
@@ -46,19 +56,19 @@ Changes from 2.8.3 to 2.8.4
 * Thanks to Tobias Hangleiter for an improved accuracy complex `expm1` function.
   While it is 25 % slower, it is significantly more accurate for the real component
   over a range of values and matches NumPy outputs much more closely.
-* Thanks to Kirill Kouzoubov for a range of fixes to constants parsing that was 
+* Thanks to Kirill Kouzoubov for a range of fixes to constants parsing that was
   resulting in duplicated constants of the same value.
-* Thanks to Mark Harfouche for noticing that we no longer need `numpy` version 
+* Thanks to Mark Harfouche for noticing that we no longer need `numpy` version
   checks. `packaging` is no longer a requirement as a result.
 
 Changes from 2.8.1 to 2.8.3
 ---------------------------
 
 * 2.8.2 was skipped due to an error in uploading to PyPi.
-* Support for Python 3.6 has been dropped due to the need to substitute the flag 
-  `NPY_ARRAY_WRITEBACKIFCOPY` for `NPY_ARRAY_UPDATEIFCOPY`. This flag change was 
-  initiated in NumPy 1.14 and finalized in 1.23. The only changes were made to 
-  cases where an unaligned constant was passed in with a pre-allocated output 
+* Support for Python 3.6 has been dropped due to the need to substitute the flag
+  `NPY_ARRAY_WRITEBACKIFCOPY` for `NPY_ARRAY_UPDATEIFCOPY`. This flag change was
+  initiated in NumPy 1.14 and finalized in 1.23. The only changes were made to
+  cases where an unaligned constant was passed in with a pre-allocated output
   variable:
 
 ```
@@ -66,13 +76,13 @@ x = np.empty(5, dtype=np.uint8)[1:].view(np.int32)
 ne.evaluate('3', out=x)
 ```
 
-  We think the risk of issues is very low, but if you are using NumExpr as a 
+  We think the risk of issues is very low, but if you are using NumExpr as a
   expression evaluation tool you may want to write a test for this edge case.
 * Thanks to Matt Einhorn (@matham) for improvements to the GitHub Actions build process to
   add support for Apple Silicon and aarch64.
 * Thanks to Biswapriyo Nath (@biswa96) for a fix to allow `mingw` builds on Windows.
 * There have been some changes made to not import `platform.machine()` on `sparc`
-  but it is highly advised to upgrade to Python 3.9+ to avoid this issue with 
+  but it is highly advised to upgrade to Python 3.9+ to avoid this issue with
   the Python core package `platform`.
 
 
@@ -80,25 +90,25 @@ Changes from 2.8.0 to 2.8.1
 ---------------------------
 
 * Fixed dependency list.
-* Added ``pyproject.toml`` and modernize the ``setup.py`` script. Thanks to 
+* Added ``pyproject.toml`` and modernize the ``setup.py`` script. Thanks to
   Antonio Valentino for the PR.
 
 Changes from 2.7.3 to 2.8.0
 ---------------------------
 
 * Wheels for Python 3.10 are now provided.
-* Support for Python 2.7 and 3.5 has been discontinued. 
-* All residual support for Python 2.X syntax has been removed, and therefore 
-  the setup build no longer makes calls to the `2to3` script. The `setup.py` 
+* Support for Python 2.7 and 3.5 has been discontinued.
+* All residual support for Python 2.X syntax has been removed, and therefore
+  the setup build no longer makes calls to the `2to3` script. The `setup.py`
   has been refactored to be more modern.
-* The examples on how to link into Intel VML/MKL/oneAPI now use the dynamic 
+* The examples on how to link into Intel VML/MKL/oneAPI now use the dynamic
   library.
 
 Changes from 2.7.2 to 2.7.3
 ---------------------------
 
-- Pinned Numpy versions to minimum supported version in an effort to alleviate 
-  issues seen in Windows machines not having the same MSVC runtime installed as 
+- Pinned Numpy versions to minimum supported version in an effort to alleviate
+  issues seen in Windows machines not having the same MSVC runtime installed as
   was used to build the wheels.
 - ARMv8 wheels are now available, thanks to `odidev` for the pull request.
 
@@ -106,22 +116,22 @@ Changes from 2.7.2 to 2.7.3
 Changes from 2.7.1 to 2.7.2
 ---------------------------
 
-- Support for Python 2.7 and 3.5 is deprecated and will be discontinued when 
+- Support for Python 2.7 and 3.5 is deprecated and will be discontinued when
   `cibuildwheels` and/or GitHub Actions no longer support these versions.
-- Wheels are now provided for Python 3.7, 3.5, 3.6, 3.7, 3.8, and 3.9 via 
+- Wheels are now provided for Python 3.7, 3.5, 3.6, 3.7, 3.8, and 3.9 via
   GitHub Actions.
 - The block size is now exported into the namespace as `numexpr.__BLOCK_SIZE1__`
   as a read-only value.
-- If using MKL, the number of threads for VML is no longer forced to 1 on loading 
-  the module. Testing has shown that VML never runs in multi-threaded mode for 
-  the default BLOCKSIZE1 of 1024 elements, and forcing to 1 can have deleterious 
+- If using MKL, the number of threads for VML is no longer forced to 1 on loading
+  the module. Testing has shown that VML never runs in multi-threaded mode for
+  the default BLOCKSIZE1 of 1024 elements, and forcing to 1 can have deleterious
   effects on NumPy functions when built with MKL. See issue #355 for details.
-- Use of `ndarray.tostring()` in tests has been switch to `ndarray.tobytes()` 
-  for future-proofing deprecation of `.tostring()`, if the version of NumPy is 
+- Use of `ndarray.tostring()` in tests has been switch to `ndarray.tobytes()`
+  for future-proofing deprecation of `.tostring()`, if the version of NumPy is
   greater than 1.9.
-- Added a utility method `get_num_threads` that returns the (maximum) number of 
-  threads currently in use by the virtual machine. The functionality of 
-  `set_num_threads` whereby it returns the previous value has been deprecated 
+- Added a utility method `get_num_threads` that returns the (maximum) number of
+  threads currently in use by the virtual machine. The functionality of
+  `set_num_threads` whereby it returns the previous value has been deprecated
   and will be removed in 2.8.X.
 
 Changes from 2.7.0 to 2.7.1
@@ -136,75 +146,75 @@ Changes from 2.7.0 to 2.7.1
 Changes from 2.6.9 to 2.7.0
 ----------------------------
 
-- The default number of 'safe' threads has been restored to the historical limit 
+- The default number of 'safe' threads has been restored to the historical limit
   of 8, if the environment variable "NUMEXPR_MAX_THREADS" has not been set.
 - Thanks to @eltoder who fixed a small memory leak.
-- Support for Python 2.6 has been dropped, as it is no longer available via 
+- Support for Python 2.6 has been dropped, as it is no longer available via
   TravisCI.
-- A typo in the test suite that had a less than rather than greater than symbol 
+- A typo in the test suite that had a less than rather than greater than symbol
   in the NumPy version check has been corrected thanks to dhomeier.
-- The file `site.cfg` was being accidently included in the sdists on PyPi. 
+- The file `site.cfg` was being accidently included in the sdists on PyPi.
   It has now been excluded.
 
 Changes from 2.6.8 to 2.6.9
 ---------------------------
 
-- Thanks to Mike Toews for more robust handling of the thread-setting 
+- Thanks to Mike Toews for more robust handling of the thread-setting
   environment variables.
-- With Appveyor updating to Python 3.7.1, wheels for Python 3.7 are now 
+- With Appveyor updating to Python 3.7.1, wheels for Python 3.7 are now
   available in addition to those for other OSes.
 
 Changes from 2.6.7 to 2.6.8
 ---------------------------
 
-- Add check to make sure that `f_locals` is not actually `f_globals` when we 
+- Add check to make sure that `f_locals` is not actually `f_globals` when we
   do the `f_locals` clear to avoid the #310 memory leak issue.
 - Compare NumPy versions using `distutils.version.LooseVersion` to avoid issue
   #312 when working with NumPy development versions.
-- As part of `multibuild`, wheels for Python 3.7 for Linux and MacOSX are now 
+- As part of `multibuild`, wheels for Python 3.7 for Linux and MacOSX are now
   available on PyPI.
 
 Changes from 2.6.6 to 2.6.7
 ---------------------------
 
 - Thanks to Lehman Garrison for finding and fixing a bug that exhibited memory
-  leak-like behavior. The use in `numexpr.evaluate` of `sys._getframe` combined 
-  with `.f_locals` from that frame object results an extra refcount on objects 
-  in the frame that calls `numexpr.evaluate`, and not `evaluate`'s frame. So if 
-  the calling frame remains in scope for a long time (such as a procedural 
-  script where `numexpr` is called from the base frame) garbage collection would 
+  leak-like behavior. The use in `numexpr.evaluate` of `sys._getframe` combined
+  with `.f_locals` from that frame object results an extra refcount on objects
+  in the frame that calls `numexpr.evaluate`, and not `evaluate`'s frame. So if
+  the calling frame remains in scope for a long time (such as a procedural
+  script where `numexpr` is called from the base frame) garbage collection would
   never occur.
 - Imports for the `numexpr.test` submodule were made lazy in the `numexpr` module.
 
 Changes from 2.6.5 to 2.6.6
 ---------------------------
 
-- Thanks to Mark Dickinson for a fix to the thread barrier that occassionally 
+- Thanks to Mark Dickinson for a fix to the thread barrier that occassionally
   suffered from spurious wakeups on MacOSX.
 
 Changes from 2.6.4 to 2.6.5
 ---------------------------
 
-- The maximum thread count can now be set at import-time by setting the 
-  environment variable 'NUMEXPR_MAX_THREADS'. The default number of 
+- The maximum thread count can now be set at import-time by setting the
+  environment variable 'NUMEXPR_MAX_THREADS'. The default number of
   max threads was lowered from 4096 (which was deemed excessive) to 64.
-- A number of imports were removed (pkg_resources) or made lazy (cpuinfo) in 
-  order to speed load-times for downstream packages (such as `pandas`, `sympy`, 
-  and `tables`). Import time has dropped from about 330 ms to 90 ms. Thanks to 
+- A number of imports were removed (pkg_resources) or made lazy (cpuinfo) in
+  order to speed load-times for downstream packages (such as `pandas`, `sympy`,
+  and `tables`). Import time has dropped from about 330 ms to 90 ms. Thanks to
   Jason Sachs for pointing out the source of the slow-down.
-- Thanks to Alvaro Lopez Ortega for updates to benchmarks to be compatible with 
+- Thanks to Alvaro Lopez Ortega for updates to benchmarks to be compatible with
   Python 3.
 - Travis and AppVeyor now fail if the test module fails or errors.
-- Thanks to Mahdi Ben Jelloul for a patch that removed a bug where constants 
+- Thanks to Mahdi Ben Jelloul for a patch that removed a bug where constants
   in `where` calls would raise a ValueError.
-- Fixed a bug whereby all-constant power operations would lead to infinite 
+- Fixed a bug whereby all-constant power operations would lead to infinite
   recursion.
 
 Changes from 2.6.3 to 2.6.4
 ---------------------------
 
-- Christoph Gohlke noticed a lack of coverage for the 2.6.3 
-  `floor` and `ceil` functions for MKL that caused seg-faults in 
+- Christoph Gohlke noticed a lack of coverage for the 2.6.3
+  `floor` and `ceil` functions for MKL that caused seg-faults in
   test, so thanks to him for that.
 
 Changes from 2.6.2 to 2.6.3
@@ -213,19 +223,19 @@ Changes from 2.6.2 to 2.6.3
 - Documentation now available at readthedocs.io_.
 
 - Support for floor() and ceil() functions added by Caleb P. Burns.
-                   
+
 - NumPy requirement increased from 1.6 to 1.7 due to changes in iterator
   flags (#245).
-  
+
 - Sphinx autodocs support added for documentation on readthedocs.org.
 
-- Fixed a bug where complex constants would return an error, fixing 
+- Fixed a bug where complex constants would return an error, fixing
   problems with `sympy` when using NumExpr as a backend.
-  
-- Fix for #277 whereby arrays of shape (1,...) would be reduced as 
+
+- Fix for #277 whereby arrays of shape (1,...) would be reduced as
   if they were full reduction. Behavoir now matches that of NumPy.
 
-- String literals are automatically encoded into 'ascii' bytes for 
+- String literals are automatically encoded into 'ascii' bytes for
   convience (see #281).
 
 .. _readthedocs.io: http://numexpr.readthedocs.io
@@ -428,7 +438,7 @@ Changes from 2.2.1 to 2.2.2
   #115.
 
 * The `__nonzero__` method in `ExpressionNode` class has been
-  commented out.  This is also for compatibility with `PyTables < 3.0`.  
+  commented out.  This is also for compatibility with `PyTables < 3.0`.
   See #24 for details.
 
 * Fixed the type of some parameters in the C extension so that s390

@@ -7,11 +7,12 @@ permissions:
 
 env:
   CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy
-  CIBW_BUILD_VERBOSITY: 3
-  # CIBW_TEST_REQUIRES: pytest
+  CIBW_BUILD_VERBOSITY: 1
   CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
   CIBW_TEST_SKIP: "*macosx*arm64*"
-  CIBW_SKIP: "*musllinux*"
+  # Building for musllinux and aarch64 takes way too much time.
+  # NumPy is adding musllinux for just x86_64 too, so this is not too bad.
+  CIBW_SKIP: "*musllinux*aarch64*"
 
 jobs:
   build_wheels:
@@ -22,38 +23,19 @@ jobs:
     env:
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-      CIBW_ARCHS_MACOS: ${{ matrix.arch }}
+      CIBW_ARCHS_MACOS: "x86_64 arm64"
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        arch: [auto64]
-        cibw_build: ["cp3{7,8,9,10,11}-*"]
-        p_ver: ["3.7-3.11"]
-        include:
-          - arch: arm64
-            os: macos-latest
-            cibw_build: "cp3{7,8,9,10,11}-*"
-            p_ver: "3.7-3.11"
-          - arch: aarch64
-            os: ubuntu-latest
-            cibw_build: "cp37*"
-            p_ver: "3.7"
-          - arch: aarch64
-            os: ubuntu-latest
-            cibw_build: "cp38*"
-            p_ver: "3.8"
-          - arch: aarch64
-            os: ubuntu-latest
-            cibw_build: "cp39*"
-            p_ver: "3.9"
-          - arch: aarch64
-            os: ubuntu-latest
-            cibw_build: "cp310*"
-            p_ver: "3.10"
-          - arch: aarch64
-            os: ubuntu-latest
-            cibw_build: "cp311*"
-            p_ver: "3.11"
+        arch: [x86_64, aarch64]
+        cibw_build: ["cp3{9,10,11,12}-*"]
+        p_ver: ["3.9-3.12"]
+        exclude:
+          - os: windows-latest
+            arch: aarch64
+          # cibuild is already in charge to build aarch64 (see CIBW_ARCHS_MACOS)
+          - os: macos-latest
+            arch: aarch64
 
     steps:
       - uses: actions/checkout@v3
@@ -70,11 +52,11 @@ jobs:
       - uses: docker/setup-qemu-action@v2
         if: ${{ matrix.arch == 'aarch64' }}
         name: Set up QEMU
-      
-      - name: Build wheels for Python
+
+      - name: Build wheels
         run: |
           python -m cibuildwheel --output-dir wheelhouse
-      
+
       - name: Make sdist
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
