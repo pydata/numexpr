@@ -5,7 +5,7 @@ Announcing NumExpr 2.8.7
 Hi everyone,
 
 NumExpr 2.8.7 is a release to deal with issues related to downstream `pandas`
-and other projects where the sanitization blacklist was triggering issue in their
+and other projects where the sanitization blacklist was triggering issues in their
 evaluate. Hopefully, the new sanitization code would be much more robust now.
 
 For those who do not wish to have sanitization on by default, it can be changed
@@ -21,7 +21,7 @@ Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.8.5 to 2.8.6
+Changes from 2.8.6 to 2.8.7
 ---------------------------
 
 * More permissive rules in sanitizing regular expression: allow to access digits
