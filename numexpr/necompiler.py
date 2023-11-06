@@ -970,11 +970,12 @@ def evaluate(ex: str,
                  out=out, order=order, casting=casting, 
                  _frame_depth=_frame_depth, sanitize=sanitize, **kwargs)
     if e is None:
-        return re_evaluate(local_dict=local_dict, _frame_depth=_frame_depth)
+        return re_evaluate(local_dict=local_dict, global_dict=global_dict, _frame_depth=_frame_depth)
     else:
         raise e
     
 def re_evaluate(local_dict: Optional[Dict] = None, 
+                global_dict: Optional[Dict] = None,
                 _frame_depth: int=2) -> numpy.ndarray:
     """
     Re-evaluate the previous executed array expression without any check.
@@ -998,7 +999,7 @@ def re_evaluate(local_dict: Optional[Dict] = None,
     except KeyError:
         raise RuntimeError("A previous evaluate() execution was not found, please call `validate` or `evaluate` once before `re_evaluate`")
     argnames = _numexpr_last['argnames']
-    args = getArguments(argnames, local_dict, _frame_depth=_frame_depth)
+    args = getArguments(argnames, local_dict, global_dict, _frame_depth=_frame_depth)
     kwargs = _numexpr_last['kwargs']
     with evaluate_lock:
         return compiled_ex(*args, **kwargs)
