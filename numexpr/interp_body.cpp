@@ -199,7 +199,7 @@
         #define s3    ((char   *)x3+j*sb3)
         /* Some temporaries */
         double da, db;
-        npy_cdouble ca, cb;
+        std::complex<double> ca, cb;
 
         switch (op) {
 
@@ -432,19 +432,19 @@
                                                 (const MKL_Complex16*)x1,
                                                 (MKL_Complex16*)dest));
 #else
-            VEC_ARG1(ca.real = c1r;
-                     ca.imag = c1i;
+            VEC_ARG1(ca.real(c1r);
+                     ca.imag(c1i);
                      functions_cc[arg2](&ca, &ca);
-                     cr_dest = ca.real;
-                     ci_dest = ca.imag);
+                     cr_dest = ca.real();
+                     ci_dest = ca.imag());
 #endif
-        case OP_FUNC_CCCN: VEC_ARG2(ca.real = c1r;
-                                    ca.imag = c1i;
-                                    cb.real = c2r;
-                                    cb.imag = c2i;
+        case OP_FUNC_CCCN: VEC_ARG2(ca.real(c1r);
+                                    ca.imag(c1i);
+                                    cb.real(c2r);
+                                    cb.imag(c2i);
                                     functions_ccc[arg3](&ca, &cb, &ca);
-                                    cr_dest = ca.real;
-                                    ci_dest = ca.imag);
+                                    cr_dest = ca.real();
+                                    ci_dest = ca.imag());
 
         case OP_REAL_DC: VEC_ARG1(d_dest = c1r);
         case OP_IMAG_DC: VEC_ARG1(d_dest = c1i);

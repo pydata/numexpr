@@ -246,7 +246,7 @@ FuncDDDPtr_vml functions_ddd_vml[] = {
 
 
 
-typedef void (*FuncCCPtr)(npy_cdouble*, npy_cdouble*);
+typedef void (*FuncCCPtr)(std::complex<double>*, std::complex<double>*);
 
 FuncCCPtr functions_cc[] = {
 #define FUNC_CC(fop, s, f, ...) f,
@@ -295,7 +295,7 @@ FuncCCPtr_vml functions_cc_vml[] = {
 #endif
 
 
-typedef void (*FuncCCCPtr)(npy_cdouble*, npy_cdouble*, npy_cdouble*);
+typedef void (*FuncCCCPtr)(std::complex<double>*, std::complex<double>*, std::complex<double>*);
 
 FuncCCCPtr functions_ccc[] = {
 #define FUNC_CCC(fop, s, f) f,
