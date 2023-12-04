@@ -265,7 +265,7 @@ class Immediate(Register):
 
 _flow_pat = r'[\;\[\:]'
 _dunder_pat = r'(^|[^\w])__[\w]+__($|[^\w])'
-_attr_pat = r'\.\b(?!(real|imag|\d*[eE]?[+-]?\d+)\b)'
+_attr_pat = r'\.\b(?!(real|imag|(\d*[eE]?[+-]?\d+)|\d*j)\b)'
 _blacklist_re = re.compile(f'{_flow_pat}|{_dunder_pat}|{_attr_pat}')
 
 def stringToExpression(s, types, context, sanitize: bool=True):
@@ -275,6 +275,7 @@ def stringToExpression(s, types, context, sanitize: bool=True):
     # parse into its homebrew AST. This is to protect the call to `eval` below.
     # We forbid `;`, `:`. `[` and `__`, and attribute access via '.'.
     # We cannot ban `.real` or `.imag` however...
+    # We also cannot ban `.\d*j`, where `\d*` is some digits (or none), e.g. 1.5j, 1.j
     if sanitize:
         no_whitespace = re.sub(r'\s+', '', s)
         if _blacklist_re.search(no_whitespace) is not None:
