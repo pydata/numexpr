@@ -980,10 +980,10 @@ run_interpreter_const(NumExprObject *self, char *output, int *pc_error)
 PyObject *
 NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArrayObject *operands[NPY_MAXARGS];
-    PyArray_Descr *dtypes[NPY_MAXARGS], **dtypes_tmp;
+    PyArrayObject *operands[NE_MAXARGS];
+    PyArray_Descr *dtypes[NE_MAXARGS], **dtypes_tmp;
     PyObject *tmp, *ret;
-    npy_uint32 op_flags[NPY_MAXARGS];
+    npy_uint32 op_flags[NE_MAXARGS];
     NPY_CASTING casting = NPY_SAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
     unsigned int i, n_inputs;
@@ -997,8 +997,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     bool reduction_outer_loop = false, need_output_buffering = false, full_reduction = false;
 
     // To specify axes when doing a reduction
-    int op_axes_values[NPY_MAXARGS][NPY_MAXDIMS],
-         op_axes_reduction_values[NPY_MAXARGS];
+    int op_axes_values[NE_MAXARGS][NPY_MAXDIMS],
+         op_axes_reduction_values[NE_MAXARGS];
     int *op_axes_ptrs[NPY_MAXDIMS];
     int oa_ndim = 0;
     int **op_axes = NULL;

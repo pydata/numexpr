@@ -23,6 +23,10 @@
 // environment variable, "NUMEXPR_MAX_THREADS"
 #define DEFAULT_MAX_THREADS 64
 
+// Remove dependence on NPY_MAXARGS, which would be a runtime constant instead of compiletime
+// constant. If numpy raises NPY_MAXARGS, we should notice and raise this as well
+#define NE_MAXARGS 64
+
 #if defined(_WIN32)
   #include "win32/pthread.h"
   #include <process.h>
