@@ -2,6 +2,12 @@
 Release notes for NumExpr 2.8 series
 ====================================
 
+Changes from 2.8.8 to 2.8.9
+---------------------------
+
+`* **Under development.**`
+
+
 Changes from 2.8.7 to 2.8.8
 ---------------------------
 

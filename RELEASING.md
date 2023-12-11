@@ -81,8 +81,6 @@ Post-release actions
 
   `* **Under development.**`
 
-  Don't forget to update the header to the next version as well.
-
 * Commit your changes:
 
   `git commit -a -m "Post X.Y.Z release actions done"`
