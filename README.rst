@@ -3,8 +3,8 @@ NumExpr: Fast numerical expression evaluator for NumPy
 ======================================================
 
 :Author: David M. Cooke, Francesc Alted, and others.
-:Maintainer: Robert A. McLeod
-:Contact: robbmcleod@gmail.com
+:Maintainer: Francesc Alted
+:Contact: faltet@gmail.com
 :URL: https://github.com/pydata/numexpr
 :Documentation: http://numexpr.readthedocs.io/en/latest/
 :Travis CI: |travis|
@@ -24,20 +24,6 @@ NumExpr: Fast numerical expression evaluator for NumPy
 .. |version| image:: https://img.shields.io/pypi/v/numexpr.png
         :target: https://pypi.python.org/pypi/numexpr
 
-IMPORTANT NOTE: NumExpr is looking for maintainers!
----------------------------------------------------
-
-After 5 years as a solo maintainer (and performing a most excellent work), Robert McLeod
-is asking for a well deserved break. So the NumExpr project is looking for a new
-maintainer for a package that is used in pandas, PyTables and many other packages.
-If you have benefited of NumExpr capabilities in the past, and are willing to contribute
-back to the community, we would be happy to hear about you!
-
-We are looking for someone that is knowledgeable about compiling extensions, and that is
-ready to spend some cycles in making releases (2 or 3 a year, maybe even less!).
-Interested? just open a new ticket here and we will help you onboarding.
-
-Thank you!
 
 What is NumExpr?
 ----------------
@@ -68,19 +54,19 @@ an integrated computing virtual machine. The array operands are split
 into small chunks that easily fit in the cache of the CPU and passed
 to the virtual machine. The virtual machine then applies the
 operations on each chunk. It's worth noting that all temporaries and
-constants in the expression are also chunked. Chunks are distributed among 
-the available cores of the CPU, resulting in highly parallelized code 
+constants in the expression are also chunked. Chunks are distributed among
+the available cores of the CPU, resulting in highly parallelized code
 execution.
 
 The result is that NumExpr can get the most of your machine computing
 capabilities for array-wise computations. Common speed-ups with regard
 to NumPy are usually between 0.95x (for very simple expressions like
-:code:`'a + 1'`) and 4x (for relatively complex ones like :code:`'a*b-4.1*a > 2.5*b'`), 
-although much higher speed-ups can be achieved for some functions  and complex 
+:code:`'a + 1'`) and 4x (for relatively complex ones like :code:`'a*b-4.1*a > 2.5*b'`),
+although much higher speed-ups can be achieved for some functions  and complex
 math operations (up to 15x in some cases).
 
-NumExpr performs best on matrices that are too large to fit in L1 CPU cache. 
-In order to get a better idea on the different speed-ups that can be achieved 
+NumExpr performs best on matrices that are too large to fit in L1 CPU cache.
+In order to get a better idea on the different speed-ups that can be achieved
 on your platform, run the provided benchmarks.
 
 Installation
@@ -89,13 +75,13 @@ Installation
 From wheels
 ^^^^^^^^^^^
 
-NumExpr is available for install via `pip` for a wide range of platforms and 
-Python versions (which may be browsed at: https://pypi.org/project/numexpr/#files). 
+NumExpr is available for install via `pip` for a wide range of platforms and
+Python versions (which may be browsed at: https://pypi.org/project/numexpr/#files).
 Installation can be performed as::
 
     pip install numexpr
 
-If you are using the Anaconda or Miniconda distribution of Python you may prefer 
+If you are using the Anaconda or Miniconda distribution of Python you may prefer
 to use the `conda` package manager in this case::
 
     conda install numexpr
@@ -103,18 +89,18 @@ to use the `conda` package manager in this case::
 From Source
 ^^^^^^^^^^^
 
-On most \*nix systems your compilers will already be present. However if you 
+On most \*nix systems your compilers will already be present. However if you
 are using a virtual environment with a substantially newer version of Python than
 your system Python you may be prompted to install a new version of `gcc` or `clang`.
 
-For Windows, you will need to install the Microsoft Visual C++ Build Tools 
-(which are free) first. The version depends on which version of Python you have 
+For Windows, you will need to install the Microsoft Visual C++ Build Tools
+(which are free) first. The version depends on which version of Python you have
 installed:
 
 https://wiki.python.org/moin/WindowsCompilers
 
-For Python 3.6+ simply installing the latest version of MSVC build tools should 
-be sufficient. Note that wheels found via pip do not include MKL support. Wheels 
+For Python 3.6+ simply installing the latest version of MSVC build tools should
+be sufficient. Note that wheels found via pip do not include MKL support. Wheels
 available via `conda` will have MKL, if the MKL backend is used for NumPy.
 
 See `requirements.txt` for the required version of NumPy.
@@ -132,19 +118,19 @@ Do not test NumExpr in the source directory or you will generate import errors.
 Enable Intel® MKL support
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-NumExpr includes support for Intel's MKL library. This may provide better 
-performance on Intel architectures, mainly when evaluating transcendental 
-functions (trigonometrical, exponential, ...). 
+NumExpr includes support for Intel's MKL library. This may provide better
+performance on Intel architectures, mainly when evaluating transcendental
+functions (trigonometrical, exponential, ...).
 
-If you have Intel's MKL, copy the `site.cfg.example` that comes with the 
-distribution to `site.cfg` and edit the latter file to provide correct paths to 
-the MKL libraries in your system.  After doing this, you can proceed with the 
+If you have Intel's MKL, copy the `site.cfg.example` that comes with the
+distribution to `site.cfg` and edit the latter file to provide correct paths to
+the MKL libraries in your system.  After doing this, you can proceed with the
 usual building instructions listed above.
 
-Pay attention to the messages during the building process in order to know 
-whether MKL has been detected or not.  Finally, you can check the speed-ups on 
-your machine by running the `bench/vml_timing.py` script (you can play with 
-different parameters to the `set_vml_accuracy_mode()` and `set_vml_num_threads()` 
+Pay attention to the messages during the building process in order to know
+whether MKL has been detected or not.  Finally, you can check the speed-ups on
+your machine by running the `bench/vml_timing.py` script (you can play with
+different parameters to the `set_vml_accuracy_mode()` and `set_vml_num_threads()`
 functions in the script so as to see how it would affect performance).
 
 Usage

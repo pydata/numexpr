@@ -5,7 +5,18 @@ Release notes for NumExpr 2.8 series
 Changes from 2.8.7 to 2.8.8
 ---------------------------
 
-* **Under development.**
+* Fix re_evaluate not taking global_dict as argument. Thanks to Teng Liu
+  (@27rabbitlt).
+
+* Fix parsing of simple complex numbers.  Now, `ne.evaluate('1.5j')` works.
+  Thanks to Teng Liu (@27rabbitlt).
+
+* Fixes for upcoming NumPy 2.0:
+
+  * Replace npy_cdouble with C++ complex. Thanks to Teng Liu (@27rabbitlt).
+  * Add NE_MAXARGS for future numpy change NPY_MAXARGS. Now it is set to 64
+    to match NumPy 2.0 value. Thanks to Teng Liu (@27rabbitlt).
+
 
 Changes from 2.8.6 to 2.8.7
 ---------------------------

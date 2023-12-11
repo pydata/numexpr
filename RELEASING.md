@@ -1,9 +1,9 @@
 Releasing NumExpr
 ==================
 
-* Author: Robert A. McLeod
-* Contact: robbmcleod@gmail.com
-* Date: 2020-12-28
+* Author: Robert A. McLeod, Francesc Alted
+* Contact: faltet@gmail.com
+* Date: 2023-12-11
 
 Following are notes for releasing NumExpr.
 
