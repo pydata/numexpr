@@ -14,7 +14,7 @@ import timeit
 import numpy
 import numexpr
 
-array_size = 1000*1000
+array_size = 5_000_000
 iterations = 10
 
 numpy_ttime = []

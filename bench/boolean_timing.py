@@ -13,7 +13,7 @@ import sys
 import timeit
 import numpy
 
-array_size = 1000*1000
+array_size = 5_000_000
 iterations = 10
 
 numpy_ttime = []
@@ -22,6 +22,7 @@ numpy_nttime = []
 numexpr_ttime = []
 numexpr_sttime = []
 numexpr_nttime = []
+
 
 def compare_times(expr, nexpr):
     global numpy_ttime
@@ -64,7 +65,7 @@ def compare_times(expr, nexpr):
     numexpr_stime = round(numexpr_timer.timeit(number=iterations), 4)
     numexpr_sttime.append(numexpr_stime)
     print("numexpr strided:", numexpr_stime/iterations, end=" ")
-    print("Speed-up of numexpr strided over numpy:", \
+    print("Speed-up of numexpr strided over numpy:",
           round(numpy_stime/numexpr_stime, 4))
 
     evalexpr = 'evaluate("%s", optimization="aggressive")' % expr
@@ -72,7 +73,7 @@ def compare_times(expr, nexpr):
     numexpr_ntime = round(numexpr_timer.timeit(number=iterations), 4)
     numexpr_nttime.append(numexpr_ntime)
     print("numexpr unaligned:", numexpr_ntime/iterations, end=" ")
-    print("Speed-up of numexpr unaligned over numpy:", \
+    print("Speed-up of numexpr unaligned over numpy:",
           round(numpy_ntime/numexpr_ntime, 4))
 
 
@@ -113,7 +114,7 @@ expressions.append('(f3+1)**50 > i2')
 expressions.append('sqrt(i2**2 + f3**2) > 1')
 expressions.append('(i2>2) | ((f3**2>3) & ~(i2*f3<2))')
 
-def compare(expression=False):
+def compare(expression=None):
     if expression:
         compare_times(expression, 1)
         sys.exit(0)

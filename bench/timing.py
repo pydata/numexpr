@@ -11,7 +11,7 @@
 from __future__ import print_function
 import timeit, numpy
 
-array_size = 1e6
+array_size = 5e6
 iterations = 2
 
 # Choose the type you want to benchmark
