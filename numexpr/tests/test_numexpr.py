@@ -19,7 +19,7 @@ import subprocess
 
 import numpy as np
 from numpy import (
-    array, arange, empty, zeros, int32, int64, uint16, complex_, float64, rec,
+    array, arange, empty, zeros, int32, int64, uint16, cdouble, float64, rec,
     copy, ones_like, where, all as alltrue, linspace,
     sum, prod, sqrt, fmod, floor, ceil,
     sin, cos, tan, arcsin, arccos, arctan, arctan2,
@@ -443,7 +443,7 @@ class test_evaluate(TestCase):
 
     def test_complex_expr(self):
         def complex(a, b):
-            c = zeros(a.shape, dtype=complex_)
+            c = zeros(a.shape, dtype=cdouble)
             c.real = a
             c.imag = b
             return c
