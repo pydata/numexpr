@@ -1029,7 +1029,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     memset(operands, 0, sizeof(operands));
     memset(dtypes, 0, sizeof(dtypes));
 
-    if (kwds) {
+    if (kwds && PyDict_Size(kwds) > 0) {
         tmp = PyDict_GetItemString(kwds, "casting"); // borrowed ref
         if (tmp != NULL && !PyArray_CastingConverter(tmp, &casting)) {
             return NULL;
