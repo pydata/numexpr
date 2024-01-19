@@ -576,6 +576,14 @@ class test_evaluate(TestCase):
             evaluate('c.real')
             evaluate('c.imag')
 
+            # pass imaginary unit j
+            evaluate('1.5j')
+            evaluate('3.j')
+
+            # pass forbidden characters within quotes
+            x = np.array(['a', 'b'], dtype=bytes)
+            evaluate("x == 'b:'")
+
         
     def test_no_sanitize(self):
         try: # Errors on compile() after eval()
