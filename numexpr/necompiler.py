@@ -278,7 +278,8 @@ def stringToExpression(s, types, context, sanitize: bool=True):
     # We also cannot ban `.\d*j`, where `\d*` is some digits (or none), e.g. 1.5j, 1.j
     if sanitize:
         no_whitespace = re.sub(r'\s+', '', s)
-        if _blacklist_re.search(no_whitespace) is not None:
+        skip_quotes = re.sub(r'(\'[^\']*\')', '', no_whitespace)
+        if _blacklist_re.search(skip_quotes) is not None:
             raise ValueError(f'Expression {s} has forbidden control characters.')
     
     old_ctx = expressions._context.get_current_context()
