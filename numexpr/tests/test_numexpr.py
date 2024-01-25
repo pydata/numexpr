@@ -307,7 +307,8 @@ class test_numexpr(TestCase):
         res = evaluate('where(a, b, c)')
         assert_array_equal(res, c)
 
-    
+    @unittest.skipIf(hasattr(sys, "pypy_version_info"),
+                     "PyPy does not have sys.getrefcount()")
     def test_refcount(self):
         # Regression test for issue #310
         a = array([1])
