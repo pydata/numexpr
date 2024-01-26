@@ -12,6 +12,8 @@ Changes from 2.8.8 to 2.9.0
 
 * Fixed more sanitizer issues (see PR #469).  Thanks to @27rabbitlt.
 
+* Modernized the test suite to avoid some warnings.
+
 
 Changes from 2.8.7 to 2.8.8
 ---------------------------
