@@ -878,10 +878,11 @@ def test_expressions():
                                     expr == '(a+1) ** -1'):
                             continue
 
-                        make_test_method(a, a2, b, c, d, e, x,
-                                         expr, test_scalar, dtype,
-                                         optimization, exact,
-                                         section_name)
+                        m = make_test_method(a, a2, b, c, d, e, x,
+                                             expr, test_scalar, dtype,
+                                             optimization, exact,
+                                             section_name)
+                        yield m
 
 
 class test_int64(TestCase):
