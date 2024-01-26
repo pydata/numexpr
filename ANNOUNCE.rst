@@ -13,20 +13,17 @@ Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.8.7 to 2.8.8
+Changes from 2.8.8 to 2.9.0
 ---------------------------
 
-* Fix re_evaluate not taking global_dict as argument. Thanks to Teng Liu
-  (@27rabbitlt).
+* Support for PyPy (see PRs #467 and #740).  The full test suite
+  should pass now, at least for the 3.10 version.  Thanks to
+  @27rabbitlt for most of the work and @mgorny and @mattip for
+  providing help and additional fixes.  Fixes #463.
 
-* Fix parsing of simple complex numbers.  Now, `ne.evaluate('1.5j')` works.
-  Thanks to Teng Liu (@27rabbitlt).
+* Fixed more sanitizer issues (see PR #469).  Thanks to @27rabbitlt.
 
-* Fixes for upcoming NumPy 2.0:
-
-  * Replace npy_cdouble with C++ complex. Thanks to Teng Liu (@27rabbitlt).
-  * Add NE_MAXARGS for future numpy change NPY_MAXARGS. Now it is set to 64
-    to match NumPy 2.0 value. Thanks to Teng Liu (@27rabbitlt).
+* Modernized the test suite to avoid some warnings.
 
 What's Numexpr?
 ---------------

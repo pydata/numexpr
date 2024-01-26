@@ -2,6 +2,11 @@
 Release notes for NumExpr 2.9 series
 ====================================
 
+Changes from 2.9.0 to 2.9.1
+---------------------------
+
+* **Under development.**
+
 Changes from 2.8.8 to 2.9.0
 ---------------------------
 

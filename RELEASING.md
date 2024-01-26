@@ -74,7 +74,7 @@ Announcing
 Post-release actions
 --------------------
 
-* Add `.dev1` to the version number in `setup.cfg`, and bump the bugfix version 
+* Add `.dev0` to the version number in `setup.cfg`, and bump the bugfix version
   number.
 * Create new headers for adding new features in `RELEASE_NOTES.rst`
   and add this place-holder:
