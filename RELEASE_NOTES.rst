@@ -1,11 +1,16 @@
 ====================================
-Release notes for NumExpr 2.8 series
+Release notes for NumExpr 2.9 series
 ====================================
 
-Changes from 2.8.8 to 2.8.9
+Changes from 2.8.8 to 2.9.0
 ---------------------------
 
-`* **Under development.**`
+* Support for PyPy (see PRs #467 and #740).  The full test suite
+  should pass now, at least for the 3.10 version.  Thanks to
+  @27rabbitlt for most of the work and @mgorny and @mattip for
+  providing help and additional fixes.  Fixes #463.
+
+* Fixed more sanitizer issues (see PR #469).  Thanks to @27rabbitlt.
 
 
 Changes from 2.8.7 to 2.8.8

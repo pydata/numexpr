@@ -1,12 +1,13 @@
 ========================
-Announcing NumExpr 2.8.8
+Announcing NumExpr 2.9.0
 ========================
 
 Hi everyone,
 
-NumExpr 2.8.8 is a release to deal mainly with issues appearing with
-upcoming `NumPy` 2.0.  Also, some small fixes (support for simple complex
-expressions like `ne.evaluate('1.5j')`) and improvements are included.
+NumExpr 2.9.0 is a release offering support for latest versions of PyPy.
+The full test suite should pass now, at least for the Python 3.10 version.
+Thanks to @27rabbitlt for most of the work and @mgorny and @mattip for
+providing help and additional fixes.
 
 Project documentation is available at:
 

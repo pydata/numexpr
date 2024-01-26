@@ -11,7 +11,7 @@ Preliminaries
 -------------
 
 * Make sure that `RELEASE_NOTES.rst` and `ANNOUNCE.rst` are up-to-date with the latest news in the release.
-* Ensure that there is no branch in the version in `setup.cfg`.
+* Ensure that the new version number in `setup.cfg` is correct.
 * Do a commit and a push:
 
     `git commit -a -m "Getting ready for release X.Y.Z"`
