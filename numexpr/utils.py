@@ -152,7 +152,8 @@ def _init_num_threads():
     # actual number of threads used.
     if 'NUMEXPR_NUM_THREADS' in os.environ:
         requested_threads = int(os.environ['NUMEXPR_NUM_THREADS'])
-    elif 'OMP_NUM_THREADS' in os.environ:
+    elif 'OMP_NUM_THREADS' in os.environ and os.environ['OMP_NUM_THREADS'] != '':
+        # Empty string is commonly used to unset the variable
         requested_threads = int(os.environ['OMP_NUM_THREADS'])
     else:
         requested_threads = n_cores

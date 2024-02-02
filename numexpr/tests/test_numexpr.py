@@ -18,6 +18,7 @@ from contextlib import contextmanager
 import subprocess
 
 import numpy as np
+from numexpr.utils import detect_number_of_cores
 from numpy import (
     array, arange, empty, zeros, int32, int64, uint16, cdouble, float64, rec,
     copy, ones_like, where, all as alltrue, linspace,
@@ -1157,6 +1158,13 @@ class test_threading_config(TestCase):
                 self.assertEqual(1, numexpr._init_num_threads())
             else:
                 self.assertEqual(5, numexpr._init_num_threads())
+
+    def test_omp_num_threads_empty_string(self):
+        with _environment('OMP_NUM_THREADS', ''):
+            if 'sparc' in platform.machine():
+                self.assertEqual(1, numexpr._init_num_threads())
+            else:
+                self.assertEqual(detect_number_of_cores(), numexpr._init_num_threads())
 
     def test_vml_threads_round_trip(self):
         n_threads = 3
