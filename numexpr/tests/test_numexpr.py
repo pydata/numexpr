@@ -18,7 +18,6 @@ from contextlib import contextmanager
 import subprocess
 
 import numpy as np
-from numexpr.utils import detect_number_of_cores
 from numpy import (
     array, arange, empty, zeros, int32, int64, uint16, cdouble, float64, rec,
     copy, ones_like, where, all as alltrue, linspace,
@@ -34,6 +33,7 @@ from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 import numexpr
 from numexpr import E, NumExpr, evaluate, re_evaluate, validate, disassemble, use_vml
 from numexpr.expressions import ConstantNode
+from numexpr.utils import detect_number_of_cores
 
 import unittest
 
