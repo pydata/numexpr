@@ -1166,6 +1166,13 @@ class test_threading_config(TestCase):
             else:
                 self.assertEqual(detect_number_of_cores(), numexpr._init_num_threads())
 
+    def test_numexpr_max_threads_empty_string(self):
+        with _environment('NUMEXPR_MAX_THREADS', ''):
+            if 'sparc' in platform.machine():
+                self.assertEqual(1, numexpr._init_num_threads())
+            else:
+                self.assertEqual(detect_number_of_cores(), numexpr._init_num_threads())
+
     def test_vml_threads_round_trip(self):
         n_threads = 3
         if use_vml:

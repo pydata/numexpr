@@ -134,7 +134,7 @@ def _init_num_threads():
 
     env_configured = False
     n_cores = detect_number_of_cores()
-    if 'NUMEXPR_MAX_THREADS' in os.environ:
+    if 'NUMEXPR_MAX_THREADS' in os.environ and os.environ['NUMEXPR_NUM_THREADS'] != '':
         # The user has configured NumExpr in the expected way, so suppress logs.
         env_configured = True
         n_cores = MAX_THREADS
@@ -150,7 +150,7 @@ def _init_num_threads():
 
     # Now we check for 'NUMEXPR_NUM_THREADS' or 'OMP_NUM_THREADS' to set the 
     # actual number of threads used.
-    if 'NUMEXPR_NUM_THREADS' in os.environ:
+    if 'NUMEXPR_NUM_THREADS' in os.environ and os.environ['NUMEXPR_NUM_THREADS'] != '':
         requested_threads = int(os.environ['NUMEXPR_NUM_THREADS'])
     elif 'OMP_NUM_THREADS' in os.environ and os.environ['OMP_NUM_THREADS'] != '':
         # Empty string is commonly used to unset the variable
