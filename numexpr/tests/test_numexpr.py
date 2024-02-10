@@ -33,6 +33,7 @@ from numpy import shape, allclose, array_equal, ravel, isnan, isinf
 import numexpr
 from numexpr import E, NumExpr, evaluate, re_evaluate, validate, disassemble, use_vml
 from numexpr.expressions import ConstantNode
+from numexpr.utils import detect_number_of_cores
 
 import unittest
 
@@ -1157,6 +1158,20 @@ class test_threading_config(TestCase):
                 self.assertEqual(1, numexpr._init_num_threads())
             else:
                 self.assertEqual(5, numexpr._init_num_threads())
+
+    def test_omp_num_threads_empty_string(self):
+        with _environment('OMP_NUM_THREADS', ''):
+            if 'sparc' in platform.machine():
+                self.assertEqual(1, numexpr._init_num_threads())
+            else:
+                self.assertEqual(detect_number_of_cores(), numexpr._init_num_threads())
+
+    def test_numexpr_max_threads_empty_string(self):
+        with _environment('NUMEXPR_MAX_THREADS', ''):
+            if 'sparc' in platform.machine():
+                self.assertEqual(1, numexpr._init_num_threads())
+            else:
+                self.assertEqual(detect_number_of_cores(), numexpr._init_num_threads())
 
     def test_vml_threads_round_trip(self):
         n_threads = 3
