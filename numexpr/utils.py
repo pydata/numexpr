@@ -134,7 +134,7 @@ def _init_num_threads():
 
     env_configured = False
     n_cores = detect_number_of_cores()
-    if 'NUMEXPR_MAX_THREADS' in os.environ and os.environ['NUMEXPR_NUM_THREADS'] != '':
+    if 'NUMEXPR_MAX_THREADS' in os.environ and os.environ['NUMEXPR_MAX_THREADS'] != '':
         # The user has configured NumExpr in the expected way, so suppress logs.
         env_configured = True
         n_cores = MAX_THREADS
