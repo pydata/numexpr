@@ -13,7 +13,6 @@ log = logging.getLogger(__name__)
 
 import os
 import subprocess
-import platform
 
 from numexpr.interpreter import _set_num_threads, _get_num_threads, MAX_THREADS
 from numexpr import use_vml
@@ -134,7 +133,8 @@ def _init_num_threads():
 
     env_configured = False
     n_cores = detect_number_of_cores()
-    if 'NUMEXPR_MAX_THREADS' in os.environ and os.environ['NUMEXPR_MAX_THREADS'] != '':
+    if ('NUMEXPR_MAX_THREADS' in os.environ and os.environ['NUMEXPR_MAX_THREADS'] != '' or
+        'OMP_NUM_THREADS' in os.environ and os.environ['OMP_NUM_THREADS'] != ''):
         # The user has configured NumExpr in the expected way, so suppress logs.
         env_configured = True
         n_cores = MAX_THREADS

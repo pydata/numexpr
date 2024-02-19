@@ -148,7 +148,7 @@ Usage
   array([  1.00000000e+00,   2.00000000e+00,   3.00000000e+00, ...,
            9.99998000e+05,   9.99999000e+05,   1.00000000e+06])
 
-  >>> ne.evaluate('a*b-4.1*a > 2.5*b')   # a more complex one
+  >>> ne.evaluate("a * b - 4.1 * a > 2.5 * b")   # a more complex one
   array([False, False, False, ...,  True,  True,  True], dtype=bool)
 
   >>> ne.evaluate("sin(a) + arcsinh(a/b)")   # you can also use functions
