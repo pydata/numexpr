@@ -25,7 +25,7 @@
 #define fmin min
 #define NE_INFINITY (DBL_MAX+DBL_MAX)
 #define NE_NAN (INFINITY-INFINITY)
-#else 
+#else
 #define NE_INFINITY INFINITY
 #define NE_NAN NAN
 #endif
@@ -1203,7 +1203,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 Py_INCREF(dtypes[0]);
             } else {  // constant, like in '"foo"'
                 dtypes[0] = PyArray_DescrNewFromType(NPY_STRING);
-                dtypes[0]->elsize = (int)self->memsizes[1];
+                PyDataType_SET_ELSIZE(dtypes[0],  (int)self->memsizes[1]);
             }  // no string temporaries, so no third case
         }
         if (dtypes[0] == NULL) {
@@ -1254,7 +1254,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     PyArrayObject *singleton;
     bool writeback;
     // NOTE: cannot assign on declaration due to `goto` statements
-    singleton = NULL; 
+    singleton = NULL;
     writeback = false;
     if (n_inputs == 0) {
         char retsig = get_return_sig(self->program);
@@ -1313,10 +1313,10 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     /* Allocate the iterator or nested iterators */
     if (reduction_size < 0 || full_reduction) {
         /* When there's no reduction, reduction_size is 1 as well */
-        // RAM: in issue #277 this was also the case for reductions on arrays 
-        // with axis=0 having singleton dimension, i.e. such ops were interpreted 
-        // as full_reductions when they weren't in Numpy. As such, the default 
-        // reduction_size is now -1 and we add the flag for full_reduction, 
+        // RAM: in issue #277 this was also the case for reductions on arrays
+        // with axis=0 having singleton dimension, i.e. such ops were interpreted
+        // as full_reductions when they weren't in Numpy. As such, the default
+        // reduction_size is now -1 and we add the flag for full_reduction,
         // e.g. ne.evaluate("sum(a)")"
         iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                             NPY_ITER_BUFFERED|
@@ -1449,7 +1449,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     /* Get the sizes of all the operands */
     dtypes_tmp = NpyIter_GetDescrArray(iter);
     for (i = 0; i < n_inputs+1; ++i) {
-        self->memsizes[i] = dtypes_tmp[i]->elsize;
+        self->memsizes[i] = PyDataType_ELSIZE(dtypes_tmp[i]);
     }
 
     /* For small calculations, just use 1 thread */
