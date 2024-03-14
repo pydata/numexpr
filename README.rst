@@ -21,7 +21,7 @@ NumExpr: Fast numerical expression evaluator for NumPy
         :target: http://numexpr.readthedocs.io/en/latest
 .. |doi| image:: https://zenodo.org/badge/doi/10.5281/zenodo.2483274.svg
         :target:  https://doi.org/10.5281/zenodo.2483274
-.. |version| image:: https://img.shields.io/pypi/v/numexpr.png
+.. |version| image:: https://img.shields.io/pypi/v/numexpr
         :target: https://pypi.python.org/pypi/numexpr
 
 
