@@ -7,7 +7,6 @@ NumExpr: Fast numerical expression evaluator for NumPy
 :Contact: faltet@gmail.com
 :URL: https://github.com/pydata/numexpr
 :Documentation: http://numexpr.readthedocs.io/en/latest/
-:Travis CI: |travis|
 :GitHub Actions: |actions|
 :PyPi: |version|
 :DOI: |doi|
