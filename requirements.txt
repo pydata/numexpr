@@ -1,1 +1,1 @@
-numpy >= 1.13.3
+numpy >= 1.19.3 # keep in sync with NPY_TARGET_VERSION (setup.py)

@@ -1203,7 +1203,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
                 Py_INCREF(dtypes[0]);
             } else {  // constant, like in '"foo"'
                 dtypes[0] = PyArray_DescrNewFromType(NPY_STRING);
-                dtypes[0]->elsize = (int)self->memsizes[1];
+                PyDataType_SET_ELSIZE(dtypes[0], (npy_intp)self->memsizes[1]);
             }  // no string temporaries, so no third case
         }
         if (dtypes[0] == NULL) {
@@ -1449,7 +1449,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     /* Get the sizes of all the operands */
     dtypes_tmp = NpyIter_GetDescrArray(iter);
     for (i = 0; i < n_inputs+1; ++i) {
-        self->memsizes[i] = dtypes_tmp[i]->elsize;
+        self->memsizes[i] = PyDataType_ELSIZE(dtypes_tmp[i]);
     }
 
     /* For small calculations, just use 1 thread */

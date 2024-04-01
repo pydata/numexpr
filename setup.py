@@ -33,7 +33,10 @@ lib_dirs = []
 inc_dirs = [np.get_include()]
 libs = []  # Pre-built libraries ONLY, like python36.so
 clibs = []
-def_macros = []
+def_macros = [
+    # keep in sync with minimal runtime requirement (requirements.txt) 
+    ('NPY_TARGET_VERSION', 'NPY_1_19_API_VERSION')
+]
 sources = ['numexpr/interpreter.cpp',
            'numexpr/module.cpp',
            'numexpr/numexpr_object.cpp']
