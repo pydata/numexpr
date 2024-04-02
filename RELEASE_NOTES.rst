@@ -1,11 +1,19 @@
-====================================
-Release notes for NumExpr 2.9 series
-====================================
+=====================================
+Release notes for NumExpr 2.10 series
+=====================================
 
-Changes from 2.9.0 to 2.9.1
----------------------------
+Changes from 2.9.0 to 2.10.0
+----------------------------
 
-* **Under development.**
+* Support for NumPy 2.0.0.  This is still experimental, so please
+  report any issues you find.  Thanks to Clément Robert and Thomas
+  Caswell for the work.
+
+* Avoid erroring when OMP_NUM_THREADS is empty string.  Thanks to
+  Patrick Hoefler.
+
+* Do not warn if OMP_NUM_THREAD set.
+
 
 Changes from 2.8.8 to 2.9.0
 ---------------------------
