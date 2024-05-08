@@ -47,6 +47,12 @@
 #define AVAILABLE(Haystack, Haystack_Len, J, Needle_Len)   \
   ((Haystack_Len) >= (J) + (Needle_Len))
 
+// To allow building with NumPy<2 locally define the new NumPy macros:
+#if NPY_ABI_VERSION < 0x02000000
+  #define PyDataType_ELSIZE(descr) ((descr)->elsize)
+  #define PyDataType_SET_ELSIZE(descr, size) (descr)->elsize = size
+#endif
+
 #include "str-two-way.hpp"
 
 #ifdef DEBUG
