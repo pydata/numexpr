@@ -143,10 +143,10 @@ def _init_num_threads():
         # configured NumExpr as desired, so we emit info logs.
         if n_cores > MAX_THREADS:
             log.info('Note: detected %d virtual cores but NumExpr set to maximum of %d, check "NUMEXPR_MAX_THREADS" environment variable.'%(n_cores, MAX_THREADS))
-        if n_cores > 8:
-            # The historical 'safety' limit.
-            log.info('Note: NumExpr detected %d cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.'%n_cores)
-            n_cores = 8
+        if n_cores > 16:
+            # Back in 2019, 8 threads would be considered safe for performance. We are in 2024 now, so adjusting.
+            log.info('Note: NumExpr detected %d cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.'%n_cores)
+            n_cores = 16
 
     # Now we check for 'NUMEXPR_NUM_THREADS' or 'OMP_NUM_THREADS' to set the 
     # actual number of threads used.
