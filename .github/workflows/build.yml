@@ -28,8 +28,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x86_64, aarch64]
-        cibw_build: ["cp3{9,10,11,12}-*"]
-        p_ver: ["3.9-3.12"]
+        cibw_build: ["cp3{9,10,11,12,13}-*"]
+        p_ver: ["3.9-3.13"]
         exclude:
           - os: windows-latest
             arch: aarch64
