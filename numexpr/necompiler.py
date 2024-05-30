@@ -767,7 +767,7 @@ def getArguments(names, local_dict=None, global_dict=None, _frame_depth: int=2):
         # If we generated local_dict via an explicit reference to f_locals,
         # clear the dict to prevent creating extra ref counts in the caller's scope
         # See https://github.com/pydata/numexpr/issues/310
-        if clear_local_dict:
+        if clear_local_dict and hasattr(local_dict, 'clear'):
             local_dict.clear()
 
     return arguments
