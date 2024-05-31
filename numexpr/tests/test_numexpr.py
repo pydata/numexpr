@@ -1316,28 +1316,28 @@ def suite():
         add_method(func)
 
     for n in range(niter):
-        theSuite.addTest(unittest.makeSuite(test_numexpr))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_numexpr))
         if 'sparc' not in platform.machine():
-            theSuite.addTest(unittest.makeSuite(test_numexpr2))
-        theSuite.addTest(unittest.makeSuite(test_evaluate))
-        theSuite.addTest(unittest.makeSuite(TestExpressions))
-        theSuite.addTest(unittest.makeSuite(test_int32_int64))
-        theSuite.addTest(unittest.makeSuite(test_uint32_int64))
-        theSuite.addTest(unittest.makeSuite(test_strings))
+            theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_numexpr2))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_evaluate))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestExpressions))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_int32_int64))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_uint32_int64))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_strings))
         theSuite.addTest(
-            unittest.makeSuite(test_irregular_stride))
-        theSuite.addTest(unittest.makeSuite(test_zerodim))
-        theSuite.addTest(unittest.makeSuite(test_threading_config))
+            unittest.defaultTestLoader.loadTestsFromTestCase(test_irregular_stride))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_zerodim))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_threading_config))
 
         # multiprocessing module is not supported on Hurd/kFreeBSD
         if (pl.system().lower() not in ('gnu', 'gnu/kfreebsd')):
-            theSuite.addTest(unittest.makeSuite(test_subprocess))
+            theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_subprocess))
 
         # I need to put this test after test_subprocess because
         # if not, the test suite locks immediately before test_subproces.
         # This only happens with Windows, so I suspect of a subtle bad
         # interaction with threads and subprocess :-/
-        theSuite.addTest(unittest.makeSuite(test_threading))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_threading))
 
     return theSuite
 
