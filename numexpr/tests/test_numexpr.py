@@ -41,7 +41,7 @@ TestCase = unittest.TestCase
 
 double = np.double
 long = int
-MAX_THREADS = 8
+MAX_THREADS = 16
 
 
 class test_numexpr(TestCase):

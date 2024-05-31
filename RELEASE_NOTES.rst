@@ -5,7 +5,10 @@ Release notes for NumExpr 2.10 series
 Changes from 2.10.0 to 2.10.1
 -----------------------------
 
-* **Under development.**
+- The default number of 'safe' threads has been upgraded to 16 (instead of
+  previous 8). That means that if your CPU has > 16 cores, the default is
+  to use 16. You can always override this with the "NUMEXPR_MAX_THREADS"
+  environment variable.
 
 Changes from 2.9.0 to 2.10.0
 ----------------------------
