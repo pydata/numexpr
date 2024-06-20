@@ -12,6 +12,7 @@ include = ["numexpr"]
 [project]
 name = "numexpr"
 description = "Fast numerical expression evaluator for NumPy"
+readme = "README.rst"
 authors = [{name = "David M. Cooke, Francesc Alted, and others", email = "blosc@blosc.org"}]
 maintainers = [{ name = "Blosc Development Team", email = "blosc@blosc.org"}]
 classifiers = [
