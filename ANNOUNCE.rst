@@ -1,12 +1,13 @@
 =========================
-Announcing NumExpr 2.10.0
+Announcing NumExpr 2.10.1
 =========================
 
 Hi everyone,
 
-NumExpr 2.10.0 is a release offering support for latest versions of NumPy 2.0.
-This is still experimental, so please report any issues you find.  Thanks to
-Clément Robert and Thomas Caswell for the work.
+NumExpr 2.10.1 continues to establize the support for NumPy 2.0.0.
+Also, the default number of 'safe' threads has been upgraded to 16
+(instead of previous 8). Finally, preliminary support for Python 3.13;
+thanks to Karolina Surma.
 
 Project documentation is available at:
 

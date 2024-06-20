@@ -10,6 +10,16 @@ Changes from 2.10.0 to 2.10.1
   to use 16. You can always override this with the "NUMEXPR_MAX_THREADS"
   environment variable.
 
+- NumPy 1.23 is now the minimum supported.
+
+- Preliminary support for Python 3.13. Thanks to Karolina Surma.
+
+- Fix tests on nthreads detection (closes: #479). Thanks to @avalentino.
+
+- The build process has been modernized and now uses the `pyproject.toml`
+  file for more of the configuration options.
+
+
 Changes from 2.9.0 to 2.10.0
 ----------------------------
 

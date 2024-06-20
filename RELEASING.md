@@ -10,7 +10,8 @@ Following are notes for releasing NumExpr.
 Preliminaries
 -------------
 
-* Make sure that `RELEASE_NOTES.rst` and `ANNOUNCE.rst` are up-to-date with the latest news in the release.
+* Make sure that `RELEASE_NOTES.rst` and `ANNOUNCE.rst` are up-to-date
+  with the latest news in the release.
 * Ensure that the new version number in `VERSION` is correct.
 * Do a commit and a push:
 

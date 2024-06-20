@@ -39,7 +39,7 @@ dynamic = ["version"]
 
 [project.urls]
 homepage = "https://github.com/pydata/numexpr"
-documentation = "https://numexpr.readthedocs.io/en/latest/user_guide.html"
+documentation = "https://numexpr.readthedocs.io"
 repository = "https://github.com/pydata/numexpr"
 
 [tool.cibuildwheel]
