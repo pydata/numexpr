@@ -2,21 +2,26 @@
 Release notes for NumExpr 2.10 series
 =====================================
 
+Changes from 2.10.1 to 2.10.2
+-----------------------------
+
+* **Under development.**
+
 Changes from 2.10.0 to 2.10.1
 -----------------------------
 
-- The default number of 'safe' threads has been upgraded to 16 (instead of
+* The default number of 'safe' threads has been upgraded to 16 (instead of
   previous 8). That means that if your CPU has > 16 cores, the default is
   to use 16. You can always override this with the "NUMEXPR_MAX_THREADS"
   environment variable.
 
-- NumPy 1.23 is now the minimum supported.
+* NumPy 1.23 is now the minimum supported.
 
-- Preliminary support for Python 3.13. Thanks to Karolina Surma.
+* Preliminary support for Python 3.13. Thanks to Karolina Surma.
 
-- Fix tests on nthreads detection (closes: #479). Thanks to @avalentino.
+* Fix tests on nthreads detection (closes: #479). Thanks to @avalentino.
 
-- The build process has been modernized and now uses the `pyproject.toml`
+* The build process has been modernized and now uses the `pyproject.toml`
   file for more of the configuration options.
 
 
