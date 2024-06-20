@@ -2,6 +2,48 @@
 requires = [
     "setuptools",
     "wheel",
-    "numpy>=2.0.0rc1",
+    "numpy>=2.0.0",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["numexpr"]
+
+[project]
+name = "numexpr"
+description = "Fast numerical expression evaluator for NumPy"
+authors = [{name = "David M. Cooke, Francesc Alted, and others", email = "blosc@blosc.org"}]
+maintainers = [{ name = "Blosc Development Team", email = "blosc@blosc.org"}]
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.9"
+# Follow guidelines from https://scientific-python.org/specs/spec-0000/
+dependencies = [
+    "numpy>=1.23.0",
+]
+dynamic = ["version"]
+
+[project.urls]
+homepage = "https://github.com/pydata/numexpr"
+documentation = "https://numexpr.readthedocs.io/en/latest/user_guide.html"
+repository = "https://github.com/pydata/numexpr"
+
+[tool.cibuildwheel]
+skip = "cp36-* cp37-* pp37-* cp38-* pp* *-manylinux_i686 *_ppc64le *_s390x"
+# Let's use a more recent version of the manylinux image for more modern compilers
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"

@@ -1,4 +1,4 @@
-include MANIFEST.in
+include MANIFEST.in VERSION
 
 include *.rst *.txt *.cfg site.cfg.example
 

@@ -3,7 +3,7 @@ Releasing NumExpr
 
 * Author: Robert A. McLeod, Francesc Alted
 * Contact: faltet@gmail.com
-* Date: 2023-12-11
+* Date: 2024-06-20
 
 Following are notes for releasing NumExpr.
 
@@ -11,7 +11,7 @@ Preliminaries
 -------------
 
 * Make sure that `RELEASE_NOTES.rst` and `ANNOUNCE.rst` are up-to-date with the latest news in the release.
-* Ensure that the new version number in `setup.cfg` is correct.
+* Ensure that the new version number in `VERSION` is correct.
 * Do a commit and a push:
 
     `git commit -a -m "Getting ready for release X.Y.Z"`
@@ -74,7 +74,7 @@ Announcing
 Post-release actions
 --------------------
 
-* Add `.dev0` to the version number in `setup.cfg`, and bump the bugfix version
+* Add `.dev0` to the version number in `VERSION`, and bump the bugfix version
   number.
 * Create new headers for adding new features in `RELEASE_NOTES.rst`
   and add this place-holder:

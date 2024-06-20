@@ -28,8 +28,6 @@ is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEAS
 # cpuinfo imports were moved into the test submodule function that calls them 
 # to improve import times.
 
-import os, os.path
-import platform
 from numexpr.expressions import E
 from numexpr.necompiler import (NumExpr, disassemble, evaluate, re_evaluate, 
     validate)
