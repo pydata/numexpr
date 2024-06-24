@@ -1129,7 +1129,7 @@ class test_threading_config(TestCase):
                 "if 'NUMEXPR_MAX_THREADS' in os.environ: os.environ.pop('NUMEXPR_MAX_THREADS')",
                 "if 'OMP_NUM_THREADS' in os.environ: os.environ.pop('OMP_NUM_THREADS')",
                 "import numexpr",
-                "assert(numexpr.nthreads <= 8)",
+                f"assert(numexpr.nthreads <= {MAX_THREADS})",
                 "exit(0)"])
         subprocess.check_call([sys.executable, '-c', script])
 
