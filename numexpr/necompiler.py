@@ -19,7 +19,7 @@ import numpy
 
 is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
 from numexpr import interpreter, expressions, use_vml
-from numexpr.utils import CacheDict
+from numexpr.utils import CacheDict, ContextDict
 
 # Declare a double type that does not exist in Python space
 double = numpy.double
@@ -776,7 +776,7 @@ def getArguments(names, local_dict=None, global_dict=None, _frame_depth: int=2):
 # Dictionaries for caching variable names and compiled expressions
 _names_cache = CacheDict(256)
 _numexpr_cache = CacheDict(256)
-_numexpr_last = {}
+_numexpr_last = ContextDict()
 evaluate_lock = threading.Lock()
 
 # MAYBE: decorate this function to add attributes instead of having the 
@@ -887,7 +887,7 @@ def validate(ex: str,
             compiled_ex = _numexpr_cache[numexpr_key] = NumExpr(ex, signature, sanitize=sanitize, **context)
         kwargs = {'out': out, 'order': order, 'casting': casting,
                 'ex_uses_vml': ex_uses_vml}
-        _numexpr_last = dict(ex=compiled_ex, argnames=names, kwargs=kwargs)
+        _numexpr_last.set(ex=compiled_ex, argnames=names, kwargs=kwargs)
     except Exception as e:
         return e
     return None
