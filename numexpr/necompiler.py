@@ -779,8 +779,6 @@ _numexpr_cache = CacheDict(256)
 _numexpr_last = ContextDict()
 evaluate_lock = threading.Lock()
 
-# MAYBE: decorate this function to add attributes instead of having the 
-# _numexpr_last dictionary?
 def validate(ex: str, 
              local_dict: Optional[Dict] = None, 
              global_dict: Optional[Dict] = None,
