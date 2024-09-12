@@ -236,7 +236,7 @@ class ContextDict:
         self._context_data = contextvars.ContextVar('context_data', default={})
 
     def set(self, key=None, value=None, **kwargs):
-        data = self._context_data.get()
+        data = self._context_data.get().copy()
 
         if key is not None:
             data[key] = value
@@ -251,7 +251,7 @@ class ContextDict:
         return data.get(key, default)
 
     def delete(self, key):
-        data = self._context_data.get()
+        data = self._context_data.get().copy()
         if key in data:
             del data[key]
         self._context_data.set(data)
@@ -263,7 +263,7 @@ class ContextDict:
         return self._context_data.get()
 
     def update(self, *args, **kwargs):
-        data = self._context_data.get()
+        data = self._context_data.get().copy()
 
         if args:
             if len(args) > 1:
