@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 
 import os
 import subprocess
+import contextvars
 
 from numexpr.interpreter import _set_num_threads, _get_num_threads, MAX_THREADS
 from numexpr import use_vml
@@ -226,3 +227,83 @@ class CacheDict(dict):
                 super(CacheDict, self).__delitem__(k)
         super(CacheDict, self).__setitem__(key, value)
 
+
+class ContextDict:
+    """
+    A context aware version dictionary
+    """
+    def __init__(self):
+        self._context_data = contextvars.ContextVar('context_data', default={})
+
+    def set(self, key=None, value=None, **kwargs):
+        data = self._context_data.get().copy()
+
+        if key is not None:
+            data[key] = value
+
+        for k, v in kwargs.items():
+            data[k] = v
+
+        self._context_data.set(data)
+
+    def get(self, key, default=None):
+        data = self._context_data.get()
+        return data.get(key, default)
+
+    def delete(self, key):
+        data = self._context_data.get().copy()
+        if key in data:
+            del data[key]
+        self._context_data.set(data)
+
+    def clear(self):
+        self._context_data.set({})
+
+    def all(self):
+        return self._context_data.get()
+
+    def update(self, *args, **kwargs):
+        data = self._context_data.get().copy()
+
+        if args:
+            if len(args) > 1:
+                raise TypeError(f"update() takes at most 1 positional argument ({len(args)} given)")
+            other = args[0]
+            if isinstance(other, dict):
+                data.update(other)
+            else:
+                for k, v in other:
+                    data[k] = v
+
+        data.update(kwargs)
+        self._context_data.set(data)
+
+    def keys(self):
+        return self._context_data.get().keys()
+
+    def values(self):
+        return self._context_data.get().values()
+
+    def items(self):
+        return self._context_data.get().items()
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __setitem__(self, key, value):
+        self.set(key, value)
+
+    def __delitem__(self, key):
+        self.delete(key)
+
+    def __contains__(self, key):
+        return key in self._context_data.get()
+
+    def __len__(self):
+        return len(self._context_data.get())
+
+    def __iter__(self):
+        return iter(self._context_data.get())
+
+    def __repr__(self):
+        return repr(self._context_data.get())
