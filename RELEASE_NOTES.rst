@@ -2,6 +2,12 @@
 Release notes for NumExpr 2.10 series
 =====================================
 
+Changes from 2.10.2 to 2.10.3
+-----------------------------
+
+* **Under development.**
+
+
 Changes from 2.10.1 to 2.10.2
 -----------------------------
 
