@@ -5,7 +5,14 @@ Release notes for NumExpr 2.10 series
 Changes from 2.10.1 to 2.10.2
 -----------------------------
 
-* **Under development.**
+* Better support for CPUs that do not have a power of 2 number of
+  cores.  See #479 and #490.  Thanks to @avalentino.
+
+* Allow numexpr to run with the multithreading package in Python.
+  See PR #496.  Thanks to @emmaai
+
+* Wheels for Python 3.13 are now provided.
+
 
 Changes from 2.10.0 to 2.10.1
 -----------------------------
