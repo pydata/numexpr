@@ -583,6 +583,9 @@ class test_evaluate(TestCase):
             evaluate('1.5j')
             evaluate('3.j')
 
+            #pass imaginary with scientific notation
+            evaluate('1.2e3+4.5e6j')
+
             # pass forbidden characters within quotes
             x = np.array(['a', 'b'], dtype=bytes)
             evaluate("x == 'b:'")

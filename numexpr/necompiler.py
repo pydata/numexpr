@@ -265,7 +265,7 @@ class Immediate(Register):
 
 _flow_pat = r'[\;\[\:]'
 _dunder_pat = r'(^|[^\w])__[\w]+__($|[^\w])'
-_attr_pat = r'\.\b(?!(real|imag|(\d*[eE]?[+-]?\d+)|\d*j)\b)'
+_attr_pat = r'\.\b(?!(real|imag|(\d*[eE]?[+-]?\d+)|(\d*[eE]?[+-]?\d+j)|(\d*j))\b)'
 _blacklist_re = re.compile(f'{_flow_pat}|{_dunder_pat}|{_attr_pat}')
 
 def stringToExpression(s, types, context, sanitize: bool=True):
