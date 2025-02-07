@@ -884,7 +884,7 @@ def validate(ex: str,
         except KeyError:
             compiled_ex = _numexpr_cache[numexpr_key] = NumExpr(ex, signature, sanitize=sanitize, **context)
         kwargs = {'out': out, 'order': order, 'casting': casting,
-                'ex_uses_vml': ex_uses_vml}
+                  'ex_uses_vml': ex_uses_vml}
         _numexpr_last.set(ex=compiled_ex, argnames=names, kwargs=kwargs)
     except Exception as e:
         return e
@@ -943,9 +943,9 @@ def evaluate(ex: str,
           * 'unsafe' means any data conversions may be done.
 
     sanitize: bool
-        Both `validate` and by extension `evaluate` call `eval(ex)`, which is 
-        potentially dangerous on unsanitized inputs. As such, NumExpr by default 
-        performs simple sanitization, banning the character ':;[', the 
+        `validate` (and by extension `evaluate`) call `eval(ex)`, which is
+        potentially dangerous on non-sanitized inputs. As such, NumExpr by default
+        performs simple sanitization, banning the characters ':;[', the
         dunder '__[\w+]__', and attribute access to all but '.real' and '.imag'.
 
         Using `None` defaults to `True` unless the environment variable 
@@ -956,15 +956,9 @@ def evaluate(ex: str,
         The calling frame depth. Unless you are a NumExpr developer you should 
         not set this value.
 
-    Note
-    ----
-    Both `validate` and by extension `evaluate` call `eval(ex)`, which is 
-    potentially dangerous on unsanitized inputs. As such, NumExpr does some 
-    sanitization, banning the character ':;[', the dunder '__', and attribute
-    access to all but '.r' for real and '.i' for imag access to complex numbers.
     """
     # We could avoid code duplication if we called validate and then re_evaluate 
-    # here, but they we have difficulties with the `sys.getframe(2)` call in
+    # here, but we have difficulties with the `sys.getframe(2)` call in
     # `getArguments`
     e = validate(ex, local_dict=local_dict, global_dict=global_dict, 
                  out=out, order=order, casting=casting, 
