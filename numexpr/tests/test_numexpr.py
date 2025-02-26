@@ -16,7 +16,6 @@ import platform
 import warnings
 from contextlib import contextmanager
 import subprocess
-import pytest
 
 import numpy as np
 from numpy import (
@@ -37,12 +36,28 @@ from numexpr.expressions import ConstantNode
 from numexpr.utils import detect_number_of_cores
 
 import unittest
+from unittest.mock import MagicMock
+
+try:
+    import pytest
+    pytest_available = True
+except ImportError:
+    pytest_available = False
 
 TestCase = unittest.TestCase
 
 double = np.double
 long = int
 MAX_THREADS = 16
+
+
+if not pytest_available:
+    def identity(f):
+        return f
+
+    pytest = MagicMock()
+    pytest.mark = MagicMock()
+    pytest.mark.thread_unsafe = identity
 
 
 class test_numexpr(TestCase):
