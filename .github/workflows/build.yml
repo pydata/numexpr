@@ -24,12 +24,13 @@ jobs:
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
+      CIBW_FREE_THREADED_SUPPORT: true
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x86_64, aarch64]
-        cibw_build: ["cp3{10,11,12,13}-*"]
-        p_ver: ["3.10-3.13"]
+        cibw_build: ["cp3{10,11,12,13,13t}-*"]
+        p_ver: ["3.10-3.13+3.13t"]
         exclude:
           - os: windows-latest
             arch: aarch64
