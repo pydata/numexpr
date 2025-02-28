@@ -24,7 +24,7 @@ jobs:
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
-      CIBW_FREE_THREADED_SUPPORT: true
+      CIBW_ENABLE: true
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
