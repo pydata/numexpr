@@ -6,9 +6,15 @@ permissions:
   contents: read
 
 env:
-  CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy
+  CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy pytest
+  CIBW_ENVIRONMENT: >
+    IS_FREETHREADED=$(python -c "import sysconfig;print(sysconfig.get_config_var('Py_GIL_DISABLED'))")
+    PYTEST_RUN_PARALLEL=$([ "$IS_FREETHREADED" == "1" ] && echo "pytest-run-parallel" || echo "")
+    PARALLEL_THREADS=$([ "$IS_FREETHREADED" == "1" ] && echo "--parallel-threads=4" || echo "")
+  CIBW_BEFORE_BUILD_LINUX: >
+    pip install setuptools oldest-supported-numpy pytest $PYTEST_RUN_PARALLEL
   CIBW_BUILD_VERBOSITY: 1
-  CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
+  CIBW_TEST_COMMAND: pytest $PARALLEL_THREADS numexpr/tests
   CIBW_TEST_SKIP: "*macosx*arm64*"
   # Building for musllinux and aarch64 takes way too much time.
   # Moreover, NumPy is not providing musllinux for x86_64 either, so it's not worth it.
