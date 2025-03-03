@@ -16,6 +16,7 @@ import platform
 import warnings
 from contextlib import contextmanager
 import subprocess
+import pytest
 
 import numpy as np
 from numpy import (
@@ -318,6 +319,7 @@ class test_numexpr(TestCase):
         evaluate('1')
         assert sys.getrefcount(a) == 2
 
+    @pytest.mark.thread_unsafe
     def test_locals_clears_globals(self):
         # Check for issue #313, whereby clearing f_locals also clear f_globals
         # if in the top-frame. This cannot be done inside `unittest` as it is always
@@ -341,6 +343,7 @@ class test_numexpr(TestCase):
 
 
 
+@pytest.mark.thread_unsafe
 class test_numexpr2(test_numexpr):
     """Testing with 2 threads"""
     nthreads = 2
@@ -512,6 +515,7 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
+    @pytest.mark.thread_unsafe
     def test_sanitize(self):
         with _environment('NUMEXPR_SANITIZE', '1'):
             # Forbid dunder
@@ -590,7 +594,7 @@ class test_evaluate(TestCase):
             x = np.array(['a', 'b'], dtype=bytes)
             evaluate("x == 'b:'")
 
-
+    @pytest.mark.thread_unsafe
     def test_no_sanitize(self):
         try: # Errors on compile() after eval()
             evaluate('import os;', sanitize=False)
@@ -677,6 +681,7 @@ class test_evaluate(TestCase):
     if 'sparc' not in platform.machine():
         # Execution order set here so as to not use too many threads
         # during the rest of the execution.  See #33 for details.
+        @pytest.mark.thread_unsafe
         def test_changing_nthreads_00_inc(self):
             a = linspace(-1, 1, 1000000)
             b = ((.25 * a + .75) * a - 1.5) * a - 2
@@ -685,6 +690,7 @@ class test_evaluate(TestCase):
                 c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
                 assert_array_almost_equal(b, c)
 
+        @pytest.mark.thread_unsafe
         def test_changing_nthreads_01_dec(self):
             a = linspace(-1, 1, 1000000)
             b = ((.25 * a + .75) * a - 1.5) * a - 2
@@ -1123,6 +1129,7 @@ def _environment(key, value):
             del os.environ[key]
 
 # Test cases for the threading configuration
+@pytest.mark.thread_unsafe
 class test_threading_config(TestCase):
     def test_max_threads_unset(self):
         # Has to be done in a subprocess as `importlib.reload` doesn't let us
@@ -1306,6 +1313,7 @@ def _worker(qout=None):
 
 # Case test for subprocesses (via multiprocessing module)
 class test_subprocess(TestCase):
+    @pytest.mark.thread_unsafe
     def test_multiprocess(self):
         try:
             import multiprocessing as mp
