@@ -7,7 +7,7 @@ permissions:
 
 env:
   CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy pytest
-  CIBW_ENVIRONMENT: >
+  CIBW_ENVIRONMENT_LINUX: >
     IS_FREETHREADED=$(python -c "import sysconfig;print(sysconfig.get_config_var('Py_GIL_DISABLED'))")
     PYTEST_RUN_PARALLEL=$([ "$IS_FREETHREADED" == "1" ] && echo "pytest-run-parallel" || echo "")
     PARALLEL_THREADS=$([ "$IS_FREETHREADED" == "1" ] && echo "--parallel-threads=4" || echo "")
@@ -30,7 +30,7 @@ jobs:
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
-      CIBW_ENABLE: true
+      CIBW_ENABLE: cpython-freethreading
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
