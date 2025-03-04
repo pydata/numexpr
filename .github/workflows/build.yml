@@ -7,14 +7,9 @@ permissions:
 
 env:
   CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy pytest
-  CIBW_ENVIRONMENT_LINUX: >
-    IS_FREETHREADED=$(python -c "import sysconfig;print(sysconfig.get_config_var('Py_GIL_DISABLED'))")
-    PYTEST_RUN_PARALLEL=$([ "$IS_FREETHREADED" == "1" ] && echo "pytest-run-parallel" || echo "")
-    PARALLEL_THREADS=$([ "$IS_FREETHREADED" == "1" ] && echo "--parallel-threads=4" || echo "")
-  CIBW_BEFORE_BUILD_LINUX: >
-    pip install setuptools oldest-supported-numpy pytest $PYTEST_RUN_PARALLEL
+  CIBW_BEFORE_TEST: pip install pytest
   CIBW_BUILD_VERBOSITY: 1
-  CIBW_TEST_COMMAND: pytest $PARALLEL_THREADS numexpr/tests
+  CIBW_TEST_COMMAND: pytest numexpr/tests
   CIBW_TEST_SKIP: "*macosx*arm64*"
   # Building for musllinux and aarch64 takes way too much time.
   # Moreover, NumPy is not providing musllinux for x86_64 either, so it's not worth it.
@@ -35,7 +30,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x86_64, aarch64]
-        cibw_build: ["cp3{10,11,12,13,13t}-*"]
+        cibw_build: ["cp3{10,11,12,13}-*", "cp313t-*"]
         p_ver: ["3.10-3.13+3.13t"]
         exclude:
           - os: windows-latest
@@ -59,6 +54,13 @@ jobs:
       - uses: docker/setup-qemu-action@v2
         if: ${{ matrix.arch == 'aarch64' }}
         name: Set up QEMU
+
+      - name: Setup free-threading variables
+        shell: bash -l {0}
+        run: |
+          echo "CIBW_BEFORE_BUILD=pip install setuptools numpy" >> "$GITHUB_ENV"
+          echo "CIBW_BEFORE_TEST=pip install pytest pytest-run-parallel" >> "$GITHUB_ENV"
+          echo "CIBW_TEST_COMMAND=pytest --parallel-threads=4 numexpr/tests" >> "$GITHUB_ENV"
 
       - name: Build wheels
         run: |
