@@ -17,7 +17,7 @@ env:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }} - ${{ matrix.p_ver }}
+    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }} - ${{ matrix.cibw_build }}
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -27,6 +27,7 @@ jobs:
       CIBW_ARCHS_MACOS: "x86_64 arm64"
       CIBW_ENABLE: cpython-freethreading
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x86_64, aarch64]
@@ -56,6 +57,7 @@ jobs:
         name: Set up QEMU
 
       - name: Setup free-threading variables
+        if: ${{ endsWith(matrix.cibw_build, 't-*') }}
         shell: bash -l {0}
         run: |
           echo "CIBW_BEFORE_BUILD=pip install setuptools numpy" >> "$GITHUB_ENV"
