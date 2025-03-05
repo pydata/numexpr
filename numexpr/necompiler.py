@@ -774,9 +774,12 @@ def getArguments(names, local_dict=None, global_dict=None, _frame_depth: int=2):
 
 
 # Dictionaries for caching variable names and compiled expressions
-_names_cache = CacheDict(256)
-_numexpr_cache = CacheDict(256)
-_numexpr_last = ContextDict()
+# _names_cache = CacheDict(256)
+_names_cache = threading.local()
+# _numexpr_cache = CacheDict(256)
+_numexpr_cache = threading.local()
+# _numexpr_last = ContextDict()
+_numexpr_last = threading.local()
 evaluate_lock = threading.Lock()
 
 def validate(ex: str, 
@@ -853,6 +856,14 @@ def validate(ex: str,
     
     """
     global _numexpr_last
+    if not hasattr(_numexpr_last, 'l'):
+        _numexpr_last.l = ContextDict()
+
+    if not hasattr(_names_cache, 'c'):
+        _names_cache.c = CacheDict(256)
+
+    if not hasattr(_numexpr_cache, 'c'):
+        _numexpr_cache.c = CacheDict(256)
 
     try:
         
@@ -868,9 +879,9 @@ def validate(ex: str,
         # Get the names for this expression
         context = getContext(kwargs)
         expr_key = (ex, tuple(sorted(context.items())))
-        if expr_key not in _names_cache:
-            _names_cache[expr_key] = getExprNames(ex, context, sanitize=sanitize)
-        names, ex_uses_vml = _names_cache[expr_key]
+        if expr_key not in _names_cache.c:
+            _names_cache.c[expr_key] = getExprNames(ex, context, sanitize=sanitize)
+        names, ex_uses_vml = _names_cache.c[expr_key]
         arguments = getArguments(names, local_dict, global_dict, _frame_depth=_frame_depth)
 
         # Create a signature
@@ -880,12 +891,12 @@ def validate(ex: str,
         # Look up numexpr if possible.
         numexpr_key = expr_key + (tuple(signature),)
         try:
-            compiled_ex = _numexpr_cache[numexpr_key]
+            compiled_ex = _numexpr_cache.c[numexpr_key]
         except KeyError:
-            compiled_ex = _numexpr_cache[numexpr_key] = NumExpr(ex, signature, sanitize=sanitize, **context)
+            compiled_ex = _numexpr_cache.c[numexpr_key] = NumExpr(ex, signature, sanitize=sanitize, **context)
         kwargs = {'out': out, 'order': order, 'casting': casting,
                   'ex_uses_vml': ex_uses_vml}
-        _numexpr_last.set(ex=compiled_ex, argnames=names, kwargs=kwargs)
+        _numexpr_last.l.set(ex=compiled_ex, argnames=names, kwargs=kwargs)
     except Exception as e:
         return e
     return None
@@ -987,13 +998,15 @@ def re_evaluate(local_dict: Optional[Dict] = None,
         not set this value.
     """
     global _numexpr_last
+    if not hasattr(_numexpr_last, 'l'):
+        _numexpr_last.l = ContextDict()
 
     try:
-        compiled_ex = _numexpr_last['ex']
+        compiled_ex = _numexpr_last.l['ex']
     except KeyError:
         raise RuntimeError("A previous evaluate() execution was not found, please call `validate` or `evaluate` once before `re_evaluate`")
-    argnames = _numexpr_last['argnames']
+    argnames = _numexpr_last.l['argnames']
     args = getArguments(argnames, local_dict, global_dict, _frame_depth=_frame_depth)
-    kwargs = _numexpr_last['kwargs']
+    kwargs = _numexpr_last.l['kwargs']
     with evaluate_lock:
         return compiled_ex(*args, **kwargs)

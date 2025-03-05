@@ -556,7 +556,7 @@ stringcontains(const char *haystack_start, const char *needle_start, npy_intp ma
 
     size_t si = 0;
     size_t min_len = min(needle_len, haystack_len);
-    while (*haystack && *needle && si < min_len)
+    while (si < min_len && *haystack && *needle)
     {
       ok &= *haystack++ == *needle++;
       si++;
@@ -573,7 +573,7 @@ stringcontains(const char *haystack_start, const char *needle_start, npy_intp ma
     }
 
     /* calc haystack length */
-    while (*haystack && si < haystack_len) {
+    while (si < haystack_len && *haystack) {
         haystack++;
         si++;
     }
@@ -652,6 +652,7 @@ int vm_engine_iter_task(NpyIter *iter, npy_intp *memsteps,
 
     /* Then finish off the rest */
     if (block_size > 0) do {
+        block_size = *size_ptr;
 #define REDUCTION_INNER_LOOP
 #define BLOCK_SIZE block_size
 #include "interp_body.cpp"
@@ -698,6 +699,7 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps,
 
     /* Then finish off the rest */
     if (block_size > 0) do {
+        block_size = *size_ptr;
 #define BLOCK_SIZE block_size
 #define NO_OUTPUT_BUFFERING // Because it's a reduction
 #include "interp_body.cpp"

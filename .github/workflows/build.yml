@@ -6,9 +6,10 @@ permissions:
   contents: read
 
 env:
-  CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy
+  CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy pytest
+  CIBW_BEFORE_TEST: pip install pytest
   CIBW_BUILD_VERBOSITY: 1
-  CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
+  CIBW_TEST_COMMAND: pytest --pyargs numexpr
   CIBW_TEST_SKIP: "*macosx*arm64*"
   # Building for musllinux and aarch64 takes way too much time.
   # Moreover, NumPy is not providing musllinux for x86_64 either, so it's not worth it.
@@ -16,7 +17,7 @@ env:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }} - ${{ matrix.p_ver }}
+    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }} - ${{ matrix.cibw_build }}
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -24,12 +25,14 @@ jobs:
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
+      CIBW_ENABLE: cpython-freethreading
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x86_64, aarch64]
-        cibw_build: ["cp3{10,11,12,13}-*"]
-        p_ver: ["3.10-3.13"]
+        cibw_build: ["cp3{10,11,12,13}-*", "cp313t-*"]
+        p_ver: ["3.10-3.13+3.13t"]
         exclude:
           - os: windows-latest
             arch: aarch64
@@ -52,6 +55,14 @@ jobs:
       - uses: docker/setup-qemu-action@v2
         if: ${{ matrix.arch == 'aarch64' }}
         name: Set up QEMU
+
+      - name: Setup free-threading variables
+        if: ${{ endsWith(matrix.cibw_build, 't-*') }}
+        shell: bash -l {0}
+        run: |
+          echo "CIBW_BEFORE_BUILD=pip install setuptools numpy" >> "$GITHUB_ENV"
+          echo "CIBW_BEFORE_TEST=pip install pytest pytest-run-parallel" >> "$GITHUB_ENV"
+          echo "CIBW_TEST_COMMAND=pytest --parallel-threads=4 --pyargs numexpr" >> "$GITHUB_ENV"
 
       - name: Build wheels
         run: |
