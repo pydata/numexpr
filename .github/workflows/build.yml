@@ -9,7 +9,7 @@ env:
   CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy pytest
   CIBW_BEFORE_TEST: pip install pytest
   CIBW_BUILD_VERBOSITY: 1
-  CIBW_TEST_COMMAND: pytest numexpr/tests
+  CIBW_TEST_COMMAND: pytest --pyargs numexpr
   CIBW_TEST_SKIP: "*macosx*arm64*"
   # Building for musllinux and aarch64 takes way too much time.
   # Moreover, NumPy is not providing musllinux for x86_64 either, so it's not worth it.
@@ -62,7 +62,7 @@ jobs:
         run: |
           echo "CIBW_BEFORE_BUILD=pip install setuptools numpy" >> "$GITHUB_ENV"
           echo "CIBW_BEFORE_TEST=pip install pytest pytest-run-parallel" >> "$GITHUB_ENV"
-          echo "CIBW_TEST_COMMAND=pytest --parallel-threads=4 numexpr/tests" >> "$GITHUB_ENV"
+          echo "CIBW_TEST_COMMAND=pytest --parallel-threads=4 --pyargs numexpr" >> "$GITHUB_ENV"
 
       - name: Build wheels
         run: |
