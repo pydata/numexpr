@@ -405,4 +405,3 @@ PyTypeObject NumExprType = {
     0,                         /* tp_alloc */
     NumExpr_new,               /* tp_new */
 };
-

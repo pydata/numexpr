@@ -9,8 +9,10 @@
 ####################################################################
 
 from __future__ import print_function
+
 import sys
 import timeit
+
 import numpy
 
 array_size = 5_000_000

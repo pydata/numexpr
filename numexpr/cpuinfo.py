@@ -23,12 +23,14 @@ Pearu Peterson
 
 __all__ = ['cpu']
 
-import sys, re, types
-import os
-import subprocess
-import warnings
-import platform
 import inspect
+import os
+import platform
+import re
+import subprocess
+import sys
+import types
+import warnings
 
 is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
 

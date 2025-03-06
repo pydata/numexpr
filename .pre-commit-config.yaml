@@ -1,0 +1,26 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: debug-statements
+
+# Too many things to fix, let's just ignore it for now
+#-   repo: https://github.com/pycqa/flake8
+#    rev: 7.0.0
+#    hooks:
+#    -   id: flake8
+#
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+    -   id: isort
+
+# Too many things to fix, let's just ignore it for now
+#-   repo: https://github.com/pre-commit/mirrors-mypy
+#    rev: v1.8.0
+#    hooks:
+#    -   id: mypy
+#        exclude: ^(docs/|setup.py)

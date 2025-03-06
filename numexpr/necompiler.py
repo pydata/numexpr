@@ -8,17 +8,18 @@
 #  rights to use.
 ####################################################################
 
-from typing import Optional, Dict
 import __future__
-import sys
+
 import os
-import threading
 import re
+import sys
+import threading
+from typing import Dict, Optional
 
 import numpy
 
 is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
-from numexpr import interpreter, expressions, use_vml
+from numexpr import expressions, interpreter, use_vml
 from numexpr.utils import CacheDict, ContextDict
 
 # Declare a double type that does not exist in Python space
@@ -28,7 +29,7 @@ double = numpy.double
 int_ = numpy.int32
 long_ = numpy.int64
 
-typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float', 'd': 'double', 
+typecode_to_kind = {'b': 'bool', 'i': 'int', 'l': 'long', 'f': 'float', 'd': 'double',
                     'c': 'complex', 'n': 'none', 's': 'str'}
 kind_to_typecode = {'bool': 'b', 'int': 'i', 'long': 'l', 'float': 'f', 'double': 'd',
                     'complex': 'c', 'bytes': 's', 'str': 's', 'none': 'n'}
@@ -104,11 +105,11 @@ class ASTNode():
             if getattr(self, name) != getattr(other, name):
                 return False
         return True
-    
+
     def __lt__(self,other):
-        # RAM: this is a fix for issue #88 whereby sorting on constants 
+        # RAM: this is a fix for issue #88 whereby sorting on constants
         # that may be of astKind == 'complex' but type(self.value) == int or float
-        # Here we let NumPy sort as it will cast data properly for comparison 
+        # Here we let NumPy sort as it will cast data properly for comparison
         # when the Python built-ins will raise an error.
         if self.astType == 'constant':
             if self.astKind == other.astKind:
@@ -271,7 +272,7 @@ _blacklist_re = re.compile(f'{_flow_pat}|{_dunder_pat}|{_attr_pat}')
 def stringToExpression(s, types, context, sanitize: bool=True):
     """Given a string, convert it to a tree of ExpressionNode's.
     """
-    # sanitize the string for obvious attack vectors that NumExpr cannot 
+    # sanitize the string for obvious attack vectors that NumExpr cannot
     # parse into its homebrew AST. This is to protect the call to `eval` below.
     # We forbid `;`, `:`. `[` and `__`, and attribute access via '.'.
     # We cannot ban `.real` or `.imag` however...
@@ -281,7 +282,7 @@ def stringToExpression(s, types, context, sanitize: bool=True):
         skip_quotes = re.sub(r'(\'[^\']*\')', '', no_whitespace)
         if _blacklist_re.search(skip_quotes) is not None:
             raise ValueError(f'Expression {s} has forbidden control characters.')
-    
+
     old_ctx = expressions._context.get_current_context()
     try:
         expressions._context.set_new_context(context)
@@ -307,7 +308,7 @@ def stringToExpression(s, types, context, sanitize: bool=True):
 
         # now build the expression
         ex = eval(c, names)
-        
+
         if expressions.isConstant(ex):
             ex = expressions.ConstantNode(ex, expressions.getKind(ex))
         elif not isinstance(ex, expressions.ExpressionNode):
@@ -363,7 +364,7 @@ def getConstants(ast):
         a = 1 + 3j; b = 5.0
         ne.evaluate('a*2 + 15j - b')
     """
-    constant_registers = set([node.reg for node in ast.allOf("constant")]) 
+    constant_registers = set([node.reg for node in ast.allOf("constant")])
     constants_order = sorted([r.node for r in constant_registers])
     constants = [convertConstantToKind(a.value, a.astKind)
                  for a in constants_order]
@@ -557,7 +558,7 @@ def getContext(kwargs, _frame_depth=1):
             context[name] = value
         else:
             raise ValueError("'%s' must be one of %s" % (name, allowed))
-    
+
     if d:
         raise ValueError("Unknown keyword argument '%s'" % d.popitem()[0])
     if context['truediv'] == 'auto':
@@ -657,7 +658,7 @@ def disassemble(nex):
 
     def parseOp(op):
         name, sig = [*op.rsplit(b'_', 1), ''][:2]
-        return name, sig 
+        return name, sig
 
     def getArg(pc, offset):
         arg = nex.program[pc + (offset if offset < 4 else offset+1)]
@@ -752,7 +753,7 @@ def getArguments(names, local_dict=None, global_dict=None, _frame_depth: int=2):
         if global_dict is None:
             global_dict = frame_globals
 
-        # If `call_frame` is the top frame of the interpreter we can't clear its 
+        # If `call_frame` is the top frame of the interpreter we can't clear its
         # `local_dict`, because it is actually the `global_dict`.
         clear_local_dict = clear_local_dict and not frame_globals is local_dict
 
@@ -774,23 +775,26 @@ def getArguments(names, local_dict=None, global_dict=None, _frame_depth: int=2):
 
 
 # Dictionaries for caching variable names and compiled expressions
-_names_cache = CacheDict(256)
-_numexpr_cache = CacheDict(256)
-_numexpr_last = ContextDict()
+# _names_cache = CacheDict(256)
+_names_cache = threading.local()
+# _numexpr_cache = CacheDict(256)
+_numexpr_cache = threading.local()
+# _numexpr_last = ContextDict()
+_numexpr_last = threading.local()
 evaluate_lock = threading.Lock()
 
-def validate(ex: str, 
-             local_dict: Optional[Dict] = None, 
+def validate(ex: str,
+             local_dict: Optional[Dict] = None,
              global_dict: Optional[Dict] = None,
-             out: numpy.ndarray = None, 
-             order: str = 'K', 
-             casting: str = 'safe', 
+             out: numpy.ndarray = None,
+             order: str = 'K',
+             casting: str = 'safe',
              _frame_depth: int = 2,
              sanitize: Optional[bool] = None,
              **kwargs) -> Optional[Exception]:
     r"""
     Validate a NumExpr expression with the given `local_dict` or `locals()`.
-    Returns `None` on success and the Exception object if one occurs. Note that 
+    Returns `None` on success and the Exception object if one occurs. Note that
     you can proceed directly to call `re_evaluate()` if you use `validate()`
     to sanitize your expressions and variables in advance.
 
@@ -835,30 +839,38 @@ def validate(ex: str,
           * 'unsafe' means any data conversions may be done.
 
     sanitize: Optional[bool]
-        Both `validate` and by extension `evaluate` call `eval(ex)`, which is 
-        potentially dangerous on unsanitized inputs. As such, NumExpr by default 
-        performs simple sanitization, banning the character ':;[', the 
+        Both `validate` and by extension `evaluate` call `eval(ex)`, which is
+        potentially dangerous on unsanitized inputs. As such, NumExpr by default
+        performs simple sanitization, banning the character ':;[', the
         dunder '__[\w+]__', and attribute access to all but '.real' and '.imag'.
-        
-        Using `None` defaults to `True` unless the environment variable 
-        `NUMEXPR_SANITIZE=0` is set, in which case the default is `False`. 
+
+        Using `None` defaults to `True` unless the environment variable
+        `NUMEXPR_SANITIZE=0` is set, in which case the default is `False`.
         Nominally this can be set via `os.environ` before `import numexpr`.
 
     _frame_depth: int
-        The calling frame depth. Unless you are a NumExpr developer you should 
+        The calling frame depth. Unless you are a NumExpr developer you should
         not set this value.
 
     Note
     ----
-    
+
     """
     global _numexpr_last
+    if not hasattr(_numexpr_last, 'l'):
+        _numexpr_last.l = ContextDict()
+
+    if not hasattr(_names_cache, 'c'):
+        _names_cache.c = CacheDict(256)
+
+    if not hasattr(_numexpr_cache, 'c'):
+        _numexpr_cache.c = CacheDict(256)
 
     try:
-        
+
         if not isinstance(ex, str):
             raise ValueError("must specify expression as a string")
-        
+
         if sanitize is None:
             if 'NUMEXPR_SANITIZE' in os.environ:
                 sanitize = bool(int(os.environ['NUMEXPR_SANITIZE']))
@@ -868,9 +880,9 @@ def validate(ex: str,
         # Get the names for this expression
         context = getContext(kwargs)
         expr_key = (ex, tuple(sorted(context.items())))
-        if expr_key not in _names_cache:
-            _names_cache[expr_key] = getExprNames(ex, context, sanitize=sanitize)
-        names, ex_uses_vml = _names_cache[expr_key]
+        if expr_key not in _names_cache.c:
+            _names_cache.c[expr_key] = getExprNames(ex, context, sanitize=sanitize)
+        names, ex_uses_vml = _names_cache.c[expr_key]
         arguments = getArguments(names, local_dict, global_dict, _frame_depth=_frame_depth)
 
         # Create a signature
@@ -880,22 +892,22 @@ def validate(ex: str,
         # Look up numexpr if possible.
         numexpr_key = expr_key + (tuple(signature),)
         try:
-            compiled_ex = _numexpr_cache[numexpr_key]
+            compiled_ex = _numexpr_cache.c[numexpr_key]
         except KeyError:
-            compiled_ex = _numexpr_cache[numexpr_key] = NumExpr(ex, signature, sanitize=sanitize, **context)
+            compiled_ex = _numexpr_cache.c[numexpr_key] = NumExpr(ex, signature, sanitize=sanitize, **context)
         kwargs = {'out': out, 'order': order, 'casting': casting,
                   'ex_uses_vml': ex_uses_vml}
-        _numexpr_last.set(ex=compiled_ex, argnames=names, kwargs=kwargs)
+        _numexpr_last.l.set(ex=compiled_ex, argnames=names, kwargs=kwargs)
     except Exception as e:
         return e
     return None
 
-def evaluate(ex: str, 
-             local_dict: Optional[Dict] = None, 
+def evaluate(ex: str,
+             local_dict: Optional[Dict] = None,
              global_dict: Optional[Dict] = None,
-             out: numpy.ndarray = None, 
-             order: str = 'K', 
-             casting: str = 'safe', 
+             out: numpy.ndarray = None,
+             order: str = 'K',
+             casting: str = 'safe',
              sanitize: Optional[bool] = None,
              _frame_depth: int = 3,
              **kwargs) -> numpy.ndarray:
@@ -948,27 +960,27 @@ def evaluate(ex: str,
         performs simple sanitization, banning the characters ':;[', the
         dunder '__[\w+]__', and attribute access to all but '.real' and '.imag'.
 
-        Using `None` defaults to `True` unless the environment variable 
-        `NUMEXPR_SANITIZE=0` is set, in which case the default is `False`. 
+        Using `None` defaults to `True` unless the environment variable
+        `NUMEXPR_SANITIZE=0` is set, in which case the default is `False`.
         Nominally this can be set via `os.environ` before `import numexpr`.
 
     _frame_depth: int
-        The calling frame depth. Unless you are a NumExpr developer you should 
+        The calling frame depth. Unless you are a NumExpr developer you should
         not set this value.
 
     """
-    # We could avoid code duplication if we called validate and then re_evaluate 
+    # We could avoid code duplication if we called validate and then re_evaluate
     # here, but we have difficulties with the `sys.getframe(2)` call in
     # `getArguments`
-    e = validate(ex, local_dict=local_dict, global_dict=global_dict, 
-                 out=out, order=order, casting=casting, 
+    e = validate(ex, local_dict=local_dict, global_dict=global_dict,
+                 out=out, order=order, casting=casting,
                  _frame_depth=_frame_depth, sanitize=sanitize, **kwargs)
     if e is None:
         return re_evaluate(local_dict=local_dict, global_dict=global_dict, _frame_depth=_frame_depth)
     else:
         raise e
-    
-def re_evaluate(local_dict: Optional[Dict] = None, 
+
+def re_evaluate(local_dict: Optional[Dict] = None,
                 global_dict: Optional[Dict] = None,
                 _frame_depth: int=2) -> numpy.ndarray:
     """
@@ -983,17 +995,19 @@ def re_evaluate(local_dict: Optional[Dict] = None,
     local_dict: dictionary, optional
         A dictionary that replaces the local operands in current frame.
     _frame_depth: int
-        The calling frame depth. Unless you are a NumExpr developer you should 
+        The calling frame depth. Unless you are a NumExpr developer you should
         not set this value.
     """
     global _numexpr_last
+    if not hasattr(_numexpr_last, 'l'):
+        _numexpr_last.l = ContextDict()
 
     try:
-        compiled_ex = _numexpr_last['ex']
+        compiled_ex = _numexpr_last.l['ex']
     except KeyError:
         raise RuntimeError("A previous evaluate() execution was not found, please call `validate` or `evaluate` once before `re_evaluate`")
-    argnames = _numexpr_last['argnames']
+    argnames = _numexpr_last.l['argnames']
     args = getArguments(argnames, local_dict, global_dict, _frame_depth=_frame_depth)
-    kwargs = _numexpr_last['kwargs']
+    kwargs = _numexpr_last.l['kwargs']
     with evaluate_lock:
         return compiled_ex(*args, **kwargs)

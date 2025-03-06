@@ -21,21 +21,20 @@ for more info about it.
 
 """
 
-from numexpr.interpreter import MAX_THREADS, use_vml, __BLOCK_SIZE1__
+from numexpr.interpreter import __BLOCK_SIZE1__, MAX_THREADS, use_vml
 
 is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
 
-# cpuinfo imports were moved into the test submodule function that calls them 
+# cpuinfo imports were moved into the test submodule function that calls them
 # to improve import times.
 
 from numexpr.expressions import E
-from numexpr.necompiler import (NumExpr, disassemble, evaluate, re_evaluate, 
-    validate)
-
-from numexpr.utils import (_init_num_threads,
-    get_vml_version, set_vml_accuracy_mode, set_vml_num_threads,
-    set_num_threads, get_num_threads,
-    detect_number_of_cores, detect_number_of_threads)
+from numexpr.necompiler import (NumExpr, disassemble, evaluate, re_evaluate,
+                                validate)
+from numexpr.utils import (_init_num_threads, detect_number_of_cores,
+                           detect_number_of_threads, get_num_threads,
+                           get_vml_version, set_num_threads,
+                           set_vml_accuracy_mode, set_vml_num_threads)
 
 # Detect the number of cores
 ncores = detect_number_of_cores()
@@ -45,6 +44,7 @@ nthreads = _init_num_threads()
 # set_vml_num_threads(1)
 
 from . import version
+
 __version__ = version.version
 
 def print_versions():

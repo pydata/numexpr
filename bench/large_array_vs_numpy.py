@@ -31,10 +31,12 @@ numexpr speedup: 2.38x
 import os
 
 os.environ["NUMEXPR_NUM_THREADS"] = "16"
-import numpy as np
-import numexpr as ne
-import timeit
 import threading
+import timeit
+
+import numpy as np
+
+import numexpr as ne
 
 array_size = 10**8
 num_runs = 10

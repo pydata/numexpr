@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-import numexpr as ne
 from timeit import default_timer as timer
+
+import numpy as np
+
+import numexpr as ne
 
 x = np.ones(100000)
 scaler = -1J

@@ -75,7 +75,7 @@ struct thread_data {
     int ret_code;
     int *pc_error;
     char **errmsg;
-    // NOTE: memsteps, iter, and reduce_iter are arrays, they MUST be allocated 
+    // NOTE: memsteps, iter, and reduce_iter are arrays, they MUST be allocated
     // to length `global_max_threads` before module load.
     // One memsteps array per thread
     // npy_intp *memsteps[MAX_THREADS];

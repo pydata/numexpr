@@ -23,7 +23,7 @@ struct global_state {
     int end_threads;                 /* should exisiting threads end? */
     // pthread_t threads[MAX_THREADS];  /* opaque structure for threads */
     // int tids[MAX_THREADS];           /* ID per each thread */
-    /* NOTE: threads and tids are arrays, they MUST be allocated to length 
+    /* NOTE: threads and tids are arrays, they MUST be allocated to length
        `global_max_threads` before module load. */
     pthread_t *threads;              /* opaque structure for threads */
     int *tids;                       /* ID per each thread */
@@ -36,7 +36,7 @@ struct global_state {
     /* Synchronization variables for threadpool state */
     pthread_mutex_t count_mutex;
     int count_threads;
-    int barrier_passed;         /* indicates if the thread pool's thread barrier 
+    int barrier_passed;         /* indicates if the thread pool's thread barrier
                                    is unlocked and ready for the VM to process.*/
     pthread_mutex_t count_threads_mutex;
     pthread_cond_t count_threads_cv;

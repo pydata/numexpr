@@ -12,9 +12,12 @@
 # Based on a script provided by Andrew Collette.
 
 from __future__ import print_function
-import numpy as np
-import numexpr as nx
+
 import time
+
+import numpy as np
+
+import numexpr as nx
 
 test_shapes = [
     (100*100*100),
@@ -90,5 +93,3 @@ for test_shape in test_shapes:
     print("Simple: ", (stop1-start1)/nruns)
     print("Numexpr: ", (stop2-start2)/nruns)
     print("Chunked: ", (stop3-start3)/nruns)
-
-

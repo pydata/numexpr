@@ -2,10 +2,14 @@
 # performs better than the serial code.  See issue #36 for details.
 
 from __future__ import print_function
-import numpy as np
-import numexpr as ne
-from numpy.testing import assert_array_equal
+
 from time import time
+
+import numpy as np
+from numpy.testing import assert_array_equal
+
+import numexpr as ne
+
 
 def bench(N):
     print("*** array length:", N)
@@ -31,4 +35,3 @@ if __name__ == "__main__":
     ne.set_num_threads(2)
     for N in range(10, 20):
         bench(2**N)
-

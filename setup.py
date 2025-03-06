@@ -9,12 +9,13 @@
 #  rights to use.
 ####################################################################
 
-import os, os.path as op
-import platform
 import configparser
-import numpy as np
-from setuptools import setup, Extension
+import os
+import os.path as op
+import platform
 
+import numpy as np
+from setuptools import Extension, setup
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
@@ -40,7 +41,7 @@ inc_dirs = [np.get_include()]
 libs = []  # Pre-built libraries ONLY, like python36.so
 clibs = []
 def_macros = [
-    # keep in sync with minimal runtime requirement (requirements.txt) 
+    # keep in sync with minimal runtime requirement (requirements.txt)
     ('NPY_TARGET_VERSION', 'NPY_1_23_API_VERSION')
 ]
 sources = ['numexpr/interpreter.cpp',

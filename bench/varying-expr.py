@@ -13,9 +13,12 @@
 # the latency of numexpr when working with small arrays.
 
 from __future__ import print_function
+
 import sys
 from time import time
+
 import numpy as np
+
 import numexpr as ne
 
 N = 100

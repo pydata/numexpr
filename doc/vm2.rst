@@ -1,32 +1,32 @@
 Performance of the Virtual Machine in NumExpr2.0
 ================================================
 
-Numexpr 2.0 leverages a new virtual machine completely based on the new ndarray 
-iterator introduced in NumPy 1.6.  This represents a nice combination of the 
-advantages of using the new iterator, while retaining the ability to avoid 
-copies in memory as well as the multi-threading capabilities of the previous 
+Numexpr 2.0 leverages a new virtual machine completely based on the new ndarray
+iterator introduced in NumPy 1.6.  This represents a nice combination of the
+advantages of using the new iterator, while retaining the ability to avoid
+copies in memory as well as the multi-threading capabilities of the previous
 virtual machine (1.x series).
 
-The increased performance of the new virtual machine can be seen in several 
+The increased performance of the new virtual machine can be seen in several
 scenarios, like:
 
-  * *Broadcasting*.  Expressions containing arrays that needs to be broadcasted, 
+  * *Broadcasting*.  Expressions containing arrays that needs to be broadcasted,
     will not need additional memory (i.e. they will be broadcasted on-the-fly).
-  * *Non-native dtypes*.  These will be translated to native dtypes on-the-fly, 
+  * *Non-native dtypes*.  These will be translated to native dtypes on-the-fly,
     so there is not need to convert the whole arrays first.
-  * *Fortran-ordered arrays*.  The new iterator will find the best path to 
+  * *Fortran-ordered arrays*.  The new iterator will find the best path to
     optimize operations on such arrays, without the need to transpose them first.
 
-There is a drawback though: performance with small arrays suffers a bit because 
-of higher set-up times for the new virtual machine.  See below for detailed 
+There is a drawback though: performance with small arrays suffers a bit because
+of higher set-up times for the new virtual machine.  See below for detailed
 benchmarks.
 
 Some benchmarks for best-case scenarios
 ---------------------------------------
 
-Here you have some benchmarks of some scenarios where the new virtual machine 
-actually represents an advantage in terms of speed (also memory, but this is 
-not shown here).  As you will see, the improvement is notable in many areas, 
+Here you have some benchmarks of some scenarios where the new virtual machine
+actually represents an advantage in terms of speed (also memory, but this is
+not shown here).  As you will see, the improvement is notable in many areas,
 ranging from 3x to 6x faster operations.
 
 Broadcasting
@@ -85,7 +85,7 @@ Mix of 'non-native' arrays, Fortran-ordered, and using broadcasting
 Longer setup-time
 ^^^^^^^^^^^^^^^^^
 
-The only drawback of the new virtual machine is during the computation of 
+The only drawback of the new virtual machine is during the computation of
 small arrays::
 
     >>> a = np.arange(10)
@@ -98,8 +98,8 @@ small arrays::
     10000 loops, best of 3: 30.6 µs per loop
 
 
-i.e. the new virtual machine takes a bit more time to set-up (around 8 µs in 
-this machine).  However, this should be not too important because for such a 
+i.e. the new virtual machine takes a bit more time to set-up (around 8 µs in
+this machine).  However, this should be not too important because for such a
 small arrays NumPy is always a better option::
 
     >>> timeit c = a*(b+1)
@@ -121,8 +121,8 @@ And for arrays large enough the difference is negligible::
 Conclusion
 ----------
 
-The new virtual machine introduced in numexpr 2.0 brings more performance in 
-many different scenarios (broadcast, non-native dtypes, Fortran-orderd arrays), 
-while it shows slightly worse performance for small arrays.  However, as 
-numexpr is more geared to compute large arrays, the new virtual machine should 
+The new virtual machine introduced in numexpr 2.0 brings more performance in
+many different scenarios (broadcast, non-native dtypes, Fortran-orderd arrays),
+while it shows slightly worse performance for small arrays.  However, as
+numexpr is more geared to compute large arrays, the new virtual machine should
 be good news for numexpr users in general.
