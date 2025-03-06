@@ -13,7 +13,7 @@ env:
   CIBW_TEST_SKIP: "*macosx*arm64*"
   # Building for musllinux and aarch64 takes way too much time.
   # Moreover, NumPy is not providing musllinux for x86_64 either, so it's not worth it.
-  CIBW_SKIP: "*musllinux*aarch64* *musllinux*x86_64*"
+  # CIBW_SKIP: "*musllinux*aarch64* *musllinux*x86_64*"
 
 jobs:
   build_wheels:
