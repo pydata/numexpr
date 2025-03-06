@@ -31,7 +31,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x86_64, aarch64]
-        cibw_build: ["cp3{10,11,12,13}-*", "cp313t-*"]
+        cibw_build: ["cp310", "cp311", "cp312", "cp313", "cp313t"]
         p_ver: ["3.10-3.13+3.13t"]
         exclude:
           - os: windows-latest
@@ -48,13 +48,9 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install cibuildwheel
-        run: |
-          python -m pip install cibuildwheel
-
-      - uses: docker/setup-qemu-action@v2
-        if: ${{ matrix.arch == 'aarch64' }}
-        name: Set up QEMU
+#      - uses: docker/setup-qemu-action@v2
+#        if: ${{ matrix.arch == 'aarch64' }}
+#        name: Set up QEMU
 
       - name: Setup free-threading variables
         if: ${{ endsWith(matrix.cibw_build, 't-*') }}
@@ -65,8 +61,7 @@ jobs:
           echo "CIBW_TEST_COMMAND=pytest --parallel-threads=4 --pyargs numexpr" >> "$GITHUB_ENV"
 
       - name: Build wheels
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
+        uses: pypa/cibuildwheel@v2.23
 
       - name: Make sdist
         if: ${{ matrix.os == 'windows-latest' }}
