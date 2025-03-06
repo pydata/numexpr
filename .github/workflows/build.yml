@@ -17,8 +17,8 @@ env:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }} - ${{ matrix.cibw_build }}
-    runs-on: ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }}
+    runs-on: ${{ matrix.runs-on || matrix.os }}
     permissions:
       contents: write
     env:
@@ -37,10 +37,11 @@ jobs:
             artifact_name: "linux-x86_64"
 
           # Linux ARM64 builds (native runners)
-          - os: ubuntu-latest-arm64
+          - os: ubuntu-latest
             arch: aarch64
             cibw_pattern: "cp3{10,11,12,13,13t}-manylinux*"
             artifact_name: "linux-aarch64"
+            runs-on: ubuntu-latest-arm64
 
           # Windows builds
           - os: windows-latest
