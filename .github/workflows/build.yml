@@ -22,33 +22,37 @@ jobs:
     permissions:
       contents: write
     env:
-      CIBW_BUILD: ${{ matrix.python.cibw_build }}
+      CIBW_BUILD: ${{ matrix.cibw_pattern }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
       CIBW_ENABLE: cpython-freethreading
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        arch: [x86_64, aarch64]
-        python:
-          - cibw_build: "cp310-*"
-            cibw_id: "cp310"
-          - cibw_build: "cp311-*"
-            cibw_id: "cp311"
-          - cibw_build: "cp312-*"
-            cibw_id: "cp312"
-          - cibw_build: "cp313-*"
-            cibw_id: "cp313"
-          - cibw_build: "cp313t-*"
-            cibw_id: "cp313t"
-        exclude:
-          - os: windows-latest
-            arch: aarch64
-          # cibuild is already in charge to build aarch64 (see CIBW_ARCHS_MACOS)
-          - os: macos-latest
-            arch: aarch64
+        include:
+          # Linux x86_64 builds
+          - os: ubuntu-latest
+            arch: x86_64
+            cibw_pattern: "cp3{10,11,12,13,13t}-manylinux*"
+            artifact_name: "linux-x86_64"
 
+          # Linux ARM64 builds (native runners)
+          - os: ubuntu-latest-arm64
+            arch: aarch64
+            cibw_pattern: "cp3{10,11,12,13,13t}-manylinux*"
+            artifact_name: "linux-aarch64"
+
+          # Windows builds
+          - os: windows-latest
+            arch: x86_64
+            cibw_pattern: "cp3{10,11,12,13,13t}-win*"
+            artifact_name: "windows-x86_64"
+
+          # macOS builds (universal2)
+          - os: macos-latest
+            arch: x86_64
+            cibw_pattern: "cp3{10,11,12,13,13t}-macosx*"
+            artifact_name: "macos-universal2"
     steps:
       - uses: actions/checkout@v3
 
@@ -56,10 +60,6 @@ jobs:
         name: Install Python
         with:
           python-version: '3.x'
-
-#      - uses: docker/setup-qemu-action@v2
-#        if: ${{ matrix.arch == 'aarch64' }}
-#        name: Set up QEMU
 
       - name: Setup free-threading variables
         if: ${{ endsWith(matrix.cibw_build, 't-*') }}
@@ -80,7 +80,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.python.cibw_id }}
+          name: ${{ matrix.artifact_name }}
           path: ./wheelhouse/*
 
       - name: Upload to GitHub Release
