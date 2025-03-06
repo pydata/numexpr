@@ -22,7 +22,7 @@ jobs:
     permissions:
       contents: write
     env:
-      CIBW_BUILD: ${{ matrix.cibw_build }}
+      CIBW_BUILD: ${{ matrix.python.cibw_build }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
       CIBW_ENABLE: cpython-freethreading
@@ -31,7 +31,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [x86_64, aarch64]
-        include:
+        python:
           - cibw_build: "cp310-*"
             cibw_id: "cp310"
           - cibw_build: "cp311-*"
@@ -80,7 +80,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.cibw_id }}
+          name: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.python.cibw_id }}
           path: ./wheelhouse/*
 
       - name: Upload to GitHub Release
