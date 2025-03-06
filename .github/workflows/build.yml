@@ -63,6 +63,7 @@ jobs:
           echo "CIBW_BEFORE_BUILD=pip install setuptools numpy" >> "$GITHUB_ENV"
           echo "CIBW_BEFORE_TEST=pip install pytest pytest-run-parallel" >> "$GITHUB_ENV"
           echo "CIBW_TEST_COMMAND=pytest --parallel-threads=4 --pyargs numexpr" >> "$GITHUB_ENV"
+          echo "ARTIFACT_LABEL=freethreaded" >> "$GITHUB_ENV"
 
       - name: Build wheels
         run: |
@@ -77,7 +78,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*
-          name: numexpr-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.cibw_build }}
+          name: numexpr-${{ matrix.os }}-${{ matrix.arch }}-${{ env.ARTIFACT_LABEL || 'standard' }}
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v1
