@@ -1,7 +1,9 @@
-import numpy as np
-import numexpr as ne
-import matplotlib.pyplot as plt
 from time import perf_counter as pc
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+import numexpr as ne
 
 # geomspace seems to be very slow, just a warning about setting `n` too high.
 # n = 2**24

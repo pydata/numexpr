@@ -11,32 +11,31 @@
 
 
 import os
-import sys
 import platform
+import subprocess
+import sys
+import unittest
 import warnings
 from contextlib import contextmanager
-import subprocess
+from unittest.mock import MagicMock
 
-import numpy as np
-from numpy import (
-    array, arange, empty, zeros, int32, int64, uint16, cdouble, float64, rec,
-    copy, ones_like, where, all as alltrue, linspace,
-    sum, prod, sqrt, fmod, floor, ceil,
-    sin, cos, tan, arcsin, arccos, arctan, arctan2,
-    sinh, cosh, tanh, arcsinh, arccosh, arctanh,
-    log, log1p, log10, exp, expm1, conj)
 import numpy
-from numpy.testing import (assert_equal, assert_array_equal,
-                           assert_array_almost_equal, assert_allclose)
-from numpy import shape, allclose, array_equal, ravel, isnan, isinf
+import numpy as np
+from numpy import all as alltrue
+from numpy import (allclose, arange, arccos, arccosh, arcsin, arcsinh, arctan,
+                   arctan2, arctanh, array, array_equal, cdouble, ceil, conj,
+                   copy, cos, cosh, empty, exp, expm1, float64, floor, fmod,
+                   int32, int64, isinf, isnan, linspace, log, log1p, log10,
+                   ones_like, prod, ravel, rec, shape, sin, sinh, sqrt, sum,
+                   tan, tanh, uint16, where, zeros)
+from numpy.testing import (assert_allclose, assert_array_almost_equal,
+                           assert_array_equal, assert_equal)
 
 import numexpr
-from numexpr import E, NumExpr, evaluate, re_evaluate, validate, disassemble, use_vml
+from numexpr import (E, NumExpr, disassemble, evaluate, re_evaluate, use_vml,
+                     validate)
 from numexpr.expressions import ConstantNode
 from numexpr.utils import detect_number_of_cores
-
-import unittest
-from unittest.mock import MagicMock
 
 try:
     import pytest
@@ -1351,8 +1350,9 @@ class test_subprocess(TestCase):
 def print_versions():
     """Print the versions of software that numexpr relies on."""
     # from pkg_resources import parse_version
-    from numexpr.cpuinfo import cpu
     import platform
+
+    from numexpr.cpuinfo import cpu
 
     print('-=' * 38)
     print('Numexpr version:   %s' % numexpr.__version__)
@@ -1394,8 +1394,8 @@ test.__test__ = False
 
 
 def suite():
-    import unittest
     import platform as pl
+    import unittest
 
     theSuite = unittest.TestSuite()
     niter = 1

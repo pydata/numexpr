@@ -30,7 +30,7 @@ and it can also re_evaluate an expression::
 Building
 --------
 
-*NumExpr* requires Python_ 3.7 or greater, and NumPy_ 1.13 or greater.  It is 
+*NumExpr* requires Python_ 3.7 or greater, and NumPy_ 1.13 or greater.  It is
 built in the standard Python way:
 
 .. code-block:: bash
@@ -39,7 +39,7 @@ built in the standard Python way:
 
 You must have a C-compiler (i.e. MSVC Build tools on Windows and GCC on Linux) installed.
 
-Then change to a directory that is not the repository directory (e.g. `/tmp`) and 
+Then change to a directory that is not the repository directory (e.g. `/tmp`) and
 test :code:`numexpr` with:
 
 .. code-block:: bash
@@ -73,23 +73,23 @@ affect performance).
 Threadpool Configuration
 ------------------------
 
-Threads are spawned at import-time, with the number being set by the environment 
-variable ``NUMEXPR_MAX_THREADS``. The default maximum thread count is **64**. 
+Threads are spawned at import-time, with the number being set by the environment
+variable ``NUMEXPR_MAX_THREADS``. The default maximum thread count is **64**.
 There is no advantage to spawning more threads than the number of virtual cores
-available on the computing node. Practically NumExpr scales at large thread 
-count (`> 8`) only on very large matrices (`> 2**22`). Spawning large numbers 
-of threads is not free, and can increase import times for NumExpr or packages 
+available on the computing node. Practically NumExpr scales at large thread
+count (`> 8`) only on very large matrices (`> 2**22`). Spawning large numbers
+of threads is not free, and can increase import times for NumExpr or packages
 that import it such as Pandas or PyTables.
 
-If desired, the number of threads in the pool used can be adjusted via an 
-environment variable, ``NUMEXPR_NUM_THREADS`` (preferred) or ``OMP_NUM_THREADS``. 
-Typically only setting ``NUMEXPR_MAX_THREADS`` is sufficient; the number of 
-threads used can be adjusted dynamically via ``numexpr.set_num_threads(int)``. 
+If desired, the number of threads in the pool used can be adjusted via an
+environment variable, ``NUMEXPR_NUM_THREADS`` (preferred) or ``OMP_NUM_THREADS``.
+Typically only setting ``NUMEXPR_MAX_THREADS`` is sufficient; the number of
+threads used can be adjusted dynamically via ``numexpr.set_num_threads(int)``.
 The number of threads can never exceed that set by ``NUMEXPR_MAX_THREADS``.
 
-If the user has not configured the environment prior to importing NumExpr, info 
-logs will be generated, and the initial number of threads *that are used*_ will 
-be set to the number of cores detected in the system or 8, whichever is *less*. 
+If the user has not configured the environment prior to importing NumExpr, info
+logs will be generated, and the initial number of threads *that are used*_ will
+be set to the number of cores detected in the system or 8, whichever is *less*.
 
 Usage::
 
@@ -111,16 +111,16 @@ function's frame (through the use of :code:`sys._getframe()`).
 Alternatively, they can be specified using the :code:`local_dict` or
 :code:`global_dict` arguments, or passed as keyword arguments.
 
-The :code:`optimization` parameter can take the values :code:`'moderate'` 
-or :code:`'aggressive'`.  :code:`'moderate'` means that no optimization is made 
-that can affect precision at all.  :code:`'aggressive'` (the default) means that 
-the expression can be rewritten in a way that precision *could* be affected, but 
-normally very little.  For example, in :code:`'aggressive'` mode, the 
-transformation :code:`x~**3` -> :code:`x*x*x` is made, but not in 
+The :code:`optimization` parameter can take the values :code:`'moderate'`
+or :code:`'aggressive'`.  :code:`'moderate'` means that no optimization is made
+that can affect precision at all.  :code:`'aggressive'` (the default) means that
+the expression can be rewritten in a way that precision *could* be affected, but
+normally very little.  For example, in :code:`'aggressive'` mode, the
+transformation :code:`x~**3` -> :code:`x*x*x` is made, but not in
 :code:`'moderate'` mode.
 
-The `truediv` parameter specifies whether the division is a 'floor division' 
-(False) or a 'true division' (True).  The default is the value of 
+The `truediv` parameter specifies whether the division is a 'floor division'
+(False) or a 'true division' (True).  The default is the value of
 `__future__.division` in the interpreter.  See PEP 238 for details.
 
 Expressions are cached, so reuse is fast.  Arrays or scalars are
@@ -164,22 +164,22 @@ Casting rules in NumExpr follow closely those of *NumPy*.  However, for
 implementation reasons, there are some known exceptions to this rule,
 namely:
 
-    * When an array with type :code:`int8`, :code:`uint8`, :code:`int16` or 
-      :code:`uint16` is used inside NumExpr, it is internally upcasted to an 
-      :code:`int` (or :code:`int32` in NumPy notation).                                         
-    * When an array with type :code:`uint32` is used inside NumExpr, it is 
-      internally upcasted to a :code:`long` (or :code:`int64` in NumPy notation).     
-    * A floating point function (e.g. :code:`sin`) acting on :code:`int8` or 
-      :code:`int16` types returns a :code:`float64` type, instead of the 
-      :code:`float32` that is returned by NumPy functions.  This is mainly due 
+    * When an array with type :code:`int8`, :code:`uint8`, :code:`int16` or
+      :code:`uint16` is used inside NumExpr, it is internally upcasted to an
+      :code:`int` (or :code:`int32` in NumPy notation).
+    * When an array with type :code:`uint32` is used inside NumExpr, it is
+      internally upcasted to a :code:`long` (or :code:`int64` in NumPy notation).
+    * A floating point function (e.g. :code:`sin`) acting on :code:`int8` or
+      :code:`int16` types returns a :code:`float64` type, instead of the
+      :code:`float32` that is returned by NumPy functions.  This is mainly due
       to the absence of native :code:`int8` or :code:`int16` types in NumExpr.
-    * In operations implying a scalar and an array, the normal rules of casting 
-      are used in NumExpr, in contrast with NumPy, where array types takes 
-      priority.  For example, if :code:`a` is an array of type :code:`float32` 
-      and :code:`b` is an scalar of type :code:`float64` (or Python :code:`float` 
-      type, which is equivalent), then :code:`a*b` returns a :code:`float64` in 
-      NumExpr, but a :code:`float32` in NumPy (i.e. array operands take priority 
-      in determining the result type).  If you need to keep the result a 
+    * In operations implying a scalar and an array, the normal rules of casting
+      are used in NumExpr, in contrast with NumPy, where array types takes
+      priority.  For example, if :code:`a` is an array of type :code:`float32`
+      and :code:`b` is an scalar of type :code:`float64` (or Python :code:`float`
+      type, which is equivalent), then :code:`a*b` returns a :code:`float64` in
+      NumExpr, but a :code:`float32` in NumPy (i.e. array operands take priority
+      in determining the result type).  If you need to keep the result a
       :code:`float32`, be sure you use a :code:`float32` scalar too.
 
 
@@ -199,42 +199,42 @@ Supported functions
 
 The next are the current supported set:
 
-    * :code:`where(bool, number1, number2): number` -- number1 if the bool condition 
+    * :code:`where(bool, number1, number2): number` -- number1 if the bool condition
       is true, number2 otherwise.
-    * :code:`{sin,cos,tan}(float|complex): float|complex` -- trigonometric sine, 
+    * :code:`{sin,cos,tan}(float|complex): float|complex` -- trigonometric sine,
       cosine or tangent.
-    * :code:`{arcsin,arccos,arctan}(float|complex): float|complex` -- trigonometric 
+    * :code:`{arcsin,arccos,arctan}(float|complex): float|complex` -- trigonometric
       inverse sine, cosine or tangent.
-    * :code:`arctan2(float1, float2): float` -- trigonometric inverse tangent of 
+    * :code:`arctan2(float1, float2): float` -- trigonometric inverse tangent of
       float1/float2.
-    * :code:`{sinh,cosh,tanh}(float|complex): float|complex` -- hyperbolic sine, 
+    * :code:`{sinh,cosh,tanh}(float|complex): float|complex` -- hyperbolic sine,
       cosine or tangent.
-    * :code:`{arcsinh,arccosh,arctanh}(float|complex): float|complex` -- hyperbolic 
+    * :code:`{arcsinh,arccosh,arctanh}(float|complex): float|complex` -- hyperbolic
       inverse sine, cosine or tangent.
-    * :code:`{log,log10,log1p}(float|complex): float|complex` -- natural, base-10 and 
+    * :code:`{log,log10,log1p}(float|complex): float|complex` -- natural, base-10 and
       log(1+x) logarithms.
-    * :code:`{exp,expm1}(float|complex): float|complex` -- exponential and exponential 
+    * :code:`{exp,expm1}(float|complex): float|complex` -- exponential and exponential
       minus one.
     * :code:`sqrt(float|complex): float|complex` -- square root.
     * :code:`abs(float|complex): float|complex`  -- absolute value.
     * :code:`conj(complex): complex` -- conjugate value.
     * :code:`{real,imag}(complex): float` -- real or imaginary part of complex.
-    * :code:`complex(float, float): complex` -- complex from real and imaginary 
+    * :code:`complex(float, float): complex` -- complex from real and imaginary
       parts.
-    * :code:`contains(np.str, np.str): bool` -- returns True for every string in :code:`op1` that 
+    * :code:`contains(np.str, np.str): bool` -- returns True for every string in :code:`op1` that
       contains :code:`op2`.
 
 Notes
 -----
 
     * :code:`abs()` for complex inputs returns a :code:`complex` output too.  This is a
-      departure from NumPy where a :code:`float` is returned instead.  However, 
-      NumExpr is not flexible enough yet so as to allow this to happen.  
-      Meanwhile, if you want to mimic NumPy behaviour, you may want to select the 
-      real part via the :code:`real` function (e.g. :code:`real(abs(cplx))`) or via the 
+      departure from NumPy where a :code:`float` is returned instead.  However,
+      NumExpr is not flexible enough yet so as to allow this to happen.
+      Meanwhile, if you want to mimic NumPy behaviour, you may want to select the
+      real part via the :code:`real` function (e.g. :code:`real(abs(cplx))`) or via the
       :code:`real` selector (e.g. :code:`abs(cplx).real`).
 
-More functions can be added if you need them. Note however that NumExpr 2.6 is 
+More functions can be added if you need them. Note however that NumExpr 2.6 is
 in maintenance mode and a new major revision is under development.
 
 Supported reduction operations
@@ -242,12 +242,12 @@ Supported reduction operations
 
 The next are the current supported set:
 
-  * :code:`sum(number, axis=None)`: Sum of array elements over a given axis.  
+  * :code:`sum(number, axis=None)`: Sum of array elements over a given axis.
     Negative axis are not supported.
-  * :code:`prod(number, axis=None)`: Product of array elements over a given axis.  
+  * :code:`prod(number, axis=None)`: Product of array elements over a given axis.
     Negative axis are not supported.
 
-*Note:* because of internal limitations, reduction operations must appear the 
+*Note:* because of internal limitations, reduction operations must appear the
 last in the stack.  If not, it will be issued an error like::
 
     >>> ne.evaluate('sum(1)*(-1)')
@@ -256,23 +256,23 @@ last in the stack.  If not, it will be issued an error like::
 General routines
 ----------------
 
-  * :code:`evaluate(expression, local_dict=None, global_dict=None, 
-    optimization='aggressive', truediv='auto')`:  Evaluate a simple array 
+  * :code:`evaluate(expression, local_dict=None, global_dict=None,
+    optimization='aggressive', truediv='auto')`:  Evaluate a simple array
     expression element-wise.  See examples above.
-  * :code:`re_evaluate(local_dict=None)`:  Re-evaluate the last array expression 
-    without any check.  This is meant for accelerating loops that are re-evaluating 
-    the same expression repeatedly without changing anything else than the operands.  
+  * :code:`re_evaluate(local_dict=None)`:  Re-evaluate the last array expression
+    without any check.  This is meant for accelerating loops that are re-evaluating
+    the same expression repeatedly without changing anything else than the operands.
     If unsure, use evaluate() which is safer.
   * :code:`test()`:  Run all the tests in the test suite.
   * :code:`print_versions()`:  Print the versions of software that numexpr relies on.
-  * :code:`set_num_threads(nthreads)`: Sets a number of threads to be used in operations.  
-    Returns the previous setting for the number of threads.  See note below to see 
+  * :code:`set_num_threads(nthreads)`: Sets a number of threads to be used in operations.
+    Returns the previous setting for the number of threads.  See note below to see
     how the number of threads is set via environment variables.
 
-    If you are using VML, you may want to use *set_vml_num_threads(nthreads)* to 
-    perform the parallel job with VML instead.  However, you should get very 
-    similar performance with VML-optimized functions, and VML's parallelizer 
-    cannot deal with common expressions like `(x+1)*(x-2)`, while NumExpr's 
+    If you are using VML, you may want to use *set_vml_num_threads(nthreads)* to
+    perform the parallel job with VML instead.  However, you should get very
+    similar performance with VML-optimized functions, and VML's parallelizer
+    cannot deal with common expressions like `(x+1)*(x-2)`, while NumExpr's
     one can.
 
   * :code:`detect_number_of_cores()`: Detects the number of cores on a system.

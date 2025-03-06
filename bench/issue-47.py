@@ -1,4 +1,5 @@
 import numpy
+
 import numexpr
 
 numexpr.set_num_threads(8)

@@ -380,7 +380,7 @@ Py_set_num_threads(PyObject *self, PyObject *args)
 }
 
 static PyObject*
-Py_get_num_threads(PyObject *self, PyObject *args) 
+Py_get_num_threads(PyObject *self, PyObject *args)
 {
     int n_thread;
     n_thread = gs.nthreads;

@@ -8,7 +8,7 @@
 #  rights to use.
 ####################################################################
 
-from numexpr.tests.test_numexpr import test, print_versions
+from numexpr.tests.test_numexpr import print_versions, test
 
 if __name__ == '__main__':
     test()
