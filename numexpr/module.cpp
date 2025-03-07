@@ -477,6 +477,10 @@ PyInit_interpreter(void) {
     if (m == NULL)
         INITERROR;
 
+    #ifdef Py_GIL_DISABLED
+        PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+    #endif
+
     Py_INCREF(&NumExprType);
     PyModule_AddObject(m, "NumExpr", (PyObject *)&NumExprType);
 
