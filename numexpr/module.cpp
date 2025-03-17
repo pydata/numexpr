@@ -47,12 +47,13 @@ void *th_worker(void *tidptr)
     char **errmsg;
     // For output buffering if needed
     vector<char> out_buffer;
+    int init_sentinels_done = 0;
 
     while (1) {
 
         /* Sentinels have to be initialised yet */
-        if(tid == 0) {
-            gs.init_sentinels_done = 0;
+        if (tid == 0) {
+            init_sentinels_done = 0;
         }
 
         /* Meeting point for all threads (wait for initialization) */
