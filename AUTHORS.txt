@@ -23,7 +23,7 @@ Google Inc. contributed bug fixes.
 
 David Cox improved readability of the Readme.
 
-Robert A. McLeod contributed bug fixes and ported the documentation to 
+Robert A. McLeod contributed bug fixes and ported the documentation to
 numexpr.readthedocs.io. He has served as the maintainer of the package
 since 2016 to 2023.
 

@@ -9,7 +9,10 @@
 ####################################################################
 
 from __future__ import print_function
-import timeit, numpy
+
+import timeit
+
+import numpy
 
 array_size = 5e6
 iterations = 2

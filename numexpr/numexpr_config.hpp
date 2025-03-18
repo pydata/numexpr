@@ -19,7 +19,7 @@
 #define BLOCK_SIZE1 1024
 #endif
 
-// The default threadpool size. It's prefer that the user set this via an 
+// The default threadpool size. It's prefer that the user set this via an
 // environment variable, "NUMEXPR_MAX_THREADS"
 #define DEFAULT_MAX_THREADS 64
 

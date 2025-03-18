@@ -4,11 +4,14 @@
 # https://github.com/pydata/numexpr/wiki/NumexprMKL
 
 from __future__ import print_function
+
 import datetime
 import sys
-import numpy as np
-import numexpr as ne
 from time import time
+
+import numpy as np
+
+import numexpr as ne
 
 N = int(2**26)
 

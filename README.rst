@@ -159,6 +159,24 @@ Usage
   array([ True, False, False], dtype=bool)
 
 
+Free-threading support
+----------------------
+Starting on CPython 3.13 onwards there is a new distribution that disables the
+Global Interpreter Lock (GIL) altogether, thus increasing the performance yields
+under multi-threaded conditions on a single interpreter, as opposed to having to use
+multiprocessing.
+
+Whilst numexpr has been demonstrated to work under free-threaded
+CPython, considerations need to be taken when using numexpr native parallel
+implementation vs using Python threads directly in order to prevent oversubscription,
+we recommend either using the main CPython interpreter thread to spawn multiple C threads
+using the parallel numexpr API, or spawning multiple CPython threads that do not use
+the parallel API.
+
+For more information about free-threaded CPython, we recommend visiting the following
+`community Wiki <https://py-free-threading.github.io/>`
+
+
 Documentation
 -------------
 

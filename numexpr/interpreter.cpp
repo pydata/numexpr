@@ -25,7 +25,7 @@
 #define fmin min
 #define NE_INFINITY (DBL_MAX+DBL_MAX)
 #define NE_NAN (INFINITY-INFINITY)
-#else 
+#else
 #define NE_INFINITY INFINITY
 #define NE_NAN NAN
 #endif
@@ -556,7 +556,7 @@ stringcontains(const char *haystack_start, const char *needle_start, npy_intp ma
 
     size_t si = 0;
     size_t min_len = min(needle_len, haystack_len);
-    while (*haystack && *needle && si < min_len)
+    while (si < min_len && *haystack && *needle)
     {
       ok &= *haystack++ == *needle++;
       si++;
@@ -573,7 +573,7 @@ stringcontains(const char *haystack_start, const char *needle_start, npy_intp ma
     }
 
     /* calc haystack length */
-    while (*haystack && si < haystack_len) {
+    while (si < haystack_len && *haystack) {
         haystack++;
         si++;
     }
@@ -652,6 +652,7 @@ int vm_engine_iter_task(NpyIter *iter, npy_intp *memsteps,
 
     /* Then finish off the rest */
     if (block_size > 0) do {
+        block_size = *size_ptr;
 #define REDUCTION_INNER_LOOP
 #define BLOCK_SIZE block_size
 #include "interp_body.cpp"
@@ -698,6 +699,7 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps,
 
     /* Then finish off the rest */
     if (block_size > 0) do {
+        block_size = *size_ptr;
 #define BLOCK_SIZE block_size
 #define NO_OUTPUT_BUFFERING // Because it's a reduction
 #include "interp_body.cpp"
@@ -1260,7 +1262,7 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     PyArrayObject *singleton;
     bool writeback;
     // NOTE: cannot assign on declaration due to `goto` statements
-    singleton = NULL; 
+    singleton = NULL;
     writeback = false;
     if (n_inputs == 0) {
         char retsig = get_return_sig(self->program);
@@ -1319,10 +1321,10 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
     /* Allocate the iterator or nested iterators */
     if (reduction_size < 0 || full_reduction) {
         /* When there's no reduction, reduction_size is 1 as well */
-        // RAM: in issue #277 this was also the case for reductions on arrays 
-        // with axis=0 having singleton dimension, i.e. such ops were interpreted 
-        // as full_reductions when they weren't in Numpy. As such, the default 
-        // reduction_size is now -1 and we add the flag for full_reduction, 
+        // RAM: in issue #277 this was also the case for reductions on arrays
+        // with axis=0 having singleton dimension, i.e. such ops were interpreted
+        // as full_reductions when they weren't in Numpy. As such, the default
+        // reduction_size is now -1 and we add the flag for full_reduction,
         // e.g. ne.evaluate("sum(a)")"
         iter = NpyIter_AdvancedNew(n_inputs+1, operands,
                             NPY_ITER_BUFFERED|

@@ -6,37 +6,56 @@ permissions:
   contents: read
 
 env:
-  CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy
+  CIBW_BEFORE_BUILD: pip install setuptools oldest-supported-numpy pytest
+  CIBW_BEFORE_TEST: pip install pytest
   CIBW_BUILD_VERBOSITY: 1
-  CIBW_TEST_COMMAND: python -c "import sys, numexpr; sys.exit(0 if numexpr.test().wasSuccessful() else 1)"
-  CIBW_TEST_SKIP: "*macosx*arm64*"
+  CIBW_TEST_COMMAND: pytest --pyargs numexpr
+  # Testing on aarch64 takes too long, as it is currently emulated on GitHub Actions
+  CIBW_TEST_SKIP: "*linux*aarch64*"
   # Building for musllinux and aarch64 takes way too much time.
   # Moreover, NumPy is not providing musllinux for x86_64 either, so it's not worth it.
   CIBW_SKIP: "*musllinux*aarch64* *musllinux*x86_64*"
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }} - ${{ matrix.p_ver }}
-    runs-on: ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }}
+    runs-on: ${{ matrix.runs-on || matrix.os }}
     permissions:
       contents: write
     env:
-      CIBW_BUILD: ${{ matrix.cibw_build }}
+      CIBW_BUILD: ${{ matrix.cibw_pattern }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
+      CIBW_ENABLE: cpython-freethreading
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        arch: [x86_64, aarch64]
-        cibw_build: ["cp3{10,11,12,13}-*"]
-        p_ver: ["3.10-3.13"]
-        exclude:
-          - os: windows-latest
-            arch: aarch64
-          # cibuild is already in charge to build aarch64 (see CIBW_ARCHS_MACOS)
-          - os: macos-latest
-            arch: aarch64
+        include:
+          # Linux x86_64 builds
+          - os: ubuntu-latest
+            arch: x86_64
+            cibw_pattern: "cp3{10,11,12,13,13t}-manylinux*"
+            artifact_name: "linux-x86_64"
 
+          # Linux ARM64 builds (native runners)
+          - os: ubuntu-latest
+            arch: aarch64
+            cibw_pattern: "cp3{10,11,12,13,13t}-manylinux*"
+            artifact_name: "linux-aarch64"
+            # Don't use native runners for now (looks like wait times are too long)
+            #runs-on: ["ubuntu-latest", "arm64"]
+
+          # Windows builds
+          - os: windows-latest
+            arch: x86_64
+            cibw_pattern: "cp3{10,11,12,13,13t}-win*"
+            artifact_name: "windows-x86_64"
+
+          # macOS builds (universal2)
+          - os: macos-latest
+            arch: x86_64
+            cibw_pattern: "cp3{10,11,12,13,13t}-macosx*"
+            artifact_name: "macos-universal2"
     steps:
       - uses: actions/checkout@v3
 
@@ -45,17 +64,22 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install cibuildwheel
+      - name: Setup free-threading variables
+        if: ${{ endsWith(matrix.cibw_build, 't-*') }}
+        shell: bash -l {0}
         run: |
-          python -m pip install cibuildwheel
+          echo "CIBW_BEFORE_BUILD=pip install setuptools numpy" >> "$GITHUB_ENV"
+          echo "CIBW_BEFORE_TEST=pip install pytest pytest-run-parallel" >> "$GITHUB_ENV"
+          echo "CIBW_TEST_COMMAND=pytest --parallel-threads=4 --pyargs numexpr" >> "$GITHUB_ENV"
 
-      - uses: docker/setup-qemu-action@v2
-        if: ${{ matrix.arch == 'aarch64' }}
-        name: Set up QEMU
+      - name: Set up QEMU
+        if: matrix.arch == 'aarch64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
       - name: Build wheels
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
+        uses: pypa/cibuildwheel@v2.23
 
       - name: Make sdist
         if: ${{ matrix.os == 'windows-latest' }}
@@ -65,6 +89,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
+          name: ${{ matrix.artifact_name }}
           path: ./wheelhouse/*
 
       - name: Upload to GitHub Release

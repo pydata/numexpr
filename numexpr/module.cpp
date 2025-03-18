@@ -51,7 +51,9 @@ void *th_worker(void *tidptr)
     while (1) {
 
         /* Sentinels have to be initialised yet */
-        gs.init_sentinels_done = 0;
+        if (tid == 0) {
+            gs.init_sentinels_done = 0;
+        }
 
         /* Meeting point for all threads (wait for initialization) */
         pthread_mutex_lock(&gs.count_threads_mutex);
@@ -380,7 +382,7 @@ Py_set_num_threads(PyObject *self, PyObject *args)
 }
 
 static PyObject*
-Py_get_num_threads(PyObject *self, PyObject *args) 
+Py_get_num_threads(PyObject *self, PyObject *args)
 {
     int n_thread;
     n_thread = gs.nthreads;
@@ -476,6 +478,10 @@ PyInit_interpreter(void) {
 
     if (m == NULL)
         INITERROR;
+
+    #ifdef Py_GIL_DISABLED
+        PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+    #endif
 
     Py_INCREF(&NumExprType);
     PyModule_AddObject(m, "NumExpr", (PyObject *)&NumExprType);

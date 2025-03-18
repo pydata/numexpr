@@ -11,37 +11,52 @@
 
 
 import os
-import sys
 import platform
+import subprocess
+import sys
+import unittest
 import warnings
 from contextlib import contextmanager
-import subprocess
+from unittest.mock import MagicMock
 
-import numpy as np
-from numpy import (
-    array, arange, empty, zeros, int32, int64, uint16, cdouble, float64, rec,
-    copy, ones_like, where, all as alltrue, linspace,
-    sum, prod, sqrt, fmod, floor, ceil,
-    sin, cos, tan, arcsin, arccos, arctan, arctan2,
-    sinh, cosh, tanh, arcsinh, arccosh, arctanh,
-    log, log1p, log10, exp, expm1, conj)
 import numpy
-from numpy.testing import (assert_equal, assert_array_equal,
-                           assert_array_almost_equal, assert_allclose)
-from numpy import shape, allclose, array_equal, ravel, isnan, isinf
+import numpy as np
+from numpy import all as alltrue
+from numpy import (allclose, arange, arccos, arccosh, arcsin, arcsinh, arctan,
+                   arctan2, arctanh, array, array_equal, cdouble, ceil, conj,
+                   copy, cos, cosh, empty, exp, expm1, float64, floor, fmod,
+                   int32, int64, isinf, isnan, linspace, log, log1p, log10,
+                   ones_like, prod, ravel, rec, shape, sin, sinh, sqrt, sum,
+                   tan, tanh, uint16, where, zeros)
+from numpy.testing import (assert_allclose, assert_array_almost_equal,
+                           assert_array_equal, assert_equal)
 
 import numexpr
-from numexpr import E, NumExpr, evaluate, re_evaluate, validate, disassemble, use_vml
+from numexpr import (E, NumExpr, disassemble, evaluate, re_evaluate, use_vml,
+                     validate)
 from numexpr.expressions import ConstantNode
 from numexpr.utils import detect_number_of_cores
 
-import unittest
+try:
+    import pytest
+    pytest_available = True
+except ImportError:
+    pytest_available = False
 
 TestCase = unittest.TestCase
 
 double = np.double
 long = int
 MAX_THREADS = 16
+
+
+if not pytest_available:
+    def identity(f):
+        return f
+
+    pytest = MagicMock()
+    pytest.mark = MagicMock()
+    pytest.mark.thread_unsafe = identity
 
 
 class test_numexpr(TestCase):
@@ -318,6 +333,7 @@ class test_numexpr(TestCase):
         evaluate('1')
         assert sys.getrefcount(a) == 2
 
+    @pytest.mark.thread_unsafe
     def test_locals_clears_globals(self):
         # Check for issue #313, whereby clearing f_locals also clear f_globals
         # if in the top-frame. This cannot be done inside `unittest` as it is always
@@ -341,6 +357,7 @@ class test_numexpr(TestCase):
 
 
 
+@pytest.mark.thread_unsafe
 class test_numexpr2(test_numexpr):
     """Testing with 2 threads"""
     nthreads = 2
@@ -512,6 +529,7 @@ class test_evaluate(TestCase):
         else:
             self.fail()
 
+    @pytest.mark.thread_unsafe
     def test_sanitize(self):
         with _environment('NUMEXPR_SANITIZE', '1'):
             # Forbid dunder
@@ -590,7 +608,7 @@ class test_evaluate(TestCase):
             x = np.array(['a', 'b'], dtype=bytes)
             evaluate("x == 'b:'")
 
-
+    @pytest.mark.thread_unsafe
     def test_no_sanitize(self):
         try: # Errors on compile() after eval()
             evaluate('import os;', sanitize=False)
@@ -677,6 +695,7 @@ class test_evaluate(TestCase):
     if 'sparc' not in platform.machine():
         # Execution order set here so as to not use too many threads
         # during the rest of the execution.  See #33 for details.
+        @pytest.mark.thread_unsafe
         def test_changing_nthreads_00_inc(self):
             a = linspace(-1, 1, 1000000)
             b = ((.25 * a + .75) * a - 1.5) * a - 2
@@ -685,6 +704,7 @@ class test_evaluate(TestCase):
                 c = evaluate("((.25*a + .75)*a - 1.5)*a - 2")
                 assert_array_almost_equal(b, c)
 
+        @pytest.mark.thread_unsafe
         def test_changing_nthreads_01_dec(self):
             a = linspace(-1, 1, 1000000)
             b = ((.25 * a + .75) * a - 1.5) * a - 2
@@ -1123,6 +1143,7 @@ def _environment(key, value):
             del os.environ[key]
 
 # Test cases for the threading configuration
+@pytest.mark.thread_unsafe
 class test_threading_config(TestCase):
     def test_max_threads_unset(self):
         # Has to be done in a subprocess as `importlib.reload` doesn't let us
@@ -1306,6 +1327,7 @@ def _worker(qout=None):
 
 # Case test for subprocesses (via multiprocessing module)
 class test_subprocess(TestCase):
+    @pytest.mark.thread_unsafe
     def test_multiprocess(self):
         try:
             import multiprocessing as mp
@@ -1328,8 +1350,9 @@ class test_subprocess(TestCase):
 def print_versions():
     """Print the versions of software that numexpr relies on."""
     # from pkg_resources import parse_version
-    from numexpr.cpuinfo import cpu
     import platform
+
+    from numexpr.cpuinfo import cpu
 
     print('-=' * 38)
     print('Numexpr version:   %s' % numexpr.__version__)
@@ -1371,8 +1394,8 @@ test.__test__ = False
 
 
 def suite():
-    import unittest
     import platform as pl
+    import unittest
 
     theSuite = unittest.TestSuite()
     niter = 1

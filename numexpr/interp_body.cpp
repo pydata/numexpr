@@ -7,13 +7,13 @@
   See LICENSE.txt for details about copyright and rights to use.
 **********************************************************************/
 
-// WARNING: This file is included multiple times in `interpreter.cpp`. It is 
-// essentially a very macro-heavy jump table. Interpretation is best done by 
+// WARNING: This file is included multiple times in `interpreter.cpp`. It is
+// essentially a very macro-heavy jump table. Interpretation is best done by
 // the developer by expanding all macros (e.g. adding `'-E'` to the `extra_cflags`
 // argument in `setup.py` and looking at the resulting `interpreter.cpp`.
 //
-// Changes made to this file will not be recognized by the compile, so the developer 
-// must make a trivial change is made to `interpreter.cpp` or delete the `build/` 
+// Changes made to this file will not be recognized by the compile, so the developer
+// must make a trivial change is made to `interpreter.cpp` or delete the `build/`
 // directory in-between each build.
 {
 #define VEC_LOOP(expr) for(j = 0; j < BLOCK_SIZE; j++) {       \

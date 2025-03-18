@@ -35,6 +35,7 @@ scalar_constant_types = tuple(scalar_constant_types)
 
 from numexpr import interpreter
 
+
 class Expression():
 
     def __getattr__(self, name):
@@ -269,10 +270,10 @@ def rtruediv_op(a, b):
 
 @ophelper
 def pow_op(a, b):
-    
+
     if isinstance(b, ConstantNode):
         x = b.value
-        if (    a.astKind in ('int', 'long') and 
+        if (    a.astKind in ('int', 'long') and
                 b.astKind in ('int', 'long') and x < 0) :
             raise ValueError(
                 'Integers to negative integer powers are not allowed.')
