@@ -14,10 +14,8 @@ import os
 import platform
 import subprocess
 import sys
-import unittest
 import warnings
 from contextlib import contextmanager
-from unittest.mock import MagicMock
 
 import numpy
 import numpy as np
@@ -36,6 +34,9 @@ from numexpr import (E, NumExpr, disassemble, evaluate, re_evaluate, use_vml,
                      validate)
 from numexpr.expressions import ConstantNode
 from numexpr.utils import detect_number_of_cores
+
+import unittest
+from unittest.mock import MagicMock
 
 try:
     import pytest
