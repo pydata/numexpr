@@ -11,7 +11,7 @@ env:
   CIBW_BUILD_VERBOSITY: 1
   CIBW_TEST_COMMAND: pytest --pyargs numexpr
   # Testing on aarch64 takes too long, as it is currently emulated on GitHub Actions
-  CIBW_TEST_SKIP: "*linux*aarch64*"
+  # CIBW_TEST_SKIP: "*linux*aarch64*"
   # Building for musllinux and aarch64 takes way too much time.
   # Moreover, NumPy is not providing musllinux for x86_64 either, so it's not worth it.
   CIBW_SKIP: "*musllinux*aarch64* *musllinux*x86_64*"
