@@ -38,7 +38,7 @@ jobs:
             artifact_name: "linux-x86_64"
 
           # Linux ARM64 builds (native runners)
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
             arch: aarch64
             cibw_pattern: "cp3{10,11,12,13,13t}-manylinux*"
             artifact_name: "linux-aarch64"
@@ -72,11 +72,11 @@ jobs:
           echo "CIBW_BEFORE_TEST=pip install pytest pytest-run-parallel" >> "$GITHUB_ENV"
           echo "CIBW_TEST_COMMAND=pytest --parallel-threads=4 --pyargs numexpr" >> "$GITHUB_ENV"
 
-      - name: Set up QEMU
-        if: matrix.arch == 'aarch64'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
+      # - name: Set up QEMU
+      #   if: matrix.arch == 'aarch64'
+      #   uses: docker/setup-qemu-action@v3
+      #   with:
+      #     platforms: arm64
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23
