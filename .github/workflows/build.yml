@@ -11,7 +11,6 @@ env:
   CIBW_BUILD_VERBOSITY: 1
   CIBW_TEST_COMMAND: pytest --pyargs numexpr
   # Testing on aarch64 takes too long, as it is currently emulated on GitHub Actions
-  # CIBW_TEST_SKIP: "*linux*aarch64*"
   # Building for musllinux and aarch64 takes way too much time.
   # Moreover, NumPy is not providing musllinux for x86_64 either, so it's not worth it.
   CIBW_SKIP: "*musllinux*aarch64* *musllinux*x86_64*"
@@ -71,12 +70,6 @@ jobs:
           echo "CIBW_BEFORE_BUILD=pip install setuptools numpy" >> "$GITHUB_ENV"
           echo "CIBW_BEFORE_TEST=pip install pytest pytest-run-parallel" >> "$GITHUB_ENV"
           echo "CIBW_TEST_COMMAND=pytest --parallel-threads=4 --pyargs numexpr" >> "$GITHUB_ENV"
-
-      # - name: Set up QEMU
-      #   if: matrix.arch == 'aarch64'
-      #   uses: docker/setup-qemu-action@v3
-      #   with:
-      #     platforms: arm64
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23
