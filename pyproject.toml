@@ -15,12 +15,12 @@ description = "Fast numerical expression evaluator for NumPy"
 readme = "README.rst"
 authors = [{name = "David M. Cooke, Francesc Alted, and others", email = "blosc@blosc.org"}]
 maintainers = [{ name = "Blosc Development Team", email = "blosc@blosc.org"}]
+license = "MIT"
 classifiers = [
     "Development Status :: 6 - Mature",
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Operating System :: Microsoft :: Windows",
