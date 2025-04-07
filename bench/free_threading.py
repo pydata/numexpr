@@ -1,36 +1,61 @@
 #################################################################################
-# To mimic the scenario that computation is i/o bound and constrained by memory
+# To compare the performance of numexpr when free-threading CPython is used.
 #
-# It's a much simplified version that the chunk is computed in a loop,
-# and expression is evaluated in a sequence, which is not true in reality.
-# Neverthless, numexpr outperforms numpy.
+# This example makes use of Python threads, as opposed to C native ones
+# in order to highlight the improvement introduced by free-threading CPython,
+# which now disables the GIL altogether.
 #################################################################################
 """
+Results with GIL-enabled CPython:
+
 Benchmarking Expression 1:
-NumPy time (threaded over 32 chunks with 2 threads): 4.612313 seconds
-numexpr time (threaded with re_evaluate over 32 chunks with 2 threads): 0.951172 seconds
-numexpr speedup: 4.85x
+NumPy time (threaded over 32 chunks with 16 threads): 1.173090 seconds
+numexpr time (threaded with re_evaluate over 32 chunks with 16 threads): 0.951071 seconds
+numexpr speedup: 1.23x
 ----------------------------------------
 Benchmarking Expression 2:
-NumPy time (threaded over 32 chunks with 2 threads): 23.862752 seconds
-numexpr time (threaded with re_evaluate over 32 chunks with 2 threads): 2.182058 seconds
-numexpr speedup: 10.94x
+NumPy time (threaded over 32 chunks with 16 threads): 10.410874 seconds
+numexpr time (threaded with re_evaluate over 32 chunks with 16 threads): 8.248753 seconds
+numexpr speedup: 1.26x
 ----------------------------------------
 Benchmarking Expression 3:
-NumPy time (threaded over 32 chunks with 2 threads): 20.594895 seconds
-numexpr time (threaded with re_evaluate over 32 chunks with 2 threads): 2.927881 seconds
-numexpr speedup: 7.03x
+NumPy time (threaded over 32 chunks with 16 threads): 9.605909 seconds
+numexpr time (threaded with re_evaluate over 32 chunks with 16 threads): 11.087108 seconds
+numexpr speedup: 0.87x
 ----------------------------------------
 Benchmarking Expression 4:
-NumPy time (threaded over 32 chunks with 2 threads): 12.834101 seconds
-numexpr time (threaded with re_evaluate over 32 chunks with 2 threads): 5.392480 seconds
-numexpr speedup: 2.38x
+NumPy time (threaded over 32 chunks with 16 threads): 3.836962 seconds
+numexpr time (threaded with re_evaluate over 32 chunks with 16 threads): 18.054531 seconds
+numexpr speedup: 0.21x
+----------------------------------------
+
+Results with free-threading CPython:
+
+Benchmarking Expression 1:
+NumPy time (threaded over 32 chunks with 16 threads): 3.415349 seconds
+numexpr time (threaded with re_evaluate over 32 chunks with 16 threads): 2.618876 seconds
+numexpr speedup: 1.30x
+----------------------------------------
+Benchmarking Expression 2:
+NumPy time (threaded over 32 chunks with 16 threads): 19.005238 seconds
+numexpr time (threaded with re_evaluate over 32 chunks with 16 threads): 12.611407 seconds
+numexpr speedup: 1.51x
+----------------------------------------
+Benchmarking Expression 3:
+NumPy time (threaded over 32 chunks with 16 threads): 20.555149 seconds
+numexpr time (threaded with re_evaluate over 32 chunks with 16 threads): 17.690749 seconds
+numexpr speedup: 1.16x
+----------------------------------------
+Benchmarking Expression 4:
+NumPy time (threaded over 32 chunks with 16 threads): 38.338372 seconds
+numexpr time (threaded with re_evaluate over 32 chunks with 16 threads): 35.074684 seconds
+numexpr speedup: 1.09x
 ----------------------------------------
 """
 
 import os
 
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "2"
 import threading
 import timeit
 
@@ -91,14 +116,6 @@ def benchmark_numexpr_re_evaluate(expr, a, b, c, results, indices):
             ),
             number=num_runs,
         )
-        # else:
-        # Re-evaluate subsequent chunks with re_evaluate
-        # time_taken = timeit.timeit(
-        #     lambda: ne.re_evaluate(
-        #         local_dict={"a": a[start:end], "b": b[start:end], "c": c[start:end]}
-        #     ),
-        #     number=num_runs,
-        # )
         results.append(time_taken)
 
 
