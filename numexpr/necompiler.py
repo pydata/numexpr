@@ -775,13 +775,11 @@ def getArguments(names, local_dict=None, global_dict=None, _frame_depth: int=2):
 
 
 # Dictionaries for caching variable names and compiled expressions
-# _names_cache = CacheDict(256)
 _names_cache = threading.local()
-# _numexpr_cache = CacheDict(256)
 _numexpr_cache = threading.local()
-# _numexpr_last = ContextDict()
 _numexpr_last = threading.local()
 evaluate_lock = threading.Lock()
+
 
 def validate(ex: str,
              local_dict: Optional[Dict] = None,
@@ -856,7 +854,6 @@ def validate(ex: str,
     ----
 
     """
-    global _numexpr_last
     if not hasattr(_numexpr_last, 'l'):
         _numexpr_last.l = ContextDict()
 
@@ -998,7 +995,6 @@ def re_evaluate(local_dict: Optional[Dict] = None,
         The calling frame depth. Unless you are a NumExpr developer you should
         not set this value.
     """
-    global _numexpr_last
     if not hasattr(_numexpr_last, 'l'):
         _numexpr_last.l = ContextDict()
 
@@ -1009,5 +1005,5 @@ def re_evaluate(local_dict: Optional[Dict] = None,
     argnames = _numexpr_last.l['argnames']
     args = getArguments(argnames, local_dict, global_dict, _frame_depth=_frame_depth)
     kwargs = _numexpr_last.l['kwargs']
-    with evaluate_lock:
-        return compiled_ex(*args, **kwargs)
+    # with evaluate_lock:
+    return compiled_ex(*args, **kwargs)
