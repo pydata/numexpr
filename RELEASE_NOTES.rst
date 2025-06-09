@@ -2,6 +2,12 @@
 Release notes for NumExpr 2.11 series
 =====================================
 
+Changes from 2.11.0 to 2.11.1
+-----------------------------
+
+* **Under development.**
+
+
 Changes from 2.10.2 to 2.11.0
 -----------------------------
 
@@ -18,6 +24,7 @@ Changes from 2.10.2 to 2.11.0
   This should make it easier to run the tests and contribute to the project.
 
 * Python 3.10 is now the minimum supported version.
+
 
 Changes from 2.10.1 to 2.10.2
 -----------------------------
