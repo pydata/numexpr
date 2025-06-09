@@ -1383,29 +1383,6 @@ def suite():
     theSuite = unittest.TestSuite()
     niter = 1
 
-    for n in range(niter):
-        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_numexpr))
-        if 'sparc' not in platform.machine():
-            theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_numexpr2))
-        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_evaluate))
-        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_int32_int64))
-        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_uint32_int64))
-        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_strings))
-        theSuite.addTest(
-            unittest.defaultTestLoader.loadTestsFromTestCase(test_irregular_stride))
-        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_zerodim))
-        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_threading_config))
-
-        # multiprocessing module is not supported on Hurd/kFreeBSD
-        if (pl.system().lower() not in ('gnu', 'gnu/kfreebsd')):
-            theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_subprocess))
-
-        # I need to put this test after test_subprocess because
-        # if not, the test suite locks immediately before test_subproces.
-        # This only happens with Windows, so I suspect of a subtle bad
-        # interaction with threads and subprocess :-/
-        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_threading))
-
     # Add the pytest parametrized tests only if pytest is available
     if pytest_available:
         # Create a class that will run the test_expressions function with different parameters
@@ -1436,10 +1413,32 @@ def suite():
                 method_name = f"test_expr_{i}"
                 setattr(TestExpressions, method_name, create_test_method())
 
-        # Add our dynamically created TestExpressions to the suite
+    for n in range(niter):
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_numexpr))
+        if 'sparc' not in platform.machine():
+            theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_numexpr2))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_evaluate))
+        # Add the dynamically created TestExpressions to the suite
+        if pytest_available:
+            theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestExpressions))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_int32_int64))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_uint32_int64))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_strings))
         theSuite.addTest(
-            unittest.defaultTestLoader.loadTestsFromTestCase(TestExpressions)
-        )
+            unittest.defaultTestLoader.loadTestsFromTestCase(test_irregular_stride))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_zerodim))
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_threading_config))
+
+        # multiprocessing module is not supported on Hurd/kFreeBSD
+        if (pl.system().lower() not in ('gnu', 'gnu/kfreebsd')):
+            theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_subprocess))
+
+        # I need to put this test after test_subprocess because
+        # if not, the test suite locks immediately before test_subproces.
+        # This only happens with Windows, so I suspect of a subtle bad
+        # interaction with threads and subprocess :-/
+        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_threading))
+
 
     return theSuite
 
