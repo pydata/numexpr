@@ -324,9 +324,11 @@ class test_numexpr(TestCase):
         res = evaluate('where(a, b, c)')
         assert_array_equal(res, c)
 
+    # Comment out this test completely, as modern Python optimizes handling refcounts.
+    # See #511 for more info.
     @unittest.skipIf(hasattr(sys, "pypy_version_info"),
                      "PyPy does not have sys.getrefcount()")
-    def test_refcount(self):
+    def _test_refcount(self):
         # Regression test for issue #310
         a = array([1])
         assert sys.getrefcount(a) == 2
