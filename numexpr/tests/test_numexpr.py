@@ -808,108 +808,89 @@ def equal(a, b, exact):
 class Skip(Exception): pass
 
 
-def test_expressions():
-    test_no = [0]
-
-    def make_test_method(a, a2, b, c, d, e, x, expr,
-                         test_scalar, dtype, optimization, exact, section):
-        this_locals = locals()
-
-        def method():
-            try:
-                # We don't want to listen at RuntimeWarnings like
-                # "overflows" or "divide by zero" in plain eval().
-                warnings.simplefilter("ignore")
-                npval = eval(expr, globals(), this_locals)
-                warnings.simplefilter("always")
-                npval = eval(expr, globals(), this_locals)
-            except Exception as ex:
-                # just store the exception in a variable
-                # compatibility with numpy v1.12
-                # see also https://github.com/pydata/numexpr/issues/239
-                np_exception = ex
-                npval = None
-            else:
-                np_exception = None
-
-            try:
-                neval = evaluate(expr, local_dict=this_locals,
-                                 optimization=optimization)
-            except AssertionError:
-                raise
-            except NotImplementedError:
-                print('%r not implemented for %s (scalar=%d, opt=%s)'
-                      % (expr, dtype.__name__, test_scalar, optimization))
-            except Exception as ne_exception:
-                same_exc_type = issubclass(type(ne_exception),
-                                           type(np_exception))
-                if np_exception is None or not same_exc_type:
-                    print('numexpr error for expression %r' % (expr,))
-                    raise
-            except:
-                print('numexpr error for expression %r' % (expr,))
-                raise
-            else:
-                msg = ('expected numexpr error not raised for expression '
-                       '%r' % (expr,))
-                assert np_exception is None, msg
-
-                assert equal(npval, neval, exact), """%r
-(test_scalar=%r, dtype=%r, optimization=%r, exact=%r,
- npval=%r (%r - %r)\n neval=%r (%r - %r))""" % (expr, test_scalar, dtype.__name__,
-                                                optimization, exact,
-                                                npval, type(npval), shape(npval),
-                                                neval, type(neval), shape(neval))
-
-        method.description = ('test_expressions(%s, test_scalar=%r, '
-                              'dtype=%r, optimization=%r, exact=%r)') % (expr, test_scalar, dtype.__name__, optimization, exact)
-        test_no[0] += 1
-        method.__name__ = 'test_scalar%d_%s_%s_%s_%04d' % (test_scalar,
-                                                           dtype.__name__,
-                                                           optimization.encode('ascii'),
-                                                           section.encode('ascii'),
-                                                           test_no[0])
-        return method
-
+@pytest.mark.parametrize(
+    "expr,test_scalar,dtype,optimization,exact,section_name",
+    [
+        (expr, test_scalar, dtype, optimization, exact, section_name)
+        for test_scalar in (0, 1, 2)
+        for dtype in (int, int, np.float32, double, complex)
+        for optimization, exact in [
+            ("none", False),
+            ("moderate", False),
+            ("aggressive", False),
+        ]
+        for section_name, section_tests in tests
+        for expr in section_tests
+        if not (
+            dtype == complex
+            and (
+                "<" in expr
+                or ">" in expr
+                or "%" in expr
+                or "arctan2" in expr
+                or "fmod" in expr
+                or "floor" in expr
+                or "ceil" in expr
+            )
+        )
+        if not (dtype in (int, int) and test_scalar and expr == "(a+1) ** -1")
+    ],
+)
+def test_expressions(
+    expr, test_scalar, dtype, optimization, exact, section_name
+):
+    array_size = 100
+    a = arange(2 * array_size, dtype=dtype)[::2]
+    a2 = zeros([array_size, array_size], dtype=dtype)
+    b = arange(array_size, dtype=dtype) / array_size
+    c = arange(array_size, dtype=dtype)
+    d = arange(array_size, dtype=dtype)
+    e = arange(array_size, dtype=dtype)
     x = None
-    for test_scalar in (0, 1, 2):
-        for dtype in (int, int, np.float32, double, complex):
-            array_size = 100
-            a = arange(2 * array_size, dtype=dtype)[::2]
-            a2 = zeros([array_size, array_size], dtype=dtype)
-            b = arange(array_size, dtype=dtype) / array_size
-            c = arange(array_size, dtype=dtype)
-            d = arange(array_size, dtype=dtype)
-            e = arange(array_size, dtype=dtype)
-            if dtype == complex:
-                a = a.real
-                for x in [a2, b, c, d, e]:
-                    x += 1j
-                    x *= 1 + 1j
-            if test_scalar == 1:
-                a = a[array_size // 2]
-            if test_scalar == 2:
-                b = b[array_size // 2]
-            for optimization, exact in [
-                ('none', False), ('moderate', False), ('aggressive', False)]:
-                for section_name, section_tests in tests:
-                    for expr in section_tests:
-                        if (dtype == complex and
-                            ('<' in expr or '>' in expr or '%' in expr
-                             or "arctan2" in expr or "fmod" in expr
-                             or "floor" in expr or "ceil" in expr)):
-                            # skip complex comparisons or functions not
-                            # defined in complex domain.
-                            continue
-                        if (dtype in (int, int) and test_scalar and
-                                    expr == '(a+1) ** -1'):
-                            continue
 
-                        m = make_test_method(a, a2, b, c, d, e, x,
-                                             expr, test_scalar, dtype,
-                                             optimization, exact,
-                                             section_name)
-                        yield m
+    if dtype == complex:
+        a = a.real
+        for var in [a2, b, c, d, e]:
+            var += 1j
+            var *= 1 + 1j
+
+    if test_scalar == 1:
+        a = a[array_size // 2]
+    if test_scalar == 2:
+        b = b[array_size // 2]
+
+    # We don't want to listen at RuntimeWarnings like
+    # "overflows" or "divide by zero" in plain eval().
+    warnings.simplefilter("ignore")
+    try:
+        npval = eval(expr, globals(), locals())
+    except Exception as ex:
+        np_exception = ex
+        npval = None
+    else:
+        np_exception = None
+    warnings.simplefilter("always")
+
+    try:
+        neval = evaluate(expr, local_dict=locals(), optimization=optimization)
+    except AssertionError:
+        raise
+    except NotImplementedError:
+        pytest.skip(
+            f"{expr!r} not implemented for {dtype.__name__} (scalar={test_scalar}, opt={optimization})"
+        )
+    except Exception as ne_exception:
+        same_exc_type = issubclass(type(ne_exception), type(np_exception))
+        if np_exception is None or not same_exc_type:
+            pytest.fail(f"numexpr error for expression {expr!r}")
+    else:
+        if np_exception is not None:
+            pytest.fail(f"expected numexpr error not raised for expression {expr!r}")
+
+        assert equal(npval, neval, exact), f"""{expr!r}
+            (test_scalar={test_scalar!r}, dtype={dtype.__name__!r}, optimization={optimization!r}, exact={exact!r},
+            npval={npval!r} ({type(npval)!r} - {shape(npval)!r})
+            neval={neval!r} ({type(neval)!r} - {shape(neval)!r}))"""
 
 
 class test_int64(TestCase):
@@ -1402,25 +1383,11 @@ def suite():
     theSuite = unittest.TestSuite()
     niter = 1
 
-    class TestExpressions(TestCase):
-        pass
-
-    def add_method(func):
-        def method(self):
-            return func()
-
-        setattr(TestExpressions, func.__name__,
-                method.__get__(None, TestExpressions))
-
-    for func in test_expressions():
-        add_method(func)
-
     for n in range(niter):
         theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_numexpr))
         if 'sparc' not in platform.machine():
             theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_numexpr2))
         theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_evaluate))
-        theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestExpressions))
         theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_int32_int64))
         theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_uint32_int64))
         theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_strings))
@@ -1438,6 +1405,41 @@ def suite():
         # This only happens with Windows, so I suspect of a subtle bad
         # interaction with threads and subprocess :-/
         theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_threading))
+
+    # Add the pytest parametrized tests only if pytest is available
+    if pytest_available:
+        # Create a class that will run the test_expressions function with different parameters
+        class TestExpressions(unittest.TestCase):
+            pass
+
+        # Get the parameters from the pytest.mark.parametrize decorator
+        # This is safer than accessing internal pytest modules
+        marker = getattr(test_expressions, "pytestmark", None)
+        if marker and hasattr(marker[0], "args") and len(marker[0].args) >= 2:
+            param_list = marker[0].args[1]
+
+            # Create test methods dynamically
+            for i, params in enumerate(param_list):
+                expr, test_scalar, dtype, optimization, exact, section_name = params
+
+                def create_test_method(params=params):
+                    def test_method(self):
+                        expr, test_scalar, dtype, optimization, exact, section_name = (
+                            params
+                        )
+                        test_expressions(
+                            expr, test_scalar, dtype, optimization, exact, section_name
+                        )
+
+                    return test_method
+
+                method_name = f"test_expr_{i}"
+                setattr(TestExpressions, method_name, create_test_method())
+
+        # Add our dynamically created TestExpressions to the suite
+        theSuite.addTest(
+            unittest.defaultTestLoader.loadTestsFromTestCase(TestExpressions)
+        )
 
     return theSuite
 
