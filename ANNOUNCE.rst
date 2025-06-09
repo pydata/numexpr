@@ -1,28 +1,33 @@
 =========================
-Announcing NumExpr 2.10.2
+Announcing NumExpr 2.11.0
 =========================
 
 Hi everyone,
 
-NumExpr 2.10.2 provides wheels for Python 2.13 for first time.
-Also, there is better support for CPUs that do not have a power
-of 2 number of cores.  Finally, numexpr is allowed to run with
-the multithreading package in Python.
+NumExpr 2.11.0 Initial support for free-threaded Python 3.13t has been added.
+This is still experimental, so please report any issues you find.
+Finally, Python 3.10 is now the minimum supported version.
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.10.1 to 2.10.2
+Changes from 2.10.2 to 2.11.0
 -----------------------------
 
-* Better support for CPUs that do not have a power of 2 number of
-  cores.  See #479 and #490.  Thanks to @avalentino.
+* Initial support for free-threaded Python 3.13t has been added.
+  This is still experimental, so please report any issues you find.
+  For more info, see discussions PRs #504, #505 and #508.
+  Thanks to @andfoy, @rgommers and @FrancescAlted for the work.
 
-* Allow numexpr to run with the multithreading package in Python.
-  See PR #496.  Thanks to @emmaai
+* Fix imaginary evaluation in the form of `1.1e1j`.  This was
+  previously not supported and would raise an error.  Thanks to @27rabbitlt
+  for the fix.
 
-* Wheels for Python 3.13 are now provided.
+* The test suite has been modernized to use `pytest` instead of `unittest`.
+  This should make it easier to run the tests and contribute to the project.
+
+* Python 3.10 is now the minimum supported version.
 
 What's Numexpr?
 ---------------

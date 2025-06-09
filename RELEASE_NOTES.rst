@@ -1,12 +1,23 @@
 =====================================
-Release notes for NumExpr 2.10 series
+Release notes for NumExpr 2.11 series
 =====================================
 
-Changes from 2.10.2 to 2.10.3
+Changes from 2.10.2 to 2.11.0
 -----------------------------
 
-* Python 3.10 is now the minimum supported version.
+* Initial support for free-threaded Python 3.13t has been added.
+  This is still experimental, so please report any issues you find.
+  For more info, see discussions PRs #504, #505 and #508.
+  Thanks to @andfoy, @rgommers and @FrancescAlted for the work.
 
+* Fix imaginary evaluation in the form of `1.1e1j`.  This was
+  previously not supported and would raise an error.  Thanks to @27rabbitlt
+  for the fix.
+
+* The test suite has been modernized to use `pytest` instead of `unittest`.
+  This should make it easier to run the tests and contribute to the project.
+
+* Python 3.10 is now the minimum supported version.
 
 Changes from 2.10.1 to 2.10.2
 -----------------------------
