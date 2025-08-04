@@ -1,7 +1,6 @@
 [build-system]
 requires = [
-    "setuptools",
-    "wheel",
+    "setuptools>=77.0.0",
     "numpy>=2.0.0",
 ]
 build-backend = "setuptools.build_meta"
@@ -16,6 +15,7 @@ readme = "README.rst"
 authors = [{name = "David M. Cooke, Francesc Alted, and others", email = "blosc@blosc.org"}]
 maintainers = [{ name = "Blosc Development Team", email = "blosc@blosc.org"}]
 license = "MIT"
+license-files = ["LICENSE.txt", "LICENSES/*"]
 classifiers = [
     "Development Status :: 6 - Mature",
     "Intended Audience :: Developers",
