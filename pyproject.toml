@@ -30,6 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 requires-python = ">=3.10"
 # Follow guidelines from https://scientific-python.org/specs/spec-0000/
@@ -43,8 +44,20 @@ homepage = "https://github.com/pydata/numexpr"
 documentation = "https://numexpr.readthedocs.io"
 repository = "https://github.com/pydata/numexpr"
 
+[dependency-groups]
+test = [
+    "pytest>=7.0.0",
+    "pytest-run-parallel>=0.6.0",
+]
+
 [tool.cibuildwheel]
-skip = "cp36-* cp37-* pp37-* cp38-* pp* *-manylinux_i686 *_ppc64le *_s390x"
+skip = ["*-manylinux_i686", "*_ppc64le", "*_s390x"]
 # Let's use a more recent version of the manylinux image for more modern compilers
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
+test-groups = ["test"]
+test-command = ["python -m pytest --pyargs numexpr"]
+
+[[tool.cibuildwheel.overrides]]
+select = "cp31*t-*"
+test-command = ["python -m pytest --parallel-threads=4 --pyargs numexpr"]
