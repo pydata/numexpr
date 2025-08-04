@@ -15,7 +15,6 @@ jobs:
     permissions:
       contents: write
     env:
-      CIBW_BUILD: ${{ matrix.cibw_pattern }}
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
       CIBW_ENABLE: cpython-freethreading
@@ -26,25 +25,21 @@ jobs:
           # Linux x86_64 builds
           - os: ubuntu-latest
             arch: x86_64
-            cibw_pattern: "*"
             artifact_name: "linux-x86_64"
 
           # Linux ARM64 builds (native runners)
           - os: ubuntu-24.04-arm
             arch: aarch64
-            cibw_pattern: "*"
             artifact_name: "linux-aarch64"
 
           # Windows builds
           - os: windows-latest
             arch: x86_64
-            cibw_pattern: "*"
             artifact_name: "windows-x86_64"
 
           # macOS builds (universal2)
           - os: macos-latest
             arch: x86_64
-            cibw_pattern: "*"
             artifact_name: "macos-universal2"
     steps:
       - uses: actions/checkout@v3
