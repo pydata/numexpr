@@ -7,10 +7,6 @@ permissions:
 
 env:
   CIBW_BUILD_VERBOSITY: 1
-  # Testing on aarch64 takes too long, as it is currently emulated on GitHub Actions
-  # Building for musllinux and aarch64 takes way too much time.
-  # Moreover, NumPy is not providing musllinux for x86_64 either, so it's not worth it.
-  CIBW_SKIP: "*musllinux*aarch64* *musllinux*x86_64*"
 
 jobs:
   build_wheels:
@@ -30,16 +26,14 @@ jobs:
           # Linux x86_64 builds
           - os: ubuntu-latest
             arch: x86_64
-            cibw_pattern: "*manylinux*"
+            cibw_pattern: "*"
             artifact_name: "linux-x86_64"
 
           # Linux ARM64 builds (native runners)
           - os: ubuntu-24.04-arm
             arch: aarch64
-            cibw_pattern: "*manylinux*"
+            cibw_pattern: "*"
             artifact_name: "linux-aarch64"
-            # Don't use native runners for now (looks like wait times are too long)
-            #runs-on: ["ubuntu-latest", "arm64"]
 
           # Windows builds
           - os: windows-latest
