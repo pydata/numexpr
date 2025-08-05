@@ -51,6 +51,7 @@ test = [
 ]
 
 [tool.cibuildwheel]
+build-verbosity = 1
 skip = ["*-manylinux_i686", "*_ppc64le", "*_s390x"]
 # Let's use a more recent version of the manylinux image for more modern compilers
 manylinux-x86_64-image = "manylinux_2_28"

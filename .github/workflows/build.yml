@@ -5,9 +5,6 @@ on: [push, pull_request]
 permissions:
   contents: read
 
-env:
-  CIBW_BUILD_VERBOSITY: 1
-
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }}
