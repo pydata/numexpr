@@ -683,7 +683,6 @@ class test_evaluate(TestCase):
         out_l = evaluate('base ** -1.0')
         assert_equal(out_l, np.power(base, -1.0))
 
-
     def test_ex_uses_vml(self):
         vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
                       "sinh", "cosh", "tanh", "arcsinh", "arccosh", "arctanh",
@@ -693,6 +692,21 @@ class test_evaluate(TestCase):
             strexpr = func+'(a)'
             _, ex_uses_vml = numexpr.necompiler.getExprNames(strexpr, {})
             assert_equal(ex_uses_vml, use_vml, strexpr)
+
+    def test_bool_funcs(self):
+        # Test functions with boolean outputs
+        array_size = 100
+        dtype = np.float32
+        a = np.arange(2 * array_size, dtype=dtype)
+        a[array_size//2] = np.nan
+        a[array_size//3] = np.inf
+
+        assert np.all(evaluate("isnan(a)") == np.isnan(a))
+        assert np.all(evaluate("isfinite(a)") == np.isfinite(a))
+        a = a.astype(np.float64)
+        assert a.dtype == np.float64
+        assert np.all(evaluate("isnan(a)") == np.isnan(a))
+        assert np.all(evaluate("isfinite(a)") == np.isfinite(a))
 
     if 'sparc' not in platform.machine():
         # Execution order set here so as to not use too many threads
@@ -891,7 +905,6 @@ def test_expressions(
             (test_scalar={test_scalar!r}, dtype={dtype.__name__!r}, optimization={optimization!r}, exact={exact!r},
             npval={npval!r} ({type(npval)!r} - {shape(npval)!r})
             neval={neval!r} ({type(neval)!r} - {shape(neval)!r}))"""
-
 
 class test_int64(TestCase):
     def test_neg(self):

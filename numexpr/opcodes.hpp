@@ -15,6 +15,9 @@ OPCODE(n, enum_name, exported, return_type, arg1_type, arg2_type, arg3_type)
 Types are Tb, Ti, Tl, Tf, Td, Tc, Ts, Tn, and T0; these symbols should be
 #defined to whatever is needed. (T0 is the no-such-arg type.)
 
+When adding new OPCODES, one has to respect the order of the numeration, as
+there are parts of the code (iterations) which assume that the OPCODES are ordered.
+
 */
 OPCODE(0, OP_NOOP, "noop", T0, T0, T0, T0)
 
@@ -144,36 +147,46 @@ OPCODE(103, OP_COPY_SS, "copy_ss", Ts, Ts, T0, T0)
 OPCODE(104, OP_WHERE_BBBB, "where_bbbb", Tb, Tb, Tb, Tb)
 
 OPCODE(105, OP_CONTAINS_BSS, "contains_bss", Tb, Ts, Ts, T0)
+//Boolean outputs
+OPCODE(106, OP_FUNC_BDN, "func_bdn", Tb, Td, Tn, T0)
+OPCODE(107, OP_FUNC_BFN, "func_bfn", Tb, Tf, Tn, T0)
 
-OPCODE(106, OP_REDUCTION, NULL, T0, T0, T0, T0)
+// Reductions always have to be at the end - parts of the code
+// use > OP_REDUCTION to decide whether operation is a reduction
+OPCODE(108, OP_REDUCTION, NULL, T0, T0, T0, T0)
 
 /* Last argument in a reduction is the axis of the array the
    reduction should be applied along. */
 
-OPCODE(107, OP_SUM_IIN, "sum_iin", Ti, Ti, Tn, T0)
-OPCODE(108, OP_SUM_LLN, "sum_lln", Tl, Tl, Tn, T0)
-OPCODE(109, OP_SUM_FFN, "sum_ffn", Tf, Tf, Tn, T0)
-OPCODE(110, OP_SUM_DDN, "sum_ddn", Td, Td, Tn, T0)
-OPCODE(111, OP_SUM_CCN, "sum_ccn", Tc, Tc, Tn, T0)
+OPCODE(109, OP_SUM_IIN, "sum_iin", Ti, Ti, Tn, T0)
+OPCODE(110, OP_SUM_LLN, "sum_lln", Tl, Tl, Tn, T0)
+OPCODE(111, OP_SUM_FFN, "sum_ffn", Tf, Tf, Tn, T0)
+OPCODE(112, OP_SUM_DDN, "sum_ddn", Td, Td, Tn, T0)
+OPCODE(113, OP_SUM_CCN, "sum_ccn", Tc, Tc, Tn, T0)
 
-OPCODE(112, OP_PROD, NULL, T0, T0, T0, T0)
-OPCODE(113, OP_PROD_IIN, "prod_iin", Ti, Ti, Tn, T0)
-OPCODE(114, OP_PROD_LLN, "prod_lln", Tl, Tl, Tn, T0)
-OPCODE(115, OP_PROD_FFN, "prod_ffn", Tf, Tf, Tn, T0)
-OPCODE(116, OP_PROD_DDN, "prod_ddn", Td, Td, Tn, T0)
-OPCODE(117, OP_PROD_CCN, "prod_ccn", Tc, Tc, Tn, T0)
+OPCODE(114, OP_PROD, NULL, T0, T0, T0, T0)
+OPCODE(115, OP_PROD_IIN, "prod_iin", Ti, Ti, Tn, T0)
+OPCODE(116, OP_PROD_LLN, "prod_lln", Tl, Tl, Tn, T0)
+OPCODE(117, OP_PROD_FFN, "prod_ffn", Tf, Tf, Tn, T0)
+OPCODE(118, OP_PROD_DDN, "prod_ddn", Td, Td, Tn, T0)
+OPCODE(119, OP_PROD_CCN, "prod_ccn", Tc, Tc, Tn, T0)
 
-OPCODE(118, OP_MIN, NULL, T0, T0, T0, T0)
-OPCODE(119, OP_MIN_IIN, "min_iin", Ti, Ti, Tn, T0)
-OPCODE(120, OP_MIN_LLN, "min_lln", Tl, Tl, Tn, T0)
-OPCODE(121, OP_MIN_FFN, "min_ffn", Tf, Tf, Tn, T0)
-OPCODE(122, OP_MIN_DDN, "min_ddn", Td, Td, Tn, T0)
+OPCODE(120, OP_MIN, NULL, T0, T0, T0, T0)
+OPCODE(121, OP_MIN_IIN, "min_iin", Ti, Ti, Tn, T0)
+OPCODE(122, OP_MIN_LLN, "min_lln", Tl, Tl, Tn, T0)
+OPCODE(123, OP_MIN_FFN, "min_ffn", Tf, Tf, Tn, T0)
+OPCODE(124, OP_MIN_DDN, "min_ddn", Td, Td, Tn, T0)
 
-OPCODE(123, OP_MAX, NULL, T0, T0, T0, T0)
-OPCODE(124, OP_MAX_IIN, "max_iin", Ti, Ti, Tn, T0)
-OPCODE(125, OP_MAX_LLN, "max_lln", Tl, Tl, Tn, T0)
-OPCODE(126, OP_MAX_FFN, "max_ffn", Tf, Tf, Tn, T0)
-OPCODE(127, OP_MAX_DDN, "max_ddn", Td, Td, Tn, T0)
+OPCODE(125, OP_MAX, NULL, T0, T0, T0, T0)
+OPCODE(126, OP_MAX_IIN, "max_iin", Ti, Ti, Tn, T0)
+OPCODE(127, OP_MAX_LLN, "max_lln", Tl, Tl, Tn, T0)
+OPCODE(128, OP_MAX_FFN, "max_ffn", Tf, Tf, Tn, T0)
+OPCODE(129, OP_MAX_DDN, "max_ddn", Td, Td, Tn, T0)
 
+/*
+When we get to 255, will maybe have to change code again
+(change latin_1 encoding in necompiler.py, use something
+other than unsigned char for OPCODE table)
+*/
 /* Should be the last opcode */
-OPCODE(128, OP_END, NULL, T0, T0, T0, T0)
+OPCODE(130, OP_END, NULL, T0, T0, T0, T0)

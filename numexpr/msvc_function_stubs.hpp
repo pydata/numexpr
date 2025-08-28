@@ -40,6 +40,10 @@
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
 #define ceilf(x)    ((float)ceil((double)(x)))
 
+// Boolean output functions
+#define isnanf(x)    (isnan((double)(x)))
+#define isfinitef(x)    (isfinite((double)(x)))
+
 /* The next are directly called from interp_body.cpp */
 #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
 #define floorf(x)    ((float)floor((double)(x)))
@@ -131,6 +135,15 @@ inline float fmodf2(float x, float y) {
 
 inline float atan2f2(float x, float y) {
     return atan2f(x, y);
+}
+
+// Boolean output functions
+inline bool isnanf2(float x) {
+    return isnanf(x);
+}
+
+inline bool isfinitef2(float x) {
+    return isfinitef(x);
 }
 
 // Needed for allowing the internal casting in numexpr machinery for

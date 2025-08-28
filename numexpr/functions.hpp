@@ -86,6 +86,32 @@ FUNC_DD(FUNC_DD_LAST,    NULL,          NULL,  NULL)
 #undef FUNC_DD
 #endif
 
+// double -> boolean functions
+#ifndef FUNC_BD
+#define ELIDE_FUNC_BD
+#define FUNC_BD(...)
+#endif
+FUNC_BD(FUNC_ISNAN_BD,   "isnan_bd",    isnan, vdIsnan)
+FUNC_BD(FUNC_ISFINITE_BD, "isfinite_bd", isfinite, vdIsfinite)
+FUNC_BD(FUNC_BD_LAST,    NULL,          NULL,  NULL)
+#ifdef ELIDE_FUNC_BD
+#undef ELIDE_FUNC_BD
+#undef FUNC_BD
+#endif
+
+// float -> boolean functions (C99 defines the same function for all types)
+#ifndef FUNC_BF
+#define ELIDE_FUNC_BF
+#define FUNC_BF(...)
+#endif // use wrappers as there is name collision with isnanf in std
+FUNC_BF(FUNC_ISNAN_BF,   "isnan_bf",    isnanf_wrapper,  isnanf2, vfIsnan)
+FUNC_BF(FUNC_ISFINITE_BF, "isfinite_bf", isfinitef_wrapper, isfinitef2, vfIsfinite)
+FUNC_BF(FUNC_BF_LAST,    NULL,          NULL,  NULL)
+#ifdef ELIDE_FUNC_BF
+#undef ELIDE_FUNC_BF
+#undef FUNC_BF
+#endif
+
 #ifndef FUNC_DDD
 #define ELIDE_FUNC_DDD
 #define FUNC_DDD(...)

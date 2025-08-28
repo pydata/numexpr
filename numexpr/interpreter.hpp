@@ -3,6 +3,10 @@
 
 #include "numexpr_config.hpp"
 
+// Wrapper functions for float -> bool (since not defined in std)
+inline bool isfinitef_wrapper(float x) noexcept { return std::isfinite(static_cast<double>(x)); }
+inline bool isnanf_wrapper(float x) noexcept { return std::isnan(static_cast<double>(x)); }
+
 // Forward declaration
 struct NumExprObject;
 
@@ -18,6 +22,12 @@ enum FuncFFCodes {
 #undef FUNC_FF
 };
 
+enum FuncBFCodes {
+#define FUNC_BF(fop, ...) fop,
+#include "functions.hpp"
+#undef FUNC_BF
+};
+
 enum FuncFFFCodes {
 #define FUNC_FFF(fop, ...) fop,
 #include "functions.hpp"
@@ -28,6 +38,12 @@ enum FuncDDCodes {
 #define FUNC_DD(fop, ...) fop,
 #include "functions.hpp"
 #undef FUNC_DD
+};
+
+enum FuncBDCodes {
+#define FUNC_BD(fop, ...) fop,
+#include "functions.hpp"
+#undef FUNC_BD
 };
 
 enum FuncDDDCodes {

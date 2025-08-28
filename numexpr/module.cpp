@@ -506,6 +506,8 @@ PyInit_interpreter(void) {
 #define FUNC_FF(name, sname, ...)  add_func(name, sname);
 #define FUNC_FFF(name, sname, ...) add_func(name, sname);
 #define FUNC_DD(name, sname, ...)  add_func(name, sname);
+#define FUNC_BF(name, sname, ...)  add_func(name, sname);
+#define FUNC_BD(name, sname, ...)  add_func(name, sname);
 #define FUNC_DDD(name, sname, ...) add_func(name, sname);
 #define FUNC_CC(name, sname, ...)  add_func(name, sname);
 #define FUNC_CCC(name, sname, ...) add_func(name, sname);
@@ -513,7 +515,8 @@ PyInit_interpreter(void) {
 #undef FUNC_CCC
 #undef FUNC_CC
 #undef FUNC_DDD
-#undef FUNC_DD
+#undef FUNC_BD
+#undef FUNC_BF
 #undef FUNC_DD
 #undef FUNC_FFF
 #undef FUNC_FF
