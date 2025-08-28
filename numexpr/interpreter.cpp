@@ -204,8 +204,8 @@ FuncDDPtr functions_dd[] = {
 #undef FUNC_DD
 };
 
-// Boolean output functions - need no except due to std definition of isnan/isfinite as int(float)
-typedef bool (*FuncBFPtr)(float) noexcept;
+// Boolean output functions
+typedef bool (*FuncBFPtr)(float);
 #ifdef _WIN32
 FuncBFPtr functions_bf[] = {
 #define FUNC_BF(fop, s, f, f_win32, ...) f_win32,

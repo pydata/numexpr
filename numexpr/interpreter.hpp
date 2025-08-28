@@ -3,10 +3,6 @@
 
 #include "numexpr_config.hpp"
 
-// Wrapper functions for float -> bool (since not defined in std)
-inline bool isfinitef_wrapper(float x) noexcept { return std::isfinite(static_cast<double>(x)); }
-inline bool isnanf_wrapper(float x) noexcept { return std::isnan(static_cast<double>(x)); }
-
 // Forward declaration
 struct NumExprObject;
 
