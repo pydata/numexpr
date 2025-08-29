@@ -4,12 +4,12 @@ Functions and Function signatures
 Adding functions
 ----------------
 
-In order to add new functions to ``numexpr``, currently it is necessary to edit several files. Consider adding a function 
+In order to add new functions to ``numexpr``, currently it is necessary to edit several files. Consider adding a function
 ``out_type myfunc(arg_type)``.
 
 * ``numexpr/expressions.py``
-Add ``'myfunc': func(numpy.myfunc, out_dtype),`` to the dict of functions, ``functions = {...``. If the return type of the function is ``bool``, add 
-the function to the list ``if opcode in ("isnan", "isfinite"):`` in the ``__init__`` function of the ``FuncNode`` class. 
+Add ``'myfunc': func(numpy.myfunc, out_dtype),`` to the dict of functions, ``functions = {...``. If the return type of the function is ``bool``, add
+the function to the list ``if opcode in ("isnan", "isfinite"):`` in the ``__init__`` function of the ``FuncNode`` class.
 In the future it might be nice to refactor this function since it sets the output type based on the type of the inputs in general.
 
 * ``numexpr/necompiler.py``
@@ -25,11 +25,11 @@ Add ``"myfunc"`` to the list of functions:
 * ``numexpr/functions.hpp``
 Find the correct function signature ``FUNC_OA`` where ``O`` is the return type, and ``A`` the argument type(s). For example, if the function
 is ``double myfunc(double)``, one should edit within the ``FUNC_DD`` clause. If you cannot find your function signature you will have to add it,
-following the template of the other functions. 
-Most likely, you will want to add support for several function signatures (e.g. double -> bool and float -> bool) and so you will have to add the 
+following the template of the other functions.
+Most likely, you will want to add support for several function signatures (e.g. double -> bool and float -> bool) and so you will have to add the
 function in two clauses. If your function has a float input, you will see that there are 5 arguments in the
 ``FUNC_OA`` macro, and you will have to add ``myfunc2`` here is order to compile on MSVC machines (i.e. Windows, see following).
-Example: 
+Example:
 ```
 #ifndef FUNC_DD
 #define ELIDE_FUNC_DD
@@ -75,7 +75,7 @@ Don't forget to add a test for your function!
 Adding function signatures
 --------------------------
 It may so happen that you cannot find your desired function signature in ``functions.hpp``. This means you will have to add it yourself!
-This involves editing a few more files. In addition, there may be certain bespoke changes, specific to the function signature 
+This involves editing a few more files. In addition, there may be certain bespoke changes, specific to the function signature
 that you may have to make (see Notes, below)
 
 * ``numexpr/functions.hpp``
@@ -132,7 +132,7 @@ enum FuncBFCodes {
 ```
 
 * ``numexpr/interpreter.cpp``
-Add clauses to generate the FUNC_CODES from the ``functions.hpp`` header, making sure to include clauses for ``_WIN32`` and 
+Add clauses to generate the FUNC_CODES from the ``functions.hpp`` header, making sure to include clauses for ``_WIN32`` and
 ``VML`` as necessary accoridng to the framework suggested by the other functions.
 ```
 typedef bool (*FuncBFPtr)(float);
@@ -189,7 +189,7 @@ Add code here to define the ``FUNC_OA`` macros you require
 ```
 
 * ``numexpr/opcodes.hpp``
-Finally, add the ``OP_FUNC_BDN`` etc. codes here. It is necessary for the OPCODES in the file to be in (ascending order) with 
+Finally, add the ``OP_FUNC_BDN`` etc. codes here. It is necessary for the OPCODES in the file to be in (ascending order) with
 ``NOOP`` as 0 and ``OP_LAST`` as the largest number. Secondly, all reduction OPCODES must appear last. Hence, after adding your
 function signatures (just before the reduction OPCODES) it is necessary to increment all succeeding OPCODES.
 ```
@@ -199,12 +199,12 @@ OPCODE(107, OP_FUNC_BFN, "func_bfn", Tb, Tf, Tn, T0)
 
 Notes
 -----
-In many cases this process will not be very smooth since one relies on the internal C/C++ standard functions (which can be fussy, 
+In many cases this process will not be very smooth since one relies on the internal C/C++ standard functions (which can be fussy,
 to varying degrees on different platforms). Some common gotchas are then:
-* OPCODES are currently only supported up to 255 - if it becomes necessary to increment further, one will have to change the ``latin_1`` 
+* OPCODES are currently only supported up to 255 - if it becomes necessary to increment further, one will have to change the ``latin_1``
 encoding used in ``quadrupleToString`` in ``necompiler.py``. In addition, since the OPCDE table is assumed to be of type ``unsigned char``
 the ``get_return_sig`` function in ``numexpr/interpreter.cpp`` may have to be changed (possibly other changes too).
-* Depending on the new function signature (above all if the out type is different to the input types), one may have to edit the ``__init__`` 
+* Depending on the new function signature (above all if the out type is different to the input types), one may have to edit the ``__init__``
 function in the ``FuncNode`` class in ``expressions.py``.
 * Depending on MSVC support, namespace clashes, casting problems, it may be necessary to make various changes to ``numexpr/numexpr_config.hpp``
 and ``numexpr/msvc_function_stubs.hpp``. For example, in PR #523, non-clashing wrappers were introduced for ``isnan`` and ``isfinite`` since
