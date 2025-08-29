@@ -455,7 +455,7 @@
         case OP_FUNC_BFN:
 #ifdef USE_VML
             VEC_ARG1_VML(functions_bf_vml[arg2](BLOCK_SIZE,
-                                                (float*)x1, (float*)dest));
+                                                (float*)x1, (bool*)dest));
 #else
             VEC_ARG1(b_dest = functions_bf[arg2](f1));
 #endif
