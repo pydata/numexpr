@@ -213,17 +213,10 @@ function signatures (just before the reduction OPCODES) it is necessary to incre
 
 Notes
 -----
-In many cases this process will not be very smooth since one relies on the internal C/C++ standard functions (which can be fussy,
-to varying degrees on different platforms). Some common gotchas are then:
+In many cases this process will not be very smooth since one relies on the internal C/C++ standard functions (which can be fussy, to varying degrees on different platforms). Some common gotchas are then:
 
-* OPCODES are currently only supported up to 255 - if it becomes necessary to increment further, one will have to change the ``latin_1``
-encoding used in ``quadrupleToString`` in ``necompiler.py``. In addition, since the OPCDE table is assumed to be of type ``unsigned char``
-the ``get_return_sig`` function in ``numexpr/interpreter.cpp`` may have to be changed (possibly other changes too).
+* OPCODES are currently only supported up to 255 - if it becomes necessary to increment further, one will have to change the ``latin_1`` encoding used in ``quadrupleToString`` in ``necompiler.py``. In addition, since the OPCDE table is assumed to be of type ``unsigned char`` the ``get_return_sig`` function in ``numexpr/interpreter.cpp`` may have to be changed (possibly other changes too).
 
-* Depending on the new function signature (above all if the out type is different to the input types), one may have to edit the ``__init__``
-function in the ``FuncNode`` class in ``expressions.py``.
+* Depending on the new function signature (above all if the out type is different to the input types), one may have to edit the ``__init__`` function in the ``FuncNode`` class in ``expressions.py``.
 
-* Depending on MSVC support, namespace clashes, casting problems, it may be necessary to make various changes to ``numexpr/numexpr_config.hpp``
-and ``numexpr/msvc_function_stubs.hpp``. For example, in PR #523, non-clashing wrappers were introduced for ``isnan`` and ``isfinite`` since
-the float versions ``isnanf, isfinitef`` were inconsistently defined (and output ints) - depending on how strict the platform interpreter is, the implicit cast
-from int to bool was acceptable or not for example. In addition, the base functions were in different namespaces or had different names across platforms.
+* Depending on MSVC support, namespace clashes, casting problems, it may be necessary to make various changes to ``numexpr/numexpr_config.hpp`` and ``numexpr/msvc_function_stubs.hpp``. For example, in PR #523, non-clashing wrappers were introduced for ``isnan`` and ``isfinite`` since the float versions ``isnanf, isfinitef`` were inconsistently defined (and output ints) - depending on how strict the platform interpreter is, the implicit cast from int to bool was acceptable or not for example. In addition, the base functions were in different namespaces or had different names across platforms.
