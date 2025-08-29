@@ -14,7 +14,9 @@ In the future it might be nice to refactor this function since it sets the outpu
 
 * ``numexpr/necompiler.py``
 Add ``"myfunc"`` to the list of functions:
+
 .. code-block:: python3
+
     "floor",
     "isnan",
     "isfinite",
@@ -29,8 +31,10 @@ Most likely, you will want to add support for several function signatures (e.g. 
 function in two clauses. If your function has a float input, you will see that there are 5 arguments in the
 ``FUNC_OA`` macro, and you will have to add ``myfunc2`` here is order to compile on MSVC machines (i.e. Windows, see following).
 Example:
+
 .. code-block:: cpp
    :emphasize-lines: 6, 20
+
     #ifndef FUNC_DD
     #define ELIDE_FUNC_DD
     #define FUNC_DD(...)
@@ -61,7 +65,9 @@ Example:
 In order to support float arguments, due to oddities of MSVC, you have to provide explicit support for your function in this file.
 Add ``#define myfuncf(x)  ((float)floor((double)(x)))`` (if your function is float -> float) to the ``#if`` clause at the top of the file
 which is for old versions of MSVC which did not have support for single precision fucntions. Then in the body, add an inline function
+
 .. code-block:: cpp
+
     inline float myfuncf2(float x) {
         return myfuncf(x);
     }
@@ -80,7 +86,9 @@ that you may have to make (see Notes, below)
 * ``numexpr/functions.hpp``
 Firstly, add clause(s) for your function signature. For example, if the function signature is ``bool(double)`` and ``bool(float)``, add
 ``FUNC_BD`` and ``FUNC_BF`` clauses (in the latter case you will need the macro to take 5 arguments for MSVC-compatibility.)
+
 .. code-block:: cpp
+
     #ifndef FUNC_BD
     #define ELIDE_FUNC_BD
     #define FUNC_BD(...)
@@ -109,7 +117,9 @@ The ultimate source of the functions in the macro ``FUNC_BF(...)`` are the heade
 * ``numexpr/interp_body.cpp``
 Add case support for OPCODES associated to your new function signatures via e.g. ``case OP_FUNC_BFN`` and ``case OP_FUNC_BDN``, following
 the framework suggested by the other functions:
+
 .. code-block:: cpp
+
     case OP_FUNC_BFN:
     #ifdef USE_VML
                 VEC_ARG1_VML(functions_bf_vml[arg2](BLOCK_SIZE,
@@ -122,7 +132,9 @@ Note that it is important that the out variable matches the output type of the f
 
 * ``numexpr/interpreter.hpp``
 Add clauses to read the ``functions.hpp`` macros correctly
+
 .. code-block:: cpp
+
     enum FuncBFCodes {
     #define FUNC_BF(fop, ...) fop,
     #include "functions.hpp"
@@ -132,7 +144,9 @@ Add clauses to read the ``functions.hpp`` macros correctly
 * ``numexpr/interpreter.cpp``
 Add clauses to generate the FUNC_CODES from the ``functions.hpp`` header, making sure to include clauses for ``_WIN32`` and
 ``VML`` as necessary accoridng to the framework suggested by the other functions.
+
 .. code-block:: cpp
+
     typedef bool (*FuncBFPtr)(float);
     #ifdef _WIN32
     FuncBFPtr functions_bf[] = {
@@ -158,7 +172,9 @@ Add clauses to generate the FUNC_CODES from the ``functions.hpp`` header, making
     #endif
 
 Add case handling to the ``check_program`` function
+
 .. code-block:: cpp
+
     else if (op == OP_FUNC_BDN) {
         if (arg < 0 || arg >= FUNC_BD_LAST) {
             PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
@@ -174,7 +190,9 @@ Add case handling to the ``check_program`` function
 
 * ``numexpr/module.cpp``
 Add code here to define the ``FUNC_OA`` macros you require
+
 .. code-block:: cpp
+
     #define FUNC_BF(name, sname, ...)  add_func(name, sname);
     #define FUNC_BD(name, sname, ...)  add_func(name, sname);
     ...
@@ -187,7 +205,9 @@ Add code here to define the ``FUNC_OA`` macros you require
 Finally, add the ``OP_FUNC_BDN`` etc. codes here. It is necessary for the OPCODES in the file to be in (ascending order) with
 ``NOOP`` as 0 and ``OP_LAST`` as the largest number. Secondly, all reduction OPCODES must appear last. Hence, after adding your
 function signatures (just before the reduction OPCODES) it is necessary to increment all succeeding OPCODES.
+
 .. code-block:: cpp
+
     OPCODE(106, OP_FUNC_BDN, "func_bdn", Tb, Td, Tn, T0)
     OPCODE(107, OP_FUNC_BFN, "func_bfn", Tb, Tf, Tn, T0)
 
