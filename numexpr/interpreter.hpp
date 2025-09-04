@@ -18,6 +18,12 @@ enum FuncFFCodes {
 #undef FUNC_FF
 };
 
+enum FuncBFCodes {
+#define FUNC_BF(fop, ...) fop,
+#include "functions.hpp"
+#undef FUNC_BF
+};
+
 enum FuncFFFCodes {
 #define FUNC_FFF(fop, ...) fop,
 #include "functions.hpp"
@@ -28,6 +34,12 @@ enum FuncDDCodes {
 #define FUNC_DD(fop, ...) fop,
 #include "functions.hpp"
 #undef FUNC_DD
+};
+
+enum FuncBDCodes {
+#define FUNC_BD(fop, ...) fop,
+#include "functions.hpp"
+#undef FUNC_BD
 };
 
 enum FuncDDDCodes {

@@ -46,6 +46,15 @@
     #include "missing_posix_functions.hpp"
   #endif
   #include "msvc_function_stubs.hpp"
+#else
+/* GCC/Clang version: use std:: (can't use it for windows)
+msvc_function_stubs contains windows alternatives
+/* Due to casting problems (normally return ints not bools, easiest to define
+non-overloaded wrappers for these functions) */
+inline bool isfinitef_(float x) { return !!::isfinite(x); }
+inline bool isnanf_(float x)    { return !!::isnan(x); }
+inline bool isfinited(double x) { return !!::isfinite(x); }
+inline bool isnand(double x)    { return !!::isnan(x); }
 #endif
 
 #endif // NUMEXPR_CONFIG_HPP

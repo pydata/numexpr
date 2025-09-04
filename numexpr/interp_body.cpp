@@ -451,6 +451,24 @@
         case OP_COMPLEX_CDD: VEC_ARG2(cr_dest = d1;
                                       ci_dest = d2);
 
+        // Boolean return types
+        case OP_FUNC_BFN:
+#ifdef USE_VML
+            VEC_ARG1_VML(functions_bf_vml[arg2](BLOCK_SIZE,
+                                                (float*)x1, (bool*)dest));
+#else
+            VEC_ARG1(b_dest = functions_bf[arg2](f1));
+#endif
+
+
+        case OP_FUNC_BDN:
+#ifdef USE_VML
+            VEC_ARG1_VML(functions_bd_vml[arg2](BLOCK_SIZE,
+                                                (double*)x1, (bool*)dest));
+#else
+            VEC_ARG1(b_dest = functions_bd[arg2](d1));
+#endif
+
         /* Reductions */
         case OP_SUM_IIN: VEC_ARG1(i_reduce += i1);
         case OP_SUM_LLN: VEC_ARG1(l_reduce += l1);

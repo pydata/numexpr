@@ -69,7 +69,9 @@ vml_functions = [
     "arctan2",
     "fmod",
     "ceil",
-    "floor"
+    "floor",
+    "isnan",
+    "isfinite"
     ]
 
 
@@ -520,7 +522,7 @@ def compileThreeAddrForm(program):
             return bytes([reg.n])
 
     def quadrupleToString(opcode, store, a1=None, a2=None):
-        cop = chr(interpreter.opcodes[opcode]).encode('ascii')
+        cop = chr(interpreter.opcodes[opcode]).encode('latin_1')
         cs = nToChr(store)
         ca1 = nToChr(a1)
         ca2 = nToChr(a2)
@@ -904,7 +906,7 @@ def evaluate(ex: str,
              global_dict: Optional[Dict] = None,
              out: numpy.ndarray = None,
              order: str = 'K',
-             casting: str = 'safe',
+             casting: str = 'same_kind',
              sanitize: Optional[bool] = None,
              _frame_depth: int = 3,
              **kwargs) -> numpy.ndarray:

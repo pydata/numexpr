@@ -204,6 +204,47 @@ FuncDDPtr functions_dd[] = {
 #undef FUNC_DD
 };
 
+// Boolean output functions
+typedef bool (*FuncBFPtr)(float);
+#ifdef _WIN32
+FuncBFPtr functions_bf[] = {
+#define FUNC_BF(fop, s, f, f_win32, ...) f_win32,
+#include "functions.hpp"
+#undef FUNC_BF
+};
+#else
+FuncBFPtr functions_bf[] = {
+#define FUNC_BF(fop, s, f, ...) f,
+#include "functions.hpp"
+#undef FUNC_BF
+};
+#endif
+
+#ifdef USE_VML
+typedef void (*FuncBFPtr_vml)(MKL_INT, const float*, bool*);
+FuncBFPtr_vml functions_bf_vml[] = {
+#define FUNC_BF(fop, s, f, f_win32, f_vml) f_vml,
+#include "functions.hpp"
+#undef FUNC_BF
+};
+#endif
+
+typedef bool (*FuncBDPtr)(double);
+FuncBDPtr functions_bd[] = {
+#define FUNC_BD(fop, s, f, ...) f,
+#include "functions.hpp"
+#undef FUNC_BD
+};
+
+#ifdef USE_VML
+typedef void (*FuncBDPtr_vml)(MKL_INT, const double*, bool*);
+FuncBDPtr_vml functions_bd_vml[] = {
+#define FUNC_BD(fop, s, f, f_vml) f_vml,
+#include "functions.hpp"
+#undef FUNC_BD
+};
+#endif
+
 #ifdef USE_VML
 /* Fake vdConj function just for casting purposes inside numexpr */
 static void vdConj(MKL_INT n, const double* x1, double* dest)
@@ -312,11 +353,11 @@ FuncCCCPtr functions_ccc[] = {
 
 char
 get_return_sig(PyObject* program)
-{
+{ // use unsigned chars to match OPCODE table and allow OPCODE > 127
     int sig;
-    char last_opcode;
+    unsigned char last_opcode;
     Py_ssize_t end = PyBytes_Size(program);
-    char *program_str = PyBytes_AS_STRING(program);
+    unsigned char *program_str = (unsigned char *)PyBytes_AS_STRING(program);
 
     do {
         end -= 4;
@@ -461,6 +502,18 @@ check_program(NumExprObject *self)
                     }
                 } else if (op == OP_FUNC_CCCN) {
                     if (arg < 0 || arg >= FUNC_CCC_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                }
+                  else if (op == OP_FUNC_BDN) {
+                    if (arg < 0 || arg >= FUNC_BD_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                }
+                  else if (op == OP_FUNC_BFN) {
+                    if (arg < 0 || arg >= FUNC_BF_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
