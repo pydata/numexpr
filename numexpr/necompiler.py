@@ -71,7 +71,8 @@ vml_functions = [
     "ceil",
     "floor",
     "isnan",
-    "isfinite"
+    "isfinite",
+    "isinf",
     ]
 
 

@@ -93,6 +93,7 @@ FUNC_DD(FUNC_DD_LAST,    NULL,          NULL,  NULL)
 #endif
 FUNC_BD(FUNC_ISNAN_BD,   "isnan_bd",    isnand, vdIsnan)
 FUNC_BD(FUNC_ISFINITE_BD, "isfinite_bd", isfinited, vdIsfinite)
+FUNC_BD(FUNC_ISINF_BD, "isinf_bd", isinfd, vdIsinf)
 FUNC_BD(FUNC_BD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_BD
 #undef ELIDE_FUNC_BD
@@ -106,6 +107,7 @@ FUNC_BD(FUNC_BD_LAST,    NULL,          NULL,  NULL)
 #endif // use wrappers as there is name collision with isnanf in std
 FUNC_BF(FUNC_ISNAN_BF,   "isnan_bf",    isnanf_,  isnanf2, vfIsnan)
 FUNC_BF(FUNC_ISFINITE_BF, "isfinite_bf", isfinitef_, isfinitef2, vfIsfinite)
+FUNC_BF(FUNC_ISINF_BF, "isinf_bf", isinff_, isinff2, vfIsinf)
 FUNC_BF(FUNC_BF_LAST,    NULL,            NULL,        NULL,    NULL)
 #ifdef ELIDE_FUNC_BF
 #undef ELIDE_FUNC_BF

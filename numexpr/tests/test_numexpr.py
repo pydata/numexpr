@@ -703,10 +703,12 @@ class test_evaluate(TestCase):
 
         assert np.all(evaluate("isnan(a)") == np.isnan(a))
         assert np.all(evaluate("isfinite(a)") == np.isfinite(a))
+        assert np.all(evaluate("isinf(a)") == np.isinf(a))
         a = a.astype(np.float64)
         assert a.dtype == np.float64
         assert np.all(evaluate("isnan(a)") == np.isnan(a))
         assert np.all(evaluate("isfinite(a)") == np.isfinite(a))
+        assert np.all(evaluate("isinf(a)") == np.isinf(a))
 
     if 'sparc' not in platform.machine():
         # Execution order set here so as to not use too many threads

@@ -54,7 +54,8 @@ inline bool isfinitef_(float x) { return !!::_finite(x); }   // MSVC has _finite
 inline bool isnanf_(float x)    { return !!::_isnan(x); }    // MSVC has _isnan
 inline bool isfinited(double x) { return !!::_finite(x); }
 inline bool isnand(double x)    { return !!::_isnan(x); }
-
+inline bool isinfd(double x) { return !!::isinf(x); }
+inline bool isinff_(float x)    { return !!::isinf(x); }
 
 /* Now the actual stubs */
 
@@ -150,6 +151,11 @@ inline bool isnanf2(float x) {
 inline bool isfinitef2(float x) {
     return isfinitef_(x);
 }
+
+inline bool isinff2(float x) {
+    return isinff_(x);
+}
+
 
 // Needed for allowing the internal casting in numexpr machinery for
 // conjugate operations

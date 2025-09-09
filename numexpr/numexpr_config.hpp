@@ -55,6 +55,8 @@ inline bool isfinitef_(float x) { return !!::isfinite(x); }
 inline bool isnanf_(float x)    { return !!::isnan(x); }
 inline bool isfinited(double x) { return !!::isfinite(x); }
 inline bool isnand(double x)    { return !!::isnan(x); }
+inline bool isinff_(float x) { return !!::isinf(x); }
+inline bool isinfd(double x)    { return !!::isinf(x); }
 #endif
 
 #endif // NUMEXPR_CONFIG_HPP
