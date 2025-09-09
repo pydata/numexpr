@@ -54,8 +54,9 @@ inline bool isfinitef_(float x) { return !!::_finite(x); }   // MSVC has _finite
 inline bool isnanf_(float x)    { return !!::_isnan(x); }    // MSVC has _isnan
 inline bool isfinited(double x) { return !!::_finite(x); }
 inline bool isnand(double x)    { return !!::_isnan(x); }
-inline bool isinfd(double x) { return !!::_isinf(x); }
-inline bool isinff_(float x)    { return !!::_isinf(x); }
+
+inline bool isinfd(double x) { return !!::isinf(x)(x); }
+inline bool isinff_(float x)    { return !!::isinf(x)(x); }
 
 /* Now the actual stubs */
 
