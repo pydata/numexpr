@@ -2,6 +2,11 @@
 Release notes for NumExpr 2.12 series
 =====================================
 
+Changes from 2.12.0 to 2.12.1
+-----------------------------
+
+* **Under development.**
+
 Changes from 2.11.0 to 2.12.0
 -----------------------------
 

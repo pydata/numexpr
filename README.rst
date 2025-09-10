@@ -106,7 +106,7 @@ See `requirements.txt` for the required version of NumPy.
 
 NumExpr is built in the standard Python way::
 
-  python setup.py build install
+  pip install [-e] .
 
 You can test `numexpr` with::
 
