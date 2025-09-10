@@ -1,33 +1,29 @@
 =========================
-Announcing NumExpr 2.11.0
+Announcing NumExpr 2.12.0
 =========================
 
 Hi everyone,
 
-NumExpr 2.11.0 Initial support for free-threaded Python 3.13t has been added.
-This is still experimental, so please report any issues you find.
-Finally, Python 3.10 is now the minimum supported version.
+NumExpr 2.12.0 comes with new isnan/isfinite/isinf functions.
+Most importantly, we have added instructions for adding new functions
+to the virtual machine.  See ADDFUNCS.rst for more details.  Thanks to
+Luke Shaw for these contributions.
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.10.2 to 2.11.0
+Changes from 2.11.0 to 2.12.0
 -----------------------------
 
-* Initial support for free-threaded Python 3.13t has been added.
-  This is still experimental, so please report any issues you find.
-  For more info, see discussions PRs #504, #505 and #508.
-  Thanks to @andfoy, @rgommers and @FrancescAlted for the work.
+* Added isnan/isfinite/isinf functions.  Thanks to Luke Shaw.
 
-* Fix imaginary evaluation in the form of `1.1e1j`.  This was
-  previously not supported and would raise an error.  Thanks to @27rabbitlt
-  for the fix.
+* New instructions for adding new functions to the virtual machine.
+  They are available at ADDFUNCS.rst.  Thanks to Luke Shaw.
 
-* The test suite has been modernized to use `pytest` instead of `unittest`.
-  This should make it easier to run the tests and contribute to the project.
+* We are distributing binary wheels for Python 3.14 and 3.14t now.
 
-* Python 3.10 is now the minimum supported version.
+* We are distributing musllinux wheels too!  Thanks to Clément Robert.
 
 What's Numexpr?
 ---------------

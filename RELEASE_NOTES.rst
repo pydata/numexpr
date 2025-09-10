@@ -1,11 +1,18 @@
 =====================================
-Release notes for NumExpr 2.11 series
+Release notes for NumExpr 2.12 series
 =====================================
 
-Changes from 2.11.0 to 2.11.1
+Changes from 2.11.0 to 2.12.0
 -----------------------------
 
-* **Under development.**
+* Added isnan/isfinite/isinf functions.  Thanks to Luke Shaw.
+
+* New instructions for adding new functions to the virtual machine.
+  They are available at ADDFUNCS.rst.  Thanks to Luke Shaw.
+
+* We are distributing binary wheels for Python 3.14 and 3.14t now.
+
+* We are distributing musllinux wheels too!  Thanks to Clément Robert.
 
 
 Changes from 2.10.2 to 2.11.0
