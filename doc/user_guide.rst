@@ -201,6 +201,8 @@ The next are the current supported set:
 
     * :code:`where(bool, number1, number2): number` -- number1 if the bool condition
       is true, number2 otherwise.
+    * :code:`{isinf, isnan, isfinite}(float|complex): bool` -- returns element-wise True
+      for ``inf`` or ``NaN``, ``NaN``, not ``inf`` respectively.
     * :code:`{sin,cos,tan}(float|complex): float|complex` -- trigonometric sine,
       cosine or tangent.
     * :code:`{arcsin,arccos,arctan}(float|complex): float|complex` -- trigonometric
