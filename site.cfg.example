@@ -2,10 +2,12 @@
 # file to "site.cfg" and edit the paths according to your installation of the
 # Intel MKL.
 
-# Example for Intel(R) MKL 2018 on Linux
+# Example for Intel(R) OneAPI MKL 2025 on Linux
+# When compiling (with e.g. `pip install -e. -v`), first do a:
+# $ source /opt/intel/oneapi/setvars.sh >/dev/null 2>&1 || true
 # [mkl]
-# library_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/lib/intel64
-# include_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/include
+# include_dirs = /opt/intel/oneapi/mkl/latest/include
+# library_dirs = /opt/intel/oneapi/mkl/latest/lib/intel64
 # libraries = mkl_rt
 
 
