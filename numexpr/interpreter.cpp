@@ -328,6 +328,15 @@ static void vzIsnan(MKL_INT n, const MKL_Complex16* x1, bool* dest)
 #endif
 
 #ifdef USE_VML
+typedef void (*FuncBCPtr_vml)(MKL_INT, const MKL_Complex16[], bool*);
+FuncBCPtr_vml functions_bc_vml[] = {
+#define FUNC_BC(fop, s, f, f_vml) f_vml,
+#include "functions.hpp"
+#undef FUNC_BC
+};
+#endif
+
+#ifdef USE_VML
 /* Fake vdConj function just for casting purposes inside numexpr */
 static void vdConj(MKL_INT n, const double* x1, double* dest)
 {
