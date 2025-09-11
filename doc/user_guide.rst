@@ -1,4 +1,4 @@
-NumExpr 2.8 User Guide
+NumExpr 2.12 User Guide
 ======================
 
 The NumExpr package supplies routines for the fast evaluation of
