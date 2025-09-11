@@ -1,29 +1,27 @@
 =========================
-Announcing NumExpr 2.12.0
+Announcing NumExpr 2.12.1
 =========================
 
 Hi everyone,
 
-NumExpr 2.12.0 comes with new isnan/isfinite/isinf functions.
-Most importantly, we have added instructions for adding new functions
-to the virtual machine.  See ADDFUNCS.rst for more details.  Thanks to
-Luke Shaw for these contributions.
+NumExpr 2.12.1 allows isnan/isfinite/isinf functions to be used with complex.
+Also, OneAPI MKL has been fixed.  Thanks to Luke Shaw for these contributions.
 
 Project documentation is available at:
 
 http://numexpr.readthedocs.io/
 
-Changes from 2.11.0 to 2.12.0
+Changes from 2.12.0 to 2.12.1
 -----------------------------
 
-* Added isnan/isfinite/isinf functions.  Thanks to Luke Shaw.
+* Added complex counterparts for isnan/isfinite/isinf functions.
+  Thanks to Luke Shaw.
 
-* New instructions for adding new functions to the virtual machine.
-  They are available at ADDFUNCS.rst.  Thanks to Luke Shaw.
+* Updated documentation for the new functions and instructions
+  for adding new functions to the virtual machine.  Thanks to Luke Shaw.
 
-* We are distributing binary wheels for Python 3.14 and 3.14t now.
-
-* We are distributing musllinux wheels too!  Thanks to Clément Robert.
+* Fixed MKL support; it was broken in 2.12.0.  Thanks to
+  Christoph Gohlke for reporting the issue.
 
 What's Numexpr?
 ---------------

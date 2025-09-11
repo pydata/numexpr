@@ -5,7 +5,15 @@ Release notes for NumExpr 2.12 series
 Changes from 2.12.0 to 2.12.1
 -----------------------------
 
-* **Under development.**
+* Added complex counterparts for isnan/isfinite/isinf functions.
+  Thanks to Luke Shaw.
+
+* Updated documentation for the new functions and instructions
+  for adding new functions to the virtual machine.  Thanks to Luke Shaw.
+
+* Fixed MKL support; it was broken in 2.12.0.  Thanks to
+  Christoph Gohlke for reporting the issue.
+
 
 Changes from 2.11.0 to 2.12.0
 -----------------------------
