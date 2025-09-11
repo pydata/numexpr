@@ -42,6 +42,12 @@ enum FuncBDCodes {
 #undef FUNC_BD
 };
 
+enum FuncBCCodes {
+#define FUNC_BC(fop, ...) fop,
+#include "functions.hpp"
+#undef FUNC_BC
+};
+
 enum FuncDDDCodes {
 #define FUNC_DDD(fop, ...) fop,
 #include "functions.hpp"

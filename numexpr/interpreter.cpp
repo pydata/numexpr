@@ -221,6 +221,31 @@ FuncBFPtr functions_bf[] = {
 #endif
 
 #ifdef USE_VML
+/* no isnan, isfinite or isinf in VML */
+static void vfIsfinite(MKL_INT n, const float* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = isfinitef_(x1[j]);
+    };
+};
+static void vfIsinf(MKL_INT n, const float* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = isinff_(x1[j]);
+    };
+};
+static void vfIsnan(MKL_INT n, const float* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = isnanf_(x1[j]);
+    };
+};
+#endif
+
+#ifdef USE_VML
 typedef void (*FuncBFPtr_vml)(MKL_INT, const float*, bool*);
 FuncBFPtr_vml functions_bf_vml[] = {
 #define FUNC_BF(fop, s, f, f_win32, f_vml) f_vml,
@@ -237,11 +262,68 @@ FuncBDPtr functions_bd[] = {
 };
 
 #ifdef USE_VML
+/* no isnan, isfinite or isinf in VML */
+static void vdIsfinite(MKL_INT n, const double* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = isfinited(x1[j]);
+    };
+};
+static void vdIsinf(MKL_INT n, const double* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = isinfd(x1[j]);
+    };
+};
+static void vdIsnan(MKL_INT n, const double* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = isnand(x1[j]);
+    };
+};
+#endif
+
+#ifdef USE_VML
 typedef void (*FuncBDPtr_vml)(MKL_INT, const double*, bool*);
 FuncBDPtr_vml functions_bd_vml[] = {
 #define FUNC_BD(fop, s, f, f_vml) f_vml,
 #include "functions.hpp"
 #undef FUNC_BD
+};
+#endif
+
+typedef bool (*FuncBCPtr)(std::complex<double>*);
+FuncBCPtr functions_bc[] = {
+#define FUNC_BC(fop, s, f, ...) f,
+#include "functions.hpp"
+#undef FUNC_BC
+};
+
+#ifdef USE_VML
+/* no isnan, isfinite or isinf in VML */
+static void vzIsfinite(MKL_INT n, const MKL_Complex16* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = isfinited(x1[j].real) && isfinited(x1[j].imag);
+    };
+};
+static void vzIsinf(MKL_INT n, const MKL_Complex16* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = isinfd(x1[j].real) || isinfd(x1[j].imag);
+    };
+};
+static void vzIsnan(MKL_INT n, const MKL_Complex16* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = isnand(x1[j].real) || isnand(x1[j].imag);
+    };
 };
 #endif
 
@@ -517,7 +599,14 @@ check_program(NumExprObject *self)
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }
-                } else if (op >= OP_REDUCTION) {
+                }
+                  else if (op == OP_FUNC_BCN) {
+                    if (arg < 0 || arg >= FUNC_BC_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                }
+                  else if (op >= OP_REDUCTION) {
                     ;
                 } else {
                     PyErr_Format(PyExc_RuntimeError, "invalid program: internal checker error processing %i", argloc);
