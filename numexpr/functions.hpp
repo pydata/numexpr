@@ -166,3 +166,17 @@ FUNC_CCC(FUNC_CCC_LAST,  NULL,      NULL)
 #undef ELIDE_FUNC_CCC
 #undef FUNC_CCC
 #endif
+
+// complex -> boolean functions
+#ifndef FUNC_BC
+#define ELIDE_FUNC_BC
+#define FUNC_BC(...)
+#endif // use wrappers as there is name collision with isnanf in std
+FUNC_BC(FUNC_ISNAN_BC,   "isnan_bc",    nc_isnan, vzIsnan)
+FUNC_BC(FUNC_ISFINITE_BC, "isfinite_bc", nc_isfinite, vzIsfinite)
+FUNC_BC(FUNC_ISINF_BC, "isinf_bc", nc_isinf, vzIsinf)
+FUNC_BC(FUNC_BC_LAST,    NULL,            NULL,        NULL)
+#ifdef ELIDE_FUNC_BC
+#undef ELIDE_FUNC_BC
+#undef FUNC_BC
+#endif

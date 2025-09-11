@@ -171,6 +171,23 @@ Add clauses to generate the FUNC_CODES from the ``functions.hpp`` header, making
     };
     #endif
 
+Some functions (e.g. ``fmod``, ``isnan``) are not available in MKL, and so must be hard-coded here as well:
+
+.. code-block:: cpp
+
+    #ifdef USE_VML
+    /* no isnan, isfinite or isinf in VML */
+    static void vdIsfinite(MKL_INT n, const double* x1, bool* dest)
+    {
+        MKL_INT j;
+        for (j=0; j<n; j++) {
+            dest[j] = isfinited(x1[j]);
+        };
+    };
+    #endif
+
+The complex case is slightlñy different (see other examples in the same file).
+
 Add case handling to the ``check_program`` function
 
 .. code-block:: cpp
@@ -218,5 +235,7 @@ In many cases this process will not be very smooth since one relies on the inter
 * OPCODES are currently only supported up to 255 - if it becomes necessary to increment further, one will have to change the ``latin_1`` encoding used in ``quadrupleToString`` in ``necompiler.py``. In addition, since the OPCDE table is assumed to be of type ``unsigned char`` the ``get_return_sig`` function in ``numexpr/interpreter.cpp`` may have to be changed (possibly other changes too).
 
 * Depending on the new function signature (above all if the out type is different to the input types), one may have to edit the ``__init__`` function in the ``FuncNode`` class in ``expressions.py``.
+
+* Functions which accept and/or return complex arguments must be added to the ``complex_functions.hpp`` file (take care when adding them in ``interpreter.cpp`` and ``interp_body.cpp``, since their signatures are usually a bit different).
 
 * Depending on MSVC support, namespace clashes, casting problems, it may be necessary to make various changes to ``numexpr/numexpr_config.hpp`` and ``numexpr/msvc_function_stubs.hpp``. For example, in PR #523, non-clashing wrappers were introduced for ``isnan`` and ``isfinite`` since the float versions ``isnanf, isfinitef`` were inconsistently defined (and output ints) - depending on how strict the platform interpreter is, the implicit cast from int to bool was acceptable or not for example. In addition, the base functions were in different namespaces or had different names across platforms.

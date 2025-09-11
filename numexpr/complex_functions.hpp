@@ -424,4 +424,33 @@ nc_abs(std::complex<double> *x, std::complex<double> *r)
     r->imag(0);
 }
 
+static bool
+nc_isinf(std::complex<double> *x)
+{
+    double xr=x->real(), xi=x->imag();
+    bool bi,br;
+    bi = isinfd(xi);
+    br = isinfd(xr);
+    return bi || br;
+}
+
+static bool
+nc_isnan(std::complex<double> *x)
+{
+    double xr=x->real(), xi=x->imag();
+    bool bi,br;
+    bi = isnand(xi);
+    br = isnand(xr);
+    return bi || br;
+}
+
+static bool
+nc_isfinite(std::complex<double> *x)
+{
+    double xr=x->real(), xi=x->imag();
+    bool bi,br;
+    bi = isfinited(xi);
+    br = isfinited(xr);
+    return bi && br;
+}
 #endif // NUMEXPR_COMPLEX_FUNCTIONS_HPP

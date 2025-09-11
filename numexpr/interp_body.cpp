@@ -469,6 +469,17 @@
             VEC_ARG1(b_dest = functions_bd[arg2](d1));
 #endif
 
+        case OP_FUNC_BCN:
+#ifdef USE_VML
+            VEC_ARG1_VML(functions_bc_vml[arg2](BLOCK_SIZE,
+                        (const MKL_Complex16*)x1, (bool*)dest));
+#else
+            VEC_ARG1(ca.real(c1r);
+                     ca.imag(c1i);
+                     b_dest = functions_bc[arg2](&ca));
+#endif
+
+
         /* Reductions */
         case OP_SUM_IIN: VEC_ARG1(i_reduce += i1);
         case OP_SUM_LLN: VEC_ARG1(l_reduce += l1);
