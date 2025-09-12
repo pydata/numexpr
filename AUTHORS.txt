@@ -29,3 +29,6 @@ since 2016 to 2023.
 
 Teng Liu fixed many bugs, and in particular, contributed valuable fixes
 to the new regex sanitizer for expressions.
+
+Luke Shaw contributed new isnan/isinf/isfinite functions, and expanded
+the amount of opcodes from 128 to 256.
