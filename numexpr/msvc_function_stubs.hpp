@@ -35,6 +35,7 @@
 #define logf(x)    ((float)log((double)(x)))
 #define log1pf(x)    ((float)log1p((double)(x)))
 #define log10f(x)    ((float)log10((double)(x)))
+#define log2f(x)    ((float)log2((double)(x)))
 #define expf(x)    ((float)exp((double)(x)))
 #define expm1f(x)    ((float)expm1((double)(x)))
 #define fabsf(x)    ((float)fabs((double)(x)))
@@ -121,6 +122,10 @@ inline float log1pf2(float x) {
 
 inline float log10f2(float x) {
     return log10f(x);
+}
+
+inline float log2f2(float x) {
+    return log2f(x);
 }
 
 inline float expf2(float x) {

@@ -62,6 +62,7 @@ vml_functions = [
     "log",
     "log1p",
     "log10",
+    "log2",
     "exp",
     "expm1",
     "absolute",

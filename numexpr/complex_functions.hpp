@@ -347,6 +347,8 @@ nc_cosh(std::complex<double> *x, std::complex<double> *r)
 
 
 #define M_LOG10_E 0.434294481903251827651128918916605082294397
+#define M_LOG2_E  1.44269504088896340735992468100189213742664
+
 
 static void
 nc_log10(std::complex<double> *x, std::complex<double> *r)
@@ -354,6 +356,15 @@ nc_log10(std::complex<double> *x, std::complex<double> *r)
     nc_log(x, r);
     r->real(r->real() * M_LOG10_E);
     r->imag(r->imag() * M_LOG10_E);
+    return;
+}
+
+static void
+nc_log2(std::complex<double> *x, std::complex<double> *r)
+{
+    nc_log(x, r);
+    r->real(r->real() * M_LOG2_E);
+    r->imag(r->imag() * M_LOG2_E);
     return;
 }
 

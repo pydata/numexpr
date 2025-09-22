@@ -25,9 +25,9 @@ from numpy import all as alltrue
 from numpy import (allclose, arange, arccos, arccosh, arcsin, arcsinh, arctan,
                    arctan2, arctanh, array, array_equal, cdouble, ceil, conj,
                    copy, cos, cosh, empty, exp, expm1, float64, floor, fmod,
-                   int32, int64, isinf, isnan, linspace, log, log1p, log10,
-                   ones_like, prod, ravel, rec, shape, sin, sinh, sqrt, sum,
-                   tan, tanh, uint16, where, zeros)
+                   int32, int64, isinf, isnan, linspace, log, log1p, log2,
+                   log10, ones_like, prod, ravel, rec, shape, sin, sinh, sqrt,
+                   sum, tan, tanh, uint16, where, zeros)
 from numpy.testing import (assert_allclose, assert_array_almost_equal,
                            assert_array_equal, assert_equal)
 
@@ -689,11 +689,15 @@ class test_evaluate(TestCase):
         n = np.array([-360, -360, -360, 360, 360, 360], dtype=np.int32)
         out_i = evaluate('a % n')
         assert_equal(out_i, np.mod(a, n))
+        main_i = evaluate('a // n')
+        assert_equal(main_i, a // n)
 
         b = a.astype(np.int64)
         m = n.astype(np.int64)
         out_l = evaluate('b % m')
         assert_equal(out_l, np.mod(b, m))
+        main_l = evaluate('b // m')
+        assert_equal(main_l, a // m)
 
     def test_negative_power_scalar(self):
         # Test for issue #428, where the power is negative and the base is an
@@ -709,7 +713,7 @@ class test_evaluate(TestCase):
     def test_ex_uses_vml(self):
         vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
                       "sinh", "cosh", "tanh", "arcsinh", "arccosh", "arctanh",
-                      "log", "log1p","log10", "exp", "expm1", "abs", "conj",
+                      "log", "log1p","log10", "log2", "exp", "expm1", "abs", "conj",
                       "arctan2", "fmod"]
         for func in vml_funcs:
             strexpr = func+'(a)'
@@ -803,7 +807,7 @@ func1tests = []
 for func in ['copy', 'ones_like', 'sqrt',
              'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-             'log', 'log1p', 'log10', 'exp', 'expm1', 'abs', 'conj',
+             'log', 'log1p', 'log10', "log2", 'exp', 'expm1', 'abs', 'conj',
              'ceil', 'floor']:
     func1tests.append("a + %s(b+c)" % func)
 tests.append(('1_ARG_FUNCS', func1tests))

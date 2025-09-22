@@ -352,6 +352,7 @@ functions = {
     'log': func(numpy.log, 'float'),
     'log1p': func(numpy.log1p, 'float'),
     'log10': func(numpy.log10, 'float'),
+    'log2': func(numpy.log2, 'float'),
     'exp': func(numpy.exp, 'float'),
     'expm1': func(numpy.expm1, 'float'),
 
@@ -441,6 +442,7 @@ class ExpressionNode():
     __mul__ = __rmul__ = binop('mul')
     __truediv__ = truediv_op
     __rtruediv__ = rtruediv_op
+    __floordiv__ = binop("floordiv")
     __pow__ = pow_op
     __rpow__ = binop('pow', reversed=True)
     __mod__ = binop('mod')
