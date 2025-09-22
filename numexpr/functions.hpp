@@ -49,6 +49,7 @@ FUNC_FF(FUNC_FF_LAST,    NULL,          NULL,   NULL,    NULL)
 #endif
 FUNC_FFF(FUNC_FMOD_FFF,    "fmod_fff",    fmodf,  fmodf2,  vsfmod)
 FUNC_FFF(FUNC_ARCTAN2_FFF, "arctan2_fff", atan2f, atan2f2, vsAtan2)
+FUNC_FFF(FUNC_HYPOT_FFF, "hypot_fff", hypotf, hypotf2, vsHypot)
 FUNC_FFF(FUNC_FFF_LAST,    NULL,          NULL,   NULL,    NULL)
 #ifdef ELIDE_FUNC_FFF
 #undef ELIDE_FUNC_FFF
@@ -122,6 +123,7 @@ FUNC_BF(FUNC_BF_LAST,    NULL,            NULL,        NULL,    NULL)
 #endif
 FUNC_DDD(FUNC_FMOD_DDD,    "fmod_ddd",    fmod,  vdfmod)
 FUNC_DDD(FUNC_ARCTAN2_DDD, "arctan2_ddd", atan2, vdAtan2)
+FUNC_DDD(FUNC_HYPOT_DDD, "hypot_ddd", hypot, vdHypot)
 FUNC_DDD(FUNC_DDD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_DDD
 #undef ELIDE_FUNC_DDD

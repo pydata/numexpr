@@ -413,6 +413,16 @@ static void vzLog1p(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
     vzLn(n, dest, dest);
 };
 
+static void vzLog2(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
+{
+    MKL_INT j;
+    vzLn(n, x1, dest);
+    for (j=0; j<n; j++) {
+        dest[j].real = dest[j].real * M_LOG2_E;
+        dest[j].imag = dest[j].imag * M_LOG2_E;
+    };
+};
+
 /* Use this instead of native vzAbs in VML as it seems to work badly */
 static void vzAbs_(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {

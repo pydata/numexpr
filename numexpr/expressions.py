@@ -348,6 +348,7 @@ functions = {
 
     'fmod': func(numpy.fmod, 'float'),
     'arctan2': func(numpy.arctan2, 'float'),
+    'hypot': func(numpy.hypot, 'float'),
 
     'log': func(numpy.log, 'float'),
     'log1p': func(numpy.log1p, 'float'),

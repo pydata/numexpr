@@ -42,6 +42,7 @@
 #define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
 #define ceilf(x)    ((float)ceil((double)(x)))
+#define hypotf(x)    ((float)hypot((double)(x)))
 
 /* The next are directly called from interp_body.cpp */
 #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
@@ -147,6 +148,11 @@ inline float fmodf2(float x, float y) {
 inline float atan2f2(float x, float y) {
     return atan2f(x, y);
 }
+
+inline float hypotf2(float x, float y) {
+    return hypotf(x, y);
+}
+
 
 // Boolean output functions
 inline bool isnanf2(float x) {

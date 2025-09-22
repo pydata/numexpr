@@ -74,6 +74,7 @@ vml_functions = [
     "isnan",
     "isfinite",
     "isinf",
+    "hypot"
     ]
 
 

@@ -25,9 +25,9 @@ from numpy import all as alltrue
 from numpy import (allclose, arange, arccos, arccosh, arcsin, arcsinh, arctan,
                    arctan2, arctanh, array, array_equal, cdouble, ceil, conj,
                    copy, cos, cosh, empty, exp, expm1, float64, floor, fmod,
-                   int32, int64, isinf, isnan, linspace, log, log1p, log2,
-                   log10, ones_like, prod, ravel, rec, shape, sin, sinh, sqrt,
-                   sum, tan, tanh, uint16, where, zeros)
+                   hypot, int32, int64, isinf, isnan, linspace, log, log1p,
+                   log2, log10, ones_like, prod, ravel, rec, shape, sin, sinh,
+                   sqrt, sum, tan, tanh, uint16, where, zeros)
 from numpy.testing import (assert_allclose, assert_array_almost_equal,
                            assert_array_equal, assert_equal)
 
@@ -714,7 +714,7 @@ class test_evaluate(TestCase):
         vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
                       "sinh", "cosh", "tanh", "arcsinh", "arccosh", "arctanh",
                       "log", "log1p","log10", "log2", "exp", "expm1", "abs", "conj",
-                      "arctan2", "fmod"]
+                      "arctan2", "fmod", "hypot"]
         for func in vml_funcs:
             strexpr = func+'(a)'
             _, ex_uses_vml = numexpr.necompiler.getExprNames(strexpr, {})
@@ -813,7 +813,7 @@ for func in ['copy', 'ones_like', 'sqrt',
 tests.append(('1_ARG_FUNCS', func1tests))
 
 func2tests = []
-for func in ['arctan2', 'fmod']:
+for func in ['arctan2', 'fmod', 'hypot']:
     func2tests.append("a + %s(b+c, d+1)" % func)
     func2tests.append("a + %s(b+c, 1)" % func)
     func2tests.append("a + %s(1, d+1)" % func)
@@ -877,6 +877,7 @@ class Skip(Exception): pass
                 or "%" in expr
                 or "arctan2" in expr
                 or "fmod" in expr
+                or "hypot" in expr
                 or "floor" in expr
                 or "ceil" in expr
             )
