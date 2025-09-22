@@ -393,7 +393,7 @@ FuncCCPtr functions_cc[] = {
 };
 
 #ifdef USE_VML
-/* complex expm1 not available in VML */
+/* various functions not available in VML */
 static void vzExpm1(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
 {
     MKL_INT j;
@@ -420,6 +420,15 @@ static void vzLog2(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
     for (j=0; j<n; j++) {
         dest[j].real = dest[j].real * M_LOG2_E;
         dest[j].imag = dest[j].imag * M_LOG2_E;
+    };
+};
+
+static void vzRint(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j].real = rint(x1[j].real);
+        dest[j].imag = rint(x1[j].imag);
     };
 };
 

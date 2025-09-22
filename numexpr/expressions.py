@@ -348,7 +348,8 @@ functions = {
 
     'fmod': func(numpy.fmod, 'float'),
     'arctan2': func(numpy.arctan2, 'float'),
-    'hypot': func(numpy.hypot, 'float'),
+    'hypot': func(numpy.hypot, 'double'),
+    'nextafter': func(numpy.nextafter, 'double'),
 
     'log': func(numpy.log, 'float'),
     'log1p': func(numpy.log1p, 'float'),
@@ -360,6 +361,8 @@ functions = {
     'abs': func(numpy.absolute, 'float'),
     'ceil': func(numpy.ceil, 'float', 'double'),
     'floor': func(numpy.floor, 'float', 'double'),
+    'round': func(numpy.round, 'double'),
+    'trunc': func(numpy.trunc, 'double'),
 
     'where': where_func,
 

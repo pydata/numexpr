@@ -43,6 +43,9 @@
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
 #define ceilf(x)    ((float)ceil((double)(x)))
 #define hypotf(x)    ((float)hypot((double)(x)))
+#define rintf(x)    ((float)rint((double)(x)))
+#define truncf(x)    ((float)trunc((double)(x)))
+#define nextafterf(x)    ((float)nextafter((double)(x)))
 
 /* The next are directly called from interp_body.cpp */
 #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
@@ -153,6 +156,10 @@ inline float hypotf2(float x, float y) {
     return hypotf(x, y);
 }
 
+inline float nextafterf2(float x, float y) {
+    return nextafterf(x, y);
+}
+
 
 // Boolean output functions
 inline bool isnanf2(float x) {
@@ -180,6 +187,14 @@ inline float ceilf2(float x) {
 
 inline float floorf2(float x) {
     return floorf(x);
+}
+
+inline float rintf2(float x) {
+    return rintf(x);
+}
+
+inline float truncf2(float x) {
+    return truncf(x);
 }
 
 #endif // NUMEXPR_MSVC_FUNCTION_STUBS_HPP

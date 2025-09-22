@@ -435,6 +435,13 @@ nc_abs(std::complex<double> *x, std::complex<double> *r)
     r->imag(0);
 }
 
+static void
+nc_rint(std::complex<double> *x, std::complex<double> *r)
+{
+    r->real(rint(x->real()));
+    r->imag(rint(x->imag()));
+}
+
 static bool
 nc_isinf(std::complex<double> *x)
 {
