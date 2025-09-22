@@ -220,6 +220,7 @@
         case OP_INVERT_BB: VEC_ARG1(b_dest = !b1);
         case OP_AND_BBB: VEC_ARG2(b_dest = (b1 && b2));
         case OP_OR_BBB: VEC_ARG2(b_dest = (b1 || b2));
+        case OP_XOR_BBB: VEC_ARG2(b_dest = (b1 || b2) && !(b1 && b2) );
 
         case OP_EQ_BBB: VEC_ARG2(b_dest = (b1 == b2));
         case OP_NE_BBB: VEC_ARG2(b_dest = (b1 != b2));
@@ -268,6 +269,11 @@
         case OP_RSHIFT_III: VEC_ARG2(i_dest = i1 >> i2);
 
         case OP_WHERE_IBII: VEC_ARG3(i_dest = b1 ? i2 : i3);
+        //Bitwise ops
+        case OP_INVERT_II: VEC_ARG1(i_dest = ~i1);
+        case OP_AND_III: VEC_ARG2(i_dest = (i1 & i2));
+        case OP_OR_III: VEC_ARG2(i_dest = (i1 | i2));
+        case OP_XOR_III: VEC_ARG2(i_dest = (i1 ^ i2));
 
         /* Long */
         case OP_CAST_LI: VEC_ARG1(l_dest = (long long)(i1));
@@ -288,6 +294,11 @@
         case OP_RSHIFT_LLL: VEC_ARG2(l_dest = l1 >> l2);
 
         case OP_WHERE_LBLL: VEC_ARG3(l_dest = b1 ? l2 : l3);
+        //Bitwise ops
+        case OP_INVERT_LL: VEC_ARG1(l_dest = ~l1);
+        case OP_AND_LLL: VEC_ARG2(l_dest = (l1 & l2));
+        case OP_OR_LLL: VEC_ARG2(l_dest = (l1 | l2));
+        case OP_XOR_LLL: VEC_ARG2(l_dest = (l1 ^ l2));
 
         /* Float */
         case OP_CAST_FI: VEC_ARG1(f_dest = (float)(i1));
