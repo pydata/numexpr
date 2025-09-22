@@ -221,26 +221,33 @@ FuncBFPtr functions_bf[] = {
 #endif
 
 #ifdef USE_VML
-/* no isnan, isfinite or isinf in VML */
-static void vfIsfinite(MKL_INT n, const float* x1, bool* dest)
+/* no isnan, isfinite, isinf or signbit in VML */
+static void vsIsfinite(MKL_INT n, const float* x1, bool* dest)
 {
     MKL_INT j;
     for (j=0; j<n; j++) {
         dest[j] = isfinitef_(x1[j]);
     };
 };
-static void vfIsinf(MKL_INT n, const float* x1, bool* dest)
+static void vsIsinf(MKL_INT n, const float* x1, bool* dest)
 {
     MKL_INT j;
     for (j=0; j<n; j++) {
         dest[j] = isinff_(x1[j]);
     };
 };
-static void vfIsnan(MKL_INT n, const float* x1, bool* dest)
+static void vsIsnan(MKL_INT n, const float* x1, bool* dest)
 {
     MKL_INT j;
     for (j=0; j<n; j++) {
         dest[j] = isnanf_(x1[j]);
+    };
+};
+static void vsSignBit(MKL_INT n, const float* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = signbitf(x1[j]);
     };
 };
 #endif
@@ -262,7 +269,7 @@ FuncBDPtr functions_bd[] = {
 };
 
 #ifdef USE_VML
-/* no isnan, isfinite or isinf in VML */
+/* no isnan, isfinite, isinf, signbit in VML */
 static void vdIsfinite(MKL_INT n, const double* x1, bool* dest)
 {
     MKL_INT j;
@@ -282,6 +289,13 @@ static void vdIsnan(MKL_INT n, const double* x1, bool* dest)
     MKL_INT j;
     for (j=0; j<n; j++) {
         dest[j] = isnand(x1[j]);
+    };
+};
+static void vdSignBit(MKL_INT n, const double* x1, bool* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = signbit(x1[j]);
     };
 };
 #endif

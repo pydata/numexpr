@@ -350,6 +350,7 @@ functions = {
     'arctan2': func(numpy.arctan2, 'float'),
     'hypot': func(numpy.hypot, 'double'),
     'nextafter': func(numpy.nextafter, 'double'),
+    'copysign': func(numpy.copysign, 'double'),
 
     'log': func(numpy.log, 'float'),
     'log1p': func(numpy.log1p, 'float'),
@@ -371,9 +372,10 @@ functions = {
     'complex': func(complex, 'complex'),
     'conj': func(numpy.conj, 'complex'),
 
-    'isnan': func(numpy.isnan, 'bool'),
-    'isfinite': func(numpy.isfinite, 'bool'),
-    'isinf': func(numpy.isinf, 'bool'),
+    'isnan': func(numpy.isnan, 'double'),
+    'isfinite': func(numpy.isfinite, 'double'),
+    'isinf': func(numpy.isinf, 'double'),
+    'signbit': func(numpy.signbit, 'double'),
 
     'sum': gen_reduce_axis_func('sum'),
     'prod': gen_reduce_axis_func('prod'),
@@ -531,6 +533,6 @@ class FuncNode(OpNode):
     def __init__(self, opcode=None, args=None, kind=None):
         if (kind is None) and (args is not None):
             kind = commonKind(args)
-        if opcode in ("isnan", "isfinite", "isinf"): # bodge for boolean return functions
+        if opcode in ("isnan", "isfinite", "isinf", "signbit"): # bodge for boolean return functions
             kind = 'bool'
         OpNode.__init__(self, opcode, args, kind)

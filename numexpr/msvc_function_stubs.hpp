@@ -41,6 +41,8 @@
 #define fabsf(x)    ((float)fabs((double)(x)))
 #define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
+#define hypotf(x, y)    ((float)hypot((double)(x), (double)(y)))
+#define copysignf(x, y)    ((float)copysign((double)(x), (double)(y)))
 #define ceilf(x)    ((float)ceil((double)(x)))
 #define hypotf(x)    ((float)hypot((double)(x)))
 #define rintf(x)    ((float)rint((double)(x)))
@@ -160,6 +162,10 @@ inline float nextafterf2(float x, float y) {
     return nextafterf(x, y);
 }
 
+inline float copysignf2(float x, float y) {
+    return copysignf(x, y);
+}
+
 
 // Boolean output functions
 inline bool isnanf2(float x) {
@@ -195,6 +201,10 @@ inline float rintf2(float x) {
 
 inline float truncf2(float x) {
     return truncf(x);
+}
+
+inline float signbitf2(float x) {
+    return signbitf(x);
 }
 
 #endif // NUMEXPR_MSVC_FUNCTION_STUBS_HPP

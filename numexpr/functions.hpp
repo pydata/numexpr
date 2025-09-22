@@ -54,6 +54,7 @@ FUNC_FFF(FUNC_FMOD_FFF,    "fmod_fff",    fmodf,  fmodf2,  vsfmod)
 FUNC_FFF(FUNC_ARCTAN2_FFF, "arctan2_fff", atan2f, atan2f2, vsAtan2)
 FUNC_FFF(FUNC_HYPOT_FFF, "hypot_fff", hypotf, hypotf2, vsHypot)
 FUNC_FFF(FUNC_NEXTAFTER_FFF, "nextafter_fff", nextafterf, nextafterf2, vsNextAfter)
+FUNC_FFF(FUNC_COPYSIGN_FFF, "copysign_fff", copysignf, copysignf2, vsCopySign)
 FUNC_FFF(FUNC_FFF_LAST,    NULL,          NULL,   NULL,    NULL)
 #ifdef ELIDE_FUNC_FFF
 #undef ELIDE_FUNC_FFF
@@ -89,7 +90,7 @@ FUNC_DD(FUNC_CEIL_DD,    "ceil_dd",     ceil,  vdCeil)
 FUNC_DD(FUNC_FLOOR_DD,   "floor_dd",    floor, vdFloor)
 FUNC_DD(FUNC_TRUNC_DD,   "trunc_dd",    trunc, vdTrunc)
  //rint rounds to nearest even integer, matching NumPy (round doesn't)
-FUNC_DD(FUNC_ROUND_DD,   "round_dd",    rint, vdRint)
+FUNC_DD(FUNC_ROUND_DD,   "round_dd",    rint,  vdRint)
 FUNC_DD(FUNC_DD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_DD
 #undef ELIDE_FUNC_DD
@@ -104,6 +105,7 @@ FUNC_DD(FUNC_DD_LAST,    NULL,          NULL,  NULL)
 FUNC_BD(FUNC_ISNAN_BD,   "isnan_bd",    isnand, vdIsnan)
 FUNC_BD(FUNC_ISFINITE_BD, "isfinite_bd", isfinited, vdIsfinite)
 FUNC_BD(FUNC_ISINF_BD, "isinf_bd", isinfd, vdIsinf)
+FUNC_BD(FUNC_SIGNBIT_BD, "signbit_bd",  signbit, vdSignBit)
 FUNC_BD(FUNC_BD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_BD
 #undef ELIDE_FUNC_BD
@@ -115,9 +117,10 @@ FUNC_BD(FUNC_BD_LAST,    NULL,          NULL,  NULL)
 #define ELIDE_FUNC_BF
 #define FUNC_BF(...)
 #endif // use wrappers as there is name collision with isnanf in std
-FUNC_BF(FUNC_ISNAN_BF,   "isnan_bf",    isnanf_,  isnanf2, vfIsnan)
-FUNC_BF(FUNC_ISFINITE_BF, "isfinite_bf", isfinitef_, isfinitef2, vfIsfinite)
-FUNC_BF(FUNC_ISINF_BF, "isinf_bf", isinff_, isinff2, vfIsinf)
+FUNC_BF(FUNC_ISNAN_BF,   "isnan_bf",    isnanf_,  isnanf2, vsIsnan)
+FUNC_BF(FUNC_ISFINITE_BF, "isfinite_bf", isfinitef_, isfinitef2, vsIsfinite)
+FUNC_BF(FUNC_ISINF_BF, "isinf_bf", isinff_, isinff2, vsIsinf)
+FUNC_BF(FUNC_SIGNBIT_BF, "signbit_bf", signbitf, signbitf2, vsSignBit)
 FUNC_BF(FUNC_BF_LAST,    NULL,            NULL,        NULL,    NULL)
 #ifdef ELIDE_FUNC_BF
 #undef ELIDE_FUNC_BF
@@ -132,6 +135,7 @@ FUNC_DDD(FUNC_FMOD_DDD,    "fmod_ddd",    fmod,  vdfmod)
 FUNC_DDD(FUNC_ARCTAN2_DDD, "arctan2_ddd", atan2, vdAtan2)
 FUNC_DDD(FUNC_HYPOT_DDD, "hypot_ddd", hypot, vdHypot)
 FUNC_DDD(FUNC_NEXTAFTER_DDD, "nextafter_ddd", nextafter, vdNextAfter)
+FUNC_DDD(FUNC_COPYSIGN_DDD, "copysign_ddd", copysign, vdCopySign)
 FUNC_DDD(FUNC_DDD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_DDD
 #undef ELIDE_FUNC_DDD

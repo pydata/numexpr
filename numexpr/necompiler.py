@@ -77,7 +77,9 @@ vml_functions = [
     "hypot",
     "round",
     "trunc",
-    "nextafter"
+    "nextafter",
+    "copysign",
+    "signbit"
     ]
 
 

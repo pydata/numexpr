@@ -24,11 +24,11 @@ import numpy as np
 from numpy import all as alltrue
 from numpy import (allclose, arange, arccos, arccosh, arcsin, arcsinh, arctan,
                    arctan2, arctanh, array, array_equal, cdouble, ceil, conj,
-                   copy, cos, cosh, empty, exp, expm1, float64, floor, fmod,
-                   hypot, int32, int64, isinf, isnan, linspace, log, log1p,
-                   log2, log10, nextafter, ones_like, prod, ravel, rec, round,
-                   shape, sin, sinh, sqrt, sum, tan, tanh, trunc, uint16,
-                   where, zeros)
+                   copy, copysign, cos, cosh, empty, exp, expm1, float64,
+                   floor, fmod, hypot, int32, int64, isfinite, isinf, isnan,
+                   linspace, log, log1p, log2, log10, nextafter, ones_like,
+                   prod, ravel, rec, round, shape, signbit, sin, sinh, sqrt,
+                   sum, tan, tanh, trunc, uint16, where, zeros)
 from numpy.testing import (assert_allclose, assert_array_almost_equal,
                            assert_array_equal, assert_equal)
 
@@ -728,20 +728,26 @@ class test_evaluate(TestCase):
         a = np.arange(2 * array_size, dtype=dtype)
         a[array_size//2] = np.nan
         a[array_size//3] = np.inf
+        a[array_size//4] = -2
 
-        assert np.all(evaluate("isnan(a)") == np.isnan(a))
-        assert np.all(evaluate("isfinite(a)") == np.isfinite(a))
-        assert np.all(evaluate("isinf(a)") == np.isinf(a))
+        assert_equal(evaluate("isnan(a)"), isnan(a))
+        assert_equal(evaluate("isfinite(a)"), isfinite(a))
+        assert_equal(evaluate("isinf(a)"), isinf(a))
+        assert_equal(evaluate("signbit(a)"), signbit(a))
+
         a = a.astype(np.float64)
         assert a.dtype == np.float64
-        assert np.all(evaluate("isnan(a)") == np.isnan(a))
-        assert np.all(evaluate("isfinite(a)") == np.isfinite(a))
-        assert np.all(evaluate("isinf(a)") == np.isinf(a))
+        assert_equal(evaluate("isnan(a)"), isnan(a))
+        assert_equal(evaluate("isfinite(a)"), isfinite(a))
+        assert_equal(evaluate("isinf(a)"), isinf(a))
+        assert_equal(evaluate("signbit(a)"), signbit(a))
+
         a = a.astype(np.complex128)
         assert a.dtype == np.complex128
         assert np.all(evaluate("isnan(a)") == np.isnan(a))
         assert np.all(evaluate("isfinite(a)") == np.isfinite(a))
         assert np.all(evaluate("isinf(a)") == np.isinf(a))
+        # signbit not defined for complex numbers
 
     if 'sparc' not in platform.machine():
         # Execution order set here so as to not use too many threads
@@ -814,7 +820,7 @@ for func in ['copy', 'ones_like', 'sqrt',
 tests.append(('1_ARG_FUNCS', func1tests))
 
 func2tests = []
-for func in ['arctan2', 'fmod', 'hypot', 'nextafter']:
+for func in ['arctan2', 'fmod', 'hypot', 'nextafter', 'copysign']:
     func2tests.append("a + %s(b+c, d+1)" % func)
     func2tests.append("a + %s(b+c, 1)" % func)
     func2tests.append("a + %s(1, d+1)" % func)

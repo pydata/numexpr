@@ -41,7 +41,8 @@
 #include "mkl_service.h"
 #endif
 #include <cmath>
-
+//no single precision version of signbit in C++ standard
+inline bool signbitf(float x) { return signbit((double)x); }
 #ifdef _WIN32
   #ifndef __MINGW32__
     #include "missing_posix_functions.hpp"
