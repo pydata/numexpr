@@ -456,6 +456,29 @@ class test_evaluate(TestCase):
         else:
             raise ValueError("should raise exception!")
 
+        x = np.ones(10, dtype='bool')
+        y = np.zeros(10, dtype='bool')
+        assert_array_equal(evaluate("x & y"), x & y) # and
+        assert_array_equal(evaluate("x ^ y"), x ^ y) # xor
+        assert_array_equal(evaluate("x | y"), x | y) # or
+        assert_array_equal(evaluate("~x"), ~x) # invert
+
+    def test_bitwise_operators(self):
+        x = arange(10, dtype='i4')
+        y = arange(10, dtype='i4')
+        assert_array_equal(evaluate("x & y"), x & y) # and
+        assert_array_equal(evaluate("x ^ y"), x ^ y) # xor
+        assert_array_equal(evaluate("x | y"), x | y) # or
+        assert_array_equal(evaluate("~x"), ~x) # invert
+
+        x = arange(10, dtype='i8')
+        y = arange(10, dtype='i8')
+        assert_array_equal(evaluate("x & y"), x & y) # and
+        assert_array_equal(evaluate("x ^ y"), x ^ y) # xor
+        assert_array_equal(evaluate("x | y"), x | y) # or
+        assert_array_equal(evaluate("~x"), ~x) # invert
+
+
     def test_rational_expr(self):
         a = arange(1e6)
         b = arange(1e6) * 0.1

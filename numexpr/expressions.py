@@ -451,10 +451,10 @@ class ExpressionNode():
     __rshift__ = binop('rshift')
     __rrshift__ = binop('rshift', reversed=True)
 
-    # boolean operations
-
-    __and__ = binop('and', kind='bool')
-    __or__ = binop('or', kind='bool')
+    # bitwise or logical operations
+    __and__ = binop('and')
+    __or__ = binop('or')
+    __xor__ = binop('xor')
 
     __gt__ = binop('gt', kind='bool')
     __ge__ = binop('ge', kind='bool')
