@@ -216,9 +216,6 @@ inline bool signbitf2(float x) {
     return signbitf(x);
 }
 
-inline float signf2(float x) {
-    return signf(x);
-}
 
 
 

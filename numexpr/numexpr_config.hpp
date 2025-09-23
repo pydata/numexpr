@@ -60,5 +60,10 @@ inline bool isnand(double x)    { return !!std::isnan(x); }
 inline bool isinff_(float x) { return !!std::isinf(x); }
 inline bool isinfd(double x)    { return !!std::isinf(x); }
 #endif
-
+#include "bespoke_functions.hpp"
+#ifdef _WIN32 //need signf from bespoke_functions
+inline float signf2(float x) {
+    return signf(x);
+}
+  #endif
 #endif // NUMEXPR_CONFIG_HPP
