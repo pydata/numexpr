@@ -44,11 +44,13 @@
 #define hypotf(x, y)    ((float)hypot((double)(x), (double)(y)))
 #define copysignf(x, y)    ((float)copysign((double)(x), (double)(y)))
 #define nextafterf(x, y)    ((float)nextafter((double)(x), (double)(y)))
+#define fmaxf(x, y)    ((float)fmax((double)(x), (double)(y)))
+#define fminf(x, y)    ((float)fmax((double)(x), (double)(y)))
 #define ceilf(x)    ((float)ceil((double)(x)))
 #define hypotf(x)    ((float)hypot((double)(x)))
 #define rintf(x)    ((float)rint((double)(x)))
 #define truncf(x)    ((float)trunc((double)(x)))
-#define fmaxf(x)    ((float)fmax((double)(x)))
+
 
 /* The next are directly called from interp_body.cpp */
 #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
