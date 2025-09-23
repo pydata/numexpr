@@ -203,7 +203,7 @@ inline float truncf2(float x) {
     return truncf(x);
 }
 
-inline float signbitf2(float x) {
+inline bool signbitf2(float x) {
     return signbitf(x);
 }
 
