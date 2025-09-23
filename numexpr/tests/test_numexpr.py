@@ -492,7 +492,8 @@ class test_evaluate(TestCase):
             x = arange(10, dtype=dtype)
             y = 2 * arange(10, dtype=dtype)[::-1]
             r = x-y
-            r[-1] = np.nan if not np.issubdtype(dtype, int) else -2
+            if not np.issubdtype(dtype, int):
+                r[-1] = np.nan
             assert_array_equal(evaluate("sign(r)"), sign(r))
 
     def test_rational_expr(self):
