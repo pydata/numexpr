@@ -492,7 +492,7 @@ class test_evaluate(TestCase):
             x = arange(10, dtype=dtype)
             y = 2 * arange(10, dtype=dtype)[::-1]
             r = x-y
-            if not np.issubdtype(dtype, int):
+            if not np.issubdtype(dtype, np.integer):
                 r[-1] = np.nan
             assert_array_equal(evaluate("sign(r)"), sign(r))
 
