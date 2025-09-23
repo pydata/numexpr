@@ -171,7 +171,7 @@ Add clauses to generate the FUNC_CODES from the ``functions.hpp`` header, making
     };
     #endif
 
-Some functions (e.g. ``fmod``, ``isnan``) are not available in MKL, and so must be hard-coded here as well:
+Some functions (e.g. ``fmod``, ``isnan``) are not available in MKL, and so must be hard-coded in ``bespoke_functions.hpp`` as well:
 
 .. code-block:: cpp
 
@@ -186,7 +186,7 @@ Some functions (e.g. ``fmod``, ``isnan``) are not available in MKL, and so must 
     };
     #endif
 
-The complex case is slightlñy different (see other examples in the same file).
+The complex case is slightly different (see other examples in the same file).
 
 Add case handling to the ``check_program`` function
 

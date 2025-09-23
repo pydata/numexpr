@@ -169,38 +169,41 @@ OPCODE(118, OP_CONTAINS_BSS, "contains_bss", Tb, Ts, Ts, T0)
 OPCODE(119, OP_FUNC_BDN, "func_bdn", Tb, Td, Tn, T0)
 OPCODE(120, OP_FUNC_BFN, "func_bfn", Tb, Tf, Tn, T0)
 OPCODE(121, OP_FUNC_BCN, "func_bcn", Tb, Tc, Tn, T0)
+//Integer funcs
+OPCODE(122, OP_FUNC_IIN, "func_iin", Ti, Ti, Tn, T0)
+OPCODE(123, OP_FUNC_LLN, "func_lln", Tl, Tl, Tn, T0)
 
 // Reductions always have to be at the end - parts of the code
 // use > OP_REDUCTION to decide whether operation is a reduction
-OPCODE(122, OP_REDUCTION, NULL, T0, T0, T0, T0)
+OPCODE(124, OP_REDUCTION, NULL, T0, T0, T0, T0)
 
 /* Last argument in a reduction is the axis of the array the
    reduction should be applied along. */
 
-OPCODE(123, OP_SUM_IIN, "sum_iin", Ti, Ti, Tn, T0)
-OPCODE(124, OP_SUM_LLN, "sum_lln", Tl, Tl, Tn, T0)
-OPCODE(125, OP_SUM_FFN, "sum_ffn", Tf, Tf, Tn, T0)
-OPCODE(126, OP_SUM_DDN, "sum_ddn", Td, Td, Tn, T0)
-OPCODE(127, OP_SUM_CCN, "sum_ccn", Tc, Tc, Tn, T0)
+OPCODE(125, OP_SUM_IIN, "sum_iin", Ti, Ti, Tn, T0)
+OPCODE(126, OP_SUM_LLN, "sum_lln", Tl, Tl, Tn, T0)
+OPCODE(127, OP_SUM_FFN, "sum_ffn", Tf, Tf, Tn, T0)
+OPCODE(128, OP_SUM_DDN, "sum_ddn", Td, Td, Tn, T0)
+OPCODE(129, OP_SUM_CCN, "sum_ccn", Tc, Tc, Tn, T0)
 
-OPCODE(128, OP_PROD, NULL, T0, T0, T0, T0)
-OPCODE(129, OP_PROD_IIN, "prod_iin", Ti, Ti, Tn, T0)
-OPCODE(130, OP_PROD_LLN, "prod_lln", Tl, Tl, Tn, T0)
-OPCODE(131, OP_PROD_FFN, "prod_ffn", Tf, Tf, Tn, T0)
-OPCODE(132, OP_PROD_DDN, "prod_ddn", Td, Td, Tn, T0)
-OPCODE(133, OP_PROD_CCN, "prod_ccn", Tc, Tc, Tn, T0)
+OPCODE(130, OP_PROD, NULL, T0, T0, T0, T0)
+OPCODE(131, OP_PROD_IIN, "prod_iin", Ti, Ti, Tn, T0)
+OPCODE(132, OP_PROD_LLN, "prod_lln", Tl, Tl, Tn, T0)
+OPCODE(133, OP_PROD_FFN, "prod_ffn", Tf, Tf, Tn, T0)
+OPCODE(134, OP_PROD_DDN, "prod_ddn", Td, Td, Tn, T0)
+OPCODE(135, OP_PROD_CCN, "prod_ccn", Tc, Tc, Tn, T0)
 
-OPCODE(134, OP_MIN, NULL, T0, T0, T0, T0)
-OPCODE(135, OP_MIN_IIN, "min_iin", Ti, Ti, Tn, T0)
-OPCODE(136, OP_MIN_LLN, "min_lln", Tl, Tl, Tn, T0)
-OPCODE(137, OP_MIN_FFN, "min_ffn", Tf, Tf, Tn, T0)
-OPCODE(138, OP_MIN_DDN, "min_ddn", Td, Td, Tn, T0)
+OPCODE(136, OP_MIN, NULL, T0, T0, T0, T0)
+OPCODE(137, OP_MIN_IIN, "min_iin", Ti, Ti, Tn, T0)
+OPCODE(138, OP_MIN_LLN, "min_lln", Tl, Tl, Tn, T0)
+OPCODE(139, OP_MIN_FFN, "min_ffn", Tf, Tf, Tn, T0)
+OPCODE(140, OP_MIN_DDN, "min_ddn", Td, Td, Tn, T0)
 
-OPCODE(139, OP_MAX, NULL, T0, T0, T0, T0)
-OPCODE(140, OP_MAX_IIN, "max_iin", Ti, Ti, Tn, T0)
-OPCODE(141, OP_MAX_LLN, "max_lln", Tl, Tl, Tn, T0)
-OPCODE(142, OP_MAX_FFN, "max_ffn", Tf, Tf, Tn, T0)
-OPCODE(143, OP_MAX_DDN, "max_ddn", Td, Td, Tn, T0)
+OPCODE(141, OP_MAX, NULL, T0, T0, T0, T0)
+OPCODE(142, OP_MAX_IIN, "max_iin", Ti, Ti, Tn, T0)
+OPCODE(143, OP_MAX_LLN, "max_lln", Tl, Tl, Tn, T0)
+OPCODE(144, OP_MAX_FFN, "max_ffn", Tf, Tf, Tn, T0)
+OPCODE(145, OP_MAX_DDN, "max_ddn", Td, Td, Tn, T0)
 
 /*
 When we get to 255, will maybe have to change code again
@@ -208,4 +211,4 @@ When we get to 255, will maybe have to change code again
 other than unsigned char for OPCODE table)
 */
 /* Should be the last opcode */
-OPCODE(144, OP_END, NULL, T0, T0, T0, T0)
+OPCODE(146, OP_END, NULL, T0, T0, T0, T0)

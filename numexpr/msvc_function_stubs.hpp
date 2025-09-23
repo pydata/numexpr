@@ -43,11 +43,12 @@
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
 #define hypotf(x, y)    ((float)hypot((double)(x), (double)(y)))
 #define copysignf(x, y)    ((float)copysign((double)(x), (double)(y)))
+#define nextafterf(x, y)    ((float)nextafter((double)(x), (double)(y)))
 #define ceilf(x)    ((float)ceil((double)(x)))
 #define hypotf(x)    ((float)hypot((double)(x)))
 #define rintf(x)    ((float)rint((double)(x)))
 #define truncf(x)    ((float)trunc((double)(x)))
-#define nextafterf(x)    ((float)nextafter((double)(x)))
+#define fmaxf(x)    ((float)fmax((double)(x)))
 
 /* The next are directly called from interp_body.cpp */
 #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
@@ -166,6 +167,14 @@ inline float copysignf2(float x, float y) {
     return copysignf(x, y);
 }
 
+inline float fmaxf2(float x, float y) {
+    return fmaxf(x, y);
+}
+
+inline float fminf2(float x, float y) {
+    return fminf(x, y);
+}
+
 
 // Boolean output functions
 inline bool isnanf2(float x) {
@@ -206,5 +215,11 @@ inline float truncf2(float x) {
 inline bool signbitf2(float x) {
     return signbitf(x);
 }
+
+inline float signf2(float x) {
+    return signf(x);
+}
+
+
 
 #endif // NUMEXPR_MSVC_FUNCTION_STUBS_HPP

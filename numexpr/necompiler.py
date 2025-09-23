@@ -79,7 +79,10 @@ vml_functions = [
     "trunc",
     "nextafter",
     "copysign",
-    "signbit"
+    "signbit",
+    "sign",
+    "minimum",
+    "maximum",
     ]
 
 

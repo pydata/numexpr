@@ -351,6 +351,9 @@ functions = {
     'hypot': func(numpy.hypot, 'double'),
     'nextafter': func(numpy.nextafter, 'double'),
     'copysign': func(numpy.copysign, 'double'),
+    'maximum': func(numpy.maximum, 'double'),
+    'minimum': func(numpy.minimum, 'double'),
+
 
     'log': func(numpy.log, 'float'),
     'log1p': func(numpy.log1p, 'float'),
@@ -364,6 +367,7 @@ functions = {
     'floor': func(numpy.floor, 'float', 'double'),
     'round': func(numpy.round, 'double'),
     'trunc': func(numpy.trunc, 'double'),
+    'sign': func(numpy.sign, 'double'),
 
     'where': where_func,
 

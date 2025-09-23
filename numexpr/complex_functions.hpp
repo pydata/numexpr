@@ -11,6 +11,7 @@
 **********************************************************************/
 
 // Replace npy_cdouble with std::complex<double>
+#include <math.h> // NAN
 #include <complex>
 
 /* constants */
@@ -471,4 +472,24 @@ nc_isfinite(std::complex<double> *x)
     br = isfinited(xr);
     return bi && br;
 }
+
+static void
+nc_sign(std::complex<double> *x, std::complex<double> *r)
+{
+    if (nc_isnan(x)){
+        r->real(NAN);
+        r->imag(NAN);
+    }
+    std::complex<double> mag;
+    nc_abs(x, &mag);
+    if (mag.real() == 0){
+        r->real(0);
+        r->imag(0);
+    }
+    else{
+        r->real(x->real()/mag.real());
+        r->imag(x->imag()/mag.real());
+    }
+}
+
 #endif // NUMEXPR_COMPLEX_FUNCTIONS_HPP

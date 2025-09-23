@@ -494,6 +494,21 @@
                      b_dest = functions_bc[arg2](&ca));
 #endif
 
+        /* Integer return types */
+         case OP_FUNC_IIN:
+#ifdef USE_VML
+            VEC_ARG1_VML(functions_ii_vml[arg2](BLOCK_SIZE,
+                                                (int*)x1, (int*)dest));
+#else
+            VEC_ARG1(i_dest = functions_ii[arg2](i1));
+#endif
+         case OP_FUNC_LLN:
+#ifdef USE_VML
+            VEC_ARG1_VML(functions_ll_vml[arg2](BLOCK_SIZE,
+                                                (long*)x1, (long*)dest));
+#else
+            VEC_ARG1(l_dest = functions_ll[arg2](l1));
+#endif
 
         /* Reductions */
         case OP_SUM_IIN: VEC_ARG1(i_reduce += i1);

@@ -18,6 +18,7 @@
 #include "complex_functions.hpp"
 #include "interpreter.hpp"
 #include "numexpr_object.hpp"
+#include "bespoke_functions.hpp"
 
 #ifdef _MSC_VER
 /* Some missing symbols and functions for Win */
@@ -143,17 +144,6 @@ FuncFFPtr functions_ff[] = {
 #endif
 
 #ifdef USE_VML
-/* Fake vsConj function just for casting purposes inside numexpr */
-static void vsConj(MKL_INT n, const float* x1, float* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = x1[j];
-    };
-};
-#endif
-
-#ifdef USE_VML
 typedef void (*FuncFFPtr_vml)(MKL_INT, const float*, float*);
 FuncFFPtr_vml functions_ff_vml[] = {
 #define FUNC_FF(fop, s, f, f_win32, f_vml) f_vml,
@@ -179,15 +169,6 @@ FuncFFFPtr functions_fff[] = {
 #endif
 
 #ifdef USE_VML
-/* fmod not available in VML */
-static void vsfmod(MKL_INT n, const float* x1, const float* x2, float* dest)
-{
-    MKL_INT j;
-    for(j=0; j < n; j++) {
-    dest[j] = fmod(x1[j], x2[j]);
-    };
-};
-
 typedef void (*FuncFFFPtr_vml)(MKL_INT, const float*, const float*, float*);
 FuncFFFPtr_vml functions_fff_vml[] = {
 #define FUNC_FFF(fop, s, f, f_win32, f_vml) f_vml,
@@ -221,38 +202,6 @@ FuncBFPtr functions_bf[] = {
 #endif
 
 #ifdef USE_VML
-/* no isnan, isfinite, isinf or signbit in VML */
-static void vsIsfinite(MKL_INT n, const float* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = isfinitef_(x1[j]);
-    };
-};
-static void vsIsinf(MKL_INT n, const float* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = isinff_(x1[j]);
-    };
-};
-static void vsIsnan(MKL_INT n, const float* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = isnanf_(x1[j]);
-    };
-};
-static void vsSignBit(MKL_INT n, const float* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = signbitf(x1[j]);
-    };
-};
-#endif
-
-#ifdef USE_VML
 typedef void (*FuncBFPtr_vml)(MKL_INT, const float*, bool*);
 FuncBFPtr_vml functions_bf_vml[] = {
 #define FUNC_BF(fop, s, f, f_win32, f_vml) f_vml,
@@ -267,38 +216,6 @@ FuncBDPtr functions_bd[] = {
 #include "functions.hpp"
 #undef FUNC_BD
 };
-
-#ifdef USE_VML
-/* no isnan, isfinite, isinf, signbit in VML */
-static void vdIsfinite(MKL_INT n, const double* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = isfinited(x1[j]);
-    };
-};
-static void vdIsinf(MKL_INT n, const double* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = isinfd(x1[j]);
-    };
-};
-static void vdIsnan(MKL_INT n, const double* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = isnand(x1[j]);
-    };
-};
-static void vdSignBit(MKL_INT n, const double* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = signbit(x1[j]);
-    };
-};
-#endif
 
 #ifdef USE_VML
 typedef void (*FuncBDPtr_vml)(MKL_INT, const double*, bool*);
@@ -316,30 +233,6 @@ FuncBCPtr functions_bc[] = {
 #undef FUNC_BC
 };
 
-#ifdef USE_VML
-/* no isnan, isfinite or isinf in VML */
-static void vzIsfinite(MKL_INT n, const MKL_Complex16* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = isfinited(x1[j].real) && isfinited(x1[j].imag);
-    };
-};
-static void vzIsinf(MKL_INT n, const MKL_Complex16* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = isinfd(x1[j].real) || isinfd(x1[j].imag);
-    };
-};
-static void vzIsnan(MKL_INT n, const MKL_Complex16* x1, bool* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = isnand(x1[j].real) || isnand(x1[j].imag);
-    };
-};
-#endif
 
 #ifdef USE_VML
 typedef void (*FuncBCPtr_vml)(MKL_INT, const MKL_Complex16[], bool*);
@@ -347,17 +240,6 @@ FuncBCPtr_vml functions_bc_vml[] = {
 #define FUNC_BC(fop, s, f, f_vml) f_vml,
 #include "functions.hpp"
 #undef FUNC_BC
-};
-#endif
-
-#ifdef USE_VML
-/* Fake vdConj function just for casting purposes inside numexpr */
-static void vdConj(MKL_INT n, const double* x1, double* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j] = x1[j];
-    };
 };
 #endif
 
@@ -379,15 +261,6 @@ FuncDDDPtr functions_ddd[] = {
 };
 
 #ifdef USE_VML
-/* fmod not available in VML */
-static void vdfmod(MKL_INT n, const double* x1, const double* x2, double* dest)
-{
-    MKL_INT j;
-    for(j=0; j < n; j++) {
-    dest[j] = fmod(x1[j], x2[j]);
-    };
-};
-
 typedef void (*FuncDDDPtr_vml)(MKL_INT, const double*, const double*, double*);
 FuncDDDPtr_vml functions_ddd_vml[] = {
 #define FUNC_DDD(fop, s, f, f_vml) f_vml,
@@ -407,57 +280,7 @@ FuncCCPtr functions_cc[] = {
 };
 
 #ifdef USE_VML
-/* various functions not available in VML */
-static void vzExpm1(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
-{
-    MKL_INT j;
-    vzExp(n, x1, dest);
-    for (j=0; j<n; j++) {
-        dest[j].real -= 1.0;
-    };
-};
-
-static void vzLog1p(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j].real = x1[j].real + 1;
-        dest[j].imag = x1[j].imag;
-    };
-    vzLn(n, dest, dest);
-};
-
-static void vzLog2(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
-{
-    MKL_INT j;
-    vzLn(n, x1, dest);
-    for (j=0; j<n; j++) {
-        dest[j].real = dest[j].real * M_LOG2_E;
-        dest[j].imag = dest[j].imag * M_LOG2_E;
-    };
-};
-
-static void vzRint(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j].real = rint(x1[j].real);
-        dest[j].imag = rint(x1[j].imag);
-    };
-};
-
-/* Use this instead of native vzAbs in VML as it seems to work badly */
-static void vzAbs_(MKL_INT n, const MKL_Complex16* x1, MKL_Complex16* dest)
-{
-    MKL_INT j;
-    for (j=0; j<n; j++) {
-        dest[j].real = sqrt(x1[j].real*x1[j].real + x1[j].imag*x1[j].imag);
-    dest[j].imag = 0;
-    };
-};
-
 typedef void (*FuncCCPtr_vml)(MKL_INT, const MKL_Complex16[], MKL_Complex16[]);
-
 FuncCCPtr_vml functions_cc_vml[] = {
 #define FUNC_CC(fop, s, f, f_vml) f_vml,
 #include "functions.hpp"
@@ -473,6 +296,39 @@ FuncCCCPtr functions_ccc[] = {
 #include "functions.hpp"
 #undef FUNC_CCC
 };
+
+/* integer return types*/
+typedef int (*FuncIIPtr)(int);
+FuncIIPtr functions_ii[] = {
+#define FUNC_II(fop, s, f, ...) f,
+#include "functions.hpp"
+#undef FUNC_II
+};
+
+#ifdef USE_VML
+typedef void (*FuncIIPtr_vml)(MKL_INT, const int*, int*);
+FuncIIPtr_vml functions_ii_vml[] = {
+#define FUNC_II(fop, s, f, f_vml) f_vml,
+#include "functions.hpp"
+#undef FUNC_II
+};
+#endif
+
+typedef long (*FuncLLPtr)(long);
+FuncLLPtr functions_ll[] = {
+#define FUNC_LL(fop, s, f, ...) f,
+#include "functions.hpp"
+#undef FUNC_LL
+};
+
+#ifdef USE_VML
+typedef void (*FuncLLPtr_vml)(MKL_INT, const long*, long*);
+FuncLLPtr_vml functions_ll_vml[] = {
+#define FUNC_LL(fop, s, f, f_vml) f_vml,
+#include "functions.hpp"
+#undef FUNC_LL
+};
+#endif
 
 
 char
@@ -644,6 +500,18 @@ check_program(NumExprObject *self)
                 }
                   else if (op == OP_FUNC_BCN) {
                     if (arg < 0 || arg >= FUNC_BC_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                }
+                  else if (op == OP_FUNC_IIN) {
+                    if (arg < 0 || arg >= FUNC_II_LAST) {
+                        PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
+                        return -1;
+                    }
+                }
+                    else if (op == OP_FUNC_LLN) {
+                    if (arg < 0 || arg >= FUNC_LL_LAST) {
                         PyErr_Format(PyExc_RuntimeError, "invalid program: funccode out of range (%i) at %i", arg, argloc);
                         return -1;
                     }

@@ -512,7 +512,11 @@ PyInit_interpreter(void) {
 #define FUNC_DDD(name, sname, ...) add_func(name, sname);
 #define FUNC_CC(name, sname, ...)  add_func(name, sname);
 #define FUNC_CCC(name, sname, ...) add_func(name, sname);
+#define FUNC_II(name, sname, ...) add_func(name, sname);
+#define FUNC_LL(name, sname, ...) add_func(name, sname);
 #include "functions.hpp"
+#undef FUNC_LL
+#undef FUNC_II
 #undef FUNC_CCC
 #undef FUNC_CC
 #undef FUNC_DDD

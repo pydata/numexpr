@@ -26,9 +26,10 @@ from numpy import (allclose, arange, arccos, arccosh, arcsin, arcsinh, arctan,
                    arctan2, arctanh, array, array_equal, cdouble, ceil, conj,
                    copy, copysign, cos, cosh, empty, exp, expm1, float64,
                    floor, fmod, hypot, int32, int64, isfinite, isinf, isnan,
-                   linspace, log, log1p, log2, log10, nextafter, ones_like,
-                   prod, ravel, rec, round, shape, signbit, sin, sinh, sqrt,
-                   sum, tan, tanh, trunc, uint16, where, zeros)
+                   linspace, log, log1p, log2, log10, maximum, minimum,
+                   nextafter, ones_like, prod, ravel, rec, round, shape, sign,
+                   signbit, sin, sinh, sqrt, sum, tan, tanh, trunc, uint16,
+                   where, zeros)
 from numpy.testing import (assert_allclose, assert_array_almost_equal,
                            assert_array_equal, assert_equal)
 
@@ -479,6 +480,20 @@ class test_evaluate(TestCase):
         assert_array_equal(evaluate("x | y"), x | y) # or
         assert_array_equal(evaluate("~x"), ~x) # invert
 
+    def test_maximum_minimum(self):
+        for dtype in [float, double, int, np.int64]:
+            x = arange(10, dtype=dtype)
+            y = 2 * arange(10, dtype=dtype)[::-1]
+            assert_array_equal(evaluate("maximum(x,y)"), maximum(x,y))
+            assert_array_equal(evaluate("minimum(x,y)"), minimum(x,y))
+
+    def test_sign(self):
+        for dtype in [float, double, int, np.int64, complex]:
+            x = arange(10, dtype=dtype)
+            y = 2 * arange(10, dtype=dtype)[::-1]
+            r = x-y
+            r[-1] = np.nan if not np.issubdtype(dtype, int) else -2
+            assert_array_equal(evaluate("sign(r)"), sign(r))
 
     def test_rational_expr(self):
         a = arange(1e6)
@@ -815,7 +830,7 @@ for func in ['copy', 'ones_like', 'sqrt',
              'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
              'log', 'log1p', 'log10', "log2", 'exp', 'expm1', 'abs', 'conj',
-             'ceil', 'floor', 'round', 'trunc']:
+             'ceil', 'floor', 'round', 'trunc', 'sign']:
     func1tests.append("a + %s(b+c)" % func)
 tests.append(('1_ARG_FUNCS', func1tests))
 
