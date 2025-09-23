@@ -130,6 +130,9 @@ op_signature(int op, unsigned int n) {
 typedef float (*FuncFFPtr)(float);
 
 #ifdef _WIN32
+inline float signf2(float x) { // needed to wait for bespoke_functions to be loaded
+    return signf(x);
+}
 FuncFFPtr functions_ff[] = {
 #define FUNC_FF(fop, s, f, f_win32, ...) f_win32,
 #include "functions.hpp"

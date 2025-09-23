@@ -216,7 +216,4 @@ inline bool signbitf2(float x) {
     return signbitf(x);
 }
 
-
-
-
 #endif // NUMEXPR_MSVC_FUNCTION_STUBS_HPP
