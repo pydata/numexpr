@@ -54,7 +54,7 @@ Example:
     #define FUNC_FF(...)
     #endif
     ...
-    FUNC_FF(FUNC_MYFUNC_FF, "myfunc_ff", myfuncf, myfuncf2, vfMyfunc)
+    FUNC_FF(FUNC_MYFUNC_FF, "myfunc_ff", myfuncf, myfuncf2, vsMyfunc)
     FUNC_FF(FUNC_FF_LAST,    NULL,       NULL,    NULL,     NULL)
     #ifdef ELIDE_FUNC_FF
     #undef ELIDE_FUNC_FF

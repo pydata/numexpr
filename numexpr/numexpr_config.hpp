@@ -43,6 +43,9 @@
 #include <cmath>
 //no single precision version of signbit in C++ standard
 inline bool signbitf(float x) { return signbit((double)x); }
+// To handle overloading of fmax/fmin in cmath
+inline double fmaxd(double x, double y)    { return fmax(x, y); }
+inline double fmind(double x, double y)    { return fmin(x, y); }
 #ifdef _WIN32
   #ifndef __MINGW32__
     #include "missing_posix_functions.hpp"

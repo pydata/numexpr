@@ -140,8 +140,8 @@ FUNC_DDD(FUNC_ARCTAN2_DDD, "arctan2_ddd", atan2, vdAtan2)
 FUNC_DDD(FUNC_HYPOT_DDD, "hypot_ddd", hypot, vdHypot)
 FUNC_DDD(FUNC_NEXTAFTER_DDD, "nextafter_ddd", nextafter, vdNextAfter)
 FUNC_DDD(FUNC_COPYSIGN_DDD, "copysign_ddd", copysign, vdCopySign)
-FUNC_DDD(FUNC_MAXIMUM_DDD, "maximum_ddd",  fmax,  vdFmax)
-FUNC_DDD(FUNC_MINIMUM_DDD, "minimum_ddd",  fmin,  vdFmin)
+FUNC_DDD(FUNC_MAXIMUM_DDD, "maximum_ddd",  fmaxd,  vdFmax)
+FUNC_DDD(FUNC_MINIMUM_DDD, "minimum_ddd",  fmind,  vdFmin)
 FUNC_DDD(FUNC_DDD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_DDD
 #undef ELIDE_FUNC_DDD
