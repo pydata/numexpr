@@ -77,7 +77,7 @@ _T = TypeVar('_T')
 
 # helper functions for creating __magic__ methods
 def ophelper(f: Callable[..., _T]) -> Callable[..., _T]:
-    def func(*args: ExpressionNode) -> _T:
+    def func(*args: 'ExpressionNode') -> _T:
         arglist = list(args)
         for i, x in enumerate(args):
             if isConstant(x):
