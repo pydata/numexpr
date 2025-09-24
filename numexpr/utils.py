@@ -15,19 +15,8 @@ log = logging.getLogger(__name__)
 import contextvars
 import os
 import subprocess
-from typing import (
-    Final,
-    Generic,
-    ItemsView,
-    Iterable,
-    Iterator,
-    KeysView,
-    Literal,
-    TypeVar,
-    ValuesView,
-    cast,
-    overload,
-)
+from typing import (Final, Generic, ItemsView, Iterable, Iterator, KeysView,
+                    Literal, TypeVar, ValuesView, cast, overload)
 
 from numexpr import use_vml
 from numexpr.interpreter import MAX_THREADS, _get_num_threads, _set_num_threads

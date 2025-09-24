@@ -12,20 +12,10 @@ __all__ = ['E']
 
 import operator
 import threading
-
 import types
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Final,
-    Iterable,
-    Mapping,
-    NoReturn,
-    TypeVar,
-    cast,
-)
+from typing import (TYPE_CHECKING, Any, Callable, ClassVar, Final, Iterable,
+                    Mapping, NoReturn, TypeVar, cast)
+
 if TYPE_CHECKING:
     from typing_extensions import Self, TypeIs
 

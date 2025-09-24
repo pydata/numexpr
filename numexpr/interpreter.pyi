@@ -1,6 +1,7 @@
-import numpy.typing as npt
 from collections.abc import Sequence
 from typing import Any, Final, Literal, TypeAlias
+
+import numpy.typing as npt
 
 _VMLAccuracyMode: TypeAlias = Literal[0, 1, 2, 3]
 

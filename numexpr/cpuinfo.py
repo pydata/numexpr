@@ -30,19 +30,8 @@ import re
 import subprocess
 import sys
 import warnings
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Container,
-    Final,
-    Generator,
-    NoReturn,
-    Sequence,
-    TypeAlias,
-    TypeVar,
-    overload,
-)
+from typing import (Any, Callable, ClassVar, Container, Final, Generator,
+                    NoReturn, Sequence, TypeAlias, TypeVar, overload)
 
 _CMD: TypeAlias = str | Sequence[str]
 _Statuses: TypeAlias = Container[int]

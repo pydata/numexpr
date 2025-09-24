@@ -14,8 +14,9 @@ import os
 import re
 import sys
 import threading
+from typing import (TYPE_CHECKING, Any, ClassVar, Final, Generator, Iterable,
+                    Iterator, TypeAlias)
 
-from typing import TYPE_CHECKING, Any, ClassVar, Final, Generator, Iterable, Iterator, TypeAlias
 if TYPE_CHECKING:
     from typing_extensions import Unpack
 
