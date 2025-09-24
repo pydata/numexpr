@@ -212,7 +212,9 @@ FUNC_BC(FUNC_BC_LAST,    NULL,            NULL,        NULL)
 #define ELIDE_FUNC_II
 #define FUNC_II(...)
 #endif
-FUNC_II(FUNC_SIGN_II,   "sign_ii", signi, viSign)
+FUNC_II(FUNC_SIGN_II,   "sign_ii",  signi, viSign)
+FUNC_II(FUNC_ROUND_II,  "round_ii", rinti, viRint)
+FUNC_II(FUNC_ABS_II,  "absolute_ii", fabsi, viFabs)
 FUNC_II(FUNC_II_LAST,  NULL,      NULL, NULL)
 #ifdef ELIDE_FUNC_II
 #undef ELIDE_FUNC_II
@@ -223,7 +225,9 @@ FUNC_II(FUNC_II_LAST,  NULL,      NULL, NULL)
 #define ELIDE_FUNC_LL
 #define FUNC_LL(...)
 #endif
-FUNC_LL(FUNC_SIGN_LL,   "sign_LL", signl, vlSign)
+FUNC_LL(FUNC_SIGN_LL,  "sign_ll",   signl,   vlSign)
+FUNC_LL(FUNC_ROUND_LL, "round_ll",  rintl,   vlRint)
+FUNC_LL(FUNC_ABS_LL,  "absolute_ll", fabsl, vlFabs)
 FUNC_LL(FUNC_LL_LAST,  NULL,      NULL, NULL)
 #ifdef ELIDE_FUNC_LL
 #undef ELIDE_FUNC_LL

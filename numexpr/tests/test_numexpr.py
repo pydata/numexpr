@@ -487,14 +487,17 @@ class test_evaluate(TestCase):
             assert_array_equal(evaluate("maximum(x,y)"), maximum(x,y))
             assert_array_equal(evaluate("minimum(x,y)"), minimum(x,y))
 
-    def test_sign(self):
-        for dtype in [float, double, int, np.int64, complex]:
+    def test_sign_round(self):
+        for dtype in [float, double, np.int32, np.int64, complex]:
             x = arange(10, dtype=dtype)
             y = 2 * arange(10, dtype=dtype)[::-1]
             r = x-y
             if not np.issubdtype(dtype, np.integer):
                 r[-1] = np.nan
+            assert evaluate("round(r)").dtype == round(r).dtype
+            assert evaluate("sign(r)").dtype == sign(r).dtype
             assert_array_equal(evaluate("sign(r)"), sign(r))
+            assert_array_equal(evaluate("round(r)"), round(r))
 
     def test_rational_expr(self):
         a = arange(1e6)

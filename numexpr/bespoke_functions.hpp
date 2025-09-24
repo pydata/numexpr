@@ -23,8 +23,43 @@ inline float signf(float x){
         return 0; // handles +0.0 and -0.0
     }
 
+// round function for ints
+inline int rinti(int x) {return x;}
+inline long rintl(long x) {return x;}
+// abs function for ints
+inline int fabsi(int x) {return x<0 ? -x: x;}
+inline long fabsl(long x) {return x<0 ? -x: x;}
+// fmod function for ints
+inline int fmodi(int x, int y) {return (int)fmodf((float)x, (float)y);}
+inline long fmodl(long x, long y)  {return (long)fmodf((long)x, (long)y);}
 
 #ifdef USE_VML
+static void viRint(MKL_INT n, const int* x, int* dest)
+{
+    memcpy(dest, x, n * sizeof(int)); // just copy x1 which is already int
+};
+
+static void vlRint(MKL_INT n, const long* x, long* dest)
+{
+    memcpy(dest, x, n * sizeof(long)); // just copy x1 which is already int
+};
+
+static void viFabs(MKL_INT n, const int* x, int* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = x[j] < 0 ? -x[j]: x[j];
+    };
+};
+
+static void vlFabs(MKL_INT n, const long* x, long* dest)
+{
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        dest[j] = x[j] < 0 ? -x[j]: x[j];
+    };
+};
+
 /* Fake vsConj function just for casting purposes inside numexpr */
 static void vsConj(MKL_INT n, const float* x1, float* dest)
 {
@@ -39,9 +74,31 @@ static void vsfmod(MKL_INT n, const float* x1, const float* x2, float* dest)
 {
     MKL_INT j;
     for(j=0; j < n; j++) {
-    dest[j] = fmod(x1[j], x2[j]);
+    dest[j] = fmodf(x1[j], x2[j]);
     };
 }
+static void vdfmod(MKL_INT n, const double* x1, const double* x2, double* dest)
+{
+    MKL_INT j;
+    for(j=0; j < n; j++) {
+    dest[j] = fmod(x1[j], x2[j]);
+    };
+};
+static void vifmod(MKL_INT n, const int* x1, const int* x2, int* dest)
+{
+    MKL_INT j;
+    for(j=0; j < n; j++) {
+    dest[j] = fmodi(x1[j], x2[j]);
+    };
+};
+static void vlfmod(MKL_INT n, const long* x1, const long* x2, long* dest)
+{
+    MKL_INT j;
+    for(j=0; j < n; j++) {
+    dest[j] = fmodl(x1[j], x2[j]);
+    };
+};
+
 /* no isnan, isfinite, isinf or signbit in VML */
 static void vsIsfinite(MKL_INT n, const float* x1, bool* dest)
 {
@@ -131,15 +188,6 @@ static void vdConj(MKL_INT n, const double* x1, double* dest)
     MKL_INT j;
     for (j=0; j<n; j++) {
         dest[j] = x1[j];
-    };
-};
-
-/* fmod not available in VML */
-static void vdfmod(MKL_INT n, const double* x1, const double* x2, double* dest)
-{
-    MKL_INT j;
-    for(j=0; j < n; j++) {
-    dest[j] = fmod(x1[j], x2[j]);
     };
 };
 

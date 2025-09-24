@@ -186,11 +186,10 @@ def func(func, minkind=None, maxkind=None):
             return ConstantNode(func(*[x.value for x in args]))
         kind = commonKind(args)
         if kind in ('int', 'long'):
-            # Exception for following NumPy casting rules
-            #FIXME: this is not always desirable. The following
-            # functions which return ints (for int inputs) on numpy
-            # but not on numexpr: copy, abs, fmod, ones_like
-            kind = 'double'
+            if func.__name__ not in ('copy', 'abs', 'fmod', 'ones_like', 'round', 'sign'):
+                # except for these special functions (which return ints for int inputs in NumPy)
+                # just do a cast to double
+                kind = 'double'
         else:
             # Apply regular casting rules
             if minkind and kind_rank.index(minkind) > kind_rank.index(kind):

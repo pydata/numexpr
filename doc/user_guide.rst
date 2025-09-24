@@ -188,10 +188,10 @@ Supported operators
 
 *NumExpr* supports the set of operators listed below:
 
-    * Bitwise operators (and, or, not, xor): :code:`&, |, ~, ^`
+    * Bitwise and logical operators (and, or, not, xor): :code:`&, |, ~, ^`
     * Comparison operators: :code:`<, <=, ==, !=, >=, >`
     * Unary arithmetic operators: :code:`-`
-    * Binary arithmetic operators: :code:`+, -, *, /, **, %, <<, >>`
+    * Binary arithmetic operators: :code:`+, -, *, /, //, **, %, <<, >>`
 
 
 Supported functions
@@ -203,22 +203,33 @@ The next are the current supported set:
       is true, number2 otherwise.
     * :code:`{isinf, isnan, isfinite}(float|complex): bool` -- returns element-wise True
       for ``inf`` or ``NaN``, ``NaN``, not ``inf`` respectively.
+    * :code:`signbit(float|complex): bool` -- returns element-wise True if signbit is set
+      False otherwise.
     * :code:`{sin,cos,tan}(float|complex): float|complex` -- trigonometric sine,
       cosine or tangent.
     * :code:`{arcsin,arccos,arctan}(float|complex): float|complex` -- trigonometric
       inverse sine, cosine or tangent.
     * :code:`arctan2(float1, float2): float` -- trigonometric inverse tangent of
       float1/float2.
+    * :code:`hypot(float1, float2): float` -- Euclidean distance between float1, float2
+    * :code:`nextafter(float1, float2): float` -- next representable floating-point value after
+      float1 in direction of float2
+    * :code:`copysign(float1, float2): float` -- return number with magnitude of float1 and
+      sign of float2
+    * :code:`{maximum,minimum}(float1, float2): float` -- return max/min of float1, float2
     * :code:`{sinh,cosh,tanh}(float|complex): float|complex` -- hyperbolic sine,
       cosine or tangent.
     * :code:`{arcsinh,arccosh,arctanh}(float|complex): float|complex` -- hyperbolic
       inverse sine, cosine or tangent.
-    * :code:`{log,log10,log1p}(float|complex): float|complex` -- natural, base-10 and
+    * :code:`{log,log10,log1p,log2}(float|complex): float|complex` -- natural, base-10 and
       log(1+x) logarithms.
     * :code:`{exp,expm1}(float|complex): float|complex` -- exponential and exponential
       minus one.
     * :code:`sqrt(float|complex): float|complex` -- square root.
-    * :code:`abs(float|complex): float|complex`  -- absolute value.
+    * :code:`trunc(float): float` -- round towards zero
+    * :code:`round(float|complex|int): float|complex|int` -- round to nearest integer (`rint`)
+    * :code:`sign(float|complex|int): float|complex|int` -- return -1, 0, +1 depending on sign
+    * :code:`abs(float|complex|int): float|complex|int`  -- absolute value.
     * :code:`conj(complex): complex` -- conjugate value.
     * :code:`{real,imag}(complex): float` -- real or imaginary part of complex.
     * :code:`complex(float, float): complex` -- complex from real and imaginary
