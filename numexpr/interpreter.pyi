@@ -1,5 +1,6 @@
-from typing import Final, Literal, TypeAlias
-
+import numpy.typing as npt
+from collections.abc import Sequence
+from typing import Any, Final, Literal, TypeAlias
 
 _VMLAccuracyMode: TypeAlias = Literal[0, 1, 2, 3]
 
@@ -20,3 +21,31 @@ funccodes: Final[dict[bytes, int]] = ...
 maxdims: Final[int] = ...
 opcodes: Final[dict[bytes, int]] = ...
 use_vml: Final[bool] = ...
+
+class NumExpr:
+    signature: Final[bytes]
+    constsig: Final[bytes]
+    tempsig: Final[bytes]
+    fullsig: Final[bytes]
+
+    program: Final[bytes]
+    constants: Final[Sequence[Any]]
+    input_names: Final[Sequence[str]]
+
+    def __init__(
+        self,
+        signature: bytes,
+        tempsig: bytes,
+        program: bytes,
+        constants: Sequence[Any] = ...,
+        input_names: Sequence[str] | None = None,
+    ) -> None: ...
+    def run(
+        self,
+        *args: Any,
+        casting: str = ...,
+        order: str = ...,
+        ex_uses_vml: bool = ...,
+        out: npt.NDArray[Any] = ...,
+    ) -> Any: ...
+    __call__ = run
