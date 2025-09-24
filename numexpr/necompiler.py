@@ -533,7 +533,7 @@ def setRegisterNumbersForTemporaries(ast: ASTNode, start: int) -> tuple[int, str
     return start + seen, signature
 
 
-_ThreeAddressForm: TypeAlias = tuple[bytes, Register, Unpack[tuple[Register, ...]]]
+_ThreeAddressForm: TypeAlias = tuple[bytes, Register, 'Unpack[tuple[Register, ...]]']
 
 
 def convertASTtoThreeAddrForm(ast: ASTNode) -> list[_ThreeAddressForm]:

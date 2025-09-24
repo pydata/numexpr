@@ -177,7 +177,7 @@ def binop(
     opfunc = getattr(operator, "__%s__" % opname)
 
     @ophelper
-    def operation(self: ExpressionNode, other: ExpressionNode) -> ExpressionNode:
+    def operation(self: 'ExpressionNode', other: 'ExpressionNode') -> 'ExpressionNode':
         if reversed:
             self, other = other, self
         if allConstantNodes([self, other]):
@@ -192,7 +192,7 @@ def func(
     func: Callable[..., Any], minkind: str | None = None, maxkind: str | None = None
 ) -> Callable[..., 'FuncNode | ConstantNode']:
     @ophelper
-    def function(*args: ExpressionNode) -> 'FuncNode | ConstantNode':
+    def function(*args: 'ExpressionNode') -> 'FuncNode | ConstantNode':
         if allConstantNodes(args):
             return ConstantNode(func(*[x.value for x in args]))
         kind = commonKind(args)
