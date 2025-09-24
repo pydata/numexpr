@@ -11,19 +11,22 @@ Thanks to Luke Shaw for these contributions.
 
 Project documentation is available at:
 
-http://numexpr.readthedocs.io/
+https://numexpr.readthedocs.io/
 
-Changes from 2.12.0 to 2.12.1
+Changes from 2.12.1 to 2.13.0
 -----------------------------
 
-* Added complex counterparts for isnan/isfinite/isinf functions.
-  Thanks to Luke Shaw.
+* New functionality has been added:
+  * Bitwise operators (and, or, not, xor): `&, |, ~, ^`
+  * New binary arithmetic operator for floor division: `//`
+  * New functions: `signbit`, `hypot`, `copysign`, `nextafter`, `maximum`,
+    `minimum`, `log2`, `trunc`, `round` and `sign`.
+  * Also enables integer outputs for integer inputs for
+    `abs`, `fmod`, `copy`, `ones_like`, `sign` and `round`.
 
-* Updated documentation for the new functions and instructions
-  for adding new functions to the virtual machine.  Thanks to Luke Shaw.
+  Thanks to Luke Shaw for the contributions.
 
-* Fixed MKL support; it was broken in 2.12.0.  Thanks to
-  Christoph Gohlke for reporting the issue.
+* New wheels for Python 3.14 and 3.14t are provided.
 
 What's Numexpr?
 ---------------

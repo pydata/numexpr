@@ -2,6 +2,11 @@
 Release notes for NumExpr 2.13 series
 =====================================
 
+Changes from 2.13.0 to 2.13.1
+-----------------------------
+
+* **Under development.**
+
 
 Changes from 2.12.1 to 2.13.0
 -----------------------------
@@ -17,6 +22,7 @@ Changes from 2.12.1 to 2.13.0
   Thanks to Luke Shaw for the contributions.
 
 * New wheels for Python 3.14 and 3.14t are provided.
+
 
 Changes from 2.12.0 to 2.12.1
 -----------------------------
