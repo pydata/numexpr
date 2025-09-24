@@ -29,7 +29,7 @@ from typing import (
     overload,
 )
 
-from numexpr import use_vml  # type: ignore[attr-defined]
+from numexpr import use_vml
 from numexpr.interpreter import MAX_THREADS, _get_num_threads, _set_num_threads
 
 from . import version
