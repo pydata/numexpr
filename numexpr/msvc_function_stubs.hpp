@@ -35,12 +35,22 @@
 #define logf(x)    ((float)log((double)(x)))
 #define log1pf(x)    ((float)log1p((double)(x)))
 #define log10f(x)    ((float)log10((double)(x)))
+#define log2f(x)    ((float)log2((double)(x)))
 #define expf(x)    ((float)exp((double)(x)))
 #define expm1f(x)    ((float)expm1((double)(x)))
 #define fabsf(x)    ((float)fabs((double)(x)))
 #define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
 #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
+#define hypotf(x, y)    ((float)hypot((double)(x), (double)(y)))
+#define copysignf(x, y)    ((float)copysign((double)(x), (double)(y)))
+#define nextafterf(x, y)    ((float)nextafter((double)(x), (double)(y)))
+#define fmaxf(x, y)    ((float)fmaxd((double)(x), (double)(y)))
+#define fminf(x, y)    ((float)fmind((double)(x), (double)(y)))
 #define ceilf(x)    ((float)ceil((double)(x)))
+#define hypotf(x)    ((float)hypot((double)(x)))
+#define rintf(x)    ((float)rint((double)(x)))
+#define truncf(x)    ((float)trunc((double)(x)))
+
 
 /* The next are directly called from interp_body.cpp */
 #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
@@ -123,6 +133,10 @@ inline float log10f2(float x) {
     return log10f(x);
 }
 
+inline float log2f2(float x) {
+    return log2f(x);
+}
+
 inline float expf2(float x) {
     return expf(x);
 }
@@ -142,6 +156,27 @@ inline float fmodf2(float x, float y) {
 inline float atan2f2(float x, float y) {
     return atan2f(x, y);
 }
+
+inline float hypotf2(float x, float y) {
+    return hypotf(x, y);
+}
+
+inline float nextafterf2(float x, float y) {
+    return nextafterf(x, y);
+}
+
+inline float copysignf2(float x, float y) {
+    return copysignf(x, y);
+}
+
+inline float fmaxf2(float x, float y) {
+    return fmaxf(x, y);
+}
+
+inline float fminf2(float x, float y) {
+    return fminf(x, y);
+}
+
 
 // Boolean output functions
 inline bool isnanf2(float x) {
@@ -169,6 +204,18 @@ inline float ceilf2(float x) {
 
 inline float floorf2(float x) {
     return floorf(x);
+}
+
+inline float rintf2(float x) {
+    return rintf(x);
+}
+
+inline float truncf2(float x) {
+    return truncf(x);
+}
+
+inline bool signbitf2(float x) {
+    return signbitf(x);
 }
 
 #endif // NUMEXPR_MSVC_FUNCTION_STUBS_HPP

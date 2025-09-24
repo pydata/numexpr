@@ -24,10 +24,12 @@ import numpy as np
 from numpy import all as alltrue
 from numpy import (allclose, arange, arccos, arccosh, arcsin, arcsinh, arctan,
                    arctan2, arctanh, array, array_equal, cdouble, ceil, conj,
-                   copy, cos, cosh, empty, exp, expm1, float64, floor, fmod,
-                   int32, int64, isinf, isnan, linspace, log, log1p, log10,
-                   ones_like, prod, ravel, rec, shape, sin, sinh, sqrt, sum,
-                   tan, tanh, uint16, where, zeros)
+                   copy, copysign, cos, cosh, empty, exp, expm1, float64,
+                   floor, fmod, hypot, int32, int64, isfinite, isinf, isnan,
+                   linspace, log, log1p, log2, log10, maximum, minimum,
+                   nextafter, ones_like, prod, ravel, rec, round, shape, sign,
+                   signbit, sin, sinh, sqrt, sum, tan, tanh, trunc, uint16,
+                   where, zeros)
 from numpy.testing import (assert_allclose, assert_array_almost_equal,
                            assert_array_equal, assert_equal)
 
@@ -478,6 +480,24 @@ class test_evaluate(TestCase):
         assert_array_equal(evaluate("x | y"), x | y) # or
         assert_array_equal(evaluate("~x"), ~x) # invert
 
+    def test_maximum_minimum(self):
+        for dtype in [float, double, int, np.int64]:
+            x = arange(10, dtype=dtype)
+            y = 2 * arange(10, dtype=dtype)[::-1]
+            assert_array_equal(evaluate("maximum(x,y)"), maximum(x,y))
+            assert_array_equal(evaluate("minimum(x,y)"), minimum(x,y))
+
+    def test_sign_round(self):
+        for dtype in [float, double, np.int32, np.int64, complex]:
+            x = arange(10, dtype=dtype)
+            y = 2 * arange(10, dtype=dtype)[::-1]
+            r = x-y
+            if not np.issubdtype(dtype, np.integer):
+                r[-1] = np.nan
+            assert evaluate("round(r)").dtype == round(r).dtype
+            assert evaluate("sign(r)").dtype == sign(r).dtype
+            assert_array_equal(evaluate("sign(r)"), sign(r))
+            assert_array_equal(evaluate("round(r)"), round(r))
 
     def test_rational_expr(self):
         a = arange(1e6)
@@ -689,11 +709,15 @@ class test_evaluate(TestCase):
         n = np.array([-360, -360, -360, 360, 360, 360], dtype=np.int32)
         out_i = evaluate('a % n')
         assert_equal(out_i, np.mod(a, n))
+        main_i = evaluate('a // n')
+        assert_equal(main_i, a // n)
 
         b = a.astype(np.int64)
         m = n.astype(np.int64)
         out_l = evaluate('b % m')
         assert_equal(out_l, np.mod(b, m))
+        main_l = evaluate('b // m')
+        assert_equal(main_l, a // m)
 
     def test_negative_power_scalar(self):
         # Test for issue #428, where the power is negative and the base is an
@@ -709,8 +733,8 @@ class test_evaluate(TestCase):
     def test_ex_uses_vml(self):
         vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
                       "sinh", "cosh", "tanh", "arcsinh", "arccosh", "arctanh",
-                      "log", "log1p","log10", "exp", "expm1", "abs", "conj",
-                      "arctan2", "fmod"]
+                      "log", "log1p","log10", "log2", "exp", "expm1", "abs", "conj",
+                      "arctan2", "fmod", "hypot"]
         for func in vml_funcs:
             strexpr = func+'(a)'
             _, ex_uses_vml = numexpr.necompiler.getExprNames(strexpr, {})
@@ -723,20 +747,26 @@ class test_evaluate(TestCase):
         a = np.arange(2 * array_size, dtype=dtype)
         a[array_size//2] = np.nan
         a[array_size//3] = np.inf
+        a[array_size//4] = -2
 
-        assert np.all(evaluate("isnan(a)") == np.isnan(a))
-        assert np.all(evaluate("isfinite(a)") == np.isfinite(a))
-        assert np.all(evaluate("isinf(a)") == np.isinf(a))
+        assert_equal(evaluate("isnan(a)"), isnan(a))
+        assert_equal(evaluate("isfinite(a)"), isfinite(a))
+        assert_equal(evaluate("isinf(a)"), isinf(a))
+        assert_equal(evaluate("signbit(a)"), signbit(a))
+
         a = a.astype(np.float64)
         assert a.dtype == np.float64
-        assert np.all(evaluate("isnan(a)") == np.isnan(a))
-        assert np.all(evaluate("isfinite(a)") == np.isfinite(a))
-        assert np.all(evaluate("isinf(a)") == np.isinf(a))
+        assert_equal(evaluate("isnan(a)"), isnan(a))
+        assert_equal(evaluate("isfinite(a)"), isfinite(a))
+        assert_equal(evaluate("isinf(a)"), isinf(a))
+        assert_equal(evaluate("signbit(a)"), signbit(a))
+
         a = a.astype(np.complex128)
         assert a.dtype == np.complex128
         assert np.all(evaluate("isnan(a)") == np.isnan(a))
         assert np.all(evaluate("isfinite(a)") == np.isfinite(a))
         assert np.all(evaluate("isinf(a)") == np.isinf(a))
+        # signbit not defined for complex numbers
 
     if 'sparc' not in platform.machine():
         # Execution order set here so as to not use too many threads
@@ -803,13 +833,13 @@ func1tests = []
 for func in ['copy', 'ones_like', 'sqrt',
              'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-             'log', 'log1p', 'log10', 'exp', 'expm1', 'abs', 'conj',
-             'ceil', 'floor']:
+             'log', 'log1p', 'log10', "log2", 'exp', 'expm1', 'abs', 'conj',
+             'ceil', 'floor', 'round', 'trunc', 'sign']:
     func1tests.append("a + %s(b+c)" % func)
 tests.append(('1_ARG_FUNCS', func1tests))
 
 func2tests = []
-for func in ['arctan2', 'fmod']:
+for func in ['arctan2', 'fmod', 'hypot', 'nextafter', 'copysign']:
     func2tests.append("a + %s(b+c, d+1)" % func)
     func2tests.append("a + %s(b+c, 1)" % func)
     func2tests.append("a + %s(1, d+1)" % func)
@@ -873,6 +903,8 @@ class Skip(Exception): pass
                 or "%" in expr
                 or "arctan2" in expr
                 or "fmod" in expr
+                # or "hypot" in expr
+                # or "nextafter" in expr
                 or "floor" in expr
                 or "ceil" in expr
             )

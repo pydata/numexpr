@@ -186,11 +186,10 @@ def func(func, minkind=None, maxkind=None):
             return ConstantNode(func(*[x.value for x in args]))
         kind = commonKind(args)
         if kind in ('int', 'long'):
-            # Exception for following NumPy casting rules
-            #FIXME: this is not always desirable. The following
-            # functions which return ints (for int inputs) on numpy
-            # but not on numexpr: copy, abs, fmod, ones_like
-            kind = 'double'
+            if func.__name__ not in ('copy', 'abs', 'fmod', 'ones_like', 'round', 'sign'):
+                # except for these special functions (which return ints for int inputs in NumPy)
+                # just do a cast to double
+                kind = 'double'
         else:
             # Apply regular casting rules
             if minkind and kind_rank.index(minkind) > kind_rank.index(kind):
@@ -348,16 +347,26 @@ functions = {
 
     'fmod': func(numpy.fmod, 'float'),
     'arctan2': func(numpy.arctan2, 'float'),
+    'hypot': func(numpy.hypot, 'double'),
+    'nextafter': func(numpy.nextafter, 'double'),
+    'copysign': func(numpy.copysign, 'double'),
+    'maximum': func(numpy.maximum, 'double'),
+    'minimum': func(numpy.minimum, 'double'),
+
 
     'log': func(numpy.log, 'float'),
     'log1p': func(numpy.log1p, 'float'),
     'log10': func(numpy.log10, 'float'),
+    'log2': func(numpy.log2, 'float'),
     'exp': func(numpy.exp, 'float'),
     'expm1': func(numpy.expm1, 'float'),
 
     'abs': func(numpy.absolute, 'float'),
     'ceil': func(numpy.ceil, 'float', 'double'),
     'floor': func(numpy.floor, 'float', 'double'),
+    'round': func(numpy.round, 'double'),
+    'trunc': func(numpy.trunc, 'double'),
+    'sign': func(numpy.sign, 'double'),
 
     'where': where_func,
 
@@ -366,9 +375,10 @@ functions = {
     'complex': func(complex, 'complex'),
     'conj': func(numpy.conj, 'complex'),
 
-    'isnan': func(numpy.isnan, 'bool'),
-    'isfinite': func(numpy.isfinite, 'bool'),
-    'isinf': func(numpy.isinf, 'bool'),
+    'isnan': func(numpy.isnan, 'double'),
+    'isfinite': func(numpy.isfinite, 'double'),
+    'isinf': func(numpy.isinf, 'double'),
+    'signbit': func(numpy.signbit, 'double'),
 
     'sum': gen_reduce_axis_func('sum'),
     'prod': gen_reduce_axis_func('prod'),
@@ -441,6 +451,7 @@ class ExpressionNode():
     __mul__ = __rmul__ = binop('mul')
     __truediv__ = truediv_op
     __rtruediv__ = rtruediv_op
+    __floordiv__ = binop("floordiv")
     __pow__ = pow_op
     __rpow__ = binop('pow', reversed=True)
     __mod__ = binop('mod')
@@ -525,6 +536,6 @@ class FuncNode(OpNode):
     def __init__(self, opcode=None, args=None, kind=None):
         if (kind is None) and (args is not None):
             kind = commonKind(args)
-        if opcode in ("isnan", "isfinite", "isinf"): # bodge for boolean return functions
+        if opcode in ("isnan", "isfinite", "isinf", "signbit"): # bodge for boolean return functions
             kind = 'bool'
         OpNode.__init__(self, opcode, args, kind)

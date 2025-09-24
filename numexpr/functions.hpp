@@ -30,12 +30,17 @@ FUNC_FF(FUNC_ARCTANH_FF, "arctanh_ff",  atanhf, atanhf2, vsAtanh)
 FUNC_FF(FUNC_LOG_FF,     "log_ff",      logf,   logf2,   vsLn)
 FUNC_FF(FUNC_LOG1P_FF,   "log1p_ff",    log1pf, log1pf2, vsLog1p)
 FUNC_FF(FUNC_LOG10_FF,   "log10_ff",    log10f, log10f2, vsLog10)
+FUNC_FF(FUNC_LOG2_FF,    "log2_ff",     log2f,  log2f2,  vsLog2)
 FUNC_FF(FUNC_EXP_FF,     "exp_ff",      expf,   expf2,   vsExp)
 FUNC_FF(FUNC_EXPM1_FF,   "expm1_ff",    expm1f, expm1f2, vsExpm1)
 FUNC_FF(FUNC_ABS_FF,     "absolute_ff", fabsf,  fabsf2,  vsAbs)
 FUNC_FF(FUNC_CONJ_FF,    "conjugate_ff",fconjf, fconjf2, vsConj)
 FUNC_FF(FUNC_CEIL_FF,    "ceil_ff",     ceilf,  ceilf2,  vsCeil)
 FUNC_FF(FUNC_FLOOR_FF,   "floor_ff",    floorf, floorf2, vsFloor)
+FUNC_FF(FUNC_TRUNC_FF,   "trunc_ff",    truncf, truncf2, vsTrunc)
+FUNC_FF(FUNC_SIGN_FF,   "sign_ff",    signf, signf2, vsSign)
+//rint rounds to nearest even integer, matching NumPy (round doesn't)
+FUNC_FF(FUNC_ROUND_FF,   "round_ff",    rintf,  rintf2,  vsRint)
 FUNC_FF(FUNC_FF_LAST,    NULL,          NULL,   NULL,    NULL)
 #ifdef ELIDE_FUNC_FF
 #undef ELIDE_FUNC_FF
@@ -48,6 +53,11 @@ FUNC_FF(FUNC_FF_LAST,    NULL,          NULL,   NULL,    NULL)
 #endif
 FUNC_FFF(FUNC_FMOD_FFF,    "fmod_fff",    fmodf,  fmodf2,  vsfmod)
 FUNC_FFF(FUNC_ARCTAN2_FFF, "arctan2_fff", atan2f, atan2f2, vsAtan2)
+FUNC_FFF(FUNC_HYPOT_FFF, "hypot_fff", hypotf, hypotf2, vsHypot)
+FUNC_FFF(FUNC_NEXTAFTER_FFF, "nextafter_fff", nextafterf, nextafterf2, vsNextAfter)
+FUNC_FFF(FUNC_COPYSIGN_FFF, "copysign_fff", copysignf, copysignf2, vsCopySign)
+FUNC_FFF(FUNC_MAXIMUM_FFF,   "maximum_fff",    fmaxf, fmaxf2, vsFmax)
+FUNC_FFF(FUNC_MINIMUM_FFF,   "minimum_fff",    fminf, fminf2, vsFmin)
 FUNC_FFF(FUNC_FFF_LAST,    NULL,          NULL,   NULL,    NULL)
 #ifdef ELIDE_FUNC_FFF
 #undef ELIDE_FUNC_FFF
@@ -74,12 +84,17 @@ FUNC_DD(FUNC_ARCTANH_DD, "arctanh_dd",  atanh, vdAtanh)
 FUNC_DD(FUNC_LOG_DD,     "log_dd",      log,   vdLn)
 FUNC_DD(FUNC_LOG1P_DD,   "log1p_dd",    log1p, vdLog1p)
 FUNC_DD(FUNC_LOG10_DD,   "log10_dd",    log10, vdLog10)
+FUNC_DD(FUNC_LOG2_DD,   "log2_dd",      log2,  vdLog2)
 FUNC_DD(FUNC_EXP_DD,     "exp_dd",      exp,   vdExp)
 FUNC_DD(FUNC_EXPM1_DD,   "expm1_dd",    expm1, vdExpm1)
 FUNC_DD(FUNC_ABS_DD,     "absolute_dd", fabs,  vdAbs)
 FUNC_DD(FUNC_CONJ_DD,    "conjugate_dd",fconj, vdConj)
 FUNC_DD(FUNC_CEIL_DD,    "ceil_dd",     ceil,  vdCeil)
 FUNC_DD(FUNC_FLOOR_DD,   "floor_dd",    floor, vdFloor)
+FUNC_DD(FUNC_TRUNC_DD,   "trunc_dd",    trunc, vdTrunc)
+FUNC_DD(FUNC_SIGN_DD,    "sign_dd",     sign,  vdSign)
+//rint rounds to nearest even integer, matching NumPy (round doesn't)
+FUNC_DD(FUNC_ROUND_DD,   "round_dd",    rint,  vdRint)
 FUNC_DD(FUNC_DD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_DD
 #undef ELIDE_FUNC_DD
@@ -94,6 +109,7 @@ FUNC_DD(FUNC_DD_LAST,    NULL,          NULL,  NULL)
 FUNC_BD(FUNC_ISNAN_BD,   "isnan_bd",    isnand, vdIsnan)
 FUNC_BD(FUNC_ISFINITE_BD, "isfinite_bd", isfinited, vdIsfinite)
 FUNC_BD(FUNC_ISINF_BD, "isinf_bd", isinfd, vdIsinf)
+FUNC_BD(FUNC_SIGNBIT_BD, "signbit_bd",  signbit, vdSignBit)
 FUNC_BD(FUNC_BD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_BD
 #undef ELIDE_FUNC_BD
@@ -105,9 +121,10 @@ FUNC_BD(FUNC_BD_LAST,    NULL,          NULL,  NULL)
 #define ELIDE_FUNC_BF
 #define FUNC_BF(...)
 #endif // use wrappers as there is name collision with isnanf in std
-FUNC_BF(FUNC_ISNAN_BF,   "isnan_bf",    isnanf_,  isnanf2, vfIsnan)
-FUNC_BF(FUNC_ISFINITE_BF, "isfinite_bf", isfinitef_, isfinitef2, vfIsfinite)
-FUNC_BF(FUNC_ISINF_BF, "isinf_bf", isinff_, isinff2, vfIsinf)
+FUNC_BF(FUNC_ISNAN_BF,   "isnan_bf",    isnanf_,  isnanf2, vsIsnan)
+FUNC_BF(FUNC_ISFINITE_BF, "isfinite_bf", isfinitef_, isfinitef2, vsIsfinite)
+FUNC_BF(FUNC_ISINF_BF, "isinf_bf", isinff_, isinff2, vsIsinf)
+FUNC_BF(FUNC_SIGNBIT_BF, "signbit_bf", signbitf, signbitf2, vsSignBit)
 FUNC_BF(FUNC_BF_LAST,    NULL,            NULL,        NULL,    NULL)
 #ifdef ELIDE_FUNC_BF
 #undef ELIDE_FUNC_BF
@@ -120,6 +137,11 @@ FUNC_BF(FUNC_BF_LAST,    NULL,            NULL,        NULL,    NULL)
 #endif
 FUNC_DDD(FUNC_FMOD_DDD,    "fmod_ddd",    fmod,  vdfmod)
 FUNC_DDD(FUNC_ARCTAN2_DDD, "arctan2_ddd", atan2, vdAtan2)
+FUNC_DDD(FUNC_HYPOT_DDD, "hypot_ddd", hypot, vdHypot)
+FUNC_DDD(FUNC_NEXTAFTER_DDD, "nextafter_ddd", nextafter, vdNextAfter)
+FUNC_DDD(FUNC_COPYSIGN_DDD, "copysign_ddd", copysign, vdCopySign)
+FUNC_DDD(FUNC_MAXIMUM_DDD, "maximum_ddd",  fmaxd,  vdFmax)
+FUNC_DDD(FUNC_MINIMUM_DDD, "minimum_ddd",  fmind,  vdFmin)
 FUNC_DDD(FUNC_DDD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_DDD
 #undef ELIDE_FUNC_DDD
@@ -146,10 +168,14 @@ FUNC_CC(FUNC_ARCTANH_CC, "arctanh_cc",  nc_atanh,  vzAtanh)
 FUNC_CC(FUNC_LOG_CC,     "log_cc",      nc_log,    vzLn)
 FUNC_CC(FUNC_LOG1P_CC,   "log1p_cc",    nc_log1p,  vzLog1p)
 FUNC_CC(FUNC_LOG10_CC,   "log10_cc",    nc_log10,  vzLog10)
+FUNC_CC(FUNC_LOG2_CC,    "log2_cc",     nc_log2,   vzLog2)
 FUNC_CC(FUNC_EXP_CC,     "exp_cc",      nc_exp,    vzExp)
 FUNC_CC(FUNC_EXPM1_CC,   "expm1_cc",    nc_expm1,  vzExpm1)
 FUNC_CC(FUNC_ABS_CC,     "absolute_cc", nc_abs,    vzAbs_)
 FUNC_CC(FUNC_CONJ_CC,    "conjugate_cc",nc_conj,   vzConj)
+FUNC_CC(FUNC_SIGN_CC,   "sign_cc",    nc_sign,   vzSign)
+// rint rounds to nearest even integer, matches NumPy behaviour (round doesn't)
+FUNC_CC(FUNC_ROUND_CC,   "round_cc",    nc_rint,   vzRint)
 FUNC_CC(FUNC_CC_LAST,    NULL,          NULL,      NULL)
 #ifdef ELIDE_FUNC_CC
 #undef ELIDE_FUNC_CC
@@ -179,4 +205,31 @@ FUNC_BC(FUNC_BC_LAST,    NULL,            NULL,        NULL)
 #ifdef ELIDE_FUNC_BC
 #undef ELIDE_FUNC_BC
 #undef FUNC_BC
+#endif
+
+// int -> int functions
+#ifndef FUNC_II
+#define ELIDE_FUNC_II
+#define FUNC_II(...)
+#endif
+FUNC_II(FUNC_SIGN_II,   "sign_ii",  signi, viSign)
+FUNC_II(FUNC_ROUND_II,  "round_ii", rinti, viRint)
+FUNC_II(FUNC_ABS_II,  "absolute_ii", fabsi, viFabs)
+FUNC_II(FUNC_II_LAST,  NULL,      NULL, NULL)
+#ifdef ELIDE_FUNC_II
+#undef ELIDE_FUNC_II
+#undef FUNC_II
+#endif
+
+#ifndef FUNC_LL
+#define ELIDE_FUNC_LL
+#define FUNC_LL(...)
+#endif
+FUNC_LL(FUNC_SIGN_LL,  "sign_ll",   signl,   vlSign)
+FUNC_LL(FUNC_ROUND_LL, "round_ll",  rintl,   vlRint)
+FUNC_LL(FUNC_ABS_LL,  "absolute_ll", fabsl, vlFabs)
+FUNC_LL(FUNC_LL_LAST,  NULL,      NULL, NULL)
+#ifdef ELIDE_FUNC_LL
+#undef ELIDE_FUNC_LL
+#undef FUNC_LL
 #endif

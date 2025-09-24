@@ -11,6 +11,7 @@
 **********************************************************************/
 
 // Replace npy_cdouble with std::complex<double>
+#include <math.h> // NAN
 #include <complex>
 
 /* constants */
@@ -347,6 +348,8 @@ nc_cosh(std::complex<double> *x, std::complex<double> *r)
 
 
 #define M_LOG10_E 0.434294481903251827651128918916605082294397
+#define M_LOG2_E  1.44269504088896340735992468100189213742664
+
 
 static void
 nc_log10(std::complex<double> *x, std::complex<double> *r)
@@ -354,6 +357,15 @@ nc_log10(std::complex<double> *x, std::complex<double> *r)
     nc_log(x, r);
     r->real(r->real() * M_LOG10_E);
     r->imag(r->imag() * M_LOG10_E);
+    return;
+}
+
+static void
+nc_log2(std::complex<double> *x, std::complex<double> *r)
+{
+    nc_log(x, r);
+    r->real(r->real() * M_LOG2_E);
+    r->imag(r->imag() * M_LOG2_E);
     return;
 }
 
@@ -424,6 +436,13 @@ nc_abs(std::complex<double> *x, std::complex<double> *r)
     r->imag(0);
 }
 
+static void
+nc_rint(std::complex<double> *x, std::complex<double> *r)
+{
+    r->real(rint(x->real()));
+    r->imag(rint(x->imag()));
+}
+
 static bool
 nc_isinf(std::complex<double> *x)
 {
@@ -453,4 +472,24 @@ nc_isfinite(std::complex<double> *x)
     br = isfinited(xr);
     return bi && br;
 }
+
+static void
+nc_sign(std::complex<double> *x, std::complex<double> *r)
+{
+    if (nc_isnan(x)){
+        r->real(NAN);
+        r->imag(NAN);
+    }
+    std::complex<double> mag;
+    nc_abs(x, &mag);
+    if (mag.real() == 0){
+        r->real(0);
+        r->imag(0);
+    }
+    else{
+        r->real(x->real()/mag.real());
+        r->imag(x->imag()/mag.real());
+    }
+}
+
 #endif // NUMEXPR_COMPLEX_FUNCTIONS_HPP

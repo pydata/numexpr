@@ -62,6 +62,7 @@ vml_functions = [
     "log",
     "log1p",
     "log10",
+    "log2",
     "exp",
     "expm1",
     "absolute",
@@ -73,6 +74,15 @@ vml_functions = [
     "isnan",
     "isfinite",
     "isinf",
+    "hypot",
+    "round",
+    "trunc",
+    "nextafter",
+    "copysign",
+    "signbit",
+    "sign",
+    "minimum",
+    "maximum",
     ]
 
 
