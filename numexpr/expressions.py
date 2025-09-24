@@ -186,9 +186,11 @@ def func(func, minkind=None, maxkind=None):
             return ConstantNode(func(*[x.value for x in args]))
         kind = commonKind(args)
         if kind in ('int', 'long'):
-            if func.__name__ not in ('copy', 'abs', 'fmod', 'ones_like', 'round', 'sign'):
+            if func.__name__ not in ('copy', 'abs', 'ones_like', 'round', 'sign'):
                 # except for these special functions (which return ints for int inputs in NumPy)
                 # just do a cast to double
+                # FIXME: 'fmod' outputs ints for NumPy when inputs are ints, but need to
+                # add new function signatures FUNC_LLL FUNC_III to support this
                 kind = 'double'
         else:
             # Apply regular casting rules

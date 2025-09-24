@@ -903,8 +903,10 @@ class Skip(Exception): pass
                 or "%" in expr
                 or "arctan2" in expr
                 or "fmod" in expr
-                # or "hypot" in expr
-                # or "nextafter" in expr
+                or "hypot" in expr
+                or "nextafter" in expr
+                or "copysign" in expr
+                or "trunc" in expr
                 or "floor" in expr
                 or "ceil" in expr
             )

@@ -30,8 +30,9 @@ inline long rintl(long x) {return x;}
 inline int fabsi(int x) {return x<0 ? -x: x;}
 inline long fabsl(long x) {return x<0 ? -x: x;}
 // fmod function for ints
-inline int fmodi(int x, int y) {return (int)fmodf((float)x, (float)y);}
-inline long fmodl(long x, long y)  {return (long)fmodf((long)x, (long)y);}
+// TODO: Have to add FUNC_III, FUNC_LLL signatures to functions.hpp to enable these
+// inline int fmodi(int x, int y) {return (int)fmodf((float)x, (float)y);}
+// inline long fmodl(long x, long y)  {return (long)fmodf((long)x, (long)y);}
 
 #ifdef USE_VML
 static void viRint(MKL_INT n, const int* x, int* dest)
@@ -84,20 +85,21 @@ static void vdfmod(MKL_INT n, const double* x1, const double* x2, double* dest)
     dest[j] = fmod(x1[j], x2[j]);
     };
 };
-static void vifmod(MKL_INT n, const int* x1, const int* x2, int* dest)
-{
-    MKL_INT j;
-    for(j=0; j < n; j++) {
-    dest[j] = fmodi(x1[j], x2[j]);
-    };
-};
-static void vlfmod(MKL_INT n, const long* x1, const long* x2, long* dest)
-{
-    MKL_INT j;
-    for(j=0; j < n; j++) {
-    dest[j] = fmodl(x1[j], x2[j]);
-    };
-};
+// TODO: Have to add FUNC_III, FUNC_LLL signatures to functions.hpp
+// static void vifmod(MKL_INT n, const int* x1, const int* x2, int* dest)
+// {
+//     MKL_INT j;
+//     for(j=0; j < n; j++) {
+//     dest[j] = fmodi(x1[j], x2[j]);
+//     };
+// };
+// static void vlfmod(MKL_INT n, const long* x1, const long* x2, long* dest)
+// {
+//     MKL_INT j;
+//     for(j=0; j < n; j++) {
+//     dest[j] = fmodl(x1[j], x2[j]);
+//     };
+// };
 
 /* no isnan, isfinite, isinf or signbit in VML */
 static void vsIsfinite(MKL_INT n, const float* x1, bool* dest)
