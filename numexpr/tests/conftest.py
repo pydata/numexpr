@@ -11,7 +11,7 @@
 import pytest
 
 
-def pytest_configure(config):
+def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
         "markers", "thread_unsafe: mark test as unsafe for parallel execution"
     )

@@ -62,3 +62,19 @@ test-command = ["python -m pytest --pyargs numexpr"]
 [[tool.cibuildwheel.overrides]]
 select = "cp31*t-*"
 test-command = ["python -m pytest --parallel-threads=4 --pyargs numexpr"]
+
+[tool.mypy]
+exclude = ["bench", "build", "doc", "issues", "numexpr/tests"]
+strict = true
+disable_error_code = ["no-any-return"]
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+warn_unreachable = false
+local_partial_types = true
+allow_redefinition_new = true
+
+[tool.pyright]
+exclude = ["bench", "build", "doc", "issues", "numexpr/tests"]
+ignore = [".venv"]
+stubPath = "."
+reportPrivateUsage = false
+reportConstantRedefinition = false

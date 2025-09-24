@@ -72,7 +72,7 @@ def print_versions() -> None:
     """Print the versions of software that numexpr relies on."""
     try:
         import numexpr.tests
-        return numexpr.tests.print_versions()  # type: ignore[attr-defined, no-untyped-call]
+        return numexpr.tests.print_versions()  # type: ignore[no-untyped-call]
     except ImportError:
         # To maintain Python 2.6 compatibility we have simple error handling
         raise ImportError('`numexpr.tests` could not be imported, likely it was excluded from the distribution.')
@@ -81,7 +81,7 @@ def test(verbosity: int = 1) -> "unittest.result.TestResult":
     """Run all the tests in the test suite."""
     try:
         import numexpr.tests
-        return numexpr.tests.test(verbosity=verbosity)  # type: ignore[attr-defined, no-untyped-call]
+        return numexpr.tests.test(verbosity=verbosity)  # type: ignore[no-untyped-call]
     except ImportError:
         # To maintain Python 2.6 compatibility we have simple error handling
         raise ImportError('`numexpr.tests` could not be imported, likely it was excluded from the distribution.')
