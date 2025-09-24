@@ -30,7 +30,7 @@ inline long rintl(long x) {return x;}
 inline int fabsi(int x) {return x<0 ? -x: x;}
 inline long fabsl(long x) {return x<0 ? -x: x;}
 // fmod function for ints
-/* Have to add FUNC_III, FUNC_LLL signatures to functions.hpp*/
+// TODO: Have to add FUNC_III, FUNC_LLL signatures to functions.hpp to enable these
 // inline int fmodi(int x, int y) {return (int)fmodf((float)x, (float)y);}
 // inline long fmodl(long x, long y)  {return (long)fmodf((long)x, (long)y);}
 
@@ -85,7 +85,7 @@ static void vdfmod(MKL_INT n, const double* x1, const double* x2, double* dest)
     dest[j] = fmod(x1[j], x2[j]);
     };
 };
-/* Have to add FUNC_III, FUNC_LLL signatures to functions.hpp*/
+// TODO: Have to add FUNC_III, FUNC_LLL signatures to functions.hpp
 // static void vifmod(MKL_INT n, const int* x1, const int* x2, int* dest)
 // {
 //     MKL_INT j;
