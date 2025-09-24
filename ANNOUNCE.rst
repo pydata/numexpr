@@ -1,11 +1,13 @@
 =========================
-Announcing NumExpr 2.12.1
+Announcing NumExpr 2.13.0
 =========================
 
 Hi everyone,
 
-NumExpr 2.12.1 allows isnan/isfinite/isinf functions to be used with complex.
-Also, OneAPI MKL has been fixed.  Thanks to Luke Shaw for these contributions.
+NumExpr 2.13.0 introduced a bunch of new features including new
+bitwise operators (&, |, ^, ~), floor division (//). It also adds
+many new functions (like hypot, log2, maximum, minimum, nextafter...).
+Thanks to Luke Shaw for these contributions.
 
 Project documentation is available at:
 
