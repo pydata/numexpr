@@ -12,12 +12,12 @@ Changes from 2.12.1 to 2.13.0
 -----------------------------
 
 * New functionality has been added:
-  * Bitwise operators (and, or, not, xor): `&, |, ~, ^`
-  * New binary arithmetic operator for floor division: `//`
-  * New functions: `signbit`, `hypot`, `copysign`, `nextafter`, `maximum`, `minimum`, `log2`, `trunc`, `round` and `sign`.
-  * Also enables integer outputs for integer inputs for `abs`, `fmod`, `copy`, `ones_like`, `sign` and `round`.
+ * Bitwise operators (and, or, not, xor): `&, |, ~, ^`
+ * New binary arithmetic operator for floor division: `//`
+ * New functions: `signbit`, `hypot`, `copysign`, `nextafter`, `maximum`, `minimum`, `log2`, `trunc`, `round` and `sign`.
+ * Also enables integer outputs for integer inputs for `abs`, `fmod`, `copy`, `ones_like`, `sign` and `round`.
 
-  Thanks to Luke Shaw for the contributions.
+ Thanks to Luke Shaw for the contributions.
 
 * New wheels for Python 3.14 and 3.14t are provided.
 
