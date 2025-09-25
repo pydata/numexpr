@@ -9,6 +9,8 @@
 #  rights to use.
 ####################################################################
 
+# mypy: ignore-errors
+
 import configparser
 import os
 import os.path as op

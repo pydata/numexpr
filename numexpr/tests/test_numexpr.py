@@ -9,6 +9,7 @@
 #  rights to use.
 ####################################################################
 
+# mypy: ignore-errors
 
 import os
 import platform
