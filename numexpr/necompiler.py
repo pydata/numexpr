@@ -15,7 +15,7 @@ import re
 import sys
 import threading
 from typing import (TYPE_CHECKING, Any, ClassVar, Final, Generator, Iterable,
-                    Iterator, TypeAlias)
+                    Iterator, Sequence, TypeAlias)
 
 if TYPE_CHECKING:
     from typing_extensions import Unpack
@@ -494,16 +494,14 @@ def optimizeTemporariesAllocation(ast: ASTNode) -> None:
             n.reg = reg
 
 
-def setOrderedRegisterNumbers(order: Iterable[ASTNode], start: int) -> int:
+def setOrderedRegisterNumbers(order: Sequence[ASTNode], start: int) -> int:
     """
     Given an order of nodes, assign register numbers.
     """
-    i = -1
-    for i, node in enumerate(order, start=start):
-        if node.reg:
-            node.reg.n = i
-    total = i + 1
-    return total
+    for i, node in enumerate(order):
+        assert node.reg is not None
+        node.reg.n = start + i
+    return start + len(order)
 
 
 def setRegisterNumbersForTemporaries(ast: ASTNode, start: int) -> tuple[int, str]:
