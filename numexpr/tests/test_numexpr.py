@@ -717,7 +717,30 @@ class test_evaluate(TestCase):
         out_l = evaluate('b % m')
         assert_equal(out_l, np.mod(b, m))
         main_l = evaluate('b // m')
-        assert_equal(main_l, a // m)
+        assert_equal(main_l, b // m)
+
+    def test_floordiv(self):
+        # Test for issue #413, modulus of negative integers. C modulus is
+        # actually remainder op, and hence different from Python modulus.
+        a = np.linspace(0, 200, 9, dtype=np.int32)
+        n = np.arange(1, 10, dtype=np.int32)
+        main_i = evaluate('a // n')
+        assert_equal(main_i, a // n)
+
+        b = a.astype(np.int64)
+        m = n.astype(np.int64)
+        main_l = evaluate('b // m')
+        assert_equal(main_l, b // m)
+
+        b = a.astype(np.float32)
+        m = n.astype(np.float32)
+        main_l = evaluate('b // m')
+        assert_equal(main_l, b // m)
+
+        b = a.astype(np.float64)
+        m = n.astype(np.float64)
+        main_l = evaluate('b // m')
+        assert_equal(main_l, b // m)
 
     def test_negative_power_scalar(self):
         # Test for issue #428, where the power is negative and the base is an
