@@ -490,6 +490,12 @@ class test_evaluate(TestCase):
             assert_array_equal(evaluate("maximum(x,y)"), maximum(x,y))
             assert_array_equal(evaluate("minimum(x,y)"), minimum(x,y))
 
+    def test_addmult_booleans(self):
+        x = np.asarray([0, 1, 0, 0, 1], dtype=bool)
+        y = x[::-1]
+        assert_array_equal(evaluate("x * y"), x * y)
+        assert_array_equal(evaluate("x + y"), x + y)
+
     def test_sign_round(self):
         for dtype in [float, double, np.int32, np.int64, complex]:
             x = arange(10, dtype=dtype)
