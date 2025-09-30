@@ -480,6 +480,13 @@ class test_evaluate(TestCase):
         assert_array_equal(evaluate("x | y"), x | y) # or
         assert_array_equal(evaluate("~x"), ~x) # invert
 
+    def test_complex_tan(self):
+        # old version of NumExpr had overflow problems
+        x = np.arange(1, 400., step=16., dtype=np.complex128)
+        y = 1j*np.arange(1, 400., step=16., dtype=np.complex128)
+        assert_array_almost_equal(evaluate("tan(x + y)"), tan(x + y))
+        assert_array_almost_equal(evaluate("tanh(x + y)"), tanh(x + y))
+
     def test_maximum_minimum(self):
         for dtype in [float, double, int, np.int64]:
             x = arange(10, dtype=dtype)
