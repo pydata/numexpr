@@ -43,9 +43,7 @@
 #include <cmath>
 //no single precision version of signbit in C++ standard
 inline bool signbitf(float x) { return signbit((double)x); }
-// To handle overloading of fmax/fmin in cmath
-inline double fmaxd(double x, double y)    { return fmax(x, y); }
-inline double fmind(double x, double y)    { return fmin(x, y); }
+
 #ifdef _WIN32
   #ifndef __MINGW32__
     #include "missing_posix_functions.hpp"
@@ -62,6 +60,12 @@ inline bool isfinited(double x) { return !!std::isfinite(x); }
 inline bool isnand(double x)    { return !!std::isnan(x); }
 inline bool isinff_(float x) { return !!std::isinf(x); }
 inline bool isinfd(double x)    { return !!std::isinf(x); }
+
+// To handle overloading of fmax/fmin in cmath and match NumPy behaviour for NaNs
+inline double fmaxd(double x, double y)    { return (isnand(x) | isnand(y))? NAN : fmax(x, y); }
+inline double fmind(double x, double y)    { return (isnand(x) | isnand(y))? NAN : fmin(x, y); }
+inline float fmaxf_(float x, float y)    { return (isnanf_(x) | isnanf_(y))? NAN : fmaxf(x, y); }
+inline float fminf_(float x, float y)    { return (isnanf_(x) | isnanf_(y))? NAN : fminf(x, y); }
 #endif
 
 #endif // NUMEXPR_CONFIG_HPP

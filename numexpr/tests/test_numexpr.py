@@ -484,6 +484,9 @@ class test_evaluate(TestCase):
         for dtype in [float, double, int, np.int64]:
             x = arange(10, dtype=dtype)
             y = 2 * arange(10, dtype=dtype)[::-1]
+            if dtype in (float, double):
+                y[5] = np.nan
+                x[2] = np.nan
             assert_array_equal(evaluate("maximum(x,y)"), maximum(x,y))
             assert_array_equal(evaluate("minimum(x,y)"), minimum(x,y))
 

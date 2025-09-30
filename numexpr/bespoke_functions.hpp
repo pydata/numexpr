@@ -35,6 +35,51 @@ inline long fabsl(long x) {return x<0 ? -x: x;}
 // inline long fmodl(long x, long y)  {return (long)fmodf((long)x, (long)y);}
 
 #ifdef USE_VML
+// To match Numpy behaviour for NaNs
+static void vsFmax_(MKL_INT n, const float* x1, const float* x2, float* dest)
+{
+    vsFmax(n, x1, x2, dest);
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        if (isnanf_(x1[j]) | isnanf_(x2[j])){
+            dest[j] = NAN;
+        }
+    };
+};
+
+static void vsFmin_(MKL_INT n, const float* x1, const float* x2, float* dest)
+{
+    vsFmin(n, x1, x2, dest);
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        if (isnanf_(x1[j]) | isnanf_(x2[j])){
+            dest[j] = NAN;
+        }
+    };
+};
+// To match Numpy behaviour for NaNs
+static void vdFmax_(MKL_INT n, const double* x1, const double* x2, double* dest)
+{
+    vdFmax(n, x1, x2, dest);
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        if (isnand(x1[j]) | isnand(x2[j])){
+            dest[j] = NAN;
+        }
+    };
+};
+
+static void vdFmin_(MKL_INT n, const double* x1, const double* x2, double* dest)
+{
+    vdFmin(n, x1, x2, dest);
+    MKL_INT j;
+    for (j=0; j<n; j++) {
+        if (isnand(x1[j]) | isnand(x2[j])){
+            dest[j] = NAN;
+        }
+    };
+};
+
 static void viRint(MKL_INT n, const int* x, int* dest)
 {
     memcpy(dest, x, n * sizeof(int)); // just copy x1 which is already int

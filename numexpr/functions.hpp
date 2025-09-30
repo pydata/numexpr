@@ -56,8 +56,8 @@ FUNC_FFF(FUNC_ARCTAN2_FFF, "arctan2_fff", atan2f, atan2f2, vsAtan2)
 FUNC_FFF(FUNC_HYPOT_FFF, "hypot_fff", hypotf, hypotf2, vsHypot)
 FUNC_FFF(FUNC_NEXTAFTER_FFF, "nextafter_fff", nextafterf, nextafterf2, vsNextAfter)
 FUNC_FFF(FUNC_COPYSIGN_FFF, "copysign_fff", copysignf, copysignf2, vsCopySign)
-FUNC_FFF(FUNC_MAXIMUM_FFF,   "maximum_fff",    fmaxf, fmaxf2, vsFmax)
-FUNC_FFF(FUNC_MINIMUM_FFF,   "minimum_fff",    fminf, fminf2, vsFmin)
+FUNC_FFF(FUNC_MAXIMUM_FFF,   "maximum_fff",    fmaxf_, fmaxf2, vsFmax_)
+FUNC_FFF(FUNC_MINIMUM_FFF,   "minimum_fff",    fminf_, fminf2, vsFmin_)
 FUNC_FFF(FUNC_FFF_LAST,    NULL,          NULL,   NULL,    NULL)
 #ifdef ELIDE_FUNC_FFF
 #undef ELIDE_FUNC_FFF
@@ -140,8 +140,8 @@ FUNC_DDD(FUNC_ARCTAN2_DDD, "arctan2_ddd", atan2, vdAtan2)
 FUNC_DDD(FUNC_HYPOT_DDD, "hypot_ddd", hypot, vdHypot)
 FUNC_DDD(FUNC_NEXTAFTER_DDD, "nextafter_ddd", nextafter, vdNextAfter)
 FUNC_DDD(FUNC_COPYSIGN_DDD, "copysign_ddd", copysign, vdCopySign)
-FUNC_DDD(FUNC_MAXIMUM_DDD, "maximum_ddd",  fmaxd,  vdFmax)
-FUNC_DDD(FUNC_MINIMUM_DDD, "minimum_ddd",  fmind,  vdFmin)
+FUNC_DDD(FUNC_MAXIMUM_DDD, "maximum_ddd",  fmaxd,  vdFmax_)
+FUNC_DDD(FUNC_MINIMUM_DDD, "minimum_ddd",  fmind,  vdFmin_)
 FUNC_DDD(FUNC_DDD_LAST,    NULL,          NULL,  NULL)
 #ifdef ELIDE_FUNC_DDD
 #undef ELIDE_FUNC_DDD
