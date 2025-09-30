@@ -493,8 +493,14 @@ class test_evaluate(TestCase):
     def test_addmult_booleans(self):
         x = np.asarray([0, 1, 0, 0, 1], dtype=bool)
         y = x[::-1]
-        assert_array_equal(evaluate("x * y"), x * y)
-        assert_array_equal(evaluate("x + y"), x + y)
+        res_ne = evaluate("x * y")
+        res_np = x * y
+        assert_array_equal(res_ne, res_np)
+        assert res_ne.dtype == res_np.dtype
+        res_ne = evaluate("x + y")
+        res_np = x + y
+        assert_array_equal(res_ne, res_np)
+        assert res_ne.dtype == res_np.dtype
 
     def test_sign_round(self):
         for dtype in [float, double, np.int32, np.int64, complex]:
