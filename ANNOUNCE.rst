@@ -1,12 +1,11 @@
 =========================
-Announcing NumExpr 2.13.0
+Announcing NumExpr 2.13.
 =========================
 
 Hi everyone,
 
-NumExpr 2.13.0 introduced a bunch of new features including new
-bitwise operators (&, |, ^, ~), floor division (//). It also adds
-many new functions (like hypot, log2, maximum, minimum, nextafter...).
+NumExpr 2.13.1 introduces a couple of patches for maximum/minimum and
+multiplication/addition for booleans to match NumPy behaviour.
 Thanks to Luke Shaw for these contributions.
 
 Project documentation is available at:
