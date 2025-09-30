@@ -2,6 +2,11 @@
 Release notes for NumExpr 2.13 series
 =====================================
 
+Changes from 2.13.1 to 2.13.2
+-----------------------------
+
+* **Under development.**
+
 Changes from 2.13.0 to 2.13.1
 -----------------------------
 
