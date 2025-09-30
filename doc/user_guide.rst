@@ -1,5 +1,5 @@
-NumExpr 2.12 User Guide
-======================
+NumExpr User Guide
+==================
 
 The NumExpr package supplies routines for the fast evaluation of
 array expressions elementwise by using a vector-based virtual
