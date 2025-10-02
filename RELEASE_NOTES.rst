@@ -7,11 +7,17 @@ Changes from 2.13.1 to 2.13.2
 
 * **Under development.**
 
+* Static typing support has been added, making NumExpr compatible with
+  static type checkers like `mypy` and `pyright`.
+  Thanks to Joren Hammudoglu (@jorenham) for the work.
+
+
 Changes from 2.13.0 to 2.13.1
 -----------------------------
 
 * Patch to maximum/minimum functions in order to match NumPy NaN handling
 * Patch to convert '+'->'|' and '*'->'&' for booleans
+
 
 Changes from 2.12.1 to 2.13.0
 -----------------------------
