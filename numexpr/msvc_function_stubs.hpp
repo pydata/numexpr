@@ -16,47 +16,6 @@
    definitions in <math.h> are actually #define'd and are not usable
    as function pointers :-/ */
 
-#if _MSC_VER < 1400  // 1310 == MSVC 7.1
-/* Apparently, single precision functions are not included in MSVC 7.1 */
-
-#define sqrtf(x)    ((float)sqrt((double)(x)))
-#define sinf(x)    ((float)sin((double)(x)))
-#define cosf(x)    ((float)cos((double)(x)))
-#define tanf(x)    ((float)tan((double)(x)))
-#define asinf(x)    ((float)asin((double)(x)))
-#define acosf(x)    ((float)acos((double)(x)))
-#define atanf(x)    ((float)atan((double)(x)))
-#define sinhf(x)    ((float)sinh((double)(x)))
-#define coshf(x)    ((float)cosh((double)(x)))
-#define tanhf(x)    ((float)tanh((double)(x)))
-#define asinhf(x)    ((float)asinh((double)(x)))
-#define acoshf(x)    ((float)acosh((double)(x)))
-#define atanhf(x)    ((float)atanh((double)(x)))
-#define logf(x)    ((float)log((double)(x)))
-#define log1pf(x)    ((float)log1p((double)(x)))
-#define log10f(x)    ((float)log10((double)(x)))
-#define log2f(x)    ((float)log2((double)(x)))
-#define expf(x)    ((float)exp((double)(x)))
-#define expm1f(x)    ((float)expm1((double)(x)))
-#define fabsf(x)    ((float)fabs((double)(x)))
-#define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
-#define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
-#define hypotf(x, y)    ((float)hypot((double)(x), (double)(y)))
-#define copysignf(x, y)    ((float)copysign((double)(x), (double)(y)))
-#define nextafterf(x, y)    ((float)nextafter((double)(x), (double)(y)))
-#define fmaxf(x, y)    ((float)fmaxd((double)(x), (double)(y)))
-#define fminf(x, y)    ((float)fmind((double)(x), (double)(y)))
-#define ceilf(x)    ((float)ceil((double)(x)))
-#define hypotf(x)    ((float)hypot((double)(x)))
-#define rintf(x)    ((float)rint((double)(x)))
-#define truncf(x)    ((float)trunc((double)(x)))
-
-
-/* The next are directly called from interp_body.cpp */
-#define powf(x, y)    ((float)pow((double)(x), (double)(y)))
-#define floorf(x)    ((float)floor((double)(x)))
-#endif // _MSC_VER < 1400
-
 /* Due to casting problems (normally return ints not bools, easiest to define
 non-overloaded wrappers for these functions) */
 // MSVC version: use global ::isfinite / ::isnan
@@ -66,6 +25,57 @@ inline bool isfinited(double x) { return !!::_finite(x); }
 inline bool isnand(double x)    { return !!::_isnan(x); }
 inline bool isinfd(double x) { return !!::isinf(x); }
 inline bool isinff_(float x)    { return !!::isinf(x); }
+
+// To handle overloading of fmax/fmin in cmath and match NumPy behaviour for NaNs
+inline double fmaxd(double x, double y)    { return (isnand(x) | isnand(y))? NAN : fmax(x, y); }
+inline double fmind(double x, double y)    { return (isnand(x) | isnand(y))? NAN : fmin(x, y); }
+
+
+#if _MSC_VER < 1400  // 1310 == MSVC 7.1
+    /* Apparently, single precision functions are not included in MSVC 7.1 */
+
+    #define sqrtf(x)    ((float)sqrt((double)(x)))
+    #define sinf(x)    ((float)sin((double)(x)))
+    #define cosf(x)    ((float)cos((double)(x)))
+    #define tanf(x)    ((float)tan((double)(x)))
+    #define asinf(x)    ((float)asin((double)(x)))
+    #define acosf(x)    ((float)acos((double)(x)))
+    #define atanf(x)    ((float)atan((double)(x)))
+    #define sinhf(x)    ((float)sinh((double)(x)))
+    #define coshf(x)    ((float)cosh((double)(x)))
+    #define tanhf(x)    ((float)tanh((double)(x)))
+    #define asinhf(x)    ((float)asinh((double)(x)))
+    #define acoshf(x)    ((float)acosh((double)(x)))
+    #define atanhf(x)    ((float)atanh((double)(x)))
+    #define logf(x)    ((float)log((double)(x)))
+    #define log1pf(x)    ((float)log1p((double)(x)))
+    #define log10f(x)    ((float)log10((double)(x)))
+    #define log2f(x)    ((float)log2((double)(x)))
+    #define expf(x)    ((float)exp((double)(x)))
+    #define expm1f(x)    ((float)expm1((double)(x)))
+    #define fabsf(x)    ((float)fabs((double)(x)))
+    #define fmodf(x, y)    ((float)fmod((double)(x), (double)(y)))
+    #define atan2f(x, y)    ((float)atan2((double)(x), (double)(y)))
+    #define hypotf(x, y)    ((float)hypot((double)(x), (double)(y)))
+    #define copysignf(x, y)    ((float)copysign((double)(x), (double)(y)))
+    #define nextafterf(x, y)    ((float)nextafter((double)(x), (double)(y)))
+    #define ceilf(x)    ((float)ceil((double)(x)))
+    #define hypotf(x)    ((float)hypot((double)(x)))
+    #define rintf(x)    ((float)rint((double)(x)))
+    #define truncf(x)    ((float)trunc((double)(x)))
+
+
+    /* The next are directly called from interp_body.cpp */
+    #define powf(x, y)    ((float)pow((double)(x), (double)(y)))
+    #define floorf(x)    ((float)floor((double)(x)))
+
+    #define fmaxf_(x, y)    ((float)fmaxd((double)(x), (double)(y))) // define fmaxf_ since fmaxf doesn't exist for early MSVC
+    #define fminf_(x, y)    ((float)fmind((double)(x), (double)(y)))
+#else
+    inline float fmaxf_(float x, float y)    { return (isnanf_(x) | isnanf_(y))? NAN : fmaxf(x, y); }
+    inline float fminf_(float x, float y)    { return (isnanf_(x) | isnanf_(y))? NAN : fminf(x, y); }
+#endif // _MSC_VER < 1400
+
 
 /* Now the actual stubs */
 
@@ -170,11 +180,11 @@ inline float copysignf2(float x, float y) {
 }
 
 inline float fmaxf2(float x, float y) {
-    return fmaxf(x, y);
+    return fmaxf_(x, y);
 }
 
 inline float fminf2(float x, float y) {
-    return fminf(x, y);
+    return fminf_(x, y);
 }
 
 

@@ -481,12 +481,34 @@ class test_evaluate(TestCase):
         assert_array_equal(evaluate("x | y"), x | y) # or
         assert_array_equal(evaluate("~x"), ~x) # invert
 
+    def test_complex_tan(self):
+        # old version of NumExpr had overflow problems
+        x = np.arange(1, 400., step=16., dtype=np.complex128)
+        y = 1j*np.arange(1, 400., step=16., dtype=np.complex128)
+        assert_array_almost_equal(evaluate("tan(x + y)"), tan(x + y))
+        assert_array_almost_equal(evaluate("tanh(x + y)"), tanh(x + y))
+
     def test_maximum_minimum(self):
         for dtype in [float, double, int, np.int64]:
             x = arange(10, dtype=dtype)
             y = 2 * arange(10, dtype=dtype)[::-1]
+            if dtype in (float, double):
+                y[5] = np.nan
+                x[2] = np.nan
             assert_array_equal(evaluate("maximum(x,y)"), maximum(x,y))
             assert_array_equal(evaluate("minimum(x,y)"), minimum(x,y))
+
+    def test_addmult_booleans(self):
+        x = np.asarray([0, 1, 0, 0, 1], dtype=bool)
+        y = x[::-1]
+        res_ne = evaluate("x * y")
+        res_np = x * y
+        assert_array_equal(res_ne, res_np)
+        assert res_ne.dtype == res_np.dtype
+        res_ne = evaluate("x + y")
+        res_np = x + y
+        assert_array_equal(res_ne, res_np)
+        assert res_ne.dtype == res_np.dtype
 
     def test_sign_round(self):
         for dtype in [float, double, np.int32, np.int64, complex]:

@@ -573,6 +573,9 @@ class OpNode(ExpressionNode):
     ) -> None:
         if (kind is None) and (args is not None):
             kind = commonKind(args)
+        if kind=='bool': # handle bool*bool and bool+bool cases
+            opcode = 'and' if opcode=='mul' else opcode
+            opcode = 'or' if opcode=='add' else opcode
         ExpressionNode.__init__(self, value=opcode, kind=kind, children=args)
 
 
