@@ -21,46 +21,62 @@ for more info about it.
 
 """
 
-from numexpr.interpreter import __BLOCK_SIZE1__, MAX_THREADS, use_vml
+from typing import TYPE_CHECKING, Final
 
-is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
+if TYPE_CHECKING:
+    import unittest
+
+# the `import _ as _` are needed for mypy to understand these are re-exports
+
+from numexpr.interpreter import __BLOCK_SIZE1__ as __BLOCK_SIZE1__
+from numexpr.interpreter import MAX_THREADS as MAX_THREADS
+from numexpr.interpreter import use_vml as use_vml
+
+is_cpu_amd_intel: Final = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
 
 # cpuinfo imports were moved into the test submodule function that calls them
 # to improve import times.
 
-from numexpr.expressions import E
-from numexpr.necompiler import (NumExpr, disassemble, evaluate, re_evaluate,
-                                validate)
-from numexpr.utils import (_init_num_threads, detect_number_of_cores,
-                           detect_number_of_threads, get_num_threads,
-                           get_vml_version, set_num_threads,
-                           set_vml_accuracy_mode, set_vml_num_threads)
+from numexpr.expressions import E as E
+from numexpr.necompiler import NumExpr as NumExpr
+from numexpr.necompiler import disassemble as disassemble
+from numexpr.necompiler import evaluate as evaluate
+from numexpr.necompiler import re_evaluate as re_evaluate
+from numexpr.necompiler import validate as validate
+from numexpr.utils import _init_num_threads
+from numexpr.utils import detect_number_of_cores as detect_number_of_cores
+from numexpr.utils import detect_number_of_threads as detect_number_of_threads
+from numexpr.utils import get_num_threads as get_num_threads
+from numexpr.utils import get_vml_version as get_vml_version
+from numexpr.utils import set_num_threads as set_num_threads
+from numexpr.utils import set_vml_accuracy_mode as set_vml_accuracy_mode
+from numexpr.utils import set_vml_num_threads as set_vml_num_threads
 
 # Detect the number of cores
-ncores = detect_number_of_cores()
+ncores: Final = detect_number_of_cores()
 # Initialize the number of threads to be used
-nthreads = _init_num_threads()
+nthreads: Final = _init_num_threads()
 # The default for VML is 1 thread (see #39)
 # set_vml_num_threads(1)
 
-from . import version
+from . import version as version
 
-__version__ = version.version
+__version__: Final = version.version
 
-def print_versions():
+def print_versions() -> None:
     """Print the versions of software that numexpr relies on."""
     try:
         import numexpr.tests
-        return numexpr.tests.print_versions()
+        return numexpr.tests.print_versions()  # type: ignore[no-untyped-call]
     except ImportError:
         # To maintain Python 2.6 compatibility we have simple error handling
         raise ImportError('`numexpr.tests` could not be imported, likely it was excluded from the distribution.')
 
-def test(verbosity=1):
+def test(verbosity: int = 1) -> "unittest.result.TestResult":
     """Run all the tests in the test suite."""
     try:
         import numexpr.tests
-        return numexpr.tests.test(verbosity=verbosity)
+        return numexpr.tests.test(verbosity=verbosity)  # type: ignore[no-untyped-call]
     except ImportError:
         # To maintain Python 2.6 compatibility we have simple error handling
         raise ImportError('`numexpr.tests` could not be imported, likely it was excluded from the distribution.')

@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 import contextvars
 import os
 import subprocess
+from typing import (Final, Generic, ItemsView, Iterable, Iterator, KeysView,
+                    Literal, TypeVar, ValuesView, cast, overload)
 
 from numexpr import use_vml
 from numexpr.interpreter import MAX_THREADS, _get_num_threads, _set_num_threads
@@ -25,19 +27,25 @@ if use_vml:
     from numexpr.interpreter import (_get_vml_num_threads, _get_vml_version,
                                      _set_vml_accuracy_mode,
                                      _set_vml_num_threads)
+else:
+    # mypy does not understand this, whereas pyright does
+    _get_vml_num_threads = None  # type: ignore[assignment]
+    _get_vml_version = None  # type: ignore[assignment]
+    _set_vml_accuracy_mode = None  # type: ignore[assignment]
+    _set_vml_num_threads = None  # type: ignore[assignment]
 
 
-def get_vml_version():
+def get_vml_version() -> str | None:
     """
     Get the VML/MKL library version.
     """
-    if use_vml:
+    if _get_vml_version is not None:
         return _get_vml_version()
     else:
         return None
 
 
-def set_vml_accuracy_mode(mode):
+def set_vml_accuracy_mode(mode: str | None) -> Literal['low', 'high', 'fast'] | None:
     """
     Set the accuracy mode for VML operations.
 
@@ -56,8 +64,10 @@ def set_vml_accuracy_mode(mode):
 
     Returns old accuracy settings.
     """
-    if use_vml:
+    if _set_vml_accuracy_mode is not None:
+        acc_dict: dict[str | None, Literal[0, 1, 2, 3]]
         acc_dict = {None: 0, 'low': 1, 'high': 2, 'fast': 3}
+        acc_reverse_dict: dict[int, Literal['low', 'high', 'fast']]
         acc_reverse_dict = {1: 'low', 2: 'high', 3: 'fast'}
         if mode not in list(acc_dict.keys()):
             raise ValueError(
@@ -68,7 +78,7 @@ def set_vml_accuracy_mode(mode):
         return None
 
 
-def set_vml_num_threads(nthreads):
+def set_vml_num_threads(nthreads: int) -> None:
     """
     Suggests a maximum number of threads to be used in VML operations.
 
@@ -80,11 +90,11 @@ def set_vml_num_threads(nthreads):
 
     for more info about it.
     """
-    if use_vml:
+    if _set_vml_num_threads is not None:
         _set_vml_num_threads(nthreads)
     pass
 
-def get_vml_num_threads():
+def get_vml_num_threads() -> int | None:
     """
     Gets the maximum number of threads to be used in VML operations.
 
@@ -96,11 +106,11 @@ def get_vml_num_threads():
 
     for more info about it.
     """
-    if use_vml:
+    if _get_vml_num_threads is not None:
         return _get_vml_num_threads()
     return None
 
-def set_num_threads(nthreads):
+def set_num_threads(nthreads: int) -> int:
     """
     Sets a number of threads to be used in operations.
 
@@ -112,13 +122,13 @@ def set_num_threads(nthreads):
     old_nthreads = _set_num_threads(nthreads)
     return old_nthreads
 
-def get_num_threads():
+def get_num_threads() -> int:
     """
     Gets the number of threads currently in use for operations.
     """
     return _get_num_threads()
 
-def _init_num_threads():
+def _init_num_threads() -> int:
     """
     Detects the environment variable 'NUMEXPR_MAX_THREADS' to set the threadpool
     size, and if necessary the slightly redundant 'NUMEXPR_NUM_THREADS' or
@@ -168,7 +178,7 @@ def _init_num_threads():
     return requested_threads
 
 
-def detect_number_of_cores():
+def detect_number_of_cores() -> int:
     """
     Detects the number of cores on a system. Cribbed from pp.
     """
@@ -177,7 +187,7 @@ def detect_number_of_cores():
         if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
             # Linux & Unix:
             ncpus = os.sysconf("SC_NPROCESSORS_ONLN")
-            if isinstance(ncpus, int) and ncpus > 0:
+            if isinstance(ncpus, int) and ncpus > 0:  # type: ignore[redundant-expr]
                 return ncpus
         else:  # OSX:
             return int(subprocess.check_output(["sysctl", "-n", "hw.ncpu"]))
@@ -191,7 +201,7 @@ def detect_number_of_cores():
     return 1  # Default
 
 
-def detect_number_of_threads():
+def detect_number_of_threads() -> int:
     """
     DEPRECATED: use `_init_num_threads` instead.
     If this is modified, please update the note in: https://github.com/pydata/numexpr/wiki/Numexpr-Users-Guide
@@ -211,64 +221,90 @@ def detect_number_of_threads():
     return nthreads
 
 
-class CacheDict(dict):
+_KT = TypeVar('_KT')
+_VT = TypeVar('_VT')
+
+
+class CacheDict(dict[_KT, _VT], Generic[_KT, _VT]):
     """
     A dictionary that prevents itself from growing too much.
     """
 
-    def __init__(self, maxentries):
-        self.maxentries = maxentries
-        super(CacheDict, self).__init__(self)
+    maxentries: Final[int]
 
-    def __setitem__(self, key, value):
+    def __init__(self, maxentries: int) -> None:
+        self.maxentries = maxentries
+        super().__init__(self)
+
+    def __setitem__(self, key: _KT, value: _VT) -> None:
         # Protection against growing the cache too much
         if len(self) > self.maxentries:
             # Remove a 10% of (arbitrary) elements from the cache
             entries_to_remove = self.maxentries // 10
             for k in list(self.keys())[:entries_to_remove]:
-                super(CacheDict, self).__delitem__(k)
-        super(CacheDict, self).__setitem__(key, value)
+                super().__delitem__(k)
+        super().__setitem__(key, value)
 
 
-class ContextDict:
+class ContextDict(Generic[_VT]):
     """
     A context aware version dictionary
     """
-    def __init__(self):
+    _context_data: contextvars.ContextVar[dict[str, _VT]]
+
+    def __init__(self) -> None:
         self._context_data = contextvars.ContextVar('context_data', default={})
 
-    def set(self, key=None, value=None, **kwargs):
+    @overload
+    def set(self, key: None = None, value: None = None, **kwargs: _VT) -> None: ...
+    @overload
+    def set(self, key: str, value: _VT, **kwargs: _VT) -> None: ...
+    def set(self, key: str | None = None, value: _VT | None = None, **kwargs: _VT) -> None:
         data = self._context_data.get().copy()
 
         if key is not None:
-            data[key] = value
+            data[key] = cast('_VT', value)
 
         for k, v in kwargs.items():
             data[k] = v
 
         self._context_data.set(data)
 
-    def get(self, key, default=None):
+    @overload
+    def get(self, key: str, default: _VT) -> _VT: ...
+    @overload
+    def get(self, key: str, default: _VT | None = None) -> _VT | None: ...
+    def get(self, key: str, default: _VT | None = None) -> _VT | None:
         data = self._context_data.get()
         return data.get(key, default)
 
-    def delete(self, key):
+    def delete(self, key: str) -> None:
         data = self._context_data.get().copy()
         if key in data:
             del data[key]
         self._context_data.set(data)
 
-    def clear(self):
+    def clear(self) -> None:
         self._context_data.set({})
 
-    def all(self):
+    def all(self) -> dict[str, _VT]:
         return self._context_data.get()
 
-    def update(self, *args, **kwargs):
+    @overload
+    def update(self, **kwargs: _VT) -> None: ...
+    @overload
+    def update(self, other: dict[str, _VT], /, **kwargs: _VT) -> None: ...
+    @overload
+    def update(self, other: Iterable[tuple[str, _VT]], /, **kwargs: _VT) -> None: ...
+    def update(  # type: ignore[misc]  # false positive mypy error
+        self,
+        *args: dict[str, _VT] | Iterable[tuple[str, _VT]],
+        **kwargs: _VT,
+    ) -> None:
         data = self._context_data.get().copy()
 
         if args:
-            if len(args) > 1:
+            if len(args) != 1:
                 raise TypeError(f"update() takes at most 1 positional argument ({len(args)} given)")
             other = args[0]
             if isinstance(other, dict):
@@ -280,32 +316,32 @@ class ContextDict:
         data.update(kwargs)
         self._context_data.set(data)
 
-    def keys(self):
+    def keys(self) -> KeysView[str]:
         return self._context_data.get().keys()
 
-    def values(self):
+    def values(self) -> ValuesView[_VT]:
         return self._context_data.get().values()
 
-    def items(self):
+    def items(self) -> ItemsView[str, _VT]:
         return self._context_data.get().items()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> _VT | None:
         return self.get(key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: _VT) -> None:
         self.set(key, value)
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         self.delete(key)
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         return key in self._context_data.get()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._context_data.get())
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self._context_data.get())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return repr(self._context_data.get())
