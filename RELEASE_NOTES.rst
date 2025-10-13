@@ -5,7 +5,7 @@ Release notes for NumExpr 2.14 series
 Changes from 2.13.1 to 2.14.0
 -----------------------------
 
-* Numerical stability for overflow has been improved for ``tan`` and ``tanh`` 
+* Numerical stability for overflow has been improved for ``tan`` / ``tanh``
   to handle possible overflows for complex numbers.
 
 * Static typing support has been added, making NumExpr compatible with
