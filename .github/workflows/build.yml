@@ -15,19 +15,28 @@ jobs:
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
       CIBW_ENABLE: cpython-freethreading
+      # Ensure cibuildwheel uses correct NumPy in isolated builds too
+      CIBW_BEFORE_BUILD: |
+        pip install --upgrade pip
+        if [ -n "${{ matrix.numpy-version }}" ]; then
+          pip install --force-reinstall "numpy==${{ matrix.numpy-version }}.*"
+        else
+          pip install --upgrade numpy
+        fi
+        python -c "import numpy; print('Using NumPy', numpy.__version__)"
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Linux x86_64 builds
+          # Linux x86_64 builds (latest NumPy)
           - os: ubuntu-latest
             arch: x86_64
             artifact_name: "linux-x86_64"
 
-            # Linux x86_64 with numpy 1.23
+          # Linux x86_64 with NumPy 1.26
           - os: ubuntu-latest
             arch: x86_64
-            artifact_name: "linux-x86_64_numpy1_23"
+            artifact_name: "linux-x86_64_numpy1_26"
             numpy-version: "1.26"
 
           # Linux ARM64 builds (native runners)
@@ -44,17 +53,31 @@ jobs:
           - os: macos-latest
             arch: x86_64
             artifact_name: "macos-universal2"
+
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v3
-        name: Install Python
+      - name: Install Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: false
 
-      - name: Install specific numpy version
+      - name: Install specific NumPy version
         if: matrix.numpy-version
-        run: pip install "numpy==${{ matrix.numpy-version }}.*"
+        run: |
+          pip install --upgrade pip
+          pip install --force-reinstall "numpy==${{ matrix.numpy-version }}.*"
+          python -c "import numpy; print('Installed NumPy version:', numpy.__version__)"
+        shell: bash
+
+      - name: Ensure latest NumPy if not pinned
+        if: ${{ !matrix.numpy-version }}
+        run: |
+          pip install --upgrade pip
+          pip install --upgrade numpy
+          python -c "import numpy; print('Using latest NumPy:', numpy.__version__)"
+        shell: bash
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.3
