@@ -4,7 +4,7 @@ Announcing NumExpr 2.14.1
 
 Hi everyone,
 
-NumExpr 2.14.1 introduces a patch to ensure compatibility with NumPy 1.26, 
+NumExpr 2.14.1 introduces patches to ensure compatibility with NumPy 1.26,
 rolling back static typing support.
 
 Project documentation is available at:
