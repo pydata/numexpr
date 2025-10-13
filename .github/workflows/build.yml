@@ -28,7 +28,7 @@ jobs:
           - os: ubuntu-latest
             arch: x86_64
             artifact_name: "linux-x86_64_numpy1_23"
-            numpy-version: "1.23"
+            numpy-version: "1.26"
 
           # Linux ARM64 builds (native runners)
           - os: ubuntu-24.04-arm
