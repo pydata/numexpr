@@ -1,31 +1,27 @@
 =========================
-Announcing NumExpr 2.13.
+Announcing NumExpr 2.14.
 =========================
 
 Hi everyone,
 
-NumExpr 2.13.1 introduces a couple of patches for maximum/minimum and
-multiplication/addition for booleans to match NumPy behaviour.
-Thanks to Luke Shaw for these contributions.
+NumExpr 2.14.0 introduces a couple of patches for tan/tanh and
+adds static typing support.
+Thanks to Luke Shaw and Joren Hammudoglu (@jorenham) for these contributions.
 
 Project documentation is available at:
 
 https://numexpr.readthedocs.io/
 
-Changes from 2.12.1 to 2.13.0
+Changes from 2.13.1 to 2.14.0
 -----------------------------
 
-* New functionality has been added:
-  * Bitwise operators (and, or, not, xor): `&, |, ~, ^`
-  * New binary arithmetic operator for floor division: `//`
-  * New functions: `signbit`, `hypot`, `copysign`, `nextafter`, `maximum`,
-    `minimum`, `log2`, `trunc`, `round` and `sign`.
-  * Also enables integer outputs for integer inputs for
-    `abs`, `fmod`, `copy`, `ones_like`, `sign` and `round`.
+* Numerical stability for overflow has been improved for ``tan`` and ``tanh`` 
+  to handle possible overflows for complex numbers.
 
-  Thanks to Luke Shaw for the contributions.
+* Static typing support has been added, making NumExpr compatible with
+  static type checkers like `mypy` and `pyright`.
+  Thanks to Joren Hammudoglu (@jorenham) for the work.
 
-* New wheels for Python 3.14 and 3.14t are provided.
 
 What's Numexpr?
 ---------------

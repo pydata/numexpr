@@ -1,11 +1,12 @@
 =====================================
-Release notes for NumExpr 2.13 series
+Release notes for NumExpr 2.14 series
 =====================================
 
-Changes from 2.13.1 to 2.13.2
+Changes from 2.13.1 to 2.14.0
 -----------------------------
 
-* **Under development.**
+* Numerical stability for overflow has been improved for ``tan`` and ``tanh`` 
+  to handle possible overflows for complex numbers.
 
 * Static typing support has been added, making NumExpr compatible with
   static type checkers like `mypy` and `pyright`.
