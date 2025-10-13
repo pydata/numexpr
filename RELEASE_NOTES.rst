@@ -5,7 +5,8 @@ Release notes for NumExpr 2.14 series
 Changes from 2.14.0 to 2.14.1
 -----------------------------
 
-* **Under development.**
+* Rolled back static typing support to ensure compatibiity with NumPy 1.26.
+* Added CI tests for NumPy 1.26
 
 
 Changes from 2.13.1 to 2.14.0
