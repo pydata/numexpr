@@ -23,7 +23,6 @@ jobs:
           - os: ubuntu-latest
             arch: x86_64
             artifact_name: "linux-x86_64"
-            numpy-version: null
 
             # Linux x86_64 with numpy 1.23
           - os: ubuntu-latest
@@ -35,19 +34,16 @@ jobs:
           - os: ubuntu-24.04-arm
             arch: aarch64
             artifact_name: "linux-aarch64"
-            numpy-version: null
 
           # Windows builds
           - os: windows-latest
             arch: x86_64
             artifact_name: "windows-x86_64"
-            numpy-version: null
 
           # macOS builds (universal2)
           - os: macos-latest
             arch: x86_64
             artifact_name: "macos-universal2"
-            numpy-version: "null"
     steps:
       - uses: actions/checkout@v3
 
