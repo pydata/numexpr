@@ -4,7 +4,7 @@ Announcing NumExpr 2.14.
 
 Hi everyone,
 
-NumExpr 2.14.0 introduces a couple of patches for tan/tanh and
+NumExpr 2.14.0 introduces a couple of patches for tan / tanh and
 adds static typing support.
 Thanks to Luke Shaw and Joren Hammudoglu (@jorenham) for these contributions.
 
@@ -15,7 +15,7 @@ https://numexpr.readthedocs.io/
 Changes from 2.13.1 to 2.14.0
 -----------------------------
 
-* Numerical stability for overflow has been improved for ``tan`` and ``tanh`` 
+* Numerical stability for overflow has been improved for ``tan`` and ``tanh``
   to handle possible overflows for complex numbers.
 
 * Static typing support has been added, making NumExpr compatible with
