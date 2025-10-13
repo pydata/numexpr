@@ -11,37 +11,34 @@
 __all__ = ['E']
 
 import operator
+import sys
 import threading
-import types
-from typing import (TYPE_CHECKING, Any, Callable, ClassVar, Final, Iterable,
-                    Mapping, NoReturn, TypeVar, cast)
-
-if TYPE_CHECKING:
-    from typing_extensions import Self, TypeIs
 
 import numpy
 
 # Declare a double type that does not exist in Python space
-double = numpy.float64
+double = numpy.double
 
 # The default kind for undeclared variables
 default_kind = 'double'
 int_ = numpy.int32
 long_ = numpy.int64
 
-type_to_kind: Final = {bool: 'bool', int_: 'int', long_: 'long', float: 'float',
-                       double: 'double', complex: 'complex', bytes: 'bytes', str: 'str'}
-kind_to_type: Final = {'bool': bool, 'int': int_, 'long': long_, 'float': float,
-                       'double': double, 'complex': complex, 'bytes': bytes, 'str': str}
-kind_rank: Final = ('bool', 'int', 'long', 'float', 'double', 'complex', 'none')
-scalar_constant_types: Final = (bool, int_, int, float, double, complex, bytes, str)
+type_to_kind = {bool: 'bool', int_: 'int', long_: 'long', float: 'float',
+                double: 'double', complex: 'complex', bytes: 'bytes', str: 'str'}
+kind_to_type = {'bool': bool, 'int': int_, 'long': long_, 'float': float,
+                'double': double, 'complex': complex, 'bytes': bytes, 'str': str}
+kind_rank = ('bool', 'int', 'long', 'float', 'double', 'complex', 'none')
+scalar_constant_types = [bool, int_, int, float, double, complex, bytes, str]
+
+scalar_constant_types = tuple(scalar_constant_types)
 
 from numexpr import interpreter
 
 
-class Expression:
+class Expression():
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name):
         if name.startswith('_'):
             try:
                 return self.__dict__[name]
@@ -51,40 +48,38 @@ class Expression:
             return VariableNode(name, default_kind)
 
 
-E: Final = Expression()
+E = Expression()
 
 
 class Context(threading.local):
 
-    def get(self, value: str, default: object) -> Any:
+    def get(self, value, default):
         return self.__dict__.get(value, default)
 
-    def get_current_context(self) -> dict[str, Any]:
+    def get_current_context(self):
         return self.__dict__
 
-    def set_new_context(self, dict_: Mapping[str, Any]) -> None:
+    def set_new_context(self, dict_):
         self.__dict__.update(dict_)
 
 # This will be called each time the local object is used in a separate thread
-_context: Final = Context()
+_context = Context()
 
 
-def get_optimization() -> str:
+def get_optimization():
     return _context.get('optimization', 'none')
 
 
-_T = TypeVar('_T')
-
 # helper functions for creating __magic__ methods
-def ophelper(f: Callable[..., _T]) -> Callable[..., _T]:
-    def func(*args: 'ExpressionNode') -> _T:
-        arglist = list(args)
+def ophelper(f):
+    def func(*args):
+        args = list(args)
         for i, x in enumerate(args):
             if isConstant(x):
-                arglist[i] = x = ConstantNode(x)
+                args[i] = x = ConstantNode(x)
             if not isinstance(x, ExpressionNode):
                 raise TypeError("unsupported object type: %s" % type(x))
-        return f(*arglist)
+        return f(*args)
 
     func.__name__ = f.__name__
     func.__doc__ = f.__doc__
@@ -92,7 +87,7 @@ def ophelper(f: Callable[..., _T]) -> Callable[..., _T]:
     return func
 
 
-def allConstantNodes(args: Iterable[object]) -> bool:
+def allConstantNodes(args):
     "returns True if args are all ConstantNodes."
     for x in args:
         if not isinstance(x, ConstantNode):
@@ -100,12 +95,12 @@ def allConstantNodes(args: Iterable[object]) -> bool:
     return True
 
 
-def isConstant(ex: object) -> "TypeIs[complex | bytes | str | numpy.number]":
+def isConstant(ex):
     "Returns True if ex is a constant scalar of an allowed type."
-    return isinstance(ex, scalar_constant_types) # pyright: ignore[reportArgumentType]
+    return isinstance(ex, scalar_constant_types)
 
 
-def commonKind(nodes: Iterable['ExpressionNode | RawNode']) -> str:
+def commonKind(nodes):
     node_kinds = [node.astKind for node in nodes]
     str_count = node_kinds.count('bytes') + node_kinds.count('str')
     if 0 < str_count < len(node_kinds):  # some args are strings, but not all
@@ -122,7 +117,7 @@ max_int32 = 2147483647
 min_int32 = -max_int32 - 1
 
 
-def bestConstantType(x: object) -> type | None:
+def bestConstantType(x):
     # ``numpy.string_`` is a subclass of ``bytes``
     if isinstance(x, (bytes, str)):
         return bytes
@@ -135,14 +130,14 @@ def bestConstantType(x: object) -> type | None:
     # ``long`` objects are kept as is to allow the user to force
     # promotion of results by using long constants, e.g. by operating
     # a 32-bit array with a long (64-bit) constant.
-    if isinstance(x, (long_, numpy.int64)):  # type: ignore[misc]
+    if isinstance(x, (long_, numpy.int64)):
         return long_
     # ``double`` objects are kept as is to allow the user to force
     # promotion of results by using double constants, e.g. by operating
     # a float (32-bit) array with a double (64-bit) constant.
     if isinstance(x, double):
         return double
-    if isinstance(x, numpy.float32): # pyright: ignore[reportArgumentType]
+    if isinstance(x, numpy.float32):
         return float
     if isinstance(x, (int, numpy.integer)):
         # Constants needing more than 32 bits are always
@@ -155,29 +150,25 @@ def bestConstantType(x: object) -> type | None:
     # ``double`` too.
     for converter in float, complex:
         try:
-            y = converter(x)  # type: ignore[arg-type, call-overload]
+            y = converter(x)
         except Exception as err:
             continue
         if y == x or numpy.isnan(y):
             return converter
-    return None
 
 
-def getKind(x: object) -> str:
+def getKind(x):
     converter = bestConstantType(x)
-    assert converter is not None
     return type_to_kind[converter]
 
 
-def binop(
-    opname: str, reversed: bool = False, kind: str | None = None
-) -> Callable[['ExpressionNode', 'ExpressionNode'], 'ExpressionNode']:
+def binop(opname, reversed=False, kind=None):
     # Getting the named method from self (after reversal) does not
     # always work (e.g. int constants do not have a __lt__ method).
     opfunc = getattr(operator, "__%s__" % opname)
 
     @ophelper
-    def operation(self: 'ExpressionNode', other: 'ExpressionNode') -> 'ExpressionNode':
+    def operation(self, other):
         if reversed:
             self, other = other, self
         if allConstantNodes([self, other]):
@@ -188,11 +179,9 @@ def binop(
     return operation
 
 
-def func(
-    func: Callable[..., Any], minkind: str | None = None, maxkind: str | None = None
-) -> Callable[..., 'FuncNode | ConstantNode']:
+def func(func, minkind=None, maxkind=None):
     @ophelper
-    def function(*args: 'ExpressionNode') -> 'FuncNode | ConstantNode':
+    def function(*args):
         if allConstantNodes(args):
             return ConstantNode(func(*[x.value for x in args]))
         kind = commonKind(args)
@@ -215,23 +204,20 @@ def func(
 
 
 @ophelper
-def where_func(
-    a: 'ExpressionNode', b: 'ExpressionNode', c: 'ExpressionNode'
-) -> 'ExpressionNode':
+def where_func(a, b, c):
     if isinstance(a, ConstantNode):
         return b if a.value else c
     if allConstantNodes([a, b, c]):
-        return ConstantNode(numpy.where(a, b, c))  # type: ignore[call-overload]
+        return ConstantNode(numpy.where(a, b, c))
     return FuncNode('where', [a, b, c])
 
 
-def encode_axis(axis: 'ConstantNode | int | None') -> 'RawNode':
+def encode_axis(axis):
     if isinstance(axis, ConstantNode):
         axis = axis.value
     if axis is None:
         axis = interpreter.allaxes
     else:
-        assert isinstance(axis, int)
         if axis < 0:
             raise ValueError("negative axis are not supported")
         if axis > 254:
@@ -239,26 +225,24 @@ def encode_axis(axis: 'ConstantNode | int | None') -> 'RawNode':
     return RawNode(axis)
 
 
-def gen_reduce_axis_func(name: str) -> Callable[..., 'ExpressionNode']:
-    def _func(a: object, axis: 'ConstantNode | int | None' = None) -> 'ExpressionNode':
-        _axis = encode_axis(axis)
+def gen_reduce_axis_func(name):
+    def _func(a, axis=None):
+        axis = encode_axis(axis)
         if isinstance(a, ConstantNode):
             return a
-        if isinstance(a, (bool, int_, long_, float, double, complex)):  # type: ignore[misc]
-            _a = ConstantNode(a)
-        else:
-            _a = cast('ExpressionNode', a)
-        return FuncNode(name, [_a, _axis], kind=_a.astKind)
+        if isinstance(a, (bool, int_, long_, float, double, complex)):
+            a = ConstantNode(a)
+        return FuncNode(name, [a, axis], kind=a.astKind)
     return _func
 
 
 @ophelper
-def contains_func(a: 'ExpressionNode', b: 'ExpressionNode') -> 'FuncNode':
+def contains_func(a, b):
     return FuncNode('contains', [a, b], kind='bool')
 
 
 @ophelper
-def div_op(a: 'ExpressionNode', b: 'ExpressionNode') -> 'OpNode':
+def div_op(a, b):
     if get_optimization() in ('moderate', 'aggressive'):
         if (isinstance(b, ConstantNode) and
                 (a.astKind == b.astKind) and
@@ -268,7 +252,7 @@ def div_op(a: 'ExpressionNode', b: 'ExpressionNode') -> 'OpNode':
 
 
 @ophelper
-def truediv_op(a: 'ExpressionNode', b: 'ExpressionNode') -> 'OpNode':
+def truediv_op(a, b):
     if get_optimization() in ('moderate', 'aggressive'):
         if (isinstance(b, ConstantNode) and
                 (a.astKind == b.astKind) and
@@ -281,12 +265,12 @@ def truediv_op(a: 'ExpressionNode', b: 'ExpressionNode') -> 'OpNode':
 
 
 @ophelper
-def rtruediv_op(a: 'ExpressionNode', b: 'ExpressionNode') -> 'OpNode':
+def rtruediv_op(a, b):
     return truediv_op(b, a)
 
 
 @ophelper
-def pow_op(a: 'ExpressionNode', b: 'ExpressionNode') -> 'ExpressionNode':
+def pow_op(a, b):
 
     if isinstance(b, ConstantNode):
         x = b.value
@@ -302,9 +286,7 @@ def pow_op(a: 'ExpressionNode', b: 'ExpressionNode') -> 'ExpressionNode':
                 n = int_(abs(x))
                 ishalfpower = int_(abs(2 * x)) % 2
 
-                def multiply(
-                    x: ExpressionNode | None, y: ExpressionNode
-                ) -> ExpressionNode:
+                def multiply(x, y):
                     if x is None: return y
                     return OpNode('mul', [x, y])
 
@@ -345,7 +327,7 @@ def pow_op(a: 'ExpressionNode', b: 'ExpressionNode') -> 'ExpressionNode':
     return OpNode('pow', [a, b])
 
 # The functions and the minimum and maximum types accepted
-numpy.expm1x = numpy.expm1  # type: ignore[attr-defined]
+numpy.expm1x = numpy.expm1
 functions = {
     'copy': func(numpy.copy),
     'ones_like': func(numpy.ones_like),
@@ -408,72 +390,58 @@ functions = {
 }
 
 
-class ExpressionNode:
+class ExpressionNode():
     """
     An object that represents a generic number object.
 
     This implements the number special methods so that we can keep
     track of how this object has been used.
     """
-    astType: ClassVar = 'generic'
-    astKind: Final[str]
+    astType = 'generic'
 
-    children: Final[tuple['ExpressionNode | RawNode', ...]]
-    value: Final[Any]
-
-    def __init__(
-        self,
-        value: object | None = None,
-        kind: str | None = None,
-        children: Iterable['ExpressionNode | RawNode'] | None = None,
-    ) -> None:
+    def __init__(self, value=None, kind=None, children=None):
         self.value = value
         if kind is None:
             kind = 'none'
         self.astKind = kind
-        self.children = () if children is None else tuple(children)
+        if children is None:
+            self.children = ()
+        else:
+            self.children = tuple(children)
 
-    def get_real(self) -> 'OpNode | ConstantNode':
+    def get_real(self):
         if self.astType == 'constant':
             return ConstantNode(complex(self.value).real)
         return OpNode('real', (self,), 'double')
 
-    if TYPE_CHECKING:
-        @property
-        def real(self) -> 'OpNode | ConstantNode': ...
-    else:
-        real = property(get_real)
+    real = property(get_real)
 
-    def get_imag(self) -> 'OpNode | ConstantNode':
+    def get_imag(self):
         if self.astType == 'constant':
             return ConstantNode(complex(self.value).imag)
         return OpNode('imag', (self,), 'double')
 
-    if TYPE_CHECKING:
-        @property
-        def imag(self) -> 'OpNode | ConstantNode': ...
-    else:
-        imag = property(get_imag)
+    imag = property(get_imag)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return '%s(%s, %s, %s)' % (self.__class__.__name__, self.value,
                                    self.astKind, self.children)
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return self.__str__()
 
-    def __neg__(self) -> 'OpNode':
+    def __neg__(self):
         return OpNode('neg', (self,))
 
-    def __invert__(self) -> 'OpNode':
+    def __invert__(self):
         return OpNode('invert', (self,))
 
-    def __pos__(self) -> 'Self':
+    def __pos__(self):
         return self
 
     # The next check is commented out. See #24 for more info.
 
-    def __bool__(self) -> NoReturn:
+    def __bool__(self):
         raise TypeError("You can't use Python's standard boolean operators in "
                         "NumExpr expressions. You should use their bitwise "
                         "counterparts instead: '&' instead of 'and', "
@@ -503,74 +471,64 @@ class ExpressionNode:
 
     __gt__ = binop('gt', kind='bool')
     __ge__ = binop('ge', kind='bool')
-    __eq__ = binop('eq', kind='bool')  # type: ignore[assignment]
-    __ne__ = binop('ne', kind='bool')  # type: ignore[assignment]
+    __eq__ = binop('eq', kind='bool')
+    __ne__ = binop('ne', kind='bool')
     __lt__ = binop('gt', reversed=True, kind='bool')
     __le__ = binop('ge', reversed=True, kind='bool')
 
 
 class LeafNode(ExpressionNode):
-    leafNode: ClassVar = True
+    leafNode = True
 
 
 class VariableNode(LeafNode):
-    astType: ClassVar = 'variable'
+    astType = 'variable'
 
-    def __init__(
-        self,
-        value: object | None = None,
-        kind: str | None = None,
-        children: None = None,
-    ) -> None:
+    def __init__(self, value=None, kind=None, children=None):
         LeafNode.__init__(self, value=value, kind=kind)
 
 
-class RawNode:
+class RawNode():
     """
     Used to pass raw integers to interpreter.
     For instance, for selecting what function to use in func1.
     Purposely don't inherit from ExpressionNode, since we don't wan't
     this to be used for anything but being walked.
     """
-    astType: ClassVar = 'raw'
-    astKind: ClassVar = 'none'
+    astType = 'raw'
+    astKind = 'none'
 
-    def __init__(self, value: object) -> None:
+    def __init__(self, value):
         self.value = value
         self.children = ()
 
-    def __str__(self) -> str:
+    def __str__(self):
         return 'RawNode(%s)' % (self.value,)
 
     __repr__ = __str__
 
 
 class ConstantNode(LeafNode):
-    astType: ClassVar = 'constant'
+    astType = 'constant'
 
-    def __init__(self, value: object | None = None, children: None = None):
+    def __init__(self, value=None, children=None):
         kind = getKind(value)
         # Python float constants are double precision by default
         if kind == 'float' and isinstance(value, float):
             kind = 'double'
         LeafNode.__init__(self, value=value, kind=kind)
 
-    def __neg__(self) -> 'ConstantNode':  # type: ignore[override]
+    def __neg__(self):
         return ConstantNode(-self.value)
 
-    def __invert__(self) -> 'ConstantNode':  # type: ignore[override]
+    def __invert__(self):
         return ConstantNode(~self.value)
 
 
 class OpNode(ExpressionNode):
-    astType: ClassVar = 'op'
+    astType = 'op'
 
-    def __init__(
-        self,
-        opcode: str | None = None,
-        args: Iterable[ExpressionNode | RawNode] | None = None,
-        kind: str | None = None,
-    ) -> None:
+    def __init__(self, opcode=None, args=None, kind=None):
         if (kind is None) and (args is not None):
             kind = commonKind(args)
         if kind=='bool': # handle bool*bool and bool+bool cases
@@ -580,12 +538,7 @@ class OpNode(ExpressionNode):
 
 
 class FuncNode(OpNode):
-    def __init__(
-        self,
-        opcode: str | None = None,
-        args: Iterable[ExpressionNode | RawNode] | None = None,
-        kind: str | None = None,
-    ) -> None:
+    def __init__(self, opcode=None, args=None, kind=None):
         if (kind is None) and (args is not None):
             kind = commonKind(args)
         if opcode in ("isnan", "isfinite", "isinf", "signbit"): # bodge for boolean return functions

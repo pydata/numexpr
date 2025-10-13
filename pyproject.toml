@@ -23,7 +23,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Programming Language :: Python",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Typing :: Typed",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3",
@@ -63,23 +62,3 @@ test-command = ["python -m pytest --pyargs numexpr"]
 [[tool.cibuildwheel.overrides]]
 select = "cp31*t-*"
 test-command = ["python -m pytest --parallel-threads=4 --pyargs numexpr"]
-
-
-[tool.mypy]
-files = ["numexpr/*.py"]
-exclude = ["^bench/", "^build/", "^doc/", "^issues/"]
-strict = true
-disable_error_code = ["no-any-return"]
-enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
-warn_unreachable = false
-local_partial_types = true
-allow_redefinition_new = true
-
-
-[tool.pyright]
-include = ["numexpr"]
-exclude = ["bench", "build", "doc", "issues", "numexpr/tests", "setup.py"]
-ignore = [".venv", "numexpr/tests/test_numexpr.py", "setup.py"]
-stubPath = "."
-reportPrivateUsage = false
-reportConstantRedefinition = false

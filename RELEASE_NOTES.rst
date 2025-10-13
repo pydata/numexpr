@@ -25,7 +25,6 @@ Changes from 2.13.0 to 2.13.1
 * Patch to maximum/minimum functions in order to match NumPy NaN handling
 * Patch to convert '+'->'|' and '*'->'&' for booleans
 
-
 Changes from 2.12.1 to 2.13.0
 -----------------------------
 

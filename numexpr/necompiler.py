@@ -14,19 +14,16 @@ import os
 import re
 import sys
 import threading
-from typing import (TYPE_CHECKING, Any, ClassVar, Final, Generator, Iterable,
-                    Iterator, Sequence, TypeAlias)
-
-if TYPE_CHECKING:
-    from typing_extensions import Unpack
+from typing import Dict, Optional
 
 import numpy
 
-is_cpu_amd_intel: Final = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
+is_cpu_amd_intel = False # DEPRECATION WARNING: WILL BE REMOVED IN FUTURE RELEASE
 from numexpr import expressions, interpreter, use_vml
 from numexpr.utils import CacheDict, ContextDict
 
 # Declare a double type that does not exist in Python space
+double = numpy.double
 double = numpy.double
 
 int_ = numpy.int32
@@ -89,9 +86,7 @@ vml_functions = [
     ]
 
 
-
-
-class ASTNode:
+class ASTNode():
     """Abstract Syntax Tree node.
 
     Members:
@@ -103,25 +98,16 @@ class ASTNode:
     children     -- the children below this node
     reg          -- the register assigned to the result for this node.
     """
-    cmpnames: ClassVar = 'astType', 'astKind', 'value', 'children'
+    cmpnames = ['astType', 'astKind', 'value', 'children']
 
-    astType: str
-    astKind: str
-    value: Any
-    children: tuple['ASTNode', ...]
-    reg: 'Register | None'
-
-    def __init__(self, astType: str = 'generic',
-                 astKind: str = 'unknown',
-                 value: object | None = None,
-                 children: Iterable['ASTNode'] = ()) -> None:
+    def __init__(self, astType='generic', astKind='unknown', value=None, children=()):
         self.astType = astType
         self.astKind = astKind
         self.value = value
         self.children = tuple(children)
         self.reg = None
 
-    def __eq__(self, other: 'ASTNode') -> bool:  # type: ignore[override]
+    def __eq__(self, other):
         if self.astType == 'alias':
             self = self.value
         if other.astType == 'alias':
@@ -133,50 +119,50 @@ class ASTNode:
                 return False
         return True
 
-    def __lt__(self, other: 'ASTNode') -> bool:
+    def __lt__(self,other):
         # RAM: this is a fix for issue #88 whereby sorting on constants
         # that may be of astKind == 'complex' but type(self.value) == int or float
         # Here we let NumPy sort as it will cast data properly for comparison
         # when the Python built-ins will raise an error.
         if self.astType == 'constant':
             if self.astKind == other.astKind:
-                return bool(numpy.array(self.value) < numpy.array(other.value))
+                return numpy.array(self.value) < numpy.array(other.value)
             return self.astKind < other.astKind
         else:
             raise TypeError('Sorting not implemented for astType: %s'%self.astType)
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         if self.astType == 'alias':
             self = self.value
         return hash((self.astType, self.astKind, self.value, self.children))
 
-    def __str__(self) -> str:
+    def __str__(self):
         return 'AST(%s, %s, %s, %s, %s)' % (self.astType, self.astKind,
                                             self.value, self.children, self.reg)
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return '<AST object at %s>' % id(self)
 
-    def key(self) -> tuple[str, str, Any, tuple['ASTNode', ...]]:
+    def key(self):
         return (self.astType, self.astKind, self.value, self.children)
 
-    def typecode(self) -> str:
+    def typecode(self):
         return kind_to_typecode[self.astKind]
 
-    def postorderWalk(self) -> Iterator['ASTNode']:
+    def postorderWalk(self):
         for c in self.children:
             for w in c.postorderWalk():
                 yield w
         yield self
 
-    def allOf(self, *astTypes: str) -> Iterator['ASTNode']:
-        astTypeSet = set(astTypes)
+    def allOf(self, *astTypes):
+        astTypes = set(astTypes)
         for w in self.postorderWalk():
-            if w.astType in astTypeSet:
+            if w.astType in astTypes:
                 yield w
 
 
-def expressionToAST(ex: expressions.ExpressionNode | expressions.RawNode) -> ASTNode:
+def expressionToAST(ex):
     """Take an expression tree made out of expressions.ExpressionNode,
     and convert to an AST tree.
 
@@ -187,7 +173,7 @@ def expressionToAST(ex: expressions.ExpressionNode | expressions.RawNode) -> AST
                    [expressionToAST(c) for c in ex.children])
 
 
-def sigPerms(s: str) -> Generator[str, None, None]:
+def sigPerms(s):
     """Generate all possible signatures derived by upcasting the given
     signature.
     """
@@ -206,7 +192,7 @@ def sigPerms(s: str) -> Generator[str, None, None]:
         yield s
 
 
-def typeCompileAst(ast: ASTNode) -> ASTNode:
+def typeCompileAst(ast):
     """Assign appropriate types to each node in the AST.
 
     Will convert opcodes and functions to appropriate upcast version,
@@ -249,7 +235,7 @@ def typeCompileAst(ast: ASTNode) -> ASTNode:
                    [typeCompileAst(c) for c in children])
 
 
-class Register:
+class Register():
     """Abstraction for a register in the VM.
 
     Members:
@@ -260,18 +246,13 @@ class Register:
                      None if no number assigned yet.
     """
 
-    node: Final[ASTNode]
-    temporary: bool
-    immediate: bool
-    n: int | None
-
-    def __init__(self, astnode: ASTNode, temporary: bool = False) -> None:
+    def __init__(self, astnode, temporary=False):
         self.node = astnode
         self.temporary = temporary
         self.immediate = False
         self.n = None
 
-    def __str__(self) -> str:
+    def __str__(self):
         if self.temporary:
             name = 'Temporary'
         else:
@@ -279,7 +260,7 @@ class Register:
         return '%s(%s, %s, %s)' % (name, self.node.astType,
                                    self.node.astKind, self.n,)
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return self.__str__()
 
 
@@ -288,11 +269,11 @@ class Immediate(Register):
     a register.
     """
 
-    def __init__(self, astnode: ASTNode) -> None:
+    def __init__(self, astnode):
         Register.__init__(self, astnode)
         self.immediate = True
 
-    def __str__(self) -> str:
+    def __str__(self):
         return 'Immediate(%d)' % (self.node.value,)
 
 
@@ -301,8 +282,7 @@ _dunder_pat = r'(^|[^\w])__[\w]+__($|[^\w])'
 _attr_pat = r'\.\b(?!(real|imag|(\d*[eE]?[+-]?\d+)|(\d*[eE]?[+-]?\d+j)|(\d*j))\b)'
 _blacklist_re = re.compile(f'{_flow_pat}|{_dunder_pat}|{_attr_pat}')
 
-def stringToExpression(s: str, types: dict[str, type], context: dict[str, Any],
-                       sanitize: bool = True) -> expressions.ExpressionNode:
+def stringToExpression(s, types, context, sanitize: bool=True):
     """Given a string, convert it to a tree of ExpressionNode's.
     """
     # sanitize the string for obvious attack vectors that NumExpr cannot
@@ -326,7 +306,7 @@ def stringToExpression(s: str, types: dict[str, type], context: dict[str, Any],
             flags = 0
         c = compile(s, '<expr>', 'eval', flags)
         # make VariableNode's for the names
-        names: dict[str, Any] = {}
+        names = {}
         for name in c.co_names:
             if name == "None":
                 names[name] = None
@@ -340,10 +320,10 @@ def stringToExpression(s: str, types: dict[str, type], context: dict[str, Any],
         names.update(expressions.functions)
 
         # now build the expression
-        ex: expressions.ExpressionNode = eval(c, names)
+        ex = eval(c, names)
 
         if expressions.isConstant(ex):
-            ex = expressions.ConstantNode(ex)
+            ex = expressions.ConstantNode(ex, expressions.getKind(ex))
         elif not isinstance(ex, expressions.ExpressionNode):
             raise TypeError("unsupported expression type: %s" % type(ex))
     finally:
@@ -351,12 +331,12 @@ def stringToExpression(s: str, types: dict[str, type], context: dict[str, Any],
     return ex
 
 
-def isReduction(ast: ASTNode) -> bool:
+def isReduction(ast):
     prefixes = (b'sum_', b'prod_', b'min_', b'max_')
     return any(ast.value.startswith(p) for p in prefixes)
 
 
-def getInputOrder(ast: ASTNode, input_order: list[str] | None = None) -> list[ASTNode]:
+def getInputOrder(ast, input_order=None):
     """
     Derive the input order of the variables in an expression.
     """
@@ -379,16 +359,16 @@ def getInputOrder(ast: ASTNode, input_order: list[str] | None = None) -> list[AS
     return ordered_variables
 
 
-def convertConstantToKind(x: Any, kind: str) -> Any:
+def convertConstantToKind(x, kind):
     # Exception for 'float' types that will return the NumPy float32 type
     if kind == 'float':
         return numpy.float32(x)
-    elif isinstance(x, str):
+    elif isinstance(x,str):
         return x.encode('ascii')
     return kind_to_type[kind](x)
 
 
-def getConstants(ast: ASTNode) -> tuple[list[ASTNode], list[Any]]:
+def getConstants(ast):
     """
     RAM: implemented magic method __lt__ for ASTNode to fix issues
     #88 and #209. The following test code works now, as does the test suite.
@@ -397,17 +377,14 @@ def getConstants(ast: ASTNode) -> tuple[list[ASTNode], list[Any]]:
         a = 1 + 3j; b = 5.0
         ne.evaluate('a*2 + 15j - b')
     """
-    constant_registers = {node.reg for node in ast.allOf("constant")
-                          if node.reg is not None}
-    constants_order = sorted(r.node for r in constant_registers)
+    constant_registers = set([node.reg for node in ast.allOf("constant")])
+    constants_order = sorted([r.node for r in constant_registers])
     constants = [convertConstantToKind(a.value, a.astKind)
                  for a in constants_order]
     return constants_order, constants
 
 
-# unused?
-def sortNodesByOrder(nodes: Iterable[ASTNode],
-                     order: Iterable[tuple[int, str, int]]) -> list[ASTNode]:
+def sortNodesByOrder(nodes, order):
     order_map = {}
     for i, (_, v, _) in enumerate(order):
         order_map[v] = i
@@ -416,12 +393,11 @@ def sortNodesByOrder(nodes: Iterable[ASTNode],
     return [a[1] for a in dec_nodes]
 
 
-def assignLeafRegisters(inodes: Iterable[ASTNode],
-                        registerMaker: type[Register]) -> None:
+def assignLeafRegisters(inodes, registerMaker):
     """
     Assign new registers to each of the leaf nodes.
     """
-    leafRegisters: dict[tuple[object, ...], Register] = {}
+    leafRegisters = {}
     for node in inodes:
         key = node.key()
         if key in leafRegisters:
@@ -430,8 +406,7 @@ def assignLeafRegisters(inodes: Iterable[ASTNode],
             node.reg = leafRegisters[key] = registerMaker(node)
 
 
-def assignBranchRegisters(inodes: Iterable[ASTNode],
-                          registerMaker: type[Register]) -> None:
+def assignBranchRegisters(inodes, registerMaker):
     """
     Assign temporary registers to each of the branch nodes.
     """
@@ -439,11 +414,11 @@ def assignBranchRegisters(inodes: Iterable[ASTNode],
         node.reg = registerMaker(node, temporary=True)
 
 
-def collapseDuplicateSubtrees(ast: ASTNode) -> list[ASTNode]:
+def collapseDuplicateSubtrees(ast):
     """
     Common subexpression elimination.
     """
-    seen: dict[ASTNode, ASTNode] = {}
+    seen = {}
     aliases = []
     for a in ast.allOf('op'):
         if a in seen:
@@ -462,66 +437,64 @@ def collapseDuplicateSubtrees(ast: ASTNode) -> list[ASTNode]:
     return aliases
 
 
-def optimizeTemporariesAllocation(ast: ASTNode) -> None:
+def optimizeTemporariesAllocation(ast):
     """
     Attempt to minimize the number of temporaries needed, by reusing old ones.
     """
-    nodes = [n for n in ast.postorderWalk() if n.reg and n.reg.temporary]
-    users_of: dict[Register, set[ASTNode]] = {n.reg: set() for n in nodes if n.reg}
+    nodes = [n for n in ast.postorderWalk() if n.reg.temporary]
+    users_of = dict((n.reg, set()) for n in nodes)
 
+    node_regs = dict((n, set(c.reg for c in n.children if c.reg.temporary))
+                     for n in nodes)
     if nodes and nodes[-1] is not ast:
         nodes_to_check = nodes + [ast]
     else:
         nodes_to_check = nodes
     for n in nodes_to_check:
         for c in n.children:
-            if c.reg and c.reg.temporary:
+            if c.reg.temporary:
                 users_of[c.reg].add(n)
 
-    unused: dict[str, set[Register]] = {tc: set() for tc in scalar_constant_kinds}
+    unused = dict([(tc, set()) for tc in scalar_constant_kinds])
     for n in nodes:
         for c in n.children:
             reg = c.reg
-            if reg and reg.temporary:
+            if reg.temporary:
                 users = users_of[reg]
                 users.discard(n)
                 if not users:
                     unused[reg.node.astKind].add(reg)
         if unused[n.astKind]:
             reg = unused[n.astKind].pop()
-            if n.reg:
-                users_of[reg] = users_of[n.reg]
+            users_of[reg] = users_of[n.reg]
             n.reg = reg
 
 
-def setOrderedRegisterNumbers(order: Sequence[ASTNode], start: int) -> int:
+def setOrderedRegisterNumbers(order, start):
     """
     Given an order of nodes, assign register numbers.
     """
     for i, node in enumerate(order):
-        assert node.reg is not None
         node.reg.n = start + i
     return start + len(order)
 
 
-def setRegisterNumbersForTemporaries(ast: ASTNode, start: int) -> tuple[int, str]:
+def setRegisterNumbersForTemporaries(ast, start):
     """
     Assign register numbers for temporary registers, keeping track of
     aliases and handling immediate operands.
     """
     seen = 0
     signature = ''
-    aliases: list[ASTNode] = []
+    aliases = []
     for node in ast.postorderWalk():
         if node.astType == 'alias':
             aliases.append(node)
             node = node.value
+        if node.reg.immediate:
+            node.reg.n = node.value
+            continue
         reg = node.reg
-        if not reg:
-            continue
-        if reg.immediate:
-            reg.n = node.value
-            continue
         if reg.n is None:
             reg.n = start + seen
             seen += 1
@@ -531,10 +504,7 @@ def setRegisterNumbersForTemporaries(ast: ASTNode, start: int) -> tuple[int, str
     return start + seen, signature
 
 
-_ThreeAddressForm: TypeAlias = tuple[bytes, Register, 'Unpack[tuple[Register, ...]]']
-
-
-def convertASTtoThreeAddrForm(ast: ASTNode) -> list[_ThreeAddressForm]:
+def convertASTtoThreeAddrForm(ast):
     """
     Convert an AST to a three address form.
 
@@ -544,59 +514,55 @@ def convertASTtoThreeAddrForm(ast: ASTNode) -> list[_ThreeAddressForm]:
     I suppose this should be called three register form, but three
     address form is found in compiler theory.
     """
-    return [(node.value, node.reg, *(c.reg for c in node.children if c.reg))
-            for node in ast.allOf('op') if node.reg]
+    return [(node.value, node.reg) + tuple([c.reg for c in node.children])
+            for node in ast.allOf('op')]
 
 
-def compileThreeAddrForm(program: Iterable[_ThreeAddressForm]) -> bytes:
+def compileThreeAddrForm(program):
     """
     Given a three address form of the program, compile it a string that
     the VM understands.
     """
 
-    def nToChr(reg: Register | None) -> bytes:
+    def nToChr(reg):
         if reg is None:
             return b'\xff'
-        assert reg.n is not None
-        if reg.n < 0:
+        elif reg.n < 0:
             raise ValueError("negative value for register number %s" % reg.n)
-        return bytes([reg.n])
+        else:
+            return bytes([reg.n])
 
-    def quadrupleToString(opcode: bytes,
-                          store: Register | None,
-                          a1: Register | None = None,
-                          a2: Register | None = None) -> bytes:
+    def quadrupleToString(opcode, store, a1=None, a2=None):
         cop = chr(interpreter.opcodes[opcode]).encode('latin_1')
         cs = nToChr(store)
         ca1 = nToChr(a1)
         ca2 = nToChr(a2)
         return cop + cs + ca1 + ca2
 
-    def toString(args: _ThreeAddressForm) -> bytes:
-        opcode: bytes = args[0]
-        store: Register = args[1]
-        a1: Register | None = args[2] if len(args) > 2 else None
-        a2: Register | None = args[3] if len(args) > 3 else None
-        an: tuple[Register, ...] = args[4:] if len(args) > 4 else ()
+    def toString(args):
+        while len(args) < 4:
+            args += (None,)
+        opcode, store, a1, a2 = args[:4]
         s = quadrupleToString(opcode, store, a1, a2)
         l = [s]
-        while an:
-            s = quadrupleToString(b'noop', *an[:3])
+        args = args[4:]
+        while args:
+            s = quadrupleToString(b'noop', *args[:3])
             l.append(s)
-            an = an[3:]
+            args = args[3:]
         return b''.join(l)
 
     prog_str = b''.join([toString(t) for t in program])
     return prog_str
 
 
-context_info: Final = (
+context_info = [
     ('optimization', ('none', 'moderate', 'aggressive'), 'aggressive'),
-    ('truediv', (False, True, 'auto'), 'auto'),
-)
+    ('truediv', (False, True, 'auto'), 'auto')
+]
 
 
-def getContext(kwargs: dict[str, Any], _frame_depth: int = 1) -> dict[str, Any]:
+def getContext(kwargs, _frame_depth=1):
     d = kwargs.copy()
     context = {}
     for name, allowed, default in context_info:
@@ -615,23 +581,11 @@ def getContext(kwargs: dict[str, Any], _frame_depth: int = 1) -> dict[str, Any]:
     return context
 
 
-_PrecompileResult: TypeAlias = tuple[
-    list[_ThreeAddressForm],  # threeAddrProgram
-    str,  # inputsig
-    str,  # tempsig
-    list[Any],  # constants
-    tuple[str, ...],  # input_names
-]
-
-
-def precompile(ex: expressions.ExpressionNode | str,
-               signature: Iterable[tuple[str, type]] = (),
-               context: dict[str, Any] = {},
-               sanitize: bool = True) -> _PrecompileResult:
+def precompile(ex, signature=(), context={}, sanitize: bool=True):
     """
     Compile the expression to an intermediate form.
     """
-    types: dict[str, type] = dict(signature)
+    types = dict(signature)
     input_order = [name for (name, type_) in signature]
 
     if isinstance(ex, str):
@@ -660,16 +614,14 @@ def precompile(ex: expressions.ExpressionNode | str,
     input_order = getInputOrder(ast, input_order)
     constants_order, constants = getConstants(ast)
 
-    assert ast.reg is not None
-
     if isReduction(ast):
         ast.reg.temporary = False
 
     optimizeTemporariesAllocation(ast)
 
     ast.reg.temporary = False
-    ast.reg.n = 0
     r_output = 0
+    ast.reg.n = 0
 
     r_inputs = r_output + 1
     r_constants = setOrderedRegisterNumbers(input_order, r_inputs)
@@ -678,15 +630,12 @@ def precompile(ex: expressions.ExpressionNode | str,
 
     threeAddrProgram = convertASTtoThreeAddrForm(ast)
     input_names = tuple([a.value for a in input_order])
-    inputsig = ''.join(type_to_typecode[types.get(x, default_type)]
-                       for x in input_names)
-    return threeAddrProgram, inputsig, tempsig, constants, input_names
+    signature = ''.join(type_to_typecode[types.get(x, default_type)]
+                        for x in input_names)
+    return threeAddrProgram, signature, tempsig, constants, input_names
 
 
-def NumExpr(ex: expressions.ExpressionNode | str,
-            signature: Iterable[tuple[str, type]] = (),
-            sanitize: bool = True,
-            **kwargs: object) -> interpreter.NumExpr:
+def NumExpr(ex,  signature=(), sanitize: bool=True, **kwargs):
     """
     Compile an expression built using E.<variable> variables to a function.
 
@@ -710,21 +659,23 @@ def NumExpr(ex: expressions.ExpressionNode | str,
                                program, constants, input_names)
 
 
-def disassemble(nex: interpreter.NumExpr) -> list[list[bytes | int | None]]:
+def disassemble(nex):
     """
     Given a NumExpr object, return a list which is the program disassembled.
     """
-    rev_opcodes = {code: op for op, code in interpreter.opcodes.items()}
+    rev_opcodes = {}
+    for op in interpreter.opcodes:
+        rev_opcodes[interpreter.opcodes[op]] = op
     r_constants = 1 + len(nex.signature)
     r_temps = r_constants + len(nex.constants)
 
-    def parseOp(op: bytes) -> tuple[bytes, bytes]:
-        name, sig, *_ = *op.rsplit(b'_', 1), b''
+    def parseOp(op):
+        name, sig = [*op.rsplit(b'_', 1), ''][:2]
         return name, sig
 
-    def getArg(pc: int, offset: int) -> int | bytes | None:
+    def getArg(pc, offset):
         arg = nex.program[pc + (offset if offset < 4 else offset+1)]
-        _, sig = parseOp(rev_opcodes[nex.program[pc]])
+        _, sig = parseOp(rev_opcodes.get(nex.program[pc]))
         try:
             code = sig[offset - 1]
         except IndexError:
@@ -748,9 +699,9 @@ def disassemble(nex: interpreter.NumExpr) -> list[list[bytes | int | None]]:
 
     source = []
     for pc in range(0, len(nex.program), 4):
-        op = rev_opcodes[nex.program[pc]]
+        op = rev_opcodes.get(nex.program[pc])
         _, sig = parseOp(op)
-        parsed: list[bytes | int | None] = [op]
+        parsed = [op]
         for i in range(len(sig)):
             parsed.append(getArg(pc, 1 + i))
         while len(parsed) < 4:
@@ -759,7 +710,7 @@ def disassemble(nex: interpreter.NumExpr) -> list[list[bytes | int | None]]:
     return source
 
 
-def getType(a: numpy.typing.NDArray[Any] | numpy.generic) -> type:
+def getType(a):
     kind = a.dtype.kind
     if kind == 'b':
         return bool
@@ -782,9 +733,7 @@ def getType(a: numpy.typing.NDArray[Any] | numpy.generic) -> type:
     raise ValueError("unknown type %s" % a.dtype.name)
 
 
-def getExprNames(text: str,
-                 context: dict[str, Any],
-                 sanitize: bool = True) -> tuple[list[str], bool]:
+def getExprNames(text, context, sanitize: bool=True):
     ex = stringToExpression(text, {}, context, sanitize)
     ast = expressionToAST(ex)
     input_order = getInputOrder(ast, None)
@@ -802,10 +751,7 @@ def getExprNames(text: str,
     return [a.value for a in input_order], ex_uses_vml
 
 
-def getArguments(names: Iterable[str],
-                 local_dict: dict[str, Any] | None = None,
-                 global_dict: dict[str, Any] | None = None,
-                 _frame_depth: int = 2) -> list[numpy.typing.NDArray[Any]]:
+def getArguments(names, local_dict=None, global_dict=None, _frame_depth: int=2):
     """
     Get the arguments based on the names.
     """
@@ -849,14 +795,14 @@ evaluate_lock = threading.Lock()
 
 
 def validate(ex: str,
-             local_dict: dict[str, Any] | None = None,
-             global_dict: dict[str, Any] | None = None,
-             out: numpy.typing.NDArray[Any] | None = None,
+             local_dict: Optional[Dict] = None,
+             global_dict: Optional[Dict] = None,
+             out: numpy.ndarray = None,
              order: str = 'K',
              casting: str = 'safe',
              _frame_depth: int = 2,
-             sanitize: bool | None = None,
-             **kwargs: object) -> Exception | None:
+             sanitize: Optional[bool] = None,
+             **kwargs) -> Optional[Exception]:
     r"""
     Validate a NumExpr expression with the given `local_dict` or `locals()`.
     Returns `None` on success and the Exception object if one occurs. Note that
@@ -903,7 +849,7 @@ def validate(ex: str,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
 
-    sanitize: bool | None
+    sanitize: Optional[bool]
         Both `validate` and by extension `evaluate` call `eval(ex)`, which is
         potentially dangerous on unsanitized inputs. As such, NumExpr by default
         performs simple sanitization, banning the character ':;[', the
@@ -967,14 +913,14 @@ def validate(ex: str,
     return None
 
 def evaluate(ex: str,
-             local_dict: dict[str, Any] | None = None,
-             global_dict: dict[str, Any] | None = None,
-             out: numpy.typing.NDArray[Any] | None = None,
+             local_dict: Optional[Dict] = None,
+             global_dict: Optional[Dict] = None,
+             out: numpy.ndarray = None,
              order: str = 'K',
              casting: str = 'same_kind',
-             sanitize: bool | None = None,
+             sanitize: Optional[bool] = None,
              _frame_depth: int = 3,
-             **kwargs: object) -> numpy.typing.NDArray[Any]:
+             **kwargs) -> numpy.ndarray:
     r"""
     Evaluate a simple array expression element-wise using the virtual machine.
 
@@ -1044,9 +990,9 @@ def evaluate(ex: str,
     else:
         raise e
 
-def re_evaluate(local_dict: dict[str, Any] | None = None,
-                global_dict: dict[str, Any] | None = None,
-                _frame_depth: int = 2) -> numpy.typing.NDArray[Any]:
+def re_evaluate(local_dict: Optional[Dict] = None,
+                global_dict: Optional[Dict] = None,
+                _frame_depth: int=2) -> numpy.ndarray:
     """
     Re-evaluate the previous executed array expression without any check.
 
@@ -1064,20 +1010,13 @@ def re_evaluate(local_dict: dict[str, Any] | None = None,
     """
     if not hasattr(_numexpr_last, 'l'):
         _numexpr_last.l = ContextDict()
-    ctx: ContextDict[Any] = _numexpr_last.l
 
     try:
-        compiled_ex = ctx['ex']
+        compiled_ex = _numexpr_last.l['ex']
     except KeyError:
         raise RuntimeError("A previous evaluate() execution was not found, please call `validate` or `evaluate` once before `re_evaluate`")
-    assert compiled_ex is not None
-
-    argnames = ctx['argnames']
-    assert argnames is not None
+    argnames = _numexpr_last.l['argnames']
     args = getArguments(argnames, local_dict, global_dict, _frame_depth=_frame_depth)
-
-    kwargs = ctx['kwargs']
-    assert kwargs is not None
-
+    kwargs = _numexpr_last.l['kwargs']
     # with evaluate_lock:
     return compiled_ex(*args, **kwargs)

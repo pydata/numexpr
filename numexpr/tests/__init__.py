@@ -8,8 +8,7 @@
 #  rights to use.
 ####################################################################
 
-from numexpr.tests.test_numexpr import print_versions as print_versions
-from numexpr.tests.test_numexpr import test as test
+from numexpr.tests.test_numexpr import print_versions, test
 
 if __name__ == '__main__':
-    test()  # type: ignore[no-untyped-call]
+    test()
