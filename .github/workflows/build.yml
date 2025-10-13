@@ -15,71 +15,80 @@ jobs:
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
       CIBW_ENABLE: cpython-freethreading
+
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Linux x86_64 builds
+          # Linux x86_64 (build wheels)
           - os: ubuntu-latest
             arch: x86_64
             artifact_name: "linux-x86_64"
+            python-version: "3.x"
 
-            # Linux x86_64 with numpy 1.23
+          # Linux x86_64 (test numpy 1.26)
           - os: ubuntu-latest
             arch: x86_64
-            artifact_name: "linux-x86_64_numpy1_23"
+            artifact_name: "linux-x86_64_numpy1_26"
+            python-version: "3.12"
             numpy-version: "1.26"
 
-          # Linux ARM64 builds (native runners)
+          # Linux ARM64 (build wheels)
           - os: ubuntu-24.04-arm
             arch: aarch64
             artifact_name: "linux-aarch64"
+            python-version: "3.x"
 
-          # Windows builds
+          # Windows (build wheels)
           - os: windows-latest
             arch: x86_64
             artifact_name: "windows-x86_64"
+            python-version: "3.x"
 
-          # macOS builds (universal2)
+          # macOS (build wheels)
           - os: macos-latest
             arch: x86_64
             artifact_name: "macos-universal2"
+            python-version: "3.x"
+
     steps:
       - uses: actions/checkout@v3
 
       - uses: actions/setup-python@v3
         name: Install Python
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install specific numpy version
+      # Run tests with specific numpy version
+      - name: Install and test with specific numpy version
         if: matrix.numpy-version
-        run: pip install "numpy==${{ matrix.numpy-version }}.*"
-
-      - name: Local Build
-        run: pip install -e .
-
-      - name: Test
         run: |
+          pip install "numpy==${{ matrix.numpy-version }}.*"
+          pip install -e .
           pip install pytest
           python -m pytest
 
+      # Build wheels only if:
+      #   - No numpy version is specified
+      #   - Python version is "3.x"
       - name: Build wheels
+        if: ${{ !matrix.numpy-version }}
         uses: pypa/cibuildwheel@v3.1.3
 
       - name: Make sdist
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: ${{ matrix.os == 'windows-latest' && !matrix.numpy-version }}
         run: |
           python -m pip install build
           python -m build --sdist --outdir wheelhouse .
 
       - uses: actions/upload-artifact@v4
+        if: ${{ !matrix.numpy-version }}
         with:
           name: ${{ matrix.artifact_name }}
           path: ./wheelhouse/*
 
       - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') && !matrix.numpy-version
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: wheelhouse/*
