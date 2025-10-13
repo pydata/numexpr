@@ -7,7 +7,7 @@ permissions:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }}
+    name: Build and test on ${{ matrix.os }}${{ matrix.numpy-version && format(' (numpy {0})', matrix.numpy-version) || '' }} for ${{ matrix.arch }}
     runs-on: ${{ matrix.runs-on || matrix.os }}
     permissions:
       contents: write
@@ -23,21 +23,32 @@ jobs:
           - os: ubuntu-latest
             arch: x86_64
             artifact_name: "linux-x86_64"
+            numpy-version: [null]
+
+            # Linux x86_64 with numpy 1.23
+          - os: ubuntu-latest
+            arch: x86_64
+            artifact_name: "linux-x86_64_numpy1_23"
+            python-version: "3.12"
+            numpy-version: "1.23"
 
           # Linux ARM64 builds (native runners)
           - os: ubuntu-24.04-arm
             arch: aarch64
             artifact_name: "linux-aarch64"
+            numpy-version: [null]
 
           # Windows builds
           - os: windows-latest
             arch: x86_64
             artifact_name: "windows-x86_64"
+            numpy-version: [null]
 
           # macOS builds (universal2)
           - os: macos-latest
             arch: x86_64
             artifact_name: "macos-universal2"
+            numpy-version: [null]
     steps:
       - uses: actions/checkout@v3
 
@@ -45,6 +56,10 @@ jobs:
         name: Install Python
         with:
           python-version: '3.x'
+
+      - name: Install specific numpy version
+        if: matrix.numpy-version
+        run: pip install "numpy==${{ matrix.numpy-version }}.*"
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.1.3
