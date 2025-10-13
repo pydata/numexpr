@@ -963,7 +963,11 @@ def test_expressions(
     # "overflows" or "divide by zero" in plain eval().
     warnings.simplefilter("ignore")
     try:
-        npval = eval(expr, globals(), locals())
+        npexpr = expr
+        if "sign" in expr and dtype==complex and np.__version__<"2.0":
+            #definition of sign changed in numpy 2.0 for complex numbers
+            npexpr = expr.replace("sign(b+c)", "(b+c)/abs(b+c)")
+        npval = eval(npexpr, globals(), locals())
     except Exception as ex:
         np_exception = ex
         npval = None
