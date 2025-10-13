@@ -2,6 +2,11 @@
 Release notes for NumExpr 2.14 series
 =====================================
 
+Changes from 2.14.1 to 2.14.2
+-----------------------------
+
+* **Under development.**
+
 Changes from 2.14.0 to 2.14.1
 -----------------------------
 
