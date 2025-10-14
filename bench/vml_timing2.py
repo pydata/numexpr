@@ -13,7 +13,7 @@ import numpy as np
 
 import numexpr as ne
 
-N = int(2**26)
+N = int(2**28)
 
 x = np.linspace(0, 1, N)
 y = np.linspace(0, 1, N)
@@ -31,17 +31,17 @@ gbs = working_set_GB / (t1-t0)
 print("Time for an algebraic expression:     %.3f s / %.3f GB/s" % (t1-t0, gbs))
 
 t0 = time()
-z = np.sin(x)**2 + np.cos(y)**2
+z = np.sin(x)**3.2 + np.cos(y)**3.2
 t1 = time()
 gbs = working_set_GB / (t1-t0)
 print("Time for a transcendental expression: %.3f s / %.3f GB/s" % (t1-t0, gbs))
 
 if ne.use_vml:
     ne.set_vml_num_threads(1)
-    ne.set_num_threads(8)
+    ne.set_num_threads(16)
     print("NumExpr version: %s, Using MKL ver. %s, Num threads: %s" % (ne.__version__, ne.get_vml_version(), ne.nthreads))
 else:
-    ne.set_num_threads(8)
+    ne.set_num_threads(16)
     print("NumExpr version: %s, Not Using MKL, Num threads: %s" % (ne.__version__, ne.nthreads))
 
 t0 = time()
@@ -51,7 +51,7 @@ gbs = working_set_GB / (t1-t0)
 print("Time for an algebraic expression:     %.3f s / %.3f GB/s" % (t1-t0, gbs))
 
 t0 = time()
-ne.evaluate('sin(x)**2 + cos(y)**2', out = z)
+ne.evaluate('sin(x)**3.2 + cos(y)**3.2', out = z)
 t1 = time()
 gbs = working_set_GB / (t1-t0)
 print("Time for a transcendental expression: %.3f s / %.3f GB/s" % (t1-t0, gbs))
