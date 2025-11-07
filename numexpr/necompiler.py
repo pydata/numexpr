@@ -1007,7 +1007,7 @@ def evaluate(ex: str,
         context = getContext(kwargs)
         names, ex_uses_vml = getExprNames(ex, context, sanitize=sanitize)
         arguments = getArguments(names, local_dict, global_dict, _frame_depth=_frame_depth - 1)
-        signature = [(name, getType(arg)) for (name, arg) in 
+        signature = [(name, getType(arg)) for (name, arg) in
                      zip(names, arguments)]
         compiled_ex = NumExpr(ex, signature, sanitize=sanitize, **context)
         kwargs = {'out': out, 'order': order, 'casting': casting,

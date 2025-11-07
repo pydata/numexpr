@@ -336,7 +336,7 @@ class test_numexpr(TestCase):
         assert sys.getrefcount(a) == 2
         evaluate('1')
         assert sys.getrefcount(a) == 2
-    
+
     # Test if `disable_cache` works correctly with refcount, see issue #521
     @unittest.skipIf(hasattr(sys, "pypy_version_info"),
                      "PyPy does not have sys.getrefcount()")
