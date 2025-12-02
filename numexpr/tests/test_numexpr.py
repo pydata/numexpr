@@ -337,6 +337,16 @@ class test_numexpr(TestCase):
         evaluate('1')
         assert sys.getrefcount(a) == 2
 
+    # Test if `disable_cache` works correctly with refcount, see issue #521
+    # Comment out as modern Python optimizes handling refcounts.
+    @unittest.skipIf(hasattr(sys, "pypy_version_info"),
+                     "PyPy does not have sys.getrefcount()")
+    def _test_refcount_disable_cache(self):
+        a = array([1])
+        b = array([1])
+        evaluate('a', out=b, disable_cache=True)
+        assert sys.getrefcount(b) == 2
+
     @pytest.mark.thread_unsafe
     def test_locals_clears_globals(self):
         # Check for issue #313, whereby clearing f_locals also clear f_globals
