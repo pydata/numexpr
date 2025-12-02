@@ -10,8 +10,12 @@
 
 import pytest
 
+import numexpr
+
 
 def pytest_configure(config):
     config.addinivalue_line(
         "markers", "thread_unsafe: mark test as unsafe for parallel execution"
     )
+    print("")
+    numexpr.print_versions()
