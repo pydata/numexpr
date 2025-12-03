@@ -46,7 +46,8 @@ def_macros = [
 ]
 sources = ['numexpr/interpreter.cpp',
            'numexpr/module.cpp',
-           'numexpr/numexpr_object.cpp']
+           'numexpr/numexpr_object.cpp',
+           'numexpr/numexpr_capi.cpp']
 extra_cflags = []
 extra_link_args = []
 
