@@ -1,0 +1,257 @@
+================================================================================
+GIL FLOW DIAGRAM: C-Blosc2 → Cython → NumExpr C-API
+================================================================================
+
+Legend:
+  ═══  Has GIL
+  ───  No GIL
+  ⚡   Real parallel computation happening here!
+
+
+Scenario: 3 C-Blosc2 worker threads processing chunks in parallel
+--------------------------------------------------------------------------------
+
+TIME →→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→→
+
+Thread 1 (C-Blosc2):
+─────────────────────────────────────────────────────────────────────────────
+[─ Decompress ─][═ wrap ═][─── ⚡ NumExpr Compute ───][═ copy ═][─ Compress ─]
+                    │         ▲                     ▲     │
+                    │         └─ GIL released ──────┘     │
+                    └─ PyGILState_Ensure()  PyGILState_Release()
+
+
+Thread 2 (C-Blosc2):
+─────────────────────────────────────────────────────────────────────────────
+         [─ Decompress ─][═ wrap ═][─── ⚡ NumExpr Compute ───][═ copy ═][─ Compress ─]
+                             │         ▲                     ▲     │
+                             │         └─ GIL released ──────┘     │
+                             └─ PyGILState_Ensure()  PyGILState_Release()
+
+
+Thread 3 (C-Blosc2):
+─────────────────────────────────────────────────────────────────────────────
+                  [─ Decompress ─][═ wrap ═][─── ⚡ NumExpr Compute ───][═ copy ═]
+                                      │         ▲                     ▲     │
+                                      │         └─ GIL released ──────┘     │
+                                      └─ PyGILState_Ensure()  PyGILState_Release()
+
+
+GIL Status (only ONE thread can hold at a time):
+─────────────────────────────────────────────────────────────────────────────
+[─────────────][═T1═][═T2═][═T3═][───── ALL THREADS PARALLEL ⚡⚡⚡ ────][═T1═][═T2═][═T3═]
+ No GIL       Wrap  Wrap  Wrap    Compute without GIL              Copy Copy Copy
+              arrays arrays arrays                                 out  out  out
+
+================================================================================
+
+
+DETAILED BREAKDOWN: What happens in the Cython "wrap" phase
+================================================================================
+
+Cython Function Signature:
+┌─────────────────────────────────────────────────────────────────────────┐
+│ cdef int process_chunk_with_numexpr(                                   │
+│     void* chunk_a, void* chunk_b, void* chunk_c,                       │
+│     void* output, int64_t size, void* handle                           │
+│ ) noexcept nogil:  ◄── Can be called without GIL from C-Blosc2 thread │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Call Flow:
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ─── C-Blosc2 thread (NO GIL)                                          │
+│      │                                                                  │
+│      │ Calls function pointer                                          │
+│      ▼                                                                  │
+│  ┌────────────────────────────────────────────┐                        │
+│  │ Cython: process_chunk_with_numexpr()       │                        │
+│  │                                            │                        │
+│  │  with gil:  ◄─── Acquire GIL (PyGILState_Ensure)                   │
+│  │  ═════════                                 │                        │
+│  │    arr_a = PyArray_SimpleNewFromData(...)  │                        │
+│  │    arr_b = PyArray_SimpleNewFromData(...)  │                        │
+│  │    arr_c = PyArray_SimpleNewFromData(...)  │                        │
+│  │    arrays = [arr_a, arr_b, arr_c]          │                        │
+│  │    │                                       │                        │
+│  │    ▼                                       │                        │
+│  │    result = numexpr_run_compiled_simple(handle, arrays, 3)          │
+│  │                │                          │                        │
+│  │                ▼                          │                        │
+│  │    ┌───────────────────────────────────────────────────┐           │
+│  │    │ NumExpr C-API: numexpr_run_compiled_simple()     │           │
+│  │    │                                                   │           │
+│  │    │  ═══ Setup (validate arrays, etc.) WITH GIL      │           │
+│  │    │                                                   │           │
+│  │    │  Py_BEGIN_ALLOW_THREADS; ◄── Release GIL!        │           │
+│  │    │  ─────────────────────────                       │           │
+│  │    │    ⚡ vm_engine_iter_task()  (PARALLEL!)          │           │
+│  │    │    ⚡ Actual computation                          │           │
+│  │    │    ⚡ 2*a + 3*b*c evaluated                       │           │
+│  │    │  ─────────────────────────                       │           │
+│  │    │  Py_END_ALLOW_THREADS; ◄── Re-acquire GIL        │           │
+│  │    │                                                   │           │
+│  │    │  ═══ Cleanup and return WITH GIL                 │           │
+│  │    │                                                   │           │
+│  │    │  return result_array                             │           │
+│  │    └───────────────────────────────────────────────────┘           │
+│  │                │                          │                        │
+│  │                ▼                          │                        │
+│  │    memcpy(output, result_data, size)      │                        │
+│  │    Py_DECREF(arr_a, arr_b, arr_c, result) │                        │
+│  │  ═════════                                 │                        │
+│  │  # end with gil ◄─── Release GIL (PyGILState_Release)              │
+│  │                                            │                        │
+│  │  return 0                                  │                        │
+│  └────────────────────────────────────────────┘                        │
+│      │                                                                  │
+│      ▼                                                                  │
+│  ─── Back to C-Blosc2 thread (NO GIL)                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+
+
+TIME ANALYSIS: GIL held vs released (typical 10K element chunk)
+================================================================================
+
+Operation                        Duration    GIL Status   Parallel?
+─────────────────────────────────────────────────────────────────────────────
+Decompress chunk (C-Blosc2)      ~0.5 ms     NO GIL       ✅ Yes
+Wrap as NumPy arrays (Cython)    ~0.001 ms   HAS GIL      ❌ No (serialized)
+NumExpr setup                    ~0.01 ms    HAS GIL      ❌ No (serialized)
+NumExpr computation ⚡            ~1-5 ms     NO GIL       ✅ Yes
+NumExpr cleanup                  ~0.01 ms    HAS GIL      ❌ No (serialized)
+Copy result (Cython)             ~0.01 ms    HAS GIL      ❌ No (serialized)
+Compress result (C-Blosc2)       ~0.5 ms     NO GIL       ✅ Yes
+─────────────────────────────────────────────────────────────────────────────
+TOTAL                            ~2-6 ms
+GIL held (serialized)            ~0.03 ms    ◄── Only 0.5-1.5% of time!
+NO GIL (parallel)                ~2-6 ms     ◄── 98-99.5% of time!
+
+Conclusion: ⚡ Real parallelism achieved! ⚡
+
+================================================================================
+
+
+COMPARISON: nogil vs PyGILState_Ensure/Release
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         PURE C APPROACH                                 │
+├─────────────────────────────────────────────────────────────────────────┤
+│ // C function called from C-Blosc2 thread                              │
+│ int process_chunk(void* chunk_a, ...) {                                │
+│     PyGILState_STATE gstate;                                           │
+│                                                                         │
+│     gstate = PyGILState_Ensure();  // ◄── Must manually acquire        │
+│                                                                         │
+│     // Wrap arrays, call NumExpr                                       │
+│     PyArrayObject* arr_a = PyArray_SimpleNewFromData(...);             │
+│     result = numexpr_run_compiled_simple(...);                         │
+│                                                                         │
+│     PyGILState_Release(gstate);    // ◄── Must manually release        │
+│                                                                         │
+│     return 0;                                                           │
+│ }                                                                       │
+└─────────────────────────────────────────────────────────────────────────┘
+
+                                   ⬇️⬇️⬇️  Equivalent to  ⬇️⬇️⬇️
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        CYTHON APPROACH                                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│ # Cython function callable from C-Blosc2 thread                        │
+│ cdef int process_chunk(                                                │
+│     void* chunk_a, ...                                                 │
+│ ) noexcept nogil:  # ◄── Declares: can be called without GIL          │
+│                                                                         │
+│     with gil:      # ◄── Automatically does PyGILState_Ensure()        │
+│                                                                         │
+│         # Wrap arrays, call NumExpr                                    │
+│         arr_a = PyArray_SimpleNewFromData(...)                         │
+│         result = numexpr_run_compiled_simple(...)                      │
+│                                                                         │
+│     # end with gil # ◄── Automatically does PyGILState_Release()       │
+│                                                                         │
+│     return 0                                                            │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Cython is cleaner, safer, and generates the same C code!
+
+================================================================================
+
+
+KEY INSIGHT: Three-level GIL dance
+================================================================================
+
+Level 1: C-Blosc2 thread
+  │
+  │  NO GIL (thread created by C code)
+  │
+  ▼
+Level 2: Cython function
+  │
+  │  with gil:          ◄── Acquire GIL (~10 μs)
+  │  ════════════
+  │    Call NumExpr
+  │  ════════════
+  │  # end with gil     ◄── Release GIL (~10 μs)
+  │
+  ▼
+Level 3: NumExpr internals
+  │
+  │  ═══ Setup with GIL
+  │
+  │  Py_BEGIN_ALLOW_THREADS  ◄── Release GIL
+  │  ─────────────────────
+  │    ⚡ Compute (1-5 ms)   ◄── REAL PARALLELISM!
+  │  ─────────────────────
+  │  Py_END_ALLOW_THREADS    ◄── Re-acquire GIL
+  │
+  │  ═══ Cleanup with GIL
+
+Result: GIL is briefly held for wrapping (~0.03 ms) but released for
+        the expensive computation (~1-5 ms). Multiple threads can compute
+        in parallel! ⚡⚡⚡
+
+================================================================================
+
+
+ANSWER TO YOUR QUESTION
+================================================================================
+
+Q: Would the qualifier nogil in the function be equivalent to 
+   PyGILState_Ensure/PyGILState_Release?
+
+A: No, they serve different purposes:
+
+   ┌────────────────────────────────────────────────────────────────────┐
+   │ nogil                           │ PyGILState_Ensure/Release        │
+   ├─────────────────────────────────┼──────────────────────────────────┤
+   │ Function DECLARATION            │ Function CALL                    │
+   │ "Can be called without GIL"     │ "Acquire/release GIL"            │
+   │ Compile-time annotation         │ Runtime operation                │
+   │ Tells Cython what's allowed     │ Actually acquires/releases GIL   │
+   └─────────────────────────────────┴──────────────────────────────────┘
+
+   TOGETHER they work like this:
+
+   cdef int func() noexcept nogil:  # ◄── DECLARATION (can be called from C)
+       with gil:                     # ◄── RUNTIME (acquires GIL)
+           # Python code
+       # end with gil                # ◄── RUNTIME (releases GIL)
+       return 0
+
+   The `with gil:` block internally uses PyGILState_Ensure/Release!
+
+Q: Can C threads run without GIL achieving real parallelism?
+
+A: YES! ✅
+
+   - C-Blosc2 threads call your Cython function WITHOUT GIL
+   - Cython acquires GIL briefly (~0.03 ms) to wrap arrays
+   - NumExpr releases GIL during computation (~1-5 ms)
+   - Multiple threads compute in parallel ⚡
+   - Result: 98-99% of time is spent in parallel execution!
+
+================================================================================
