@@ -78,7 +78,7 @@ def benchmark_numexpr_re_evaluate(expr, a, b, c, results, indices):
     for index in indices:
         start = index * chunk_size
         end = (index + 1) * chunk_size
-        if index == 0:
+        if index == 0 or index == 1:
             # Evaluate the first chunk with evaluate
             time_taken = timeit.timeit(
                 lambda: ne.evaluate(
