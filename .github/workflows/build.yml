@@ -45,6 +45,12 @@ jobs:
             artifact_name: "windows-x86_64"
             python-version: "3.x"
 
+          # Windows ARM64 (build wheels)
+          - os: windows-11-arm
+            arch: aarch64
+            artifact_name: "windows-arm64"
+            python-version: "3.x"
+
           # macOS (build wheels)
           - os: macos-latest
             arch: x86_64
