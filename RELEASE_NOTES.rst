@@ -6,6 +6,7 @@ Changes from 2.14.1 to 2.14.2
 -----------------------------
 
 * **Under development.**
+* Avoid keeping arrays passed as ``out=`` alive in the ``re_evaluate`` cache.
 
 Changes from 2.14.0 to 2.14.1
 -----------------------------
