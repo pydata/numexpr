@@ -26,16 +26,15 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 # Follow guidelines from https://scientific-python.org/specs/spec-0000/
 dependencies = [
-    "numpy>=1.23.0",
+    "numpy>=1.26.0",
 ]
 dynamic = ["version"]
 
@@ -52,7 +51,7 @@ test = [
 
 [tool.cibuildwheel]
 build-verbosity = 1
-skip = ["*-manylinux_i686", "*_ppc64le", "*_s390x", "cp310-win_arm64", "cp313t-*"]
+skip = ["*-manylinux_i686", "*_ppc64le", "*_s390x", "cp313t-*"]
 # Let's use a more recent version of the manylinux image for more modern compilers
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
