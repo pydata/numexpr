@@ -14,6 +14,7 @@ import os
 import re
 import sys
 import threading
+import weakref
 from typing import Dict, Optional
 
 import numpy
@@ -794,6 +795,26 @@ _numexpr_last = threading.local()
 evaluate_lock = threading.Lock()
 
 
+def _cache_last_kwargs(out: Optional[numpy.ndarray],
+                       order: str,
+                       casting: str,
+                       ex_uses_vml: bool) -> Dict[str, object]:
+    return {
+        'out': None if out is None else weakref.ref(out),
+        'order': order,
+        'casting': casting,
+        'ex_uses_vml': ex_uses_vml,
+    }
+
+
+def _resolve_last_kwargs(kwargs: Dict) -> Dict:
+    kwargs = kwargs.copy()
+    out = kwargs.get('out')
+    if isinstance(out, weakref.ReferenceType):
+        kwargs['out'] = out()
+    return kwargs
+
+
 def validate(ex: str,
              local_dict: Optional[Dict] = None,
              global_dict: Optional[Dict] = None,
@@ -905,8 +926,7 @@ def validate(ex: str,
             compiled_ex = _numexpr_cache.c[numexpr_key]
         except KeyError:
             compiled_ex = _numexpr_cache.c[numexpr_key] = NumExpr(ex, signature, sanitize=sanitize, **context)
-        kwargs = {'out': out, 'order': order, 'casting': casting,
-                  'ex_uses_vml': ex_uses_vml}
+        kwargs = _cache_last_kwargs(out, order, casting, ex_uses_vml)
         _numexpr_last.l.set(ex=compiled_ex, argnames=names, kwargs=kwargs)
     except Exception as e:
         return e
@@ -1049,6 +1069,6 @@ def re_evaluate(local_dict: Optional[Dict] = None,
         raise RuntimeError("A previous evaluate() execution was not found, please call `validate` or `evaluate` once before `re_evaluate`")
     argnames = _numexpr_last.l['argnames']
     args = getArguments(argnames, local_dict, global_dict, _frame_depth=_frame_depth)
-    kwargs = _numexpr_last.l['kwargs']
+    kwargs = _resolve_last_kwargs(_numexpr_last.l['kwargs'])
     # with evaluate_lock:
     return compiled_ex(*args, **kwargs)

@@ -9,13 +9,14 @@
 #  rights to use.
 ####################################################################
 
-
+import gc
 import os
 import platform
 import subprocess
 import sys
 import unittest
 import warnings
+import weakref
 from contextlib import contextmanager
 from unittest.mock import MagicMock
 
@@ -411,6 +412,30 @@ class test_evaluate(TestCase):
         x = evaluate("2*a + 3*b*c", local_dict=local_dict)
         x = re_evaluate(local_dict=local_dict)
         assert_array_equal(x, array([86., 124., 168.]))
+
+    def test_evaluate_out_is_not_kept_alive(self):
+        a = arange(1000.0)
+        out = zeros(a.shape)
+        out_ref = weakref.ref(out)
+
+        evaluate("a + 1", local_dict={"a": a}, out=out)
+        del out
+        gc.collect()
+
+        assert out_ref() is None
+
+    def test_re_evaluate_reuses_live_out(self):
+        a = array([1., 2., 3.])
+        out = zeros(a.shape)
+
+        x = evaluate("a + 1", local_dict={"a": a}, out=out)
+        assert x is out
+        assert_array_equal(out, array([2., 3., 4.]))
+
+        a = array([4., 5., 6.])
+        x = re_evaluate(local_dict={"a": a})
+        assert x is out
+        assert_array_equal(out, array([5., 6., 7.]))
 
     def test_validate(self):
         a = array([1., 2., 3.])

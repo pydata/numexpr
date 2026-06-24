@@ -52,7 +52,7 @@ test = [
 
 [tool.cibuildwheel]
 build-verbosity = 1
-skip = ["*-manylinux_i686", "*_ppc64le", "*_s390x", "cp310-win_arm64"]
+skip = ["*-manylinux_i686", "*_ppc64le", "*_s390x", "cp310-win_arm64", "cp313t-*"]
 # Let's use a more recent version of the manylinux image for more modern compilers
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
@@ -60,5 +60,5 @@ test-groups = ["test"]
 test-command = ["python -m pytest --pyargs numexpr"]
 
 [[tool.cibuildwheel.overrides]]
-select = "cp31*t-*"
+select = "cp314t-*"
 test-command = ["python -m pytest --parallel-threads=4 --pyargs numexpr"]
