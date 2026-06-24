@@ -795,10 +795,10 @@ _numexpr_last = threading.local()
 evaluate_lock = threading.Lock()
 
 
-def _cache_last_kwargs(out: numpy.ndarray,
+def _cache_last_kwargs(out: Optional[numpy.ndarray],
                        order: str,
                        casting: str,
-                       ex_uses_vml: bool) -> Dict:
+                       ex_uses_vml: bool) -> Dict[str, object]:
     return {
         'out': None if out is None else weakref.ref(out),
         'order': order,
