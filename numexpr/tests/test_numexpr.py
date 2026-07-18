@@ -482,6 +482,21 @@ class test_evaluate(TestCase):
         x = arange(10, dtype='i4')
         assert_array_equal(evaluate("x>>2"), x >> 2)
 
+    def test_shift_out_of_range(self):
+        # Shift counts that are negative or >= the operand width are
+        # undefined behavior in C. Match NumPy, which treats them as a
+        # full shift (0 for <<, sign fill for >>).
+        for dtype in ('i4', 'i8'):
+            width = np.dtype(dtype).itemsize * 8
+            x = array([5, -5, 0], dtype=dtype)
+            # Include the exact width boundary for each dtype (32 for i4,
+            # 64 for i8) so the >= width edge is covered, not just far
+            # out-of-range counts.
+            for count in (-1, width, width + 1, 200):
+                y = array([count] * len(x), dtype=dtype)
+                assert_array_equal(evaluate("x << y"), x << y)
+                assert_array_equal(evaluate("x >> y"), x >> y)
+
     # PyTables uses __nonzero__ among ExpressionNode objects internally
     # so this should be commented out for the moment.  See #24.
     def test_boolean_operator(self):
