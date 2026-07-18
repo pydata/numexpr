@@ -995,7 +995,7 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
         PyErr_SetString(PyExc_RuntimeError, errmsg);
     }
 
-    return 0;
+    return r;
 }
 
 static int
