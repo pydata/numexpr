@@ -125,6 +125,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
         }
         if (!(itemsizes = PyMem_New(int, n_constants))) {
             Py_DECREF(constants);
+            Py_DECREF(constsig);
             return -1;
         }
         for (i = 0; i < n_constants; i++) {
