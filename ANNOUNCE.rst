@@ -1,21 +1,37 @@
 =========================
-Announcing NumExpr 2.14.1
+Announcing NumExpr 2.14.2
 =========================
 
 Hi everyone,
 
-NumExpr 2.14.1 introduces patches to ensure compatibility with NumPy 1.26,
-rolling back static typing support.
+NumExpr 2.14.2 is a maintenance release with several bug fixes, a new
+``disable_cache`` option for ``evaluate()``, and updated build/CI support
+(Windows ARM64 wheels, dropped Python 3.10, no more free-threaded 3.13
+wheels).
 
 Project documentation is available at:
 
 https://numexpr.readthedocs.io/
 
-Changes from 2.14.0 to 2.14.1
+Changes from 2.14.1 to 2.14.2
 -----------------------------
 
-* Rolled back static typing support to ensure compatibiity with NumPy 1.26.
-* Added CI tests for NumPy 1.26
+* Added a ``disable_cache`` parameter to ``evaluate()`` to bypass the
+  internal expression cache. Thanks to 27rabbitlt.
+* Added Windows ARM64 wheel builds.
+* Dropped support for Python 3.10.
+* No longer build free-threaded Python 3.13 wheels, matching NumPy's own
+  support.
+* Avoid keeping arrays passed as ``out=`` alive in the ``re_evaluate`` cache
+  (#558).
+* Guarded out-of-range shift counts (shift amount >= bit width) in the
+  integer ``<<``/``>>`` opcodes, which was undefined behavior in C and could
+  return garbage results. Thanks to uwezkhan (#559).
+* Fixed ``run_interpreter()`` unconditionally returning success even when
+  the VM engine failed, so execution errors are now correctly raised
+  instead of silently discarded (#557).
+* Fixed a reference leak of ``constsig`` on the allocation-failure path in
+  ``NumExpr_init()`` (#561).
 
 What's Numexpr?
 ---------------

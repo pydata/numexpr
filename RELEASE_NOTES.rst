@@ -5,8 +5,22 @@ Release notes for NumExpr 2.14 series
 Changes from 2.14.1 to 2.14.2
 -----------------------------
 
-* **Under development.**
-* Avoid keeping arrays passed as ``out=`` alive in the ``re_evaluate`` cache.
+* Added a ``disable_cache`` parameter to ``evaluate()`` to bypass the
+  internal expression cache. Thanks to 27rabbitlt.
+* Added Windows ARM64 wheel builds.
+* Dropped support for Python 3.10.
+* No longer build free-threaded Python 3.13 wheels, matching NumPy's own
+  support.
+* Avoid keeping arrays passed as ``out=`` alive in the ``re_evaluate`` cache
+  (#558).
+* Guarded out-of-range shift counts (shift amount >= bit width) in the
+  integer ``<<``/``>>`` opcodes, which was undefined behavior in C and could
+  return garbage results. Thanks to uwezkhan (#559).
+* Fixed ``run_interpreter()`` unconditionally returning success even when
+  the VM engine failed, so execution errors are now correctly raised
+  instead of silently discarded (#557).
+* Fixed a reference leak of ``constsig`` on the allocation-failure path in
+  ``NumExpr_init()`` (#561).
 
 Changes from 2.14.0 to 2.14.1
 -----------------------------
