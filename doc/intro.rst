@@ -32,7 +32,7 @@ expression is not compiled to machine code, you will have a big case statement
 (or a bunch of if's) inside the loop, which adds a large overhead for each
 element, and will hurt the branch-prediction used on the CPU.
 
-:code:`numexpr` uses a in-between approach. Arrays are handled as chunks (of
+:code:`numexpr` uses an in-between approach. Arrays are handled as chunks (of
 4096 elements) at a time, using a register machine. As Python code,
 it looks something like this::
 

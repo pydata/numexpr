@@ -13,7 +13,7 @@ simple expressions.  One is a pure algebraic one: :code:`2*y + 4*x` and the othe
 contains transcendental functions: :code:`sin(x)**2 + cos(y)**2`.
 
 For this, we are going to use this worksheet_.  I (Francesc Alted) ran this
-benchmark on a Intel Xeon E3-1245 v5 @ 3.50GHz. Here are the results when
+benchmark on an Intel Xeon E3-1245 v5 @ 3.50GHz. Here are the results when
 not using MKL::
 
     NumPy version: 1.11.1
