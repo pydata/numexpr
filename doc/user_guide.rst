@@ -176,7 +176,7 @@ namely:
     * In operations implying a scalar and an array, the normal rules of casting
       are used in NumExpr, in contrast with NumPy, where array types takes
       priority.  For example, if :code:`a` is an array of type :code:`float32`
-      and :code:`b` is an scalar of type :code:`float64` (or Python :code:`float`
+      and :code:`b` is a scalar of type :code:`float64` (or Python :code:`float`
       type, which is equivalent), then :code:`a*b` returns a :code:`float64` in
       NumExpr, but a :code:`float32` in NumPy (i.e. array operands take priority
       in determining the result type).  If you need to keep the result a
