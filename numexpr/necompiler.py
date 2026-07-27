@@ -1105,7 +1105,7 @@ def evaluate(ex: str,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
 
-    sanitize: bool
+    sanitize: Optional[bool]
         `validate` (and by extension `evaluate`) call `eval(ex)`, which is
         potentially dangerous on non-sanitized inputs. As such, NumExpr by default
         permits only AST nodes used by its expression language, functions from
