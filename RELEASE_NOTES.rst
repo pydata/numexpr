@@ -10,9 +10,10 @@ Changes from 2.14.2 to 2.14.3
   evaluation, and disabled Python builtins while sanitization is enabled.
   This closes sanitizer bypasses in both cached and ``disable_cache=True``
   evaluation. Expressions using unsupported Python syntax are now rejected
-  before evaluation. Parser errors raise ``SyntaxError``, while expressions
-  rejected by the sanitizer raise ``ValueError``. Sanitization can still be
-  explicitly disabled with ``sanitize=False`` or ``NUMEXPR_SANITIZE=0``.
+  before evaluation. Parser errors raise ``SyntaxError``; expressions rejected
+  by the sanitizer raise ``ValueError``; and unknown functions raise
+  ``TypeError``. Sanitization can still be explicitly disabled with
+  ``sanitize=False`` or ``NUMEXPR_SANITIZE=0``.
 
 Changes from 2.14.1 to 2.14.2
 -----------------------------
