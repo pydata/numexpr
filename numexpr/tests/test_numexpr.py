@@ -455,6 +455,8 @@ class test_evaluate(TestCase):
     def test_validate_syntax(self):
         retval = validate("2+")
         assert(isinstance(retval, SyntaxError))
+        retval = validate("a = 1")
+        assert(isinstance(retval, SyntaxError))
 
     def test_validate_dict(self):
         a1 = array([1., 2., 3.])
@@ -673,10 +675,10 @@ class test_evaluate(TestCase):
             else:
                 self.fail()
 
-            # Forbid semicolon
+            # Statements are invalid in an expression.
             try:
                 evaluate('import os;')
-            except ValueError:
+            except SyntaxError:
                 pass
             else:
                 self.fail()
@@ -725,6 +727,69 @@ class test_evaluate(TestCase):
             x = np.array(['a', 'b'], dtype=bytes)
             evaluate("x == 'b:'")
 
+            # Reject syntax hidden between single quotes that are themselves
+            # contained in double-quoted literals.
+            with self.assertRaises(ValueError):
+                evaluate('"\'" + ().__class__ + "\'"')
+
+            # The no-cache path must resolve sanitize=None to the safe default.
+            with self.assertRaises(ValueError):
+                evaluate('().__class__', disable_cache=True)
+
+            # An unsanitized cache entry must not bypass later sanitization.
+            a = arange(3)
+            evaluate('(a,)[0]', sanitize=False)
+            with self.assertRaises(ValueError):
+                evaluate('(a,)[0]', sanitize=True)
+
+            # Preserve names containing non-dunder double underscores.
+            for name in ('feature__scaled', 'col__value', '__x', 'x__'):
+                result = evaluate(
+                    f'{name} + 1', local_dict={name: a}
+                )
+                assert_array_equal(result, a + 1)
+
+            # Preserve expression forms accepted by the previous sanitizer.
+            b = a + 1
+            assert_array_equal(
+                evaluate('a if True else b', local_dict={'a': a, 'b': b}),
+                a,
+            )
+            assert_equal(
+                evaluate('a is b', local_dict={'a': a, 'b': b}),
+                False,
+            )
+            assert_equal(
+                evaluate('a is not b', local_dict={'a': a, 'b': b}),
+                True,
+            )
+            with self.assertRaises(TypeError):
+                evaluate('a in b', local_dict={'a': a, 'b': b})
+            with self.assertRaises(TypeError):
+                evaluate('a not in b', local_dict={'a': a, 'b': b})
+
+            with self.assertRaisesRegex(TypeError, 'unknown function: foo'):
+                evaluate('foo(a)', local_dict={'a': a})
+
+            # sanitize=None must resolve to the secure default for NumExpr.
+            with self.assertRaises(ValueError):
+                NumExpr('(a,)[0]', [('a', double)], sanitize=None)
+
+            context = {'optimization': 'aggressive', 'truediv': False}
+            for call in (
+                lambda: numexpr.necompiler.stringToExpression(
+                    '(a,)[0]', {'a': double}, context, sanitize=None
+                ),
+                lambda: numexpr.necompiler.precompile(
+                    '(a,)[0]', [('a', double)], context, sanitize=None
+                ),
+                lambda: numexpr.necompiler.getExprNames(
+                    '(a,)[0]', context, sanitize=None
+                ),
+            ):
+                with self.assertRaises(ValueError):
+                    call()
+
     @pytest.mark.thread_unsafe
     def test_no_sanitize(self):
         try: # Errors on compile() after eval()
@@ -741,6 +806,10 @@ class test_evaluate(TestCase):
                 pass
             else:
                 self.fail()
+
+            a = arange(3, dtype=double)
+            expr = NumExpr('(a,)[0]', [('a', double)], sanitize=None)
+            assert_array_equal(expr(a), a)
 
     def test_disassemble(self):
         assert_equal(disassemble(NumExpr(
