@@ -10,8 +10,8 @@
 
 import __future__
 
+import ast as pyast
 import os
-import re
 import sys
 import threading
 import weakref
@@ -278,37 +278,117 @@ class Immediate(Register):
         return 'Immediate(%d)' % (self.node.value,)
 
 
-_flow_pat = r'[\;\[\:]'
-_dunder_pat = r'(^|[^\w])__[\w]+__($|[^\w])'
-_attr_pat = r'\.\b(?!(real|imag|(\d*[eE]?[+-]?\d+)|(\d*[eE]?[+-]?\d+j)|(\d*j))\b)'
-_blacklist_re = re.compile(f'{_flow_pat}|{_dunder_pat}|{_attr_pat}')
+_allowed_ast_node_types = frozenset((
+    pyast.Expression,
+    pyast.Constant,
+    pyast.Name,
+    pyast.Load,
+    pyast.BinOp,
+    pyast.BoolOp,
+    pyast.UnaryOp,
+    pyast.Compare,
+    pyast.IfExp,
+    pyast.Call,
+    pyast.keyword,
+    pyast.Attribute,
+    pyast.Add,
+    pyast.Sub,
+    pyast.Mult,
+    pyast.Div,
+    pyast.FloorDiv,
+    pyast.Pow,
+    pyast.Mod,
+    pyast.LShift,
+    pyast.RShift,
+    pyast.BitAnd,
+    pyast.BitOr,
+    pyast.BitXor,
+    pyast.And,
+    pyast.Or,
+    pyast.UAdd,
+    pyast.USub,
+    pyast.Invert,
+    pyast.Not,
+    pyast.Eq,
+    pyast.NotEq,
+    pyast.Lt,
+    pyast.LtE,
+    pyast.Gt,
+    pyast.GtE,
+    pyast.In,
+    pyast.NotIn,
+    pyast.Is,
+    pyast.IsNot,
+))
 
-def stringToExpression(s, types, context, sanitize: bool=True):
-    """Given a string, convert it to a tree of ExpressionNode's.
-    """
-    # sanitize the string for obvious attack vectors that NumExpr cannot
-    # parse into its homebrew AST. This is to protect the call to `eval` below.
-    # We forbid `;`, `:`. `[` and `__`, and attribute access via '.'.
-    # We cannot ban `.real` or `.imag` however...
-    # We also cannot ban `.\d*j`, where `\d*` is some digits (or none), e.g. 1.5j, 1.j
-    if sanitize:
-        no_whitespace = re.sub(r'\s+', '', s)
-        skip_quotes = re.sub(r'(\'[^\']*\')', '', no_whitespace)
-        if _blacklist_re.search(skip_quotes) is not None:
-            raise ValueError(f'Expression {s} has forbidden control characters.')
+def _forbidden_expression(expression):
+    raise ValueError(f'Expression {expression} has forbidden syntax.')
 
+
+def _is_dunder_name(name):
+    # Not a security boundary: a bare Name can only ever become a VariableNode,
+    # since every name in `co_names` is bound before `eval` and builtins are
+    # empty. Escapes need attribute access or a call, which are gated below.
+    # This check exists to preserve the pre-2.14.3 `_dunder_pat` regex
+    # `__[\w]+__`, which required at least one character between the underscore
+    # pairs -- hence the length bound, which admits '____' but not '_____'.
+    return (
+        len(name) > 4
+        and name.startswith('__')
+        and name.endswith('__')
+    )
+
+
+def _sanitize_expression(expression):
+    parsed = pyast.parse(expression, filename='<expr>', mode='eval')
+
+    for node in pyast.walk(parsed):
+        node_type = type(node)
+        if node_type not in _allowed_ast_node_types:
+            _forbidden_expression(expression)
+        if node_type is pyast.Name and _is_dunder_name(node.id):
+            _forbidden_expression(expression)
+        if node_type is pyast.Attribute and node.attr not in ('real', 'imag'):
+            _forbidden_expression(expression)
+        if node_type is pyast.Call:
+            if not isinstance(node.func, pyast.Name):
+                _forbidden_expression(expression)
+            # Redundant with the function-table check below -- no dunder is in
+            # `expressions.functions` -- but it reports `__import__(...)` as a
+            # sanitizer rejection rather than as an unknown function.
+            if _is_dunder_name(node.func.id):
+                _forbidden_expression(expression)
+            if node.func.id not in expressions.functions:
+                raise TypeError(f'unknown function: {node.func.id}')
+    return parsed
+
+
+def _resolve_sanitize(sanitize):
+    if sanitize is not None:
+        return sanitize
+    if 'NUMEXPR_SANITIZE' in os.environ:
+        return bool(int(os.environ['NUMEXPR_SANITIZE']))
+    return True
+
+
+def _compile_expression(expression, context, sanitize):
+    sanitize = _resolve_sanitize(sanitize)
+    source = _sanitize_expression(expression) if sanitize else expression
+    if context.get('truediv', False):
+        flags = __future__.division.compiler_flag
+    else:
+        flags = 0
+    return compile(source, '<expr>', 'eval', flags)
+
+
+def _expression_from_compiled(compiled, types, context, sanitize):
+    sanitize = _resolve_sanitize(sanitize)
     old_ctx = expressions._context.get_current_context()
     try:
         expressions._context.set_new_context(context)
-        # first compile to a code object to determine the names
-        if context.get('truediv', False):
-            flags = __future__.division.compiler_flag
-        else:
-            flags = 0
-        c = compile(s, '<expr>', 'eval', flags)
         # make VariableNode's for the names
         names = {}
-        for name in c.co_names:
+        for name in compiled.co_names:
             if name == "None":
                 names[name] = None
             elif name == "True":
@@ -321,7 +401,10 @@ def stringToExpression(s, types, context, sanitize: bool=True):
         names.update(expressions.functions)
 
         # now build the expression
-        ex = eval(c, names)
+        if sanitize:
+            ex = eval(compiled, {'__builtins__': {}}, names)
+        else:
+            ex = eval(compiled, names)
 
         if expressions.isConstant(ex):
             ex = expressions.ConstantNode(ex, expressions.getKind(ex))
@@ -330,6 +413,14 @@ def stringToExpression(s, types, context, sanitize: bool=True):
     finally:
         expressions._context.set_new_context(old_ctx)
     return ex
+
+
+def stringToExpression(s, types, context, sanitize: bool=True):
+    """Given a string, convert it to a tree of ExpressionNode's.
+    """
+    sanitize = _resolve_sanitize(sanitize)
+    compiled = _compile_expression(s, context, sanitize)
+    return _expression_from_compiled(compiled, types, context, sanitize)
 
 
 def isReduction(ast):
@@ -582,15 +673,18 @@ def getContext(kwargs, _frame_depth=1):
     return context
 
 
-def precompile(ex, signature=(), context={}, sanitize: bool=True):
+def _precompile(ex, signature, context, sanitize, compiled=None):
     """
     Compile the expression to an intermediate form.
     """
+    sanitize = _resolve_sanitize(sanitize)
     types = dict(signature)
     input_order = [name for (name, type_) in signature]
 
     if isinstance(ex, str):
-        ex = stringToExpression(ex, types, context, sanitize)
+        if compiled is None:
+            compiled = _compile_expression(ex, context, sanitize)
+        ex = _expression_from_compiled(compiled, types, context, sanitize)
 
     # the AST is like the expression, but the node objects don't have
     # any odd interpretations
@@ -636,7 +730,21 @@ def precompile(ex, signature=(), context={}, sanitize: bool=True):
     return threeAddrProgram, signature, tempsig, constants, input_names
 
 
-def NumExpr(ex,  signature=(), sanitize: bool=True, **kwargs):
+def precompile(ex, signature=(), context={}, sanitize: bool=True):
+    return _precompile(ex, signature, context, sanitize)
+
+
+def _numexpr(ex, signature, context, sanitize, compiled=None):
+    threeAddrProgram, inputsig, tempsig, constants, input_names = _precompile(
+        ex, signature, context, sanitize=sanitize, compiled=compiled
+    )
+    program = compileThreeAddrForm(threeAddrProgram)
+    return interpreter.NumExpr(inputsig.encode('ascii'),
+                               tempsig.encode('ascii'),
+                               program, constants, input_names)
+
+
+def NumExpr(ex, signature=(), sanitize: bool=True, **kwargs):
     """
     Compile an expression built using E.<variable> variables to a function.
 
@@ -653,11 +761,8 @@ def NumExpr(ex,  signature=(), sanitize: bool=True, **kwargs):
     # translated to either True or False).
     _frame_depth = 1
     context = getContext(kwargs, _frame_depth=_frame_depth)
-    threeAddrProgram, inputsig, tempsig, constants, input_names = precompile(ex, signature, context, sanitize=sanitize)
-    program = compileThreeAddrForm(threeAddrProgram)
-    return interpreter.NumExpr(inputsig.encode('ascii'),
-                               tempsig.encode('ascii'),
-                               program, constants, input_names)
+    sanitize = _resolve_sanitize(sanitize)
+    return _numexpr(ex, signature, context, sanitize)
 
 
 def disassemble(nex):
@@ -734,8 +839,11 @@ def getType(a):
     raise ValueError("unknown type %s" % a.dtype.name)
 
 
-def getExprNames(text, context, sanitize: bool=True):
-    ex = stringToExpression(text, {}, context, sanitize)
+def _getExprNames(text, context, sanitize, compiled=None):
+    sanitize = _resolve_sanitize(sanitize)
+    if compiled is None:
+        compiled = _compile_expression(text, context, sanitize)
+    ex = _expression_from_compiled(compiled, {}, context, sanitize)
     ast = expressionToAST(ex)
     input_order = getInputOrder(ast, None)
     #try to figure out if vml operations are used by expression
@@ -750,6 +858,10 @@ def getExprNames(text, context, sanitize: bool=True):
             ex_uses_vml = False
 
     return [a.value for a in input_order], ex_uses_vml
+
+
+def getExprNames(text, context, sanitize: bool=True):
+    return _getExprNames(text, context, sanitize)
 
 
 def getArguments(names, local_dict=None, global_dict=None, _frame_depth: int=2):
@@ -873,8 +985,8 @@ def validate(ex: str,
     sanitize: Optional[bool]
         Both `validate` and by extension `evaluate` call `eval(ex)`, which is
         potentially dangerous on unsanitized inputs. As such, NumExpr by default
-        performs simple sanitization, banning the character ':;[', the
-        dunder '__[\w+]__', and attribute access to all but '.real' and '.imag'.
+        permits only AST nodes used by its expression language, functions from
+        its function table, and the attributes '.real' and '.imag'.
 
         Using `None` defaults to `True` unless the environment variable
         `NUMEXPR_SANITIZE=0` is set, in which case the default is `False`.
@@ -902,17 +1014,21 @@ def validate(ex: str,
         if not isinstance(ex, str):
             raise ValueError("must specify expression as a string")
 
-        if sanitize is None:
-            if 'NUMEXPR_SANITIZE' in os.environ:
-                sanitize = bool(int(os.environ['NUMEXPR_SANITIZE']))
-            else:
-                sanitize = True
+        sanitize = _resolve_sanitize(sanitize)
 
         # Get the names for this expression
         context = getContext(kwargs)
         expr_key = (ex, tuple(sorted(context.items())))
+        # Keep unsanitized results separate without changing the default
+        # cache-key shape used by the hot path.
+        if not sanitize:
+            expr_key += (sanitize,)
+        compiled = None
         if expr_key not in _names_cache.c:
-            _names_cache.c[expr_key] = getExprNames(ex, context, sanitize=sanitize)
+            compiled = _compile_expression(ex, context, sanitize)
+            _names_cache.c[expr_key] = _getExprNames(
+                ex, context, sanitize=sanitize, compiled=compiled
+            )
         names, ex_uses_vml = _names_cache.c[expr_key]
         arguments = getArguments(names, local_dict, global_dict, _frame_depth=_frame_depth)
 
@@ -925,7 +1041,11 @@ def validate(ex: str,
         try:
             compiled_ex = _numexpr_cache.c[numexpr_key]
         except KeyError:
-            compiled_ex = _numexpr_cache.c[numexpr_key] = NumExpr(ex, signature, sanitize=sanitize, **context)
+            if compiled is None:
+                compiled = _compile_expression(ex, context, sanitize)
+            compiled_ex = _numexpr_cache.c[numexpr_key] = _numexpr(
+                ex, signature, context, sanitize, compiled=compiled
+            )
         kwargs = _cache_last_kwargs(out, order, casting, ex_uses_vml)
         _numexpr_last.l.set(ex=compiled_ex, argnames=names, kwargs=kwargs)
     except Exception as e:
@@ -985,11 +1105,11 @@ def evaluate(ex: str,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
 
-    sanitize: bool
+    sanitize: Optional[bool]
         `validate` (and by extension `evaluate`) call `eval(ex)`, which is
         potentially dangerous on non-sanitized inputs. As such, NumExpr by default
-        performs simple sanitization, banning the characters ':;[', the
-        dunder '__[\w+]__', and attribute access to all but '.real' and '.imag'.
+        permits only AST nodes used by its expression language, functions from
+        its function table, and the attributes '.real' and '.imag'.
 
         Using `None` defaults to `True` unless the environment variable
         `NUMEXPR_SANITIZE=0` is set, in which case the default is `False`.
@@ -1021,15 +1141,21 @@ def evaluate(ex: str,
     # here, but we have difficulties with the `sys.getframe(2)` call in
     # `getArguments`
 
-    # If dissable_cache set to be True, we evaluate the expression here
+    # If disable_cache is True, we evaluate the expression here.
     # Otherwise we validate and then re_evaluate
     if disable_cache:
+        sanitize = _resolve_sanitize(sanitize)
         context = getContext(kwargs)
-        names, ex_uses_vml = getExprNames(ex, context, sanitize=sanitize)
+        compiled = _compile_expression(ex, context, sanitize)
+        names, ex_uses_vml = _getExprNames(
+            ex, context, sanitize=sanitize, compiled=compiled
+        )
         arguments = getArguments(names, local_dict, global_dict, _frame_depth=_frame_depth - 1)
         signature = [(name, getType(arg)) for (name, arg) in
                      zip(names, arguments)]
-        compiled_ex = NumExpr(ex, signature, sanitize=sanitize, **context)
+        compiled_ex = _numexpr(
+            ex, signature, context, sanitize, compiled=compiled
+        )
         kwargs = {'out': out, 'order': order, 'casting': casting,
                   'ex_uses_vml': ex_uses_vml}
         return compiled_ex(*arguments, **kwargs)
