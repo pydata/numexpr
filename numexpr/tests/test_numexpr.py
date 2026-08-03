@@ -378,6 +378,134 @@ class test_numexpr2(test_numexpr):
     nthreads = 2
 
 
+class test_interpreter_validation(TestCase):
+    """Malformed bytecode must be rejected before entering the VM."""
+
+    def test_rejects_integer_width_mismatch(self):
+        program = bytes([
+            50, 2, 1, 1,  # add_lll into an int32 temporary
+            47, 0, 1, 0,  # copy_ll into the output
+        ])
+        with self.assertRaisesRegex(RuntimeError, "signature doesn't match"):
+            numexpr.interpreter.NumExpr(
+                b'l', b'i', program, (), (b'x',)
+            )
+
+    def test_rejects_truncated_double_instruction(self):
+        # where_fbff reads its fourth operand from the following word.
+        program = bytes([77, 0, 1, 2])
+        with self.assertRaisesRegex(RuntimeError, "truncated double instruction"):
+            numexpr.interpreter.NumExpr(
+                b'bff', b'', program, (), (b'a', b'b', b'c')
+            )
+
+    def test_rejects_incomplete_program(self):
+        for program in (b'', b'\0'):
+            with self.assertRaisesRegex(RuntimeError, "complete instruction"):
+                numexpr.interpreter.NumExpr(
+                    b'', b'', program, (), None
+                )
+
+    def test_rejects_copy_ss_from_noncanonical_source(self):
+        program = bytes([116, 0, 2, 0])
+        with self.assertRaisesRegex(RuntimeError, "copy_ss source"):
+            numexpr.interpreter.NumExpr(
+                b'', b'', program, (b'a', b'b' * 16), None
+            )
+
+    def test_rejects_copy_ss_into_temporary(self):
+        program = bytes([
+            116, 2, 1, 0,
+            116, 0, 1, 0,
+        ])
+        with self.assertRaisesRegex(RuntimeError, "copy_ss destination"):
+            numexpr.interpreter.NumExpr(
+                b's', b's', program, (), (b'x',)
+            )
+
+    def test_rejects_store_into_input(self):
+        program = bytes([
+            29, 1, 1, 0,  # copy_ii into read-only input register 1
+            29, 0, 1, 0,
+        ])
+        with self.assertRaisesRegex(RuntimeError, "destination buffer is read-only"):
+            numexpr.interpreter.NumExpr(
+                b'i', b'', program, (), (b'x',)
+            )
+
+    def test_rejects_string_temporary(self):
+        # A 's' temporary has item size 0, so it is a zero-length allocation
+        # that eq_bss would still read from.
+        program = bytes([26, 0, 2, 2])
+        with self.assertRaisesRegex(RuntimeError, "string temporaries"):
+            numexpr.interpreter.NumExpr(
+                b's', b's', program, (), (b'x',)
+            )
+
+    def test_rejects_reinitialisation(self):
+        # Re-initialising would free the register buffers that a concurrent
+        # run() has already handed to the worker threads, and it was also a way
+        # to install a program that never passed validation.
+        valid = bytes([116, 0, 1, 0])
+        nex = numexpr.interpreter.NumExpr(b's', b'', valid, (), (b'x',))
+        for program in (valid, bytes([116, 2, 2, 0])):
+            with self.assertRaisesRegex(RuntimeError, "re-initialised"):
+                nex.__init__(b'bss', b'', program, (), (b'a', b'b', b'c'))
+        self.assertEqual(nex.program, valid)
+        self.assertEqual(nex.signature, b's')
+        x = array([b'abcdefgh'] * 8, dtype='S8')
+        assert_array_equal(nex.run(x), x)
+
+    def test_failed_init_can_be_retried(self):
+        # Nothing is installed by a rejected __init__, so the half-built object
+        # is still usable for a second, valid attempt.
+        nex = numexpr.interpreter.NumExpr.__new__(numexpr.interpreter.NumExpr)
+        with self.assertRaisesRegex(RuntimeError, "read-only"):
+            nex.__init__(b'i', b'', bytes([29, 1, 1, 0, 29, 0, 1, 0]), (), (b'x',))
+        nex.__init__(b'i', b'', bytes([29, 0, 1, 0]), (), (b'x',))
+        x = arange(8, dtype='int32')
+        assert_array_equal(nex.run(x), x)
+
+    def test_rejects_reduction_writing_output_before_the_end(self):
+        # A full reduction allocates a single-element output, so an ordinary
+        # opcode targeting register 0 would write a whole block past its end.
+        program = bytes([
+            88, 0, 1, 1,   # mul_ddd into the output buffer
+            140, 0, 1, 0,  # min_ddn -- makes the output a lone accumulator
+        ])
+        with self.assertRaisesRegex(RuntimeError, "final reduction instruction"):
+            numexpr.interpreter.NumExpr(
+                b'd', b'', program, (), (b'x',)
+            )
+
+    def test_rejects_nul_in_signature(self):
+        # PyBytes_FromFormat("%s") truncates at a NUL, which would desynchronise
+        # fullsig from the register map that mem[]/memsizes[] are indexed with.
+        program = bytes([26, 0, 2, 2])
+        for signature, tempsig in ((b'i\x00', b's'), (b'i\x00i', b'd')):
+            with self.assertRaisesRegex(RuntimeError, "NUL bytes"):
+                numexpr.interpreter.NumExpr(
+                    signature, tempsig, program, (), (b'a', b'b')
+                )
+
+    def test_uninitialized_object_refuses_to_run(self):
+        nex = numexpr.interpreter.NumExpr.__new__(numexpr.interpreter.NumExpr)
+        with self.assertRaisesRegex(RuntimeError, "program is empty"):
+            nex.run()
+
+    def test_rejects_oversized_constant_storage(self):
+        constants = (
+            b'a' * 2_000_000,
+            b'b' * 2_000_000,
+            b'c' * 194_304,
+        )
+        program = bytes([116, 0, 1, 0])
+        with self.assertRaisesRegex(OverflowError, "constant storage"):
+            numexpr.interpreter.NumExpr(
+                b'', b'', program, constants, None
+            )
+
+
 class test_evaluate(TestCase):
     def test_simple(self):
         a = array([1., 2., 3.])
@@ -1288,6 +1416,24 @@ class test_strings(TestCase):
         s1, s2 = b'foo', b'foo\0\0'
         self.assertTrue(evaluate('s1 == s2'))
 
+    def test_compare_empty_string_ordering(self):
+        # An empty operand sorts before every non-empty one; ordering against
+        # an empty constant must agree with NumPy.
+        a = np.array([b'foo', b'', b'bar'])
+        for expr, expected in (
+            ("a < b''", a < b''),
+            ("a <= b''", a <= b''),
+            ("a > b''", a > b''),
+            ("a >= b''", a >= b''),
+            ("a == b''", a == b''),
+            ("a != b''", a != b''),
+            ("b'' < a", b'' < a),
+            ("b'' <= a", b'' <= a),
+        ):
+            assert_array_equal(evaluate(expr), expected, err_msg=expr)
+        self.assertTrue(evaluate("b'' == b''"))
+        self.assertFalse(evaluate("b'' < b''"))
+
 
 # Case for testing selections in fields which are aligned but whose
 # data length is not an exact multiple of the length of the record.
@@ -1639,6 +1785,8 @@ def suite():
         theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_numexpr))
         if 'sparc' not in platform.machine():
             theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_numexpr2))
+        theSuite.addTest(
+            unittest.defaultTestLoader.loadTestsFromTestCase(test_interpreter_validation))
         theSuite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(test_evaluate))
         # Add the dynamically created TestExpressions to the suite
         if pytest_available:
