@@ -393,15 +393,20 @@ get_reduction_axis(PyObject* program) {
 
 
 
+/* Validate a program against the register layout it will run on.  This takes
+   the raw pieces rather than a NumExprObject so that NumExpr_init can call it
+   *before* installing anything into the object. */
 int
-check_program(NumExprObject *self)
+check_program(PyObject *program_object, PyObject *fullsig_object,
+              PyObject *signature_object, int n_constants, int n_temps)
 {
     unsigned char *program;
-    Py_ssize_t prog_len, n_buffers, n_inputs;
+    Py_ssize_t prog_len, n_buffers, n_inputs, first_temp, reg;
     int pc, arg, argloc, argno, sig;
     char *fullsig, *signature;
+    bool is_reduction;
 
-    if (PyBytes_AsStringAndSize(self->program, (char **)&program,
+    if (PyBytes_AsStringAndSize(program_object, (char **)&program,
                                 &prog_len) < 0) {
         PyErr_Format(PyExc_RuntimeError, "invalid program: can't read program");
         return -1;
@@ -410,12 +415,16 @@ check_program(NumExprObject *self)
         PyErr_Format(PyExc_RuntimeError, "invalid program: prog_len mod 4 != 0");
         return -1;
     }
-    if (PyBytes_AsStringAndSize(self->fullsig, (char **)&fullsig,
+    if (prog_len == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "invalid program: program is empty");
+        return -1;
+    }
+    if (PyBytes_AsStringAndSize(fullsig_object, (char **)&fullsig,
                                 &n_buffers) < 0) {
         PyErr_Format(PyExc_RuntimeError, "invalid program: can't read fullsig");
         return -1;
     }
-    if (PyBytes_AsStringAndSize(self->signature, (char **)&signature,
+    if (PyBytes_AsStringAndSize(signature_object, (char **)&signature,
                                 &n_inputs) < 0) {
         PyErr_Format(PyExc_RuntimeError, "invalid program: can't read signature");
         return -1;
@@ -424,6 +433,26 @@ check_program(NumExprObject *self)
         PyErr_Format(PyExc_RuntimeError, "invalid program: too many buffers");
         return -1;
     }
+    /* fullsig is built with PyBytes_FromFormat("%c%s%s%s", ...), whose %s stops
+       at the first NUL byte.  An embedded NUL in signature or tempsig would
+       shorten fullsig without shortening mem[]/memsizes[], so every register
+       index past the NUL would then be described by the wrong signature
+       character.  Reject the whole class by checking the layout invariant. */
+    if (n_buffers != 1 + n_inputs + n_constants + n_temps) {
+        PyErr_Format(PyExc_RuntimeError,
+            "invalid program: fullsig describes %i buffers but the register map "
+            "has %i (1 output + %i inputs + %i constants + %i temporaries); "
+            "signature and tempsig must not contain NUL bytes",
+            (int)n_buffers, 1 + (int)n_inputs + n_constants + n_temps,
+            (int)n_inputs, n_constants, n_temps);
+        return -1;
+    }
+    first_temp = 1 + n_inputs + n_constants;
+    /* A reduction program accumulates into the output register, which
+       NumExpr_run allocates as a *single* element for a full reduction.  Only
+       the final reduction instruction may write it -- an ordinary opcode
+       targeting register 0 writes a whole BLOCK_SIZE1 block past its end. */
+    is_reduction = program[prog_len-4] > OP_REDUCTION;
     for (pc = 0; pc < prog_len; pc += 4) {
         unsigned int op = program[pc];
         if (op == OP_NOOP) {
@@ -445,11 +474,13 @@ check_program(NumExprObject *self)
                 argloc = pc+argno+1;
             }
             if (argno >= 3) {
-                if (pc + 1 >= prog_len) {
-                    PyErr_Format(PyExc_RuntimeError, "invalid program: double opcode (%c) at end (%i)", pc, sig);
+                argloc = pc+argno+2;
+                if (argloc >= prog_len) {
+                    PyErr_Format(PyExc_RuntimeError,
+                        "invalid program: truncated double instruction for opcode %u at %i",
+                        op, pc);
                     return -1;
                 }
-                argloc = pc+argno+2;
             }
             arg = program[argloc];
 
@@ -525,16 +556,49 @@ check_program(NumExprObject *self)
                     PyErr_Format(PyExc_RuntimeError, "invalid program: internal checker error processing %i", argloc);
                     return -1;
                 }
-            /* The next is to avoid problems with the ('i','l') duality,
-               specially in 64-bit platforms */
-            } else if (((sig == 'l') && (fullsig[arg] == 'i')) ||
-                       ((sig == 'i') && (fullsig[arg] == 'l'))) {
-              ;
             } else if (sig != fullsig[arg]) {
                 PyErr_Format(PyExc_RuntimeError,
-                "invalid : opcode signature doesn't match buffer (%c vs %c) at %i", sig, fullsig[arg], argloc);
+                "invalid program: opcode signature doesn't match buffer (%c vs %c) at %i", sig, fullsig[arg], argloc);
                 return -1;
             }
+            if (sig != 'n' && argno == 0 && arg != 0 && arg < first_temp) {
+                PyErr_Format(PyExc_RuntimeError,
+                    "invalid program: destination buffer is read-only (%i) at %i",
+                    arg, argloc);
+                return -1;
+            }
+            if (sig != 'n' && argno == 0 && arg == 0 && is_reduction &&
+                    pc != prog_len-4) {
+                PyErr_Format(PyExc_RuntimeError,
+                    "invalid program: only the final reduction instruction may "
+                    "write the output buffer (at %i)", pc);
+                return -1;
+            }
+            if (op == OP_COPY_SS) {
+                if (argno == 0 && arg != 0) {
+                    PyErr_SetString(PyExc_RuntimeError,
+                        "invalid program: copy_ss destination must be the output buffer");
+                    return -1;
+                }
+                if (argno == 1 && arg != 1) {
+                    PyErr_SetString(PyExc_RuntimeError,
+                        "invalid program: copy_ss source must be buffer 1");
+                    return -1;
+                }
+            }
+        }
+    }
+    /* String registers have a zero item size (size_from_char('s') == 0), so a
+       string temporary is a zero-length allocation that the string comparison
+       opcodes would still read from.  No opcode can write one either, since
+       OP_COPY_SS is the only string-producing opcode and its destination is
+       the output buffer. */
+    for (reg = first_temp; reg < n_buffers; reg++) {
+        if (fullsig[reg] == 's') {
+            PyErr_Format(PyExc_RuntimeError,
+                "invalid program: string temporaries are not supported (%i)",
+                (int)reg);
+            return -1;
         }
     }
     return 0;
@@ -576,8 +640,13 @@ stringcmp(const char *s1, const char *s2, npy_intp maxlen1, npy_intp maxlen2)
     // First check if some of the operands is the empty string and if so,
     // just check that the first char of the other is the NULL one.
     // Fixes #121
+    // Two empty operands compare equal without dereferencing either pointer:
+    // a zero-sized register holds no readable byte at all.
+    if (maxlen1 == 0 && maxlen2 == 0) return 0;
     if (maxlen2 == 0) return *s1 != null;
-    if (maxlen1 == 0) return *s2 != null;
+    /* An empty s1 sorts *before* a non-empty s2, so the sign must be negative
+       here -- returning +1 made "a < b''" and "a <= b''" disagree with NumPy. */
+    if (maxlen1 == 0) return -(*s2 != null);
 
     maxlen = (maxlen1 > maxlen2) ? maxlen1 : maxlen2;
     for (nextpos = 1;  nextpos <= maxlen;  nextpos++) {
@@ -1075,6 +1144,13 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 
     // Don't force serial mode by default
     gs.force_serial = 0;
+
+    // A NumExprObject that never completed __init__() (e.g. NumExpr.__new__())
+    // carries an empty program, which last_opcode() would read out of bounds.
+    if (PyBytes_GET_SIZE(self->program) < 4) {
+        PyErr_SetString(PyExc_RuntimeError, "invalid program: program is empty");
+        return NULL;
+    }
 
     // Check whether there's a reduction as the final step
     is_reduction = last_opcode(self->program) > OP_REDUCTION;
