@@ -10,6 +10,7 @@
 ####################################################################
 
 import gc
+import importlib.util
 import os
 import platform
 import subprocess
@@ -51,6 +52,28 @@ TestCase = unittest.TestCase
 double = np.double
 long = int
 MAX_THREADS = 16
+
+
+def _can_start_thread():
+    """Whether the interpreter can actually start an OS thread."""
+    import threading
+    thread = threading.Thread(target=lambda: None)
+    try:
+        thread.start()
+    except RuntimeError:
+        return False
+    thread.join()
+    return True
+
+
+# WebAssembly runtimes (Pyodide/Emscripten, WASI) have no process support, and
+# the standard builds are single-threaded.  A handful of tests below need to
+# spawn an interpreter or start threads to test what they test, so they cannot
+# run there.  `_thread` and `os.fork` are both present-but-non-functional under
+# Emscripten, hence the platform check for processes and the probe for threads.
+HAS_SUBPROCESS = sys.platform not in ('emscripten', 'wasi')
+HAS_MULTIPROCESSING = importlib.util.find_spec('_multiprocessing') is not None
+HAS_THREADS = _can_start_thread()
 
 
 if not pytest_available:
@@ -349,6 +372,7 @@ class test_numexpr(TestCase):
         assert sys.getrefcount(b) == 2
 
     @pytest.mark.thread_unsafe
+    @unittest.skipUnless(HAS_SUBPROCESS, 'requires process support')
     def test_locals_clears_globals(self):
         # Check for issue #313, whereby clearing f_locals also clear f_globals
         # if in the top-frame. This cannot be done inside `unittest` as it is always
@@ -1350,6 +1374,7 @@ def _environment(key, value):
 # Test cases for the threading configuration
 @pytest.mark.thread_unsafe
 class test_threading_config(TestCase):
+    @unittest.skipUnless(HAS_SUBPROCESS, 'requires process support')
     def test_max_threads_unset(self):
         # Has to be done in a subprocess as `importlib.reload` doesn't let us
         # re-initialize the threadpool
@@ -1362,6 +1387,7 @@ class test_threading_config(TestCase):
                 "exit(0)"])
         subprocess.check_call([sys.executable, '-c', script])
 
+    @unittest.skipUnless(HAS_SUBPROCESS, 'requires process support')
     def test_max_threads_set(self):
         # Has to be done in a subprocess as `importlib.reload` doesn't let us
         # re-initialize the threadpool
@@ -1415,6 +1441,7 @@ class test_threading_config(TestCase):
 
 
 # Case test for threads
+@unittest.skipUnless(HAS_THREADS, 'requires working threads')
 class test_threading(TestCase):
 
     def test_thread(self):
@@ -1531,6 +1558,7 @@ def _worker(qout=None):
 
 
 # Case test for subprocesses (via multiprocessing module)
+@unittest.skipUnless(HAS_MULTIPROCESSING, 'requires the multiprocessing module')
 class test_subprocess(TestCase):
     @pytest.mark.thread_unsafe
     def test_multiprocess(self):
