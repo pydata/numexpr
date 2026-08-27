@@ -1566,13 +1566,14 @@ def print_versions():
     (sysname, nodename, release, os_version, machine, processor) = platform.uname()
     print('Platform:          %s-%s-%s' % (sys.platform, machine, os_version))
     try:
-        # cpuinfo doesn't work on OSX well it seems, so protect these outputs
-        # with a try block
+        # cpuinfo doesn't work on OSX well it seems, and platforms with no
+        # dedicated CPUInfo subclass report nothing at all, so protect these
+        # outputs with a try block
         cpu_info = cpu.info[0]
         print('CPU vendor:        %s' % cpu_info.get('VendorIdentifier', ''))
         print('CPU model:         %s' % cpu_info.get('ProcessorNameString', ''))
         print('CPU clock speed:   %s MHz' % cpu_info.get('~MHz',''))
-    except KeyError:
+    except (KeyError, IndexError, TypeError):
         pass
     print('VML available?     %s' % use_vml)
     if use_vml:
