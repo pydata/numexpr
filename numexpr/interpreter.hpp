@@ -128,7 +128,8 @@ extern thread_data th_params;
 PyObject *NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds);
 
 char get_return_sig(PyObject* program);
-int check_program(NumExprObject *self);
+int check_program(PyObject *program_object, PyObject *fullsig_object,
+                  PyObject *signature_object, int n_constants, int n_temps);
 int get_temps_space(const vm_params& params, char **mem, size_t block_size);
 void free_temps_space(const vm_params& params, char **mem);
 int vm_engine_iter_task(NpyIter *iter, npy_intp *memsteps,
