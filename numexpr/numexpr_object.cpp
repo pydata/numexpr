@@ -45,6 +45,9 @@ NumExpr_dealloc(NumExprObject *self)
     PyMem_Del(self->rawmem);
     PyMem_Del(self->memsteps);
     PyMem_Del(self->memsizes);
+    if (self->run_lock != NULL) {
+        PyThread_free_lock((PyThread_type_lock)self->run_lock);
+    }
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -53,6 +56,7 @@ NumExpr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     NumExprObject *self = (NumExprObject *)type->tp_alloc(type, 0);
     if (self != NULL) {
+        self->run_lock = NULL;
 #define INIT_WITH(name, object) \
         self->name = object; \
         if (!self->name) { \
@@ -76,6 +80,11 @@ NumExpr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         self->n_inputs = 0;
         self->n_constants = 0;
         self->n_temps = 0;
+        self->run_lock = (void *)PyThread_allocate_lock();
+        if (self->run_lock == NULL) {
+            Py_DECREF(self);
+            return PyErr_NoMemory();
+        }
 #undef INIT_WITH
     }
     return (PyObject *)self;
