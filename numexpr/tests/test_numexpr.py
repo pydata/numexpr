@@ -1448,6 +1448,7 @@ class test_threading(TestCase):
         for t in threads:
             t.join()
 
+    @pytest.mark.thread_unsafe
     def test_shared_compiled_expression(self):
         import threading
 
