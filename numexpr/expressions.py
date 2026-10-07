@@ -350,7 +350,7 @@ functions = {
     'fmod': func(numpy.fmod, 'float'),
     'arctan2': func(numpy.arctan2, 'float'),
     'hypot': func(numpy.hypot, 'double'),
-    'nextafter': func(numpy.nextafter, 'double'),
+    'nextafter': func(numpy.nextafter, 'float'),
     'copysign': func(numpy.copysign, 'double'),
     'maximum': func(numpy.maximum, 'double'),
     'minimum': func(numpy.minimum, 'double'),
