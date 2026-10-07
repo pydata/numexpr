@@ -871,6 +871,15 @@ class test_evaluate(TestCase):
         out_l = evaluate('base ** -1.0')
         assert_equal(out_l, np.power(base, -1.0))
 
+    def test_nextafter_float32(self):
+        # nextafter on float32 inputs must step to the next float32 value,
+        # not to the next float64 one.
+        x = np.array([1.0, -2.5, 0.0, 3.0], dtype=np.float32)
+        y = np.array([2.0, -3.0, 1.0, 3.0], dtype=np.float32)
+        res = evaluate('nextafter(x, y)')
+        assert_equal(res.dtype, np.float32)
+        assert_array_equal(res, np.nextafter(x, y))
+
     def test_ex_uses_vml(self):
         vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
                       "sinh", "cosh", "tanh", "arcsinh", "arccosh", "arctanh",
