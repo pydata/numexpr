@@ -264,8 +264,10 @@
         case OP_MUL_III: VEC_ARG2(i_dest = i1 * i2);
         case OP_DIV_III: VEC_ARG2(i_dest = i2 ? (i1 / i2) : 0);
         case OP_POW_III: VEC_ARG2(i_dest = (i2 < 0) ? (1 / i1) : (int)pow((double)i1, i2));
-        case OP_MOD_III: VEC_ARG2(i_dest = i2 == 0 ? 0 :((i1 % i2) + i2) % i2);
-        case OP_FLOORDIV_III: VEC_ARG2(i_dest = i2 ? (i1 / i2) - ((i1 % i2 != 0) && (i1 < 0 != i2 < 0)) : 0);
+        case OP_MOD_III: VEC_ARG2(i_dest = (i2 == 0 || i2 == -1) ? 0 :
+                                   ((i1 % i2 != 0) && ((i1 % i2 < 0) != (i2 < 0))) ? i1 % i2 + i2 : i1 % i2);
+        case OP_FLOORDIV_III: VEC_ARG2(i_dest = i2 == -1 ? (int)(0U - (unsigned int)i1) :
+                                        i2 ? (i1 / i2) - ((i1 % i2 != 0) && (i1 < 0 != i2 < 0)) : 0);
         case OP_LSHIFT_III: VEC_ARG2(i_dest = (unsigned int)i2 < 32 ? i1 << i2 : 0);
         case OP_RSHIFT_III: VEC_ARG2(i_dest = i1 >> ((unsigned int)i2 < 32 ? i2 : 31));
 
@@ -290,8 +292,10 @@
 #else
         case OP_POW_LLL: VEC_ARG2(l_dest = (l2 < 0) ? (1 / l1) : (long long)llround(pow((long double)l1, (long double)l2)));
 #endif
-        case OP_MOD_LLL: VEC_ARG2(l_dest = l2 == 0 ? 0 :((l1 % l2) + l2) % l2);
-        case OP_FLOORDIV_LLL: VEC_ARG2(l_dest = l2 ? (l1 / l2) - ((l1 % l2 != 0) && (l1 < 0 != l2 < 0)): 0);
+        case OP_MOD_LLL: VEC_ARG2(l_dest = (l2 == 0 || l2 == -1) ? 0 :
+                                   ((l1 % l2 != 0) && ((l1 % l2 < 0) != (l2 < 0))) ? l1 % l2 + l2 : l1 % l2);
+        case OP_FLOORDIV_LLL: VEC_ARG2(l_dest = l2 == -1 ? (long long)(0ULL - (unsigned long long)l1) :
+                                        l2 ? (l1 / l2) - ((l1 % l2 != 0) && (l1 < 0 != l2 < 0)): 0);
         case OP_LSHIFT_LLL: VEC_ARG2(l_dest = (unsigned long long)l2 < 64 ? l1 << l2 : 0);
         case OP_RSHIFT_LLL: VEC_ARG2(l_dest = l1 >> ((unsigned long long)l2 < 64 ? l2 : 63));
 

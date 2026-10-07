@@ -860,6 +860,20 @@ class test_evaluate(TestCase):
         main_l = evaluate('b // m')
         assert_equal(main_l, a // m)
 
+    def test_mod_floordiv_extreme_values(self):
+        # INT_MIN // -1 and INT_MIN % -1 overflow in C (and crash the
+        # process on x86), and the floor-modulus fixup used to overflow for
+        # divisors near the type limits. Match NumPy.
+        for dtype in ('i4', 'i8'):
+            info = np.iinfo(dtype)
+            a = np.array([info.min, info.min, -1, 5, -5, info.max, 7], dtype=dtype)
+            b = np.array([-1, info.min, info.min, info.max, info.max, info.min, -1],
+                         dtype=dtype)
+            assert_equal(evaluate('a % b'), np.mod(a, b))
+            with np.errstate(over='ignore'):
+                expected = a // b
+            assert_equal(evaluate('a // b'), expected)
+
     def test_negative_power_scalar(self):
         # Test for issue #428, where the power is negative and the base is an
         # integer. This was running afoul in the precomputation in `expressions.py:pow_op()`
