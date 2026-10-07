@@ -871,6 +871,16 @@ class test_evaluate(TestCase):
         out_l = evaluate('base ** -1.0')
         assert_equal(out_l, np.power(base, -1.0))
 
+    def test_negative_power_array(self):
+        # Integer powers with negative exponents taken from an array. 0 ** -n
+        # used to divide by zero (crashing the process with MSVC builds), and
+        # (-1) ** -n returned -1 for even n.
+        for dtype in ('i4', 'i8'):
+            base = np.array([-2, -1, -1, 0, 1, 1, 2], dtype=dtype)
+            n = np.array([-1, -2, -3, -1, -1, -2, -2], dtype=dtype)
+            assert_equal(evaluate('base ** n'),
+                         np.array([0, 1, -1, 0, 1, 1, 0], dtype=dtype))
+
     def test_ex_uses_vml(self):
         vml_funcs = [ "sin", "cos", "tan", "arcsin", "arccos", "arctan",
                       "sinh", "cosh", "tanh", "arcsinh", "arccosh", "arctanh",

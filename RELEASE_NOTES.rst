@@ -14,6 +14,9 @@ Changes from 2.14.2 to 2.14.3
   by the sanitizer raise ``ValueError``; and unknown functions raise
   ``TypeError``. Sanitization can still be explicitly disabled with
   ``sanitize=False`` or ``NUMEXPR_SANITIZE=0``.
+* Fixed integer ``**`` with negative exponents taken from an array: ``0 ** -n``
+  divided by zero (crashing MSVC builds) and ``(-1) ** -n`` returned ``-1``
+  for even ``n``.
 
 Changes from 2.14.1 to 2.14.2
 -----------------------------
