@@ -14,6 +14,9 @@ Changes from 2.14.2 to 2.14.3
   by the sanitizer raise ``ValueError``; and unknown functions raise
   ``TypeError``. Sanitization can still be explicitly disabled with
   ``sanitize=False`` or ``NUMEXPR_SANITIZE=0``.
+* Fixed integer ``min()``/``max()`` reductions: int32 inputs raised an
+  error with NumPy 2, int64 inputs got a 32-bit identity on Windows, and
+  int64 values were compared as doubles, losing precision above 2**53.
 
 Changes from 2.14.1 to 2.14.2
 -----------------------------

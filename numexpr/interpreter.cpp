@@ -1499,11 +1499,13 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
             /* floating point min/max identity is NaN */
             fill = PyFloat_FromDouble(NE_NAN);
         } else if (op >= OP_MIN && op < OP_MAX) {
-            /* integer min identity */
-            fill = PyLong_FromLong(LONG_MAX);
+            /* integer min identity (int32 or int64) */
+            fill = PyLong_FromLongLong(PyArray_ITEMSIZE(a) == 4 ?
+                                       NPY_MAX_INT32 : NPY_MAX_INT64);
         } else {
-            /* integer max identity */
-            fill = PyLong_FromLong(LONG_MIN);
+            /* integer max identity (int32 or int64) */
+            fill = PyLong_FromLongLong(PyArray_ITEMSIZE(a) == 4 ?
+                                       NPY_MIN_INT32 : NPY_MIN_INT64);
         }
         PyArray_FillWithScalar(a, fill);
         Py_DECREF(fill);
