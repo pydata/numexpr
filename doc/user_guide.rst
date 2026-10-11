@@ -20,7 +20,13 @@ It is also possible to use NumExpr to validate an expression::
 
     >>> ne.validate('2*a + 3*b')
 
-which returns `None` on success or raises an exception on invalid inputs.
+which returns `None` on success. On invalid inputs the exception is not
+raised but returned, so check the return value::
+
+    >>> err = ne.validate('2*a + 3*')
+    >>> if err is not None:
+    ...     print(type(err).__name__)
+    SyntaxError
 
 and it can also re_evaluate an expression::
 
