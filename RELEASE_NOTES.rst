@@ -14,6 +14,21 @@ Changes from 2.14.2 to 2.14.3
   by the sanitizer raise ``ValueError``; and unknown functions raise
   ``TypeError``. Sanitization can still be explicitly disabled with
   ``sanitize=False`` or ``NUMEXPR_SANITIZE=0``.
+* Hardened low-level VM bytecode validation against mismatched register widths,
+  writes to read-only registers, truncated extended instructions, unsafe string
+  copies, string temporaries, a non-final instruction writing the output buffer
+  of a reduction program, register signatures desynchronised by an embedded NUL
+  byte, and integer overflow while sizing constant storage. Validation now runs
+  *before* the program is installed on the ``NumExpr`` object, and ``run()``
+  refuses to execute an object whose ``__init__`` never completed.
+* ``numexpr.interpreter.NumExpr`` objects are now single-initialisation: calling
+  ``__init__`` again on a built object raises ``RuntimeError`` instead of
+  freeing the register buffers that a concurrent ``run()`` may still be using.
+  A *failed* ``__init__`` installs nothing and can be retried.
+* Fixed the ordering of string comparisons against an empty string: an empty
+  operand now sorts before a non-empty one, so ``a < b''`` and ``a <= b''``
+  agree with NumPy, and two empty operands compare equal without reading
+  uninitialised memory.
 
 Changes from 2.14.1 to 2.14.2
 -----------------------------

@@ -8,6 +8,7 @@
 **********************************************************************/
 
 #include "module.hpp"
+#include <limits.h>
 #include <structmember.h>
 
 #include "numexpr_config.hpp"
@@ -86,25 +87,43 @@ NumExpr_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
 {
-    int i, j, mem_offset;
+    int i, j;
     int n_inputs, n_constants, n_temps;
     PyObject *signature = NULL, *tempsig = NULL, *constsig = NULL;
     PyObject *fullsig = NULL, *program = NULL, *constants = NULL;
     PyObject *input_names = NULL, *o_constants = NULL;
-    int *itemsizes = NULL;
+    Py_ssize_t *itemsizes = NULL;
     char **mem = NULL, *rawmem = NULL;
     npy_intp *memsteps;
     npy_intp *memsizes;
+    Py_ssize_t mem_offset, program_size;
     int rawmemsize;
     static char *kwlist[] = {CHARP("signature"), CHARP("tempsig"),
 			     CHARP("program"),  CHARP("constants"),
 			     CHARP("input_names"), NULL};
+
+    /* A NumExpr object is immutable once built (all its members are READONLY),
+       and run() hands self->mem to worker threads while the GIL is released.
+       Re-initialising it would PyMem_Del() those buffers underneath a running
+       interpreter, so only the first successful __init__ is accepted. */
+    if (self->mem != NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "NumExpr objects cannot be re-initialised");
+        return -1;
+    }
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "SSS|OO", kwlist,
                                      &signature,
                                      &tempsig,
                                      &program, &o_constants,
                                      &input_names)) {
+        return -1;
+    }
+
+    program_size = PyBytes_GET_SIZE(program);
+    if (program_size < 4 || program_size % 4 != 0) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "invalid program: expected at least one complete instruction");
         return -1;
     }
 
@@ -123,7 +142,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
             Py_DECREF(constants);
             return -1;
         }
-        if (!(itemsizes = PyMem_New(int, n_constants))) {
+        if (!(itemsizes = PyMem_New(Py_ssize_t, n_constants))) {
             Py_DECREF(constants);
             Py_DECREF(constsig);
             return -1;
@@ -173,7 +192,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
             }
             if (PyBytes_Check(o)) {
                 PyBytes_AS_STRING(constsig)[i] = 's';
-                itemsizes[i] = (int)PyBytes_GET_SIZE(o);
+                itemsizes[i] = PyBytes_GET_SIZE(o);
                 continue;
             }
             PyErr_SetString(PyExc_TypeError, "constants must be of type bool/int/long/float/double/complex/bytes");
@@ -209,9 +228,21 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
     /* Compute the size of registers. We leave temps out (will be
        malloc'ed later on). */
     rawmemsize = 0;
-    for (i = 0; i < n_constants; i++)
-        rawmemsize += itemsizes[i];
-    rawmemsize *= BLOCK_SIZE1;
+    for (i = 0; i < n_constants; i++) {
+        /* Keep the allocation within the range supported by the old int
+           rawmemsize field, but reject overflow instead of wrapping it. */
+        if (itemsizes[i] > INT_MAX / BLOCK_SIZE1 ||
+            rawmemsize > INT_MAX - itemsizes[i] * BLOCK_SIZE1) {
+            PyErr_SetString(PyExc_OverflowError,
+                "total constant storage is too large");
+            Py_DECREF(constants);
+            Py_DECREF(constsig);
+            Py_DECREF(fullsig);
+            PyMem_Del(itemsizes);
+            return -1;
+        }
+        rawmemsize += (int)(itemsizes[i] * BLOCK_SIZE1);
+    }
 
     mem = PyMem_New(char *, 1 + n_inputs + n_constants + n_temps);
     rawmem = PyMem_New(char, rawmemsize);
@@ -238,7 +269,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
     mem_offset = 0;
     for (i = 0; i < n_constants; i++) {
         char c = PyBytes_AS_STRING(constsig)[i];
-        int size = itemsizes[i];
+        Py_ssize_t size = itemsizes[i];
         mem[i+n_inputs+1] = rawmem + mem_offset;
         mem_offset += BLOCK_SIZE1 * size;
         memsteps[i+n_inputs+1] = memsizes[i+n_inputs+1] = size;
@@ -286,8 +317,8 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
         } else if (c == 's') {
             char *smem = (char*)mem[i+n_inputs+1];
             char *value = PyBytes_AS_STRING(PyTuple_GET_ITEM(constants, i));
-            for (j = 0; j < size*BLOCK_SIZE1; j+=size) {
-                memcpy(smem + j, value, size);
+            for (j = 0; j < BLOCK_SIZE1; j++) {
+                memcpy(smem + j*size, value, size);
             }
         }
     }
@@ -317,6 +348,17 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
+    /* Validate the program *before* installing it. */
+    if (check_program(program, fullsig, signature, n_constants, n_temps) < 0) {
+        Py_DECREF(constants);
+        Py_DECREF(constsig);
+        Py_DECREF(fullsig);
+        PyMem_Del(mem);
+        PyMem_Del(rawmem);
+        PyMem_Del(memsteps);
+        PyMem_Del(memsizes);
+        return -1;
+    }
 
     #define REPLACE_OBJ(arg) \
     {PyObject *tmp = self->arg; \
@@ -345,7 +387,7 @@ NumExpr_init(NumExprObject *self, PyObject *args, PyObject *kwds)
     #undef INCREF_REPLACE_OBJ
     #undef REPLACE_MEM
 
-    return check_program(self);
+    return 0;
 }
 
 static PyMethodDef NumExpr_methods[] = {
