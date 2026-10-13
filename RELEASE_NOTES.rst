@@ -6,6 +6,8 @@ Changes from 2.14.2 to 2.14.3
 -----------------------------
 
 * **Under development.**
+* Preserve the sign of the imaginary component in complex square roots on
+  the negative real axis, including signed zero inputs.
 * Replaced expression-string blacklist filtering with AST validation before
   evaluation, and disabled Python builtins while sanitization is enabled.
   This closes sanitizer bypasses in both cached and ``disable_cache=True``

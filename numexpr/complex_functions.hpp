@@ -109,8 +109,10 @@ static void
 nc_sqrt(std::complex<double> *x, std::complex<double> *r)
 {
     double s,d;
-    if (x->real() == 0. && x->imag() == 0.)
-        *r = *x;
+    if (x->real() == 0. && x->imag() == 0.) {
+        r->imag(x->imag());
+        r->real(0.);
+    }
     else {
         s = sqrt((fabs(x->real()) + hypot(x->real(),x->imag()))/2);
         d = x->imag()/(2*s);
@@ -118,13 +120,9 @@ nc_sqrt(std::complex<double> *x, std::complex<double> *r)
             r->real(s);
             r->imag(d);
         }
-        else if (x->imag() >= 0.) {
-            r->real(d);
-            r->imag(s);
-        }
         else {
-            r->real(-d);
-            r->imag(-s);
+            r->real(fabs(d));
+            r->imag(copysign(s, x->imag()));
         }
     }
     return;

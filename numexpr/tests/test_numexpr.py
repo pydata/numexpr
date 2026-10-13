@@ -532,6 +532,22 @@ class test_evaluate(TestCase):
         assert_array_equal(evaluate("x | y"), x | y) # or
         assert_array_equal(evaluate("~x"), ~x) # invert
 
+    def test_complex_sqrt_branch_side(self):
+        # Signed imaginary zero distinguishes the two sides of the branch cut.
+        x = np.array([complex(real, imag)
+                      for real in (-4., -0., 0., 4.)
+                      for imag in (-0., 0., -1., 1.)])
+        for values in (x, x[::-1], np.tile(x, 1024)):
+            expected = np.sqrt(values)
+            actual = evaluate("sqrt(values)")
+            assert_allclose(actual, expected)
+            assert_array_equal(np.signbit(actual.real), np.signbit(expected.real))
+            assert_array_equal(np.signbit(actual.imag), np.signbit(expected.imag))
+            assert_allclose(evaluate("sqrt(conj(values))"), np.conj(expected))
+            out = values.copy()
+            evaluate("sqrt(out)", out=out)
+            assert_allclose(out, expected)
+
     def test_complex_tan(self):
         # old version of NumExpr had overflow problems
         x = np.arange(1, 400., step=16., dtype=np.complex128)
