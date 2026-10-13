@@ -24,6 +24,12 @@ NumExpr: Fast numerical expression evaluator for NumPy
         :target: https://pypi.python.org/pypi/numexpr
 
 
+WARNING: FUNDING IS NEEDED
+--------------------------
+
+Are you a numexpr user and want to make its future brighter?  If so,
+`check this <https://github.com/pydata/numexpr/blob/master/FUNDING-NEEDED.md>`_.
+
 What is NumExpr?
 ----------------
 
