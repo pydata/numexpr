@@ -86,6 +86,11 @@ class CPUInfoBase(object):
     the availability of various CPU features.
     """
 
+    # Platforms without a dedicated subclass (WebAssembly under Emscripten,
+    # for instance) fall back to this class, so `info` has to exist and be
+    # subscriptable rather than resolve through `__getattr__`.
+    info = []
+
     def _try_call(self, func):
         try:
             return func()

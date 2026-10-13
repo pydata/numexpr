@@ -193,10 +193,55 @@ void *th_worker(void *tidptr)
     return(0);
 }
 
-/* Initialize threads */
+/*
+ * Tear down the running thread pool.  Assumes `gs.nthreads` matches the number
+ * of live workers and that they are (or will be) parked on the barrier.
+ */
+static void join_threads(void)
+{
+    int t, rc;
+    void *status;
+
+    /* Tell all existing threads to finish */
+    gs.end_threads = 1;
+    pthread_mutex_lock(&gs.count_threads_mutex);
+    if (gs.count_threads < gs.nthreads) {
+        gs.count_threads++;
+        do {
+            pthread_cond_wait(&gs.count_threads_cv,
+                              &gs.count_threads_mutex);
+        } while (!gs.barrier_passed);
+    }
+    else {
+        gs.barrier_passed = 1;
+        pthread_cond_broadcast(&gs.count_threads_cv);
+    }
+    pthread_mutex_unlock(&gs.count_threads_mutex);
+
+    /* Join exiting threads */
+    for (t = 0; t < gs.nthreads; t++) {
+        rc = pthread_join(gs.threads[t], &status);
+        if (rc) {
+            fprintf(stderr,
+                    "ERROR; return code from pthread_join() is %d\n", rc);
+            fprintf(stderr, "\tError detail: %s\n", strerror(rc));
+        }
+    }
+    gs.init_threads_done = 0;
+    gs.end_threads = 0;
+}
+
+/*
+ * Initialize the thread pool.  Returns 0 on success and -1 if the pool could
+ * not be created, in which case numexpr falls back to running serially with
+ * `gs.nthreads == 1`.  Platforms without working threads (WebAssembly under
+ * Emscripten/Pyodide, for instance) always take the fallback path, so this
+ * must never terminate the host process.
+ */
 int init_threads(void)
 {
-    int tid, rc;
+    int tid, rc, created;
+    int masked = 0;
 
     if ( !(gs.nthreads > 1 && (!gs.init_threads_done || gs.pid != getpid())) ) {
         /* Thread pool must always be initialized once and once only. */
@@ -216,20 +261,25 @@ int init_threads(void)
     /*
      * Our worker threads should not deal with signals from the rest of the
      * application - mask everything temporarily in this thread, so our workers
-     * can inherit that mask
+     * can inherit that mask.  Failing to mask is not fatal, it just means the
+     * workers may see signals meant for the main thread.
      */
     sigset_t sigset_block_all, sigset_restore;
     rc = sigfillset(&sigset_block_all);
     if (rc != 0) {
-        fprintf(stderr, "ERROR; failed to block signals: sigfillset: %s",
+        fprintf(stderr, "WARNING; failed to block signals: sigfillset: %s\n",
                 strerror(rc));
-        exit(-1);
     }
-    rc = pthread_sigmask( SIG_BLOCK, &sigset_block_all, &sigset_restore);
-    if (rc != 0) {
-        fprintf(stderr, "ERROR; failed to block signals: pthread_sigmask: %s",
-                strerror(rc));
-        exit(-1);
+    else {
+        rc = pthread_sigmask( SIG_BLOCK, &sigset_block_all, &sigset_restore);
+        if (rc != 0) {
+            fprintf(stderr,
+                    "WARNING; failed to block signals: pthread_sigmask: %s\n",
+                    strerror(rc));
+        }
+        else {
+            masked = 1;
+        }
     }
 
     /* Now create the threads */
@@ -238,23 +288,47 @@ int init_threads(void)
         rc = pthread_create(&gs.threads[tid], NULL, th_worker,
                             (void *)&gs.tids[tid]);
         if (rc) {
-            fprintf(stderr,
-                    "ERROR; return code from pthread_create() is %d\n", rc);
-            fprintf(stderr, "\tError detail: %s\n", strerror(rc));
-            exit(-1);
+            break;
         }
     }
+    created = tid;
 
     /*
      * Restore the signal mask so the main thread can process signals as
      * expected
      */
-    rc = pthread_sigmask( SIG_SETMASK, &sigset_restore, NULL);
-    if (rc != 0) {
+    if (masked) {
+        int rc_mask = pthread_sigmask( SIG_SETMASK, &sigset_restore, NULL);
+        if (rc_mask != 0) {
+            fprintf(stderr,
+                    "WARNING: failed to restore signal mask: pthread_sigmask: %s\n",
+                    strerror(rc_mask));
+        }
+    }
+
+    if (created < gs.nthreads) {
+        /*
+         * The pool could not be brought up.  Wind back whatever we did manage
+         * to start and fall back to serial execution rather than killing the
+         * host process.
+         */
         fprintf(stderr,
-                "ERROR: failed to restore signal mask: pthread_sigmask: %s",
-                strerror(rc));
-        exit(-1);
+                "WARNING; return code from pthread_create() is %d\n", rc);
+        fprintf(stderr, "\tError detail: %s\n", strerror(rc));
+        fprintf(stderr,
+                "\tNumExpr could not start a thread pool of %d threads, "
+                "falling back to serial evaluation.\n", gs.nthreads);
+        if (created > 0) {
+            /* `join_threads` drives the barrier off `gs.nthreads`, so make it
+               match the number of workers that actually started. */
+            gs.nthreads = created;
+            gs.init_threads_done = 1;
+            gs.pid = (int)getpid();
+            join_threads();
+        }
+        gs.nthreads = 1;
+        gs.init_threads_done = 0;
+        return(-1);
     }
 
     gs.init_threads_done = 1;                 /* Initialization done! */
@@ -267,8 +341,6 @@ int init_threads(void)
 int numexpr_set_nthreads(int nthreads_new)
 {
     int nthreads_old = gs.nthreads;
-    int t, rc;
-    void *status;
 
     // if (nthreads_new > MAX_THREADS) {
     //     fprintf(stderr,
@@ -291,38 +363,11 @@ int numexpr_set_nthreads(int nthreads_new)
        different from that in pid var (probably means that we are a
        subprocess, and thus threads are non-existent). */
     if (gs.nthreads > 1 && gs.init_threads_done && gs.pid == getpid()) {
-        /* Tell all existing threads to finish */
-        gs.end_threads = 1;
-        pthread_mutex_lock(&gs.count_threads_mutex);
-        if (gs.count_threads < gs.nthreads) {
-            gs.count_threads++;
-            do {
-                pthread_cond_wait(&gs.count_threads_cv,
-                                  &gs.count_threads_mutex);
-            } while (!gs.barrier_passed);
-        }
-        else {
-            gs.barrier_passed = 1;
-            pthread_cond_broadcast(&gs.count_threads_cv);
-        }
-        pthread_mutex_unlock(&gs.count_threads_mutex);
-
-        /* Join exiting threads */
-        for (t=0; t<gs.nthreads; t++) {
-            rc = pthread_join(gs.threads[t], &status);
-            if (rc) {
-                fprintf(stderr,
-                        "ERROR; return code from pthread_join() is %d\n",
-                        rc);
-                fprintf(stderr, "\tError detail: %s\n", strerror(rc));
-                exit(-1);
-            }
-        }
-        gs.init_threads_done = 0;
-        gs.end_threads = 0;
+        join_threads();
     }
 
-    /* Launch a new pool of threads (if necessary) */
+    /* Launch a new pool of threads (if necessary).  If the pool cannot be
+       created, `init_threads` leaves us in serial mode. */
     gs.nthreads = nthreads_new;
     init_threads();
 

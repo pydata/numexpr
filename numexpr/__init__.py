@@ -38,8 +38,12 @@ from numexpr.utils import (_init_num_threads, detect_number_of_cores,
 
 # Detect the number of cores
 ncores = detect_number_of_cores()
-# Initialize the number of threads to be used
-nthreads = _init_num_threads()
+# Initialize the number of threads to be used. `_init_num_threads` returns the
+# number of threads it requested; read back what the VM actually ended up with,
+# since it falls back to serial evaluation on platforms that cannot create a
+# thread pool (WebAssembly under Emscripten/Pyodide, for instance).
+_init_num_threads()
+nthreads = get_num_threads()
 # The default for VML is 1 thread (see #39)
 # set_vml_num_threads(1)
 
