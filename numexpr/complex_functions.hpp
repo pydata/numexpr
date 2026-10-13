@@ -300,6 +300,12 @@ nc_asinh(std::complex<double> *x, std::complex<double> *r)
 static void
 nc_atan(std::complex<double> *x, std::complex<double> *r)
 {
+    // On the branch cut, the sign of real zero selects the principal value.
+    // The quotient below loses that sign and is undefined at the poles.
+    if (x->real() == 0.0) {
+        *r = std::atan(*x);
+        return;
+    }
     std::complex<double> a, *pa=&a;
     nc_diff(&nc_i, x, pa);
     nc_sum(&nc_i, x, r);

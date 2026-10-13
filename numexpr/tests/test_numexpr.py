@@ -532,6 +532,24 @@ class test_evaluate(TestCase):
         assert_array_equal(evaluate("x | y"), x | y) # or
         assert_array_equal(evaluate("~x"), ~x) # invert
 
+    def test_complex_atan_imaginary_axis(self):
+        values = np.array([complex(real, imag)
+                           for real in [0.0, -0.0]
+                           for imag in [0.0, -0.0, 0.5, -0.5, 1.0, -1.0, 2.0, -2.0]])
+        with np.errstate(all='ignore'):
+            for x in [values, np.tile(values, 257), np.tile(values, 257)[::-2]]:
+                expected = np.arctan(x)
+                actual = evaluate('arctan(x)')
+                # Compare components independently, including imaginary infinities.
+                assert_allclose(actual.real, expected.real, atol=1e-15)
+                assert_allclose(actual.imag, expected.imag, atol=1e-15)
+                assert_array_equal(np.signbit(actual.real), np.signbit(expected.real))
+                assert_array_equal(np.signbit(actual.imag), np.signbit(expected.imag))
+                target = x.copy()
+                evaluate('arctan(target)', out=target)
+                assert_allclose(target.real, expected.real, atol=1e-15)
+                assert_allclose(target.imag, expected.imag, atol=1e-15)
+
     def test_complex_tan(self):
         # old version of NumExpr had overflow problems
         x = np.arange(1, 400., step=16., dtype=np.complex128)
