@@ -539,6 +539,40 @@ class test_evaluate(TestCase):
         assert_array_almost_equal(evaluate("tan(x + y)"), tan(x + y))
         assert_array_almost_equal(evaluate("tanh(x + y)"), tanh(x + y))
 
+    def test_complex_abs_range(self):
+        values = np.array([complex(3*s, 4*s) for s in
+                           [1e200, -1e200, 1e-200, -1e-200, 1.0]])
+        # Include enough elements to exercise multiple interpreter blocks.
+        values = np.tile(values, 2048)
+        for x in [values, values[::-2], values[0]]:
+            expected = np.abs(x)
+            result = evaluate("abs(x)")
+            assert result.dtype == np.complex128
+            assert_allclose(result.real, expected, rtol=1e-15, atol=0)
+            assert_array_equal(result.imag, 0)
+            # The function also receives temporaries as both input and output.
+            assert_allclose(evaluate("abs(conj(x))").real, expected,
+                            rtol=1e-15, atol=0)
+        x = values.copy()
+        expected = np.abs(x)
+        evaluate("abs(x)", out=x)
+        assert_allclose(x.real, expected, rtol=1e-15, atol=0)
+        assert_array_equal(x.imag, 0)
+
+    def test_complex_abs_nonfinite(self):
+        parts = [0.0, -0.0, 1.0, -1.0, np.inf, -np.inf, np.nan]
+        x = np.array([complex(a, b) for a in parts for b in parts])
+        result = evaluate("abs(x)")
+        assert_allclose(result.real, np.abs(x), rtol=1e-15, atol=0)
+        assert_array_equal(result.imag, 0)
+        assert not np.any(np.signbit(result.real[result.real == 0]))
+
+    def test_complex_sign_range(self):
+        x = np.array([complex(3*s, 4*s) for s in
+                      [1e200, -1e200, 1e-200, -1e-200]])
+        expected = np.array([complex(0.6, 0.8), complex(-0.6, -0.8)] * 2)
+        assert_allclose(evaluate("sign(x)"), expected, rtol=1e-15, atol=0)
+
     def test_maximum_minimum(self):
         for dtype in [float, double, int, np.int64]:
             x = arange(10, dtype=dtype)

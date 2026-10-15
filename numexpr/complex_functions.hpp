@@ -435,7 +435,7 @@ nc_tanh(std::complex<double> *x, std::complex<double> *r)
 static void
 nc_abs(std::complex<double> *x, std::complex<double> *r)
 {
-    r->real(sqrt(x->real()*x->real() + x->imag()*x->imag()));
+    r->real(hypot(x->real(), x->imag()));
     r->imag(0);
 }
 
