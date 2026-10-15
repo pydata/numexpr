@@ -6,6 +6,8 @@ Changes from 2.14.2 to 2.14.3
 -----------------------------
 
 * **Under development.**
+* Avoid intermediate overflow and underflow in complex ``abs()`` and ``sign()``
+  when not using VML.
 * Replaced expression-string blacklist filtering with AST validation before
   evaluation, and disabled Python builtins while sanitization is enabled.
   This closes sanitizer bypasses in both cached and ``disable_cache=True``
