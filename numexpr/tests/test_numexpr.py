@@ -176,6 +176,18 @@ class test_numexpr(TestCase):
         assert_allclose(evaluate("sum(x**2+2,axis=0)"), sum(x ** 2 + 2, axis=0))
         assert_allclose(evaluate("prod(x-1,axis=0)"), prod(x - 1, axis=0))
 
+    def test_int_min_max_reductions(self):
+        # The integer min/max identity used to be out of range for int32
+        # (raising an error) and too small for int64 where C long is 32-bit,
+        # and the comparisons went through double, losing int64 precision.
+        x = np.array([-5, -3, -9], dtype=np.int32)
+        assert_equal(evaluate("max(x)"), np.max(x))
+        assert_equal(evaluate("min(-x)"), np.min(-x))
+        y = np.array([[-(2**40), -(2**41)], [2**53 + 1, 2**53 + 3]], dtype=np.int64)
+        for axis in (None, 0, 1):
+            assert_equal(evaluate("max(y, axis=%s)" % axis), np.max(y, axis=axis))
+            assert_equal(evaluate("min(y, axis=%s)" % axis), np.min(y, axis=axis))
+
     def test_in_place(self):
         x = arange(10000.).reshape(1000, 10)
         evaluate("x + 3", out=x)
