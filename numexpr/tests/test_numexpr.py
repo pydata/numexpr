@@ -1519,6 +1519,97 @@ class test_threading(TestCase):
 
         test_thread_safety_with_numexpr()
 
+# Both scripts below are run in a subprocess: the failures they expose are a
+# deadlock and an `exit(-1)` raised from C, neither of which can be caught in
+# the running interpreter -- in-process they would take the whole test session
+# down instead of failing a single test.
+
+# `numexpr_set_nthreads()` tears the thread pool down and builds it back up
+# again without holding any lock. Two Python threads calling it at the same
+# time both pass the `gs.init_threads_done` check and both `pthread_join()`
+# the same workers; the loser gets ESRCH and numexpr calls `exit(-1)`.
+# Only reachable on a free-threaded build: with the GIL, `Py_set_num_threads`
+# never releases it, so the calls are serialized for free.
+_CONCURRENT_SET_NUM_THREADS = """
+import threading
+import numexpr
+
+errors = []
+
+def churn():
+    try:
+        for i in range(500):
+            numexpr.set_num_threads(1 + i % 4)
+    except BaseException as exc:
+        errors.append(exc)
+
+threads = [threading.Thread(target=churn) for _ in range(4)]
+for thread in threads:
+    thread.start()
+for thread in threads:
+    thread.join()
+assert not errors, errors
+"""
+
+# `vm_engine_iter_parallel()` holds `gs.parallel_mutex` and releases the GIL
+# while the workers run, but `numexpr_set_nthreads()` takes no lock at all, so
+# it can join those workers mid-flight. The evaluating thread is then left
+# waiting on `count_threads_cv` for a pool that no longer exists.
+# This one does not need free-threading: releasing the GIL is enough.
+_SET_NUM_THREADS_DURING_EVALUATE = """
+import threading
+import numpy as np
+import numexpr
+
+numexpr.set_num_threads(4)
+a = np.random.random(1_000_000)
+b = np.random.random(1_000_000)
+stop = threading.Event()
+errors = []
+
+def compute():
+    try:
+        while not stop.is_set():
+            numexpr.evaluate("sin(a) + cos(b) * a / (b + 1.0)")
+    except BaseException as exc:
+        errors.append(exc)
+
+workers = [threading.Thread(target=compute) for _ in range(3)]
+for worker in workers:
+    worker.start()
+try:
+    for i in range(200):
+        numexpr.set_num_threads(1 + i % 4)
+finally:
+    stop.set()
+    for worker in workers:
+        worker.join()
+assert not errors, errors
+"""
+
+
+@pytest.mark.thread_unsafe
+class test_set_num_threads_concurrency(TestCase):
+    """set_num_threads() resizes a process-global thread pool; doing so
+    concurrently with itself or with a running evaluation must not corrupt it.
+    """
+
+    def _run_isolated(self, script, timeout=120):
+        try:
+            proc = subprocess.run([sys.executable, '-c', script],
+                                  timeout=timeout, capture_output=True,
+                                  universal_newlines=True)
+        except subprocess.TimeoutExpired:
+            self.fail(f'deadlock: no exit after {timeout}s')
+        if proc.returncode != 0:
+            self.fail(f'exited with {proc.returncode}\n{proc.stderr}')
+
+    def test_concurrent_set_num_threads(self):
+        self._run_isolated(_CONCURRENT_SET_NUM_THREADS)
+
+    def test_set_num_threads_during_evaluate(self):
+        self._run_isolated(_SET_NUM_THREADS_DURING_EVALUATE)
+
 
 # The worker function for the subprocess (needs to be here because Windows
 # has problems pickling nested functions with the multiprocess module :-/)

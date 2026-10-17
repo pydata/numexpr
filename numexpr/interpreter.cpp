@@ -765,6 +765,32 @@ vm_engine_iter_outer_reduce_task(NpyIter *iter, npy_intp *memsteps,
     return 0;
 }
 
+/* Single-task version of the VM engine, for when there is no worker pool.
+   `params` is taken by value: out_buffer is rewritten below. */
+static int
+vm_engine_iter_serial(NpyIter *iter, vm_params params,
+                      bool need_output_buffering, int *pc_error,
+                      char **errmsg)
+{
+    int r;
+
+    // Allocate memory for output buffering if needed
+    vector<char> out_buffer(need_output_buffering ?
+                        (params.memsizes[0] * BLOCK_SIZE1) : 0);
+    params.out_buffer = need_output_buffering ? &out_buffer[0] : NULL;
+    // Reset the iterator to allocate its buffers
+    if (NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
+        return -1;
+    }
+    get_temps_space(params, params.mem, BLOCK_SIZE1);
+    Py_BEGIN_ALLOW_THREADS;
+    r = vm_engine_iter_task(iter, params.memsteps, params, pc_error, errmsg);
+    Py_END_ALLOW_THREADS;
+    free_temps_space(params, params.mem);
+
+    return r;
+}
+
 /* Parallel iterator version of VM engine */
 static int
 vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
@@ -783,6 +809,16 @@ vm_engine_iter_parallel(NpyIter *iter, const vm_params& params,
     Py_BEGIN_ALLOW_THREADS;
     pthread_mutex_lock(&gs.parallel_mutex);
     Py_END_ALLOW_THREADS;
+
+    /* numexpr_set_nthreads() takes this same mutex, so gs.nthreads no longer
+       moves under our feet -- but it may have dropped to 1 between the
+       dispatch decision in run_interpreter() and here, and a pool of one has
+       no worker threads to meet at the barrier below. */
+    if (gs.nthreads == 1) {
+        ret = vm_engine_iter_serial(iter, params, need_output_buffering,
+                                    pc_error, errmsg);
+        goto end;
+    }
 
     /* Populate parameters for worker threads */
     NpyIter_GetIterIndexRange(iter, &th_params.start, &th_params.vlen);
@@ -910,21 +946,8 @@ run_interpreter(NumExprObject *self, NpyIter *iter, NpyIter *reduce_iter,
     if ((gs.nthreads == 1) || gs.force_serial) {
         // Can do it as one "task"
         if (reduce_iter == NULL) {
-            // Allocate memory for output buffering if needed
-            vector<char> out_buffer(need_output_buffering ?
-                                (self->memsizes[0] * BLOCK_SIZE1) : 0);
-            params.out_buffer = need_output_buffering ? &out_buffer[0] : NULL;
-            // Reset the iterator to allocate its buffers
-            if(NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
-                return -1;
-            }
-            get_temps_space(params, params.mem, BLOCK_SIZE1);
-            Py_BEGIN_ALLOW_THREADS;
-            r = vm_engine_iter_task(iter, params.memsteps,
-                                        params, pc_error, &errmsg);
-            Py_END_ALLOW_THREADS;
-            free_temps_space(params, params.mem);
-        }
+            r = vm_engine_iter_serial(iter, params, need_output_buffering,
+                                      pc_error, &errmsg);        }
         else {
             if (reduction_outer_loop) {
                 char **dataptr;

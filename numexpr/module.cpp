@@ -192,6 +192,36 @@ void *th_worker(void *tidptr)
     /* This should never be reached, but anyway */
     return(0);
 }
+/* Create the mutexes and the condition variable.
+
+   These outlive any particular thread pool, so this runs exactly once per
+   process: re-creating a mutex that some thread still holds is undefined
+   behaviour, and numexpr_set_nthreads() now resizes the pool while holding
+   gs.parallel_mutex. */
+static void init_sync_primitives(void)
+{
+    pthread_mutex_init(&gs.count_mutex, NULL);
+    pthread_mutex_init(&gs.parallel_mutex, NULL);
+
+    /* Barrier initialization */
+    pthread_mutex_init(&gs.count_threads_mutex, NULL);
+    pthread_cond_init(&gs.count_threads_cv, NULL);
+    gs.count_threads = 0;      /* Reset threads counter */
+    gs.barrier_passed = 0;
+}
+
+#ifndef _WIN32
+/* A fork() gives the child `gs` describing worker threads that did not
+   survive, and copies of the primitives frozen in whatever state they were
+   in -- possibly held by a thread that no longer exists. Start the child
+   from a clean slate; NumExpr_run() rebuilds the pool on the next call. */
+static void reinit_after_fork(void)
+{
+    init_sync_primitives();
+    gs.init_threads_done = 0;
+    gs.end_threads = 0;
+}
+#endif
 
 /* Initialize threads */
 int init_threads(void)
@@ -203,13 +233,6 @@ int init_threads(void)
         return(0);
     }
 
-    /* Initialize mutex and condition variable objects */
-    pthread_mutex_init(&gs.count_mutex, NULL);
-    pthread_mutex_init(&gs.parallel_mutex, NULL);
-
-    /* Barrier initialization */
-    pthread_mutex_init(&gs.count_threads_mutex, NULL);
-    pthread_cond_init(&gs.count_threads_cv, NULL);
     gs.count_threads = 0;      /* Reset threads counter */
     gs.barrier_passed = 0;
 
@@ -263,29 +286,12 @@ int init_threads(void)
     return(0);
 }
 
-/* Set the number of threads in numexpr's VM */
-int numexpr_set_nthreads(int nthreads_new)
+/* Rebuild the thread pool. The caller must hold gs.parallel_mutex. */
+static int set_nthreads_locked(int nthreads_new)
 {
     int nthreads_old = gs.nthreads;
     int t, rc;
     void *status;
-
-    // if (nthreads_new > MAX_THREADS) {
-    //     fprintf(stderr,
-    //             "Error.  nthreads cannot be larger than MAX_THREADS (%d)",
-    //             MAX_THREADS);
-    //     return -1;
-    // }
-    if (nthreads_new > global_max_threads) {
-        fprintf(stderr,
-                "Error.  nthreads cannot be larger than environment variable \"NUMEXPR_MAX_THREADS\" (%ld)",
-                global_max_threads);
-        return -1;
-    }
-    else if (nthreads_new <= 0) {
-        fprintf(stderr, "Error.  nthreads must be a positive integer");
-        return -1;
-    }
 
     /* Only join threads if they are not initialized or if our PID is
        different from that in pid var (probably means that we are a
@@ -325,6 +331,48 @@ int numexpr_set_nthreads(int nthreads_new)
     /* Launch a new pool of threads (if necessary) */
     gs.nthreads = nthreads_new;
     init_threads();
+
+    return nthreads_old;
+}
+
+/* Set the number of threads in numexpr's VM */
+int numexpr_set_nthreads(int nthreads_new)
+{
+    int nthreads_old;
+
+    // if (nthreads_new > MAX_THREADS) {
+    //     fprintf(stderr,
+    //             "Error.  nthreads cannot be larger than MAX_THREADS (%d)",
+    //             MAX_THREADS);
+    //     return -1;
+    // }
+    if (nthreads_new > global_max_threads) {
+        fprintf(stderr,
+                "Error.  nthreads cannot be larger than environment variable \"NUMEXPR_MAX_THREADS\" (%ld)",
+                global_max_threads);
+        return -1;
+    }
+    else if (nthreads_new <= 0) {
+        fprintf(stderr, "Error.  nthreads must be a positive integer");
+        return -1;
+    }
+
+    /* Resizing the pool has to exclude both a parallel job in flight -- whose
+       workers we would otherwise join out from under it, leaving it waiting
+       on a barrier nobody reaches -- and another resize, which would join the
+       same workers twice and get ESRCH. gs.parallel_mutex already serializes
+       parallel jobs, so reuse it here.
+
+       The GIL must be dropped while waiting for it: vm_engine_iter_parallel()
+       re-acquires the GIL before releasing the mutex, so holding on to it
+       here would deadlock the two against each other. */
+    Py_BEGIN_ALLOW_THREADS;
+    pthread_mutex_lock(&gs.parallel_mutex);
+    Py_END_ALLOW_THREADS;
+
+    nthreads_old = set_nthreads_locked(nthreads_new);
+
+    pthread_mutex_unlock(&gs.parallel_mutex);
 
     return nthreads_old;
 }
@@ -470,6 +518,10 @@ PyInit_interpreter(void) {
     gs.tids               = (int*)calloc(sizeof(int),             global_max_threads);
     // TODO: for Py3, deallocate: https://docs.python.org/3/c-api/module.html#c.PyModuleDef.m_free
     // For Python 2.7, people have to exit the process to reclaim the memory.
+    init_sync_primitives();
+#ifndef _WIN32
+    pthread_atfork(NULL, NULL, reinit_after_fork);
+#endif
 
     if (PyType_Ready(&NumExprType) < 0)
         INITERROR;
