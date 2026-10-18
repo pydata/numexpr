@@ -27,6 +27,7 @@ struct NumExprObject
     int  n_inputs;
     int  n_constants;
     int  n_temps;
+    void *run_lock;
 };
 
 extern PyTypeObject NumExprType;

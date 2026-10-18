@@ -18,6 +18,22 @@
 #include "complex_functions.hpp"
 #include "interpreter.hpp"
 #include "numexpr_object.hpp"
+
+class NumExprRunLock {
+public:
+    explicit NumExprRunLock(PyThread_type_lock lock) : lock(lock) {
+        Py_BEGIN_ALLOW_THREADS;
+        PyThread_acquire_lock(lock, WAIT_LOCK);
+        Py_END_ALLOW_THREADS;
+    }
+
+    ~NumExprRunLock() {
+        PyThread_release_lock(lock);
+    }
+
+private:
+    PyThread_type_lock lock;
+};
 #include "bespoke_functions.hpp"
 
 #ifdef _MSC_VER
@@ -1058,6 +1074,8 @@ NumExpr_run(NumExprObject *self, PyObject *args, PyObject *kwds)
 #endif
     int is_reduction = 0;
     bool reduction_outer_loop = false, need_output_buffering = false, full_reduction = false;
+
+    NumExprRunLock run_lock((PyThread_type_lock)self->run_lock);
 
     // To specify axes when doing a reduction
     int op_axes_values[NE_MAXARGS][NPY_MAXDIMS],

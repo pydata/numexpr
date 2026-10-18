@@ -1448,6 +1448,42 @@ class test_threading(TestCase):
         for t in threads:
             t.join()
 
+    @pytest.mark.thread_unsafe
+    def test_shared_compiled_expression(self):
+        import threading
+
+        expression = NumExpr("where(norm == 0.0, dummy, signal / norm)")
+        size = 200_000
+        signal = np.random.random(size)
+        norm = np.random.random(size)
+        dummy = np.float64(0.0)
+        expected = signal / norm
+        barrier = threading.Barrier(4)
+        errors = []
+
+        def work():
+            try:
+                for _ in range(10):
+                    barrier.wait()
+                    result = expression(dummy, norm, signal)
+                    assert_allclose(result, expected)
+            except BaseException as error:
+                errors.append(error)
+                barrier.abort()
+
+        old_nthreads = numexpr.set_num_threads(1)
+        try:
+            threads = [threading.Thread(target=work) for _ in range(4)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+        finally:
+            numexpr.set_num_threads(old_nthreads)
+
+        if errors:
+            raise errors[0]
+
     def test_thread_safety(self):
         """
         Expected output
