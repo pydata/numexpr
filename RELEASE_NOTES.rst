@@ -14,6 +14,9 @@ Changes from 2.14.2 to 2.14.3
   by the sanitizer raise ``ValueError``; and unknown functions raise
   ``TypeError``. Sanitization can still be explicitly disabled with
   ``sanitize=False`` or ``NUMEXPR_SANITIZE=0``.
+* ``nextafter()`` on float32 inputs now uses the float32 kernel. It was
+  computed in float64, so it returned float64 values next to the inputs
+  instead of the next float32 values.
 
 Changes from 2.14.1 to 2.14.2
 -----------------------------
