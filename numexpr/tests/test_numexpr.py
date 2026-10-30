@@ -1403,6 +1403,23 @@ class test_threading_config(TestCase):
             else:
                 self.assertEqual(min(detect_number_of_cores(), MAX_THREADS), numexpr._init_num_threads())
 
+    def test_detect_cores_respects_affinity(self):
+        # A process pinned to a subset of the machine's cores (taskset,
+        # docker --cpuset-cpus, a SLURM cpuset) must not be told there are
+        # more cores than it may run on; otherwise the default pool
+        # oversubscribes them (gh-328).
+        if not (hasattr(os, 'sched_getaffinity') and hasattr(os, 'sched_setaffinity')):
+            self.skipTest('CPU affinity control not available on this platform')
+        original = os.sched_getaffinity(0)
+        if len(original) < 2:
+            self.skipTest('need at least two allowed CPUs to restrict the mask')
+        subset = {sorted(original)[0]}
+        try:
+            os.sched_setaffinity(0, subset)
+            self.assertEqual(detect_number_of_cores(), len(subset))
+        finally:
+            os.sched_setaffinity(0, original)
+
     def test_vml_threads_round_trip(self):
         n_threads = 3
         if use_vml:

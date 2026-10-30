@@ -171,7 +171,23 @@ def _init_num_threads():
 def detect_number_of_cores():
     """
     Detects the number of cores on a system. Cribbed from pp.
+
+    When the process is restricted to a subset of the machine's cores -- by
+    ``taskset``, ``docker run --cpuset-cpus``, or the cpuset that cluster
+    managers such as SLURM pin a job to -- the CPU affinity mask reports fewer
+    cores than are physically online. Prefer that mask so the default thread
+    pool does not oversubscribe the cores the process may actually run on,
+    which is the common failure mode when numexpr is pulled in as an indirect
+    dependency (see gh-328).
     """
+    # Respect a restricted CPU affinity mask where the OS exposes one (Linux).
+    if hasattr(os, "sched_getaffinity"):
+        try:
+            ncpus = len(os.sched_getaffinity(0))
+            if ncpus > 0:
+                return ncpus
+        except OSError:
+            pass
     # Linux, Unix and MacOS:
     if hasattr(os, "sysconf"):
         if "SC_NPROCESSORS_ONLN" in os.sysconf_names:
