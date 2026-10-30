@@ -14,6 +14,7 @@ import os
 import platform
 import subprocess
 import sys
+import tempfile
 import unittest
 import warnings
 import weakref
@@ -38,7 +39,7 @@ import numexpr
 from numexpr import (E, NumExpr, disassemble, evaluate, re_evaluate, use_vml,
                      validate)
 from numexpr.expressions import ConstantNode
-from numexpr.utils import detect_number_of_cores
+from numexpr.utils import _cgroup_cpu_limit, detect_number_of_cores
 
 try:
     import pytest
@@ -1402,6 +1403,55 @@ class test_threading_config(TestCase):
                 self.assertEqual(1, numexpr._init_num_threads())
             else:
                 self.assertEqual(min(detect_number_of_cores(), MAX_THREADS), numexpr._init_num_threads())
+
+    def test_detect_cores_respects_affinity(self):
+        # A process pinned to a subset of the machine's cores (taskset,
+        # docker --cpuset-cpus, a SLURM cpuset) must not be told there are
+        # more cores than it may run on; otherwise the default pool
+        # oversubscribes them (gh-328).
+        if not (hasattr(os, 'sched_getaffinity') and hasattr(os, 'sched_setaffinity')):
+            self.skipTest('CPU affinity control not available on this platform')
+        original = os.sched_getaffinity(0)
+        if len(original) < 2:
+            self.skipTest('need at least two allowed CPUs to restrict the mask')
+        subset = {sorted(original)[0]}
+        try:
+            os.sched_setaffinity(0, subset)
+            self.assertEqual(detect_number_of_cores(), len(subset))
+        finally:
+            os.sched_setaffinity(0, original)
+
+    def test_cgroup_cpu_quota_parsing(self):
+        # A cgroup CPU quota (docker --cpus, a Kubernetes CPU limit) must be
+        # read so the default pool does not oversubscribe it (gh-328). Parsing
+        # is exercised against fixture files so the test needs no root and no
+        # real cgroup.
+        with tempfile.TemporaryDirectory() as rootdir:
+            proc = os.path.join(rootdir, 'proc_cgroup')
+            # cgroup v2: "<quota> <period>" in a leaf cpu.max == 1.5 CPUs
+            with open(proc, 'w') as f:
+                f.write('0::/mygroup\n')
+            leaf = os.path.join(rootdir, 'mygroup')
+            os.makedirs(leaf)
+            with open(os.path.join(leaf, 'cpu.max'), 'w') as f:
+                f.write('150000 100000\n')
+            self.assertAlmostEqual(_cgroup_cpu_limit(proc, rootdir), 1.5)
+            # "max" means no quota -> None
+            with open(os.path.join(leaf, 'cpu.max'), 'w') as f:
+                f.write('max 100000\n')
+            self.assertIsNone(_cgroup_cpu_limit(proc, rootdir))
+        with tempfile.TemporaryDirectory() as rootdir:
+            # cgroup v1: cpu.cfs_quota_us / cpu.cfs_period_us == 2.0 CPUs
+            proc = os.path.join(rootdir, 'proc_cgroup')
+            with open(proc, 'w') as f:
+                f.write('5:cpu,cpuacct:/mygroup\n')
+            leaf = os.path.join(rootdir, 'cpu,cpuacct', 'mygroup')
+            os.makedirs(leaf)
+            with open(os.path.join(leaf, 'cpu.cfs_quota_us'), 'w') as f:
+                f.write('200000\n')
+            with open(os.path.join(leaf, 'cpu.cfs_period_us'), 'w') as f:
+                f.write('100000\n')
+            self.assertAlmostEqual(_cgroup_cpu_limit(proc, rootdir), 2.0)
 
     def test_vml_threads_round_trip(self):
         n_threads = 3

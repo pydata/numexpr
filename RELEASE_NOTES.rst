@@ -14,6 +14,15 @@ Changes from 2.14.2 to 2.14.3
   by the sanitizer raise ``ValueError``; and unknown functions raise
   ``TypeError``. Sanitization can still be explicitly disabled with
   ``sanitize=False`` or ``NUMEXPR_SANITIZE=0``.
+* ``detect_number_of_cores()`` now honours a restricted CPU affinity mask
+  (``taskset``, ``docker run --cpuset-cpus``, or the cpuset a cluster manager
+  such as SLURM pins a job to) when choosing the default thread count, so the
+  default pool no longer oversubscribes the cores a pinned process may run on
+  (gh-328).
+* The default thread count also honours a cgroup CPU quota (``docker run
+  --cpus``, a Kubernetes CPU limit, a SLURM cpu bandwidth limit) read from
+  cgroup v2 ``cpu.max`` or cgroup v1 ``cpu.cfs_quota_us``, rounded up, so a
+  quota-limited container does not oversubscribe its share (gh-328).
 
 Changes from 2.14.1 to 2.14.2
 -----------------------------
