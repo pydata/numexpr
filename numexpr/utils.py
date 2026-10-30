@@ -13,6 +13,7 @@ import logging
 log = logging.getLogger(__name__)
 
 import contextvars
+import math
 import os
 import subprocess
 
@@ -118,6 +119,69 @@ def get_num_threads():
     """
     return _get_num_threads()
 
+
+def _read_cgroup_cpu_limit(cgroup_dir, v2):
+    """Return the CPU limit (in CPUs) set on one cgroup directory, or None."""
+    try:
+        if v2:
+            with open(os.path.join(cgroup_dir, "cpu.max")) as f:
+                quota, period = f.read().split()[:2]
+            if quota == "max":
+                return None
+        else:
+            with open(os.path.join(cgroup_dir, "cpu.cfs_quota_us")) as f:
+                quota = f.read().strip()
+            with open(os.path.join(cgroup_dir, "cpu.cfs_period_us")) as f:
+                period = f.read().strip()
+        if int(quota) <= 0 or int(period) <= 0:
+            return None
+        return int(quota) / int(period)
+    except (OSError, ValueError):
+        return None
+
+
+def _cgroup_cpu_limit(proc_cgroup="/proc/self/cgroup", cgroup_root="/sys/fs/cgroup"):
+    """Return the tightest CPU quota (in CPUs) on this process's cgroup, or None.
+
+    Reads cgroup v2 ``cpu.max`` or cgroup v1 ``cpu.cfs_quota_us`` /
+    ``cpu.cfs_period_us`` for the process's own cgroup and its ancestors, for
+    example a ``docker run --cpus`` limit or a Kubernetes CPU limit. Returns
+    None when no quota is set, or on non-Linux platforms where the files are
+    absent.
+    """
+    try:
+        with open(proc_cgroup) as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return None
+    limits = []
+    for line in lines:
+        parts = line.split(":", 2)
+        if len(parts) != 3:
+            continue
+        controllers, path = parts[1], parts[2]
+        if controllers == "":
+            mounts, v2 = [cgroup_root], True
+        elif "cpu" in controllers.split(","):
+            names = ("cpu", "cpu,cpuacct", "cpuacct,cpu")
+            mounts, v2 = [os.path.join(cgroup_root, n) for n in names], False
+        else:
+            continue
+        for mount in mounts:
+            # Walk from the process cgroup up to the mount root. Inside a
+            # container without a cgroup namespace the mount root is also the
+            # process cgroup, where ``path`` does not exist under the mount.
+            rel = path.strip("/")
+            while True:
+                limit = _read_cgroup_cpu_limit(os.path.join(mount, rel), v2)
+                if limit is not None:
+                    limits.append(limit)
+                if not rel:
+                    break
+                rel = os.path.dirname(rel)
+    return min(limits) if limits else None
+
+
 def _init_num_threads():
     """
     Detects the environment variable 'NUMEXPR_MAX_THREADS' to set the threadpool
@@ -144,6 +208,15 @@ def _init_num_threads():
     else:
         # The use has not set 'NUMEXPR_MAX_THREADS', so likely they have not
         # configured NumExpr as desired, so we emit info logs.
+        # A cgroup CPU quota (`docker run --cpus`, a Kubernetes CPU limit, a
+        # SLURM cpu bandwidth limit) caps how much CPU time the process gets
+        # without restricting which cores it runs on, so it is invisible to
+        # the affinity mask detect_number_of_cores() reads. Honour it too,
+        # rounding up, so the default pool does not oversubscribe the quota
+        # (gh-328).
+        cpu_quota = _cgroup_cpu_limit()
+        if cpu_quota is not None:
+            n_cores = max(min(n_cores, math.ceil(cpu_quota)), 1)
         if n_cores > MAX_THREADS:
             log.info('Note: detected %d virtual cores but NumExpr set to maximum of %d, check "NUMEXPR_MAX_THREADS" environment variable.'%(n_cores, MAX_THREADS))
         if n_cores > 16:
