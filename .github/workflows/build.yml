@@ -14,7 +14,7 @@ jobs:
     env:
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
       CIBW_ARCHS_MACOS: "x86_64 arm64"
-      CIBW_ENABLE: cpython-freethreading
+      CIBW_PLATFORM: ${{ matrix.platform || 'auto' }}
 
     strategy:
       fail-fast: false
@@ -57,6 +57,13 @@ jobs:
             artifact_name: "macos-universal2"
             python-version: "3.x"
 
+          # Pyodide / WebAssembly (build wheels).
+          - os: ubuntu-latest
+            arch: wasm32
+            platform: pyodide
+            artifact_name: "pyodide-wasm32"
+            python-version: "3.x"
+
     steps:
       - uses: actions/checkout@v3
 
@@ -79,7 +86,7 @@ jobs:
       #   - Python version is "3.x"
       - name: Build wheels
         if: ${{ !matrix.numpy-version }}
-        uses: pypa/cibuildwheel@v3.1.3
+        uses: pypa/cibuildwheel@v4.2.0
 
       - name: Make sdist
         if: ${{ matrix.os == 'windows-latest' && !matrix.numpy-version }}
