@@ -3,11 +3,12 @@
 #include <string.h>
 #include <assert.h>
 #include <vector>
+#include <limits>
 #include "numexpr_config.hpp" // isnan definitions
 
 // Generic sign function
 inline int signi(int x) {return (0 < x) - (x < 0);}
-inline long signl(long x) {return (0 < x) - (x < 0);}
+inline long long signl(long long x) {return (0 < x) - (x < 0);}
 inline double sign(double x){
         // Floats: -1.0, 0.0, +1.0, NaN stays NaN
         if (isnand(x)) {return NAN;}
@@ -25,10 +26,17 @@ inline float signf(float x){
 
 // round function for ints
 inline int rinti(int x) {return x;}
-inline long rintl(long x) {return x;}
+inline long long rintl(long long x) {return x;}
 // abs function for ints
-inline int fabsi(int x) {return x<0 ? -x: x;}
-inline long fabsl(long x) {return x<0 ? -x: x;}
+inline int fabsi(int x) {
+    // Match NumPy's wraparound result without negating the minimum integer.
+    if (x == std::numeric_limits<int>::min()) {return x;}
+    return x < 0 ? -x : x;
+}
+inline long long fabsl(long long x) {
+    if (x == std::numeric_limits<long long>::min()) {return x;}
+    return x < 0 ? -x : x;
+}
 // fmod function for ints
 // TODO: Have to add FUNC_III, FUNC_LLL signatures to functions.hpp to enable these
 // inline int fmodi(int x, int y) {return (int)fmodf((float)x, (float)y);}
@@ -85,24 +93,24 @@ static void viRint(MKL_INT n, const int* x, int* dest)
     memcpy(dest, x, n * sizeof(int)); // just copy x1 which is already int
 };
 
-static void vlRint(MKL_INT n, const long* x, long* dest)
+static void vlRint(MKL_INT n, const long long* x, long long* dest)
 {
-    memcpy(dest, x, n * sizeof(long)); // just copy x1 which is already int
+    memcpy(dest, x, n * sizeof(long long)); // just copy x1 which is already int
 };
 
 static void viFabs(MKL_INT n, const int* x, int* dest)
 {
     MKL_INT j;
     for (j=0; j<n; j++) {
-        dest[j] = x[j] < 0 ? -x[j]: x[j];
+        dest[j] = fabsi(x[j]);
     };
 };
 
-static void vlFabs(MKL_INT n, const long* x, long* dest)
+static void vlFabs(MKL_INT n, const long long* x, long long* dest)
 {
     MKL_INT j;
     for (j=0; j<n; j++) {
-        dest[j] = x[j] < 0 ? -x[j]: x[j];
+        dest[j] = fabsl(x[j]);
     };
 };
 
@@ -309,7 +317,7 @@ static void viSign(MKL_INT n, const int* x1, int* dest)
         dest[j] = signi(x1[j]);
     };
 };
-static void vlSign(MKL_INT n, const long* x1, long* dest)
+static void vlSign(MKL_INT n, const long long* x1, long long* dest)
 {
     MKL_INT j;
     for(j=0; j < n; j++) {
