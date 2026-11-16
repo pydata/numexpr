@@ -572,6 +572,14 @@ class test_evaluate(TestCase):
             assert evaluate("sign(r)").dtype == sign(r).dtype
             assert_array_equal(evaluate("sign(r)"), sign(r))
             assert_array_equal(evaluate("round(r)"), round(r))
+            if np.issubdtype(dtype, np.integer):
+                assert evaluate("abs(r)").dtype == abs(r).dtype
+                assert_array_equal(evaluate("abs(r)"), abs(r))
+                lowest = np.array([np.iinfo(dtype).min], dtype=dtype)
+                assert evaluate("abs(lowest)").tolist() == abs(lowest).tolist()
+        # int64 magnitudes beyond 2**53 are not exactly representable as double
+        r = np.array([-(2**53 + 1), 2**62 + 1], dtype=np.int64)
+        assert evaluate("abs(r)").tolist() == abs(r).tolist()
 
     def test_rational_expr(self):
         a = arange(1e6)

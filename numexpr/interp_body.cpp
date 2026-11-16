@@ -505,7 +505,7 @@
          case OP_FUNC_LLN:
 #ifdef USE_VML
             VEC_ARG1_VML(functions_ll_vml[arg2](BLOCK_SIZE,
-                                                (long*)x1, (long*)dest));
+                                                (long long*)x1, (long long*)dest));
 #else
             VEC_ARG1(l_dest = functions_ll[arg2](l1));
 #endif

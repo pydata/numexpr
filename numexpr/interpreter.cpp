@@ -317,7 +317,7 @@ FuncIIPtr_vml functions_ii_vml[] = {
 };
 #endif
 
-typedef long (*FuncLLPtr)(long);
+typedef long long (*FuncLLPtr)(long long);
 FuncLLPtr functions_ll[] = {
 #define FUNC_LL(fop, s, f, ...) f,
 #include "functions.hpp"
@@ -325,7 +325,7 @@ FuncLLPtr functions_ll[] = {
 };
 
 #ifdef USE_VML
-typedef void (*FuncLLPtr_vml)(MKL_INT, const long*, long*);
+typedef void (*FuncLLPtr_vml)(MKL_INT, const long long*, long long*);
 FuncLLPtr_vml functions_ll_vml[] = {
 #define FUNC_LL(fop, s, f, f_vml) f_vml,
 #include "functions.hpp"
